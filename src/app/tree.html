@@ -1,0 +1,21 @@
+<div class="tree-container">
+  <header>
+    <h1>Heritago</h1>
+    <p>Modern Genealogy Explorer</p>
+  </header>
+
+  <main class="tree-grid" *ngIf="treeData() as data">
+    <div *ngFor="let ind of data.individuals" class="individual-card" [class.male]="ind.gender === 'M'" [class.female]="ind.gender === 'F'">
+      <div class="card-content">
+        <div class="avatar">{{ ind.gender }}</div>
+        <div class="info">
+          <h3>{{ ind.name }}</h3>
+          <p class="dates">
+            <span>{{ ind.birthDate || '?' }}</span> — <span>{{ ind.deathDate || '?' }}</span>
+          </p>
+          <div class="badge">{{ ind.id }}</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
