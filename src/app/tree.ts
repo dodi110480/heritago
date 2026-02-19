@@ -286,7 +286,7 @@ export class Tree implements AfterViewInit, OnInit {
 
         treeLayout(root);
 
-        // --- Disconnected Spouse Adjustment: Pull root-spouses to their partners level ---
+        // --- Partner Alignment: Ensure spouses are strictly on same level ---
         const descendants = root.descendants();
         const nodes_map = new Map(descendants.map(d => [d.data.id, d]));
 
@@ -295,23 +295,24 @@ export class Tree implements AfterViewInit, OnInit {
                 const hNode: any = nodes_map.get(fam.husband);
                 const wNode: any = nodes_map.get(fam.wife);
 
-                if (hNode && wNode && Math.abs(hNode.y - wNode.y) > 50) {
-                    const hDepth = hNode.depth;
-                    const wDepth = wNode.depth;
+                if (hNode && wNode && Math.abs(hNode.y - wNode.y) > 1) {
+                    // Force both to the same Y level
+                    const targetY = Math.min(hNode.y, wNode.y);
+                    hNode.y = targetY;
+                    wNode.y = targetY;
+                }
 
-                    if (hDepth !== wDepth) {
-                        const deeper = hDepth > wDepth ? hNode : wNode;
-                        const shallower = hDepth > wDepth ? wNode : hNode;
+                // Ensure proximity if they are far apart
+                if (hNode && wNode && Math.abs(hNode.x - wNode.x) > (this.nodeWidth + 200)) {
+                    const leftNode = hNode.x < wNode.x ? hNode : wNode;
+                    const rightNode = hNode.x < wNode.x ? wNode : hNode;
+                    const targetX = leftNode.x + this.nodeWidth + 60; // Standard spouse gap
 
-                        // If the shallower one is a direct child of 'forest-root' (meaning it's a root)
-                        if (shallower.parent && shallower.parent.data.id === 'forest-root') {
-                            // Align shallower with deeper
-                            shallower.y = deeper.y;
-                            // Move x to be next to deeper. 
-                            // If deeper is on the left of its relatives, put shallower on its left, else right.
-                            const offset = 260;
-                            shallower.x = deeper.x + offset;
-                        }
+                    if (rightNode.x > targetX) {
+                        const shift = targetX - rightNode.x;
+                        rightNode.each((desc: any) => {
+                            if (desc.x !== undefined) desc.x += shift;
+                        });
                     }
                 }
             }
