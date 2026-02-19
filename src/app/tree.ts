@@ -278,7 +278,7 @@ export class Tree implements AfterViewInit, OnInit {
         // 4. Create d3 tree layout
         const root = d3.hierarchy(hierarchy);
         const treeLayout = d3.tree<HierarchyNode>()
-            .nodeSize([this.nodeWidth + 40, this.nodeHeight + 100])
+            .nodeSize([this.nodeWidth + 60, this.nodeHeight + 100])
             .separation((a, b) => {
                 // Siblings are closer than cousins or unrelated roots
                 return a.parent === b.parent ? 1 : 1.5;
@@ -330,9 +330,9 @@ export class Tree implements AfterViewInit, OnInit {
 
                     // 2. Ensure adjacency (x)
                     // This is more complex because shifting one node affects others.
-                    // We'll sort them and ensure a minimum gap.
+                    // We'll sort them and ensure a minimum gap of 60px (No-Touch Rule).
                     childNodes.sort((a, b) => a.x - b.x);
-                    const siblingGap = this.nodeWidth + 20; // Tight gap for siblings
+                    const siblingGap = this.nodeWidth + 60; // 60px gap for siblings
 
                     for (let i = 1; i < childNodes.length; i++) {
                         const targetX = childNodes[i - 1].x + siblingGap;
