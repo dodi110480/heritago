@@ -1,0 +1,30 @@
+<div class="timeline-container">
+    <div *ngIf="loading()" class="loading">Laden...</div>
+
+    <div *ngIf="!loading() && timelineData()" class="content">
+        <header>
+            <h2>{{ timelineData().individual.name }}</h2>
+            <p class="subtitle">Lebenslauf</p>
+        </header>
+
+        <div class="timeline">
+            <div class="timeline-item" *ngFor="let event of timelineData().events">
+                <div class="timeline-icon">
+                    {{ getIcon(event.fact_type) }}
+                </div>
+                <div class="timeline-content">
+                    <div class="date">{{ event.date }}</div>
+                    <h3 class="title">{{ event.type }}</h3>
+                    <p class="description" *ngIf="event.description">{{ event.description }}</p>
+                    <div class="place" *ngIf="event.place">📍 {{ event.place }}</div>
+                </div>
+            </div>
+
+            <div class="timeline-item" *ngIf="timelineData().events.length === 0">
+                <div class="timeline-content">
+                    <p>Keine Ereignisse verfügbar.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

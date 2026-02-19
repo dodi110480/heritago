@@ -57,3 +57,11 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+
+## Project Standards
+
+### GEDCOM 7.0 Compliance
+This project strictly follows the **FamilySearch GEDCOM 7.0** specification. 
+- Technical specifications are located in the `gedcom_specification/` folder.
+- AI assistants must adhere to the standards defined in `.agent/workflows/gedcom-compliance.md`.
+

@@ -1,0 +1,88 @@
+<div class="list-container">
+    <div class="glass-header">
+        <div class="header-content">
+            <div class="title-section">
+                <h1>Alle Personen</h1>
+                <p class="subtitle">{{ filteredIndividuals().length }} Personen in {{ treeName() }}</p>
+            </div>
+
+            <div class="search-bar">
+                <div class="search-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </div>
+                <input type="text" placeholder="Suchen nach Name, ID..." [ngModel]="searchTerm()"
+                    (ngModelChange)="searchTerm.set($event)" class="search-input">
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" *ngIf="loading()">
+        <div class="spinner"></div>
+        <p>Lade Personenliste...</p>
+    </div>
+
+    <div class="no-results" *ngIf="!loading() && filteredIndividuals().length === 0">
+        <div class="empty-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </div>
+        <h3>Keine Personen gefunden</h3>
+        <p>Versuch es mit einem anderen Suchbegriff.</p>
+    </div>
+
+    <div class="person-grid" *ngIf="!loading() && filteredIndividuals().length > 0">
+        <a *ngFor="let person of filteredIndividuals()" [routerLink]="['/tree']" [queryParams]="{focus: person.id}"
+            class="person-card">
+
+            <div class="avatar-box" [class]="'gender-' + person.gender">
+                <svg *ngIf="person.gender === 'M'" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <svg *ngIf="person.gender === 'F'" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <svg *ngIf="person.gender !== 'M' && person.gender !== 'F'" xmlns="http://www.w3.org/2000/svg"
+                    width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+
+            <div class="person-info">
+                <div class="name-row">
+                    <h3>{{ person.firstName }} {{ person.lastName }}</h3>
+                    <span class="id-tag">{{ person.id }}</span>
+                </div>
+                <p class="lifespan">{{ getLifespan(person) }}</p>
+                <p class="meta-info" *ngIf="person.birthPlace">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    {{ person.birthPlace }}
+                </p>
+            </div>
+
+            <div class="card-action">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+        </a>
+    </div>
+</div>

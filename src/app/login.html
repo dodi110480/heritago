@@ -1,0 +1,42 @@
+<div class="login-container">
+    <div class="glass-card">
+        <div class="header">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22v-5M9 7l3 3 3-3M8 10V7a4 4 0 0 1 8 0v3M12 22a9 9 0 1 1 0-18 9 9 0 0 1 0 18z" />
+                </svg>
+            </div>
+            <h1>Heritago</h1>
+            <p>Entdecke deine Wurzeln</p>
+        </div>
+
+        <form (submit)="onSubmit()" #loginForm="ngForm">
+            <div class="form-group">
+                <label for="username">Benutzername</label>
+                <input type="text" id="username" name="username" [(ngModel)]="username" required
+                    placeholder="Dein Benutzername" autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Passwort</label>
+                <input type="password" id="password" name="password" [(ngModel)]="password" required
+                    placeholder="••••••••" autocomplete="current-password">
+            </div>
+
+            <div *ngIf="error()" class="error-message">
+                {{ error() }}
+            </div>
+
+            <button type="submit" [disabled]="!loginForm.form.valid || loading()" class="submit-btn"
+                [class.loading]="loading()">
+                <span *ngIf="!loading()">Einloggen</span>
+                <span *ngIf="loading()" class="loader"></span>
+            </button>
+        </form>
+
+        <div class="footer">
+            <p>&copy; 2026 Heritago - Modern Genealogy</p>
+        </div>
+    </div>
+</div>

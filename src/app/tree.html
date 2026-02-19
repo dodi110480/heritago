@@ -1,21 +1,462 @@
 <div class="tree-container">
-  <header>
-    <h1>Heritago</h1>
-    <p>Modern Genealogy Explorer</p>
-  </header>
+  <div id="tree-background-map"></div>
+  <svg id="tree-viewport"></svg>
 
-  <main class="tree-grid" *ngIf="treeData() as data">
-    <div *ngFor="let ind of data.individuals" class="individual-card" [class.male]="ind.gender === 'M'" [class.female]="ind.gender === 'F'">
-      <div class="card-content">
-        <div class="avatar">{{ ind.gender }}</div>
-        <div class="info">
-          <h3>{{ ind.name }}</h3>
-          <p class="dates">
-            <span>{{ ind.birthDate || '?' }}</span> — <span>{{ ind.deathDate || '?' }}</span>
-          </p>
-          <div class="badge">{{ ind.id }}</div>
+  <div class="controls">
+    <button class="control-btn" (click)="zoomIn()" title="Zoom In">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+    <button class="control-btn" (click)="zoomOut()" title="Zoom Out">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    </button>
+    <button class="control-btn" (click)="resetZoom()" title="Reset View">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+        <path d="M3 3v5h5"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Edit/Add Modal -->
+  <div class="modal-backdrop" *ngIf="isModalOpen" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ modalTitle }}</h2>
+        <button class="close-btn" (click)="closeModal()">&times;</button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
+
+        <!-- Tabs -->
+        <div class="modal-tabs" style="display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 15px;">
+          <button class="tab-btn" [class.active]="activeTab === 'basics'"
+            (click)="setActiveTab('basics')">Stammdaten</button>
+          <button class="tab-btn" [class.active]="activeTab === 'relations'"
+            (click)="setActiveTab('relations')">Beziehungen</button>
+          <button class="tab-btn" [class.active]="activeTab === 'events'"
+            (click)="setActiveTab('events')">Ereignisse</button>
+        </div>
+
+        <!-- BASICS TAB -->
+        <div *ngIf="activeTab === 'basics'" style="display: flex; flex-direction: column; gap: 15px;">
+          <!-- Gender -->
+          <div class="form-group">
+            <div class="radio-group" style="display: flex; gap: 20px; align-items: center;">
+              <label style="font-weight: normal;"><input type="radio" name="gender" [(ngModel)]="modalData.gender"
+                  value="M"> Männlich</label>
+              <label style="font-weight: normal;"><input type="radio" name="gender" [(ngModel)]="modalData.gender"
+                  value="F"> Weiblich</label>
+              <label style="font-weight: normal;"><input type="radio" name="gender" [(ngModel)]="modalData.gender"
+                  value="X"> Andere</label>
+              <label style="font-weight: normal;"><input type="radio" name="gender" [(ngModel)]="modalData.gender"
+                  value="U"> Unbekannt</label>
+            </div>
+          </div>
+
+          <!-- Name Row 1 -->
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label>Vor- (und Zweit-) name:</label>
+              <input type="text" [(ngModel)]="modalData.firstName" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Mädchenname:</label>
+              <input type="text" [(ngModel)]="modalData.birthName" class="form-control">
+            </div>
+          </div>
+
+          <!-- Name Row 2 -->
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 15px;">
+            <div class="form-group">
+              <label>Titel:</label>
+              <input type="text" [(ngModel)]="modalData.title" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Namenszusatz:</label>
+              <input type="text" [(ngModel)]="modalData.suffix" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>Ehename / Nachname:</label>
+              <input type="text" [(ngModel)]="modalData.lastName" class="form-control">
+            </div>
+          </div>
+
+          <!-- Birth -->
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label>Geburtsdatum:</label>
+              <input type="text" [(ngModel)]="modalData.birthDate" placeholder="TT.MM.JJJJ" class="form-control">
+            </div>
+            <div class="form-group" style="position: relative;">
+              <label>Geburtsort:</label>
+              <div style="display: flex; gap: 5px;">
+                <input type="text" [(ngModel)]="modalData.birthPlace"
+                  (input)="searchPlaces(modalData.birthPlace || '', 'birth')" class="form-control" style="flex: 1;">
+                <button class="btn-icon" (click)="openPlaceModal(modalData.birthPlace || '')"
+                  title="Neuer Ort">+</button>
+              </div>
+              <div *ngIf="showPlaceResults && activePlaceField === 'birth' && potentialPlaces.length > 0"
+                class="search-results-dropdown">
+                <div *ngFor="let p of potentialPlaces" class="search-result-item" (click)="selectPlace(p)">
+                  {{ p.name }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="form-group">
+            <div class="radio-group" style="display: flex; gap: 20px; align-items: center;">
+              <label style="font-weight: normal;"><input type="radio" name="isAlive" [value]="true"
+                  [(ngModel)]="modalData.isAlive"> lebend</label>
+              <label style="font-weight: normal;"><input type="radio" name="isAlive" [value]="false"
+                  [(ngModel)]="modalData.isAlive"> Verstorben</label>
+            </div>
+          </div>
+
+          <!-- Death (Conditional) -->
+          <div class="form-row" *ngIf="!modalData.isAlive"
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+              <label>Sterbedatum:</label>
+              <input type="text" [(ngModel)]="modalData.deathDate" placeholder="TT.MM.JJJJ" class="form-control">
+            </div>
+            <div class="form-group" style="position: relative;">
+              <label>Sterbeort:</label>
+              <div style="display: flex; gap: 5px;">
+                <input type="text" [(ngModel)]="modalData.deathPlace"
+                  (input)="searchPlaces(modalData.deathPlace || '', 'death')" class="form-control" style="flex: 1;">
+                <button class="btn-icon" (click)="openPlaceModal(modalData.deathPlace || '')"
+                  title="Neuer Ort">+</button>
+              </div>
+              <div *ngIf="showPlaceResults && activePlaceField === 'death' && potentialPlaces.length > 0"
+                class="search-results-dropdown">
+                <div *ngFor="let p of potentialPlaces" class="search-result-item" (click)="selectPlace(p)">
+                  {{ p.name }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label>E-Mail-Adresse:</label>
+            <input type="email" [(ngModel)]="modalData.email" class="form-control">
+          </div>
+
+        </div>
+
+        <!-- RELATIONS TAB -->
+        <div *ngIf="activeTab === 'relations'" style="display: flex; flex-direction: column; gap: 15px;">
+
+          <h4 style="margin: 0 0 10px 0;">Eltern & Partner</h4>
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <!-- Father Search -->
+            <div class="form-group" style="position: relative;">
+              <label>Vater:</label>
+              <div style="display: flex; gap: 5px;">
+                <input type="text" [(ngModel)]="fatherSearchQuery" (input)="searchPerson('father', fatherSearchQuery)"
+                  placeholder="Vater suchen..." class="form-control" style="flex: 1;">
+                <button *ngIf="modalData.fatherId || fatherSearchQuery" class="btn-icon text-danger"
+                  (click)="clearPerson('father')" title="Entfernen">&times;</button>
+              </div>
+              <input type="hidden" [(ngModel)]="modalData.fatherId">
+              <div *ngIf="showFatherResults && potentialFathers.length > 0" class="search-results-dropdown">
+                <div *ngFor="let p of potentialFathers" class="search-result-item" (click)="selectPerson('father', p)">
+                  {{ p.name }} ({{ p.birthDate }})
+                </div>
+              </div>
+              <div *ngIf="showFatherResults && potentialFathers.length === 0" class="search-results-dropdown">
+                <div class="search-result-item">Keine Ergebnisse</div>
+              </div>
+            </div>
+
+            <!-- Mother Search -->
+            <div class="form-group" style="position: relative;">
+              <label>Mutter:</label>
+              <div style="display: flex; gap: 5px;">
+                <input type="text" [(ngModel)]="motherSearchQuery" (input)="searchPerson('mother', motherSearchQuery)"
+                  placeholder="Mutter suchen..." class="form-control" style="flex: 1;">
+                <button *ngIf="modalData.motherId || motherSearchQuery" class="btn-icon text-danger"
+                  (click)="clearPerson('mother')" title="Entfernen">&times;</button>
+              </div>
+              <input type="hidden" [(ngModel)]="modalData.motherId">
+              <div *ngIf="showMotherResults && potentialMothers.length > 0" class="search-results-dropdown">
+                <div *ngFor="let p of potentialMothers" class="search-result-item" (click)="selectPerson('mother', p)">
+                  {{ p.name }} ({{ p.birthDate }})
+                </div>
+              </div>
+              <div *ngIf="showMotherResults && potentialMothers.length === 0" class="search-results-dropdown">
+                <div class="search-result-item">Keine Ergebnisse</div>
+              </div>
+            </div>
+
+            <!-- Spouse Search -->
+            <div class="form-group" style="position: relative;">
+              <label>Partner/in:</label>
+              <div style="display: flex; gap: 5px;">
+                <input type="text" [(ngModel)]="spouseSearchQuery" (input)="searchPerson('spouse', spouseSearchQuery)"
+                  placeholder="Partner suchen..." class="form-control" style="flex: 1;">
+                <button *ngIf="modalData.spouseId || spouseSearchQuery" class="btn-icon text-danger"
+                  (click)="clearPerson('spouse')" title="Entfernen">&times;</button>
+              </div>
+              <input type="hidden" [(ngModel)]="modalData.spouseId">
+              <div *ngIf="showSpouseResults && potentialSpouses.length > 0" class="search-results-dropdown">
+                <div *ngFor="let p of potentialSpouses" class="search-result-item" (click)="selectPerson('spouse', p)">
+                  {{ p.name }} ({{ p.birthDate }})
+                </div>
+              </div>
+              <div *ngIf="showSpouseResults && potentialSpouses.length === 0" class="search-results-dropdown">
+                <div class="search-result-item">Keine Ergebnisse</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EVENTS TAB -->
+        <div *ngIf="activeTab === 'events'" style="display: flex; flex-direction: column; gap: 15px;">
+          <h4 style="margin: 0;">Lebensereignisse</h4>
+
+          <!-- Event List -->
+          <div class="event-list"
+            style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+            <div *ngFor="let event of modalData.events; let i = index" class="event-item"
+              style="border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; position: relative; background: #f8fafc;">
+              <div style="font-weight: bold; color: #334155;">{{ event.type }} <span *ngIf="event.date"
+                  style="font-weight: normal; color: #64748b;">({{ event.date }})</span></div>
+              <div *ngIf="event.place" style="font-size: 0.9em; color: #64748b;">{{ event.place }}</div>
+              <div *ngIf="event.description"
+                style="font-style: italic; font-size: 0.9em; color: #475569; margin-top: 4px;">{{
+                event.description }}</div>
+              <button (click)="removeEvent(i)"
+                style="position: absolute; top: 10px; right: 10px; color: #ef4444; background: none; border: none; cursor: pointer; font-size: 1.2em; line-height: 1;">&times;</button>
+            </div>
+            <div *ngIf="!modalData.events || modalData.events.length === 0"
+              style="color: #94a3b8; font-style: italic; padding: 10px; text-align: center; border: 1px dashed #cbd5e1; border-radius: 6px;">
+              Keine Ereignisse eingetragen.</div>
+          </div>
+
+          <!-- Add Event Form -->
+          <div class="add-event-form" style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 5px;">
+            <h5 style="margin: 0 0 10px 0; color: #475569;">Ereignis hinzufügen</h5>
+            <div class="form-row"
+              style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+              <select [(ngModel)]="newEvent.type" class="form-control">
+                <option value="" disabled selected>Typ wählen...</option>
+                <option value="ADOP">Adoption (ADOP)</option>
+                <option value="BAPM">Taufe (BAPM)</option>
+                <option value="BARM">Bar Mitzvah (BARM)</option>
+                <option value="BASM">Bat Mitzvah (BASM)</option>
+                <option value="BIRT">Geburt (BIRT)</option>
+                <option value="BLES">Segnung (BLES)</option>
+                <option value="BURI">Beisetzung (BURI)</option>
+                <option value="CENS">Volkszählung (CENS)</option>
+                <option value="CHR">Christening (CHR)</option>
+                <option value="CHRA">Erwachsenentaufe (CHRA)</option>
+                <option value="CONF">Konfirmation (CONF)</option>
+                <option value="CREM">Einäscherung (CREM)</option>
+                <option value="DEAT">Tod (DEAT)</option>
+                <option value="EMIG">Auswanderung (EMIG)</option>
+                <option value="FCOM">Erstkommunion (FCOM)</option>
+                <option value="GRAD">Abschluss (GRAD)</option>
+                <option value="IMMI">Einwanderung (IMMI)</option>
+                <option value="NATU">Einbürgerung (NATU)</option>
+                <option value="ORDN">Ordination (ORDN)</option>
+                <option value="RETI">Ruhestand (RETI)</option>
+                <option value="PROB">Testamenteröffnung (PROB)</option>
+                <option value="WILL">Testament (WILL)</option>
+                <option value="MARR">Hochzeit (MARR)</option>
+                <option value="DIV">Scheidung (DIV)</option>
+                <option value="CAST">Kaste (CAST)</option>
+                <option value="DSCR">Beschreibung (DSCR)</option>
+                <option value="EDUC">Ausbildung (EDUC)</option>
+                <option value="IDNO">Ausweisnummer (IDNO)</option>
+                <option value="NATI">Nationalität (NATI)</option>
+                <option value="NCHI">Anzahl Kinder (NCHI)</option>
+                <option value="NMR">Anzahl Ehen (NMR)</option>
+                <option value="OCCU">Beruf (OCCU)</option>
+                <option value="PROP">Besitz (PROP)</option>
+                <option value="RELI">Religion (RELI)</option>
+                <option value="RESI">Wohnort (RESI)</option>
+                <option value="TITL">Titel (TITL)</option>
+                <option value="SSN">RV-Nummer (SSN)</option>
+                <option value="EVEN">Sonstiges (EVEN)</option>
+              </select>
+              <input type="text" [(ngModel)]="newEvent.date" placeholder="Datum (TT.MM.JJJJ)" class="form-control">
+            </div>
+            <div class="form-row"
+              style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+              <div style="position: relative;">
+                <div style="display: flex; gap: 5px;">
+                  <input type="text" [(ngModel)]="newEvent.place" (input)="searchPlaces(newEvent.place || '', 'event')"
+                    placeholder="Ort" class="form-control" style="flex: 1;">
+                  <button class="btn-icon" (click)="openPlaceModal(newEvent.place || '')" title="Neuer Ort">+</button>
+                </div>
+                <div *ngIf="showPlaceResults && activePlaceField === 'event' && potentialPlaces.length > 0"
+                  class="search-results-dropdown">
+                  <div *ngFor="let p of potentialPlaces" class="search-result-item" (click)="selectPlace(p)">
+                    {{ p.name }}
+                  </div>
+                </div>
+              </div>
+              <input type="text" [(ngModel)]="newEvent.description" placeholder="Beschreibung / Notiz"
+                class="form-control">
+            </div>
+            <button class="btn btn-secondary" (click)="addEvent()"
+              style="width: 100%; border: 1px dashed #94a3b8; color: #475569;">+ Ereignis hinzufügen</button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-danger" *ngIf="modalMode === 'edit'" (click)="deletePerson()">Löschen</button>
+          <div class="spacer"></div>
+          <button class="btn btn-secondary" (click)="closeModal()">Abbrechen</button>
+          <button class="btn btn-primary" (click)="savePerson()" [disabled]="isSaving">
+            {{ isSaving ? 'Speichere...' : 'Speichern' }}
+          </button>
         </div>
       </div>
     </div>
-  </main>
+  </div>
+
+  <!-- Family Card Modal -->
+  <div class="modal-backdrop" *ngIf="isFamilyModalOpen" (click)="closeFamilyModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Familie / Partnerschaft</h2>
+        <button class="close-btn" (click)="closeFamilyModal()">&times;</button>
+      </div>
+
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
+        <p style="color: #64748b; margin-bottom: 10px;">Verwalte hier Ereignisse der Partnerschaft, wie Hochzeit oder
+          Scheidung.</p>
+
+        <!-- Existing Events -->
+        <div class="events-list" *ngIf="familyModalData.events && familyModalData.events.length > 0">
+          <div *ngFor="let event of familyModalData.events; let i = index" class="event-item"
+            style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 6px; margin-bottom: 10px; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div style="font-weight: 600; color: #1e293b;">{{ event.type }}</div>
+              <button class="btn-text text-danger" (click)="familyModalData.events.splice(i, 1)">&times;</button>
+            </div>
+            <div style="font-size: 0.9em; color: #475569;">
+              <span *ngIf="event.date">📅 {{ event.date }}</span>
+              <span *ngIf="event.place" style="margin-left: 10px;">📍 {{ event.place }}</span>
+            </div>
+            <div *ngIf="event.description" style="font-size: 0.85em; font-style: italic; margin-top: 4px;">"{{
+              event.description }}"</div>
+          </div>
+        </div>
+
+        <!-- Add Family Event Form -->
+        <div class="add-event-form" style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 5px;">
+          <h5 style="margin: 0 0 10px 0; color: #475569;">Ereignis hinzufügen</h5>
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <select [(ngModel)]="newFamilyEvent.type" class="form-control">
+              <option value="MARR">Hochzeit (MARR)</option>
+              <option value="DIV">Scheidung (DIV)</option>
+              <option value="ENGA">Verlobung (ENGA)</option>
+              <option value="ANUL">Annullierung (ANUL)</option>
+              <option value="MARB">Aufgebot (MARB)</option>
+              <option value="MARC">Ehevertrag (MARC)</option>
+              <option value="DIVF">Scheidungsantrag (DIVF)</option>
+              <option value="EVEN">Sonstiges (EVEN)</option>
+            </select>
+            <input type="text" [(ngModel)]="newFamilyEvent.date" placeholder="Datum (TT.MM.JJJJ)" class="form-control">
+          </div>
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div style="position: relative;">
+              <div style="display: flex; gap: 5px;">
+                <input type="text" [(ngModel)]="newFamilyEvent.place"
+                  (input)="searchPlaces(newFamilyEvent.place || '', 'family')" placeholder="Ort" class="form-control"
+                  style="flex: 1;">
+                <button class="btn-icon" (click)="openPlaceModal(newFamilyEvent.place || '')"
+                  title="Neuer Ort">+</button>
+              </div>
+              <div *ngIf="showPlaceResults && activePlaceField === 'family' && potentialPlaces.length > 0"
+                class="search-results-dropdown">
+                <div *ngFor="let p of potentialPlaces" class="search-result-item" (click)="selectPlace(p)">
+                  {{ p.name }}
+                </div>
+              </div>
+            </div>
+            <input type="text" [(ngModel)]="newFamilyEvent.description" placeholder="Notiz" class="form-control">
+          </div>
+          <button class="btn btn-secondary" (click)="addFamilyEvent()"
+            style="width: 100%; border: 1px dashed #94a3b8; color: #475569;">+ Ereignis hinzufügen</button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" (click)="closeFamilyModal()">Abbrechen</button>
+        <button class="btn btn-primary" (click)="saveFamily()" [disabled]="isSaving">
+          {{ isSaving ? 'Speichere...' : 'Speichern' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Place Creator Modal -->
+  <div class="modal-backdrop" *ngIf="isPlaceModalOpen" (click)="closePlaceModal()">
+    <div class="modal" (click)="$event.stopPropagation()" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2>Neuer Ort</h2>
+        <button class="close-btn" (click)="closePlaceModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="error-box" *ngIf="placeErrorMessage"
+          style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #fca5a5; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.9rem;">
+          {{ placeErrorMessage }}
+        </div>
+        <div class="form-group">
+          <label>Ortsteil / Gebäude (optional)</label>
+          <input type="text" [(ngModel)]="placeModalData.detail" class="form-control" placeholder="z.B. Rathaus">
+        </div>
+        <div class="form-group">
+          <label>Stadt / Gemeinde (optional)</label>
+          <input type="text" [(ngModel)]="placeModalData.city" class="form-control" placeholder="z.B. Ahorn">
+        </div>
+        <div class="form-group">
+          <label>Landkreis / Bezirk (optional)</label>
+          <input type="text" [(ngModel)]="placeModalData.district" class="form-control" placeholder="z.B. Coburg">
+        </div>
+        <div class="form-group">
+          <label>Bundesland / Region (optional)</label>
+          <input type="text" [(ngModel)]="placeModalData.region" class="form-control" placeholder="z.B. Bayern">
+        </div>
+        <div class="form-group">
+          <label>Staat / Land</label>
+          <input type="text" [(ngModel)]="placeModalData.country" class="form-control" placeholder="z.B. Deutschland">
+        </div>
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label>Breitengrad (Lat):</label>
+            <input type="text" [(ngModel)]="placeModalData.latitude" class="form-control" placeholder="52.52">
+          </div>
+          <div class="form-group">
+            <label>Längengrad (Long):</label>
+            <input type="text" [(ngModel)]="placeModalData.longitude" class="form-control" placeholder="13.40">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Geografische Notizen:</label>
+          <textarea [(ngModel)]="placeModalData.notes" class="form-control" rows="3"
+            style="width: 100%; resize: vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closePlaceModal()">Abbrechen</button>
+        <button class="btn btn-primary" (click)="savePlace()"
+          [disabled]="isSaving || (!placeModalData.detail && !placeModalData.city && !placeModalData.district && !placeModalData.region && !placeModalData.country)">
+          {{ isSaving ? 'Speichere...' : 'Speichern' }}
+        </button>
+      </div>
+    </div>
+  </div>
 </div>

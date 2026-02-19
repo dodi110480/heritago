@@ -1,0 +1,31 @@
+<div class="gallery-container">
+    <h2>Mediengalerie</h2>
+
+    <div *ngIf="loading()" class="loading">Laden...</div>
+
+    <div *ngIf="!loading() && mediaItems().length === 0" class="no-data">
+        Keine Medien gefunden.
+    </div>
+
+    <div class="media-grid" *ngIf="!loading() && mediaItems().length > 0">
+        <div *ngFor="let item of mediaItems()" class="media-card" (click)="openLightbox(item)">
+            <div class="thumbnail-wrapper">
+                <img [src]="item.thumbnail" [alt]="item.title" loading="lazy">
+            </div>
+            <div class="media-info">
+                <h3>{{ item.title }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" *ngIf="selectedImage()" (click)="closeLightbox()">
+        <div class="lightbox-content" (click)="$event.stopPropagation()">
+            <img [src]="selectedImage().url" [alt]="selectedImage().title">
+            <button class="close-btn" (click)="closeLightbox()">&times;</button>
+            <div class="lightbox-caption">
+                <h3>{{ selectedImage().title }}</h3>
+            </div>
+        </div>
+    </div>
+</div>

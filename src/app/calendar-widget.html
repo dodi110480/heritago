@@ -1,0 +1,30 @@
+<div class="calendar-widget" *ngIf="hasTree()">
+    <div class="calendar-header">
+        <h3>An diesem Tag...</h3>
+        <span class="date">{{ currentDate() }}</span>
+    </div>
+
+    <div *ngIf="loading()" class="loading">Laden...</div>
+
+    <div *ngIf="!loading() && events().length === 0" class="no-events">
+        Keine Ereignisse heute.
+    </div>
+
+    <div class="events-list" *ngIf="!loading() && events().length > 0">
+        <div *ngFor="let event of events()" class="event-item">
+            <div class="event-icon"
+                [ngClass]="{'birth': event.type === 'BIRT', 'death': event.type === 'DEAT', 'marriage': event.type === 'MARR'}">
+                <!-- Icons based on type -->
+                <span *ngIf="event.type === 'BIRT'">🎂</span>
+                <span *ngIf="event.type === 'DEAT'">⚰️</span>
+                <span *ngIf="event.type === 'MARR'">💍</span>
+            </div>
+            <div class="event-details">
+                <span class="event-name">{{ event.name }}</span>
+                <span class="event-years">{{ event.years }} Jahre <span *ngIf="event.type === 'BIRT'">alt geworden /
+                        her</span><span *ngIf="event.type === 'MARR'">verheiratet</span><span
+                        *ngIf="event.type === 'DEAT'">tot</span></span>
+            </div>
+        </div>
+    </div>
+</div>

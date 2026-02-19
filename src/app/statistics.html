@@ -1,0 +1,49 @@
+<div class="stats-container">
+    <h2>Statistik-Dashboard</h2>
+    <p class="subtitle" *ngIf="treeName()">für Stammbaum "{{ treeName() }}"</p>
+
+    <div *ngIf="loading()" class="loading">Laden...</div>
+
+    <div *ngIf="!loading() && stats()" class="dashboard-grid">
+        <!-- Key Metrics Cards -->
+        <div class="card metric-card">
+            <div class="metric-value">{{ stats().counts.individuals }}</div>
+            <div class="metric-label">Personen</div>
+            <div class="icon">👥</div>
+        </div>
+        <div class="card metric-card">
+            <div class="metric-value">{{ stats().counts.families }}</div>
+            <div class="metric-label">Familien</div>
+            <div class="icon">👨‍👩‍👧‍👦</div>
+        </div>
+        <div class="card metric-card">
+            <div class="metric-value">{{ stats().counts.places }}</div>
+            <div class="metric-label">Orte</div>
+            <div class="icon">🌍</div>
+        </div>
+        <div class="card metric-card">
+            <div class="metric-value">{{ stats().counts.media }}</div>
+            <div class="metric-label">Medien</div>
+            <div class="icon">🖼️</div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="card chart-card">
+            <h3>Geschlechterverteilung</h3>
+            <div class="gender-chart">
+                <div class="bar-container">
+                    <div class="bar male" [style.width.%]="genderPercentages.male"></div>
+                    <div class="bar female" [style.width.%]="genderPercentages.female"></div>
+                    <div class="bar unknown" [style.width.%]="genderPercentages.unknown"></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><span class="dot male"></span> Männlich ({{ stats().gender.male }})</div>
+                    <div class="legend-item"><span class="dot female"></span> Weiblich ({{ stats().gender.female }})
+                    </div>
+                    <div class="legend-item"><span class="dot unknown"></span> Unbekannt ({{ stats().gender.unknown }})
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

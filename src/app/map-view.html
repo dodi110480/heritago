@@ -1,0 +1,46 @@
+<div class="map-view-hero">
+    <div class="map-wrapper" #mapContainer></div>
+
+    <div class="overlay-content">
+        <header class="glass-header">
+            <div class="title-group">
+                <h1>Interaktive Weltkarte</h1>
+                <p>Orte deiner Familiengeschichte</p>
+            </div>
+            <div class="stats-badge" *ngIf="!loading()">
+                <span class="count">{{ persons().length }}</span>
+                <span class="label">Personen mit Orten</span>
+            </div>
+        </header>
+
+        <div class="side-panel" *ngIf="persons().length > 0">
+            <div class="glass-card list-card">
+                <h3>Personenliste</h3>
+                <div class="place-list">
+                    <div *ngFor="let p of persons()" class="place-item" (click)="focusPerson(p)">
+                        <div class="icon">👤</div>
+                        <div class="details">
+                            <span class="name">{{ p.name }}</span>
+                            <span class="coords">{{ p.places.length }} Ort{{ p.places.length > 1 ? 'e' : '' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div *ngIf="loading()" class="status-overlay">
+            <div class="glass-loader">
+                <div class="spinner"></div>
+                <span>Karte wird geladen...</span>
+            </div>
+        </div>
+
+        <div *ngIf="!loading() && markers().length === 0" class="status-overlay">
+            <div class="glass-card info-card">
+                <h3>Keine Orte gefunden</h3>
+                <p>In deiner Datenbank sind noch keine Orte mit geografischen Koordinaten hinterlegt.</p>
+                <button class="btn-primary" routerLink="/">Zurück zum Dashboard</button>
+            </div>
+        </div>
+    </div>
+</div>
