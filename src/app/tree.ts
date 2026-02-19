@@ -278,7 +278,11 @@ export class Tree implements AfterViewInit, OnInit {
         // 4. Create d3 tree layout
         const root = d3.hierarchy(hierarchy);
         const treeLayout = d3.tree<HierarchyNode>()
-            .nodeSize([this.nodeWidth + 100, this.nodeHeight + 100]);
+            .nodeSize([this.nodeWidth + 40, this.nodeHeight + 100])
+            .separation((a, b) => {
+                // Siblings are closer than cousins or unrelated roots
+                return a.parent === b.parent ? 1 : 1.5;
+            });
 
         treeLayout(root);
 
@@ -313,30 +317,54 @@ export class Tree implements AfterViewInit, OnInit {
             }
         });
 
-        // --- Symmetry Adjustment: Center children between parents ---
+        // --- Sibling Alignment & Proximity: Ensure siblings are on same level and adjacent ---
+        data.families.forEach(fam => {
+            if (fam.children && fam.children.length > 1) {
+                const childNodes = fam.children.map(cid => nodes_map.get(cid)).filter(n => !!n) as any[];
 
+                if (childNodes.length > 0) {
+                    // 1. Force same level (y)
+                    const minY = d3.min(childNodes, d => d.y) || 0;
+                    childNodes.forEach(c => c.y = minY);
+
+                    // 2. Ensure adjacency (x)
+                    // This is more complex because shifting one node affects others.
+                    // We'll sort them and ensure a minimum gap.
+                    childNodes.sort((a, b) => a.x - b.x);
+                    const siblingGap = this.nodeWidth + 20; // Tight gap for siblings
+
+                    for (let i = 1; i < childNodes.length; i++) {
+                        const targetX = childNodes[i - 1].x + siblingGap;
+                        if (childNodes[i].x < targetX) {
+                            const shift = targetX - childNodes[i].x;
+                            childNodes[i].each((desc: any) => {
+                                if (desc.x !== undefined) desc.x += shift;
+                            });
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- Symmetry Adjustment: Center children between parents ---
         data.families.forEach(fam => {
             if (fam.husband && fam.wife && fam.children && fam.children.length > 0) {
                 const hNode: any = nodes_map.get(fam.husband);
                 const wNode: any = nodes_map.get(fam.wife);
 
                 if (hNode && wNode && hNode.x !== undefined && hNode.y !== undefined && wNode.x !== undefined && wNode.y !== undefined && Math.abs(hNode.y - wNode.y) < 10) {
-                    // Find the parent node that actually holds the children in the D3 hierarchy
-                    const holderNode: any = hNode.children?.some((c: any) => fam.children.includes(c.data.id)) ? hNode :
-                        (wNode.children?.some((c: any) => fam.children.includes(c.data.id)) ? wNode : null);
+                    const familyChildren = fam.children.map(cid => nodes_map.get(cid)).filter(n => !!n) as any[];
+                    if (familyChildren.length > 0) {
+                        const minX = d3.min(familyChildren, d => d.x) || 0;
+                        const maxX = d3.max(familyChildren, d => d.x) || 0;
+                        const childrenCenter = (minX + maxX) / 2;
+                        const parentsCenter = (hNode.x + wNode.x) / 2;
+                        const offset = parentsCenter - childrenCenter;
 
-                    if (holderNode) {
-                        const spouseNode: any = holderNode === hNode ? wNode : hNode;
-                        // Calculate offset to shift children from under the holder to between the parents
-                        const offset = (spouseNode.x - holderNode.x) / 2;
-
-                        holderNode.children?.forEach((c: any) => {
-                            if (fam.children.includes(c.data.id)) {
-                                // Shift the entire subtree of each child in this family
-                                c.each((child: any) => {
-                                    if (child.x !== undefined) child.x += offset;
-                                });
-                            }
+                        familyChildren.forEach(c => {
+                            c.each((desc: any) => {
+                                if (desc.x !== undefined) desc.x += offset;
+                            });
                         });
                     }
                 }
