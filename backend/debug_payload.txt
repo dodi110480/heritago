@@ -1,0 +1,312 @@
+2026-02-18 20:08:11 - SavePerson: Array
+(
+    [mode] => add
+    [id] => 
+    [firstName] => Phantasia
+    [lastName] => Schmitt
+    [birthName] => 
+    [title] => 
+    [suffix] => 
+    [gender] => F
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [targetId] => I8
+    [relationType] => daughter
+    [fatherId] => I8
+    [motherId] => 
+    [spouseId] => 
+    [events] => Array
+        (
+        )
+
+)
+
+2026-02-18 20:57:33 - SavePerson: Array
+(
+    [mode] => add
+    [id] => 
+    [firstName] => Lenox
+    [lastName] => Schmitt
+    [birthName] => 
+    [title] => 
+    [suffix] => 
+    [gender] => M
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [targetId] => I14
+    [relationType] => son
+    [fatherId] => I14
+    [motherId] => 
+    [spouseId] => 
+    [events] => Array
+        (
+        )
+
+)
+
+2026-02-18 20:57:50 - SavePerson: Array
+(
+    [mode] => add
+    [id] => 
+    [firstName] => Miranda
+    [lastName] => Schmitt
+    [birthName] => 
+    [title] => 
+    [suffix] => 
+    [gender] => F
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [targetId] => I16
+    [relationType] => daughter
+    [fatherId] => I16
+    [motherId] => 
+    [spouseId] => 
+    [events] => Array
+        (
+        )
+
+)
+
+2026-02-18 20:58:22 - SavePerson: Array
+(
+    [mode] => add
+    [id] => 
+    [firstName] => Kasandra
+    [lastName] => 
+    [birthName] => Müller
+    [title] => 
+    [suffix] => 
+    [gender] => F
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [targetId] => I16
+    [relationType] => partner
+    [fatherId] => 
+    [motherId] => 
+    [spouseId] => 
+    [events] => Array
+        (
+        )
+
+)
+
+2026-02-18 20:59:51 - SavePerson: Array
+(
+    [mode] => edit
+    [id] => I15
+    [firstName] => Phantasia
+    [lastName] => Schmitt
+    [birthName] => 
+    [title] => 
+    [suffix] => 
+    [gender] => F
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [fatherId] => I8
+    [motherId] => 
+    [spouseId] => I6
+    [events] => Array
+        (
+        )
+
+)
+
+2026-02-18 21:01:06 - SavePerson: Array
+(
+    [mode] => edit
+    [id] => I15
+    [firstName] => Phantasia
+    [lastName] => Schmitt
+    [birthName] => 
+    [title] => 
+    [suffix] => 
+    [gender] => F
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [fatherId] => I8
+    [motherId] => 
+    [spouseId] => 
+    [events] => Array
+        (
+        )
+
+)
+
+2026-02-18 21:09:45 - SavePerson: Array
+(
+    [mode] => edit
+    [id] => I17
+    [firstName] => Miranda
+    [lastName] => Schmitt
+    [birthName] => 
+    [title] => 
+    [suffix] => 
+    [gender] => F
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [fatherId] => I16
+    [motherId] => I18
+    [spouseId] => 
+    [events] => Array
+        (
+        )
+
+)
+
+2026-02-18 21:10:08 - SavePerson: Array
+(
+    [mode] => edit
+    [id] => I17
+    [firstName] => Miranda
+    [lastName] => Schmitt
+    [birthName] => 
+    [title] => 
+    [suffix] => 
+    [gender] => F
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [fatherId] => I16
+    [motherId] => I18
+    [spouseId] => 
+    [events] => Array
+        (
+        )
+
+)
+
+2026-02-18 21:15:34 - SavePerson: Array
+(
+    [mode] => edit
+    [id] => I17
+    [firstName] => Miranda
+    [lastName] => Schmitt
+    [birthName] => 
+    [title] => 
+    [suffix] => 
+    [gender] => F
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [fatherId] => I16
+    [motherId] => I18
+    [spouseId] => 
+    [events] => Array
+        (
+        )
+
+)
+
+2026-02-18 21:16:10 - SavePerson: Array
+(
+    [mode] => add
+    [id] => 
+    [firstName] => Martin
+    [lastName] => Karl
+    [birthName] => 
+    [title] => 
+    [suffix] => 
+    [gender] => F
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [targetId] => I17
+    [relationType] => partner
+    [fatherId] => 
+    [motherId] => 
+    [spouseId] => 
+    [events] => Array
+        (
+        )
+
+)
+
+2026-02-18 21:16:25 - SavePerson: Array
+(
+    [mode] => edit
+    [id] => I19
+    [firstName] => Martin
+    [lastName] => Karl
+    [birthName] => 
+    [title] => 
+    [suffix] => 
+    [gender] => M
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [fatherId] => 
+    [motherId] => 
+    [spouseId] => I17
+    [events] => Array
+        (
+        )
+
+)
+
+2026-02-18 21:25:44 - SavePerson: Array
+(
+    [mode] => add
+    [id] => 
+    [firstName] => Baby
+    [lastName] => Karl
+    [birthName] => 
+    [title] => 
+    [suffix] => 
+    [gender] => M
+    [birthDate] => 
+    [birthPlace] => 
+    [isAlive] => 1
+    [deathDate] => 
+    [deathPlace] => 
+    [email] => 
+    [targetId] => I17
+    [relationType] => son
+    [fatherId] => 
+    [motherId] => I17
+    [spouseId] => 
+    [events] => Array
+        (
+        )
+
+)
+

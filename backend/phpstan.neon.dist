@@ -1,0 +1,19 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    fileExtensions:
+        - php
+        - phtml
+
+    level: 2
+
+    paths:
+        - index.php
+        - public/index.php
+        - app
+        - resources/views
+        - tests
+
+    dynamicConstantNames:
+        - Fisharebest\Webtrees\Webtrees::STABILITY
