@@ -1,0 +1,79 @@
+<div class="settings-container">
+    <div class="glass-card">
+        <div class="header">
+            <div class="title-row">
+                <a routerLink="/settings" class="back-link-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </a>
+                <h1>GEDCOM Daten</h1>
+            </div>
+            <p>Importiere oder exportiere deine Familiendaten im GEDCOM 7.0 Format</p>
+        </div>
+
+        <div class="content">
+            <div class="io-section">
+                <div class="section-card">
+                    <div class="icon-header">
+                        <div class="io-icon download">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                        <h3>Exportieren</h3>
+                    </div>
+                    <p>Sichere deinen aktuellen Stammbaum als standardisierte GEDCOM-Datei.</p>
+                    <button class="btn btn-primary" (click)="exportGedcom()" [disabled]="isExporting">
+                        {{ isExporting ? 'Exportiere...' : 'GEDCOM Exportieren' }}
+                    </button>
+                </div>
+
+                <div class="section-card">
+                    <div class="icon-header">
+                        <div class="io-icon upload">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h3>Importieren</h3>
+                    </div>
+                    <p>Wähle eine GEDCOM-Datei aus, um sie in diesen Stammbaum zu importieren.</p>
+                    <div class="file-input-wrapper">
+                        <input type="file" (change)="onFileSelected($event)" accept=".ged" id="gedcomFile">
+                        <label for="gedcomFile" class="file-label">
+                            {{ selectedFile ? selectedFile.name : 'Datei wählen...' }}
+                        </label>
+                    </div>
+                    <button class="btn btn-secondary" (click)="importGedcom()"
+                        [disabled]="isImporting || !selectedFile">
+                        {{ isImporting ? 'Importiere...' : 'GEDCOM Importieren' }}
+                    </button>
+                    <div class="warning-box">
+                        <strong>Hinweis:</strong> Ein Import überschreibt alle aktuellen Daten in diesem Stammbaum!
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="message()" [class.msg-box]="true" [class.error]="isError()">
+                {{ message() }}
+            </div>
+        </div>
+
+        <div class="back-link">
+            <a routerLink="/settings" class="back-btn">
+                <span>Zurück zu Einstellungen</span>
+            </a>
+        </div>
+    </div>
+</div>

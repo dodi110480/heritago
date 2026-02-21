@@ -26,7 +26,7 @@ export class CreateTree {
     loading = signal(false);
 
     onSubmit() {
-        if (!this.name || !this.title || !this.firstName || !this.lastName) {
+        if (!this.title || !this.firstName || !this.lastName) {
             this.error.set('Bitte fülle alle Pflichtfelder aus.');
             return;
         }
@@ -34,8 +34,13 @@ export class CreateTree {
         this.loading.set(true);
         this.error.set(null);
 
-        // Ensure name follows common ID rules (lowercase, no spaces)
-        const normalizedName = this.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        // Auto-generate technical name from title (e.g. "Familie Sperlich" -> "familie-sperlich")
+        const normalizedName = this.title
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, '-')           // Replace spaces with -
+            .replace(/[^-a-z0-9]/g, '')     // Remove non-alphanumeric except -
+            .replace(/-+/g, '-');           // Remove duplicate -
 
         this.authService.createTree(normalizedName, this.title, this.firstName, this.lastName, this.gender, this.birthDate).subscribe(result => {
             this.loading.set(false);

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="180" height="180"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="180" height="180"><svg viewBox="0 0 180 180" version="1.1" id="svg31" sodipodi:docname="test2.svg" inkscape:version="1.2.2 (b0a8486541, 2022-12-01)" width="180" height="180" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview id="namedview33" pagecolor="#ffffff" bordercolor="#000000" borderopacity="0.25" inkscape:showpageshadow="2" inkscape:pageopacity="0.0" inkscape:pagecheckerboard="0" inkscape:deskcolor="#d1d1d1" showgrid="false" inkscape:zoom="2.5675" inkscape:cx="15.579357" inkscape:cy="-6.037001" inkscape:window-width="2560" inkscape:window-height="1352" inkscape:window-x="0" inkscape:window-y="0" inkscape:window-maximized="1" inkscape:current-layer="g5706"></sodipodi:namedview>
+  <!-- Glassmorphism-Kachel -->
+  <!-- Leichter innerer Glanz -->
+  <defs id="defs13">
+    <rect x="24.537489" y="45.180138" width="160.66212" height="127.75073" id="rect909"></rect>
+    <linearGradient id="shine" x1="10" y1="10" x2="10" y2="190" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="white" stop-opacity="0.8" id="stop6"></stop>
+      <stop offset="40%" stop-color="white" stop-opacity="0.2" id="stop8"></stop>
+      <stop offset="100%" stop-color="white" stop-opacity="0" id="stop10"></stop>
+    </linearGradient>
+  </defs>
+  <!-- Ahnengraph -->
+  <g id="g5706" transform="translate(-10,-10)">
+    <path id="rect2" style="stroke-width:2" d="m 50,10 h 100 c 22.16,0 40,17.84 40,40 v 100 c 0,22.16 -17.84,40 -40,40 H 50 C 27.84,190 10,172.16 10,150 V 50 C 10,27.84 27.84,10 50,10 Z"></path>
+    <path id="rect4" style="opacity:0.25;fill:url(#shine)" d="m 50,10 h 100 c 22.16,0 40,17.84 40,40 v 100 c 0,22.16 -17.84,40 -40,40 H 50 C 27.84,190 10,172.16 10,150 V 50 C 10,27.84 27.84,10 50,10 Z"></path>
+    <path id="circle15-1" d="m 67.929828,141.17712 a 10,10 0 0 1 -10,10 10,10 0 0 1 -10,-10 10,10 0 0 1 10,-10 10,10 0 0 1 10,10 z" style="fill:none;stroke:#60a5fa;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"></path>
+    <path id="circle23" d="m 108.33229,99.756573 a 7.7967463,7.8655977 0 0 1 -7.63643,7.863927 7.7967463,7.8655977 0 0 1 -7.950473,-7.54053 7.7967463,7.8655977 0 0 1 7.309473,-8.174032 7.7967463,7.8655977 0 0 1 8.25107,7.204387 l -7.77039,0.646248 z" style="fill:none;stroke:#60a5fa;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"></path>
+    <path id="circle15" d="m 67.764669,60.137703 a 10,10 0 0 1 -10,10 10,10 0 0 1 -10,-10 10,10 0 0 1 10,-10 10,10 0 0 1 10,10 z" inkscape:transform-center-x="-7.2054528" inkscape:transform-center-y="-1.1684518" style="fill:none;stroke:#60a5fa;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"></path>
+    <path id="line25" d="M 66.699124,67.351509 136.41675,133.70497" sodipodi:nodetypes="cc" style="fill:none;stroke:#60a5fa;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"></path>
+    <path id="circle27" d="m 153.76825,141.31937 a 10,10 0 0 1 -10,10 10,10 0 0 1 -10,-10 10,10 0 0 1 10,-10 10,10 0 0 1 10,10 z" style="fill:none;stroke:#60a5fa;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"></path>
+    <path id="circle15-6" d="m 133.78149,60.22775 a 10,10 0 0 0 10,10 10,10 0 0 0 10,-10 10,10 0 0 0 -10,-10 10,10 0 0 0 -10,10 z" style="fill:none;stroke:#60a5fa;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"></path>
+    <path id="line19-7" d="M 135.38396,66.779434 66.45919,134.58098" sodipodi:nodetypes="cc" style="fill:none;stroke:#60a5fa;stroke-width:8;stroke-linecap:round;stroke-linejoin:round"></path>
+    <path d="M 139.46213,176.65189 H 113.2058 V 123.09592 H 63.996908 v 53.55597 H 37.740576 V 52.499427 H 63.996908 V 101.18667 H 113.2058 V 52.499427 h 26.25633 z" style="font-weight:bold;font-size:173.883px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';fill:#60a5fa;fill-opacity:0.541735;stroke-width:3.55686" id="path7180" transform="scale(1.1376945,0.87897059)"></path>
+  </g>
+</svg></svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
+@media (prefers-color-scheme: dark) { :root { filter: none; } }
+</style></svg>

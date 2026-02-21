@@ -6,13 +6,23 @@ html {
     width: 100%;
     min-height: 100vh;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background: linear-gradient(135deg, #1a1c20 0%, #0f1012 100%);
+    background: radial-gradient(circle at top left, #1e293b, #0f172a);
     background-attachment: fixed;
-    color: #e2e8f0;
+    color: #f1f5f9;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
 }
 
 * {
     box-sizing: border-box;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.glass-card {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 32px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
 }

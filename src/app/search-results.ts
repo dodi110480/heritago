@@ -20,40 +20,52 @@ export class SearchResults {
     results = signal<any[]>([]);
     loading = signal(false);
 
+    treeName = signal<string | null>(null);
+
     constructor() {
         effect(() => {
-            // Re-run search when query changes
             const q = this.query();
+            const t = this.treeName();
             if (q) {
-                this.performSearch(q);
+                this.performSearch(q, t);
             }
         });
 
         this.route.queryParams.subscribe(params => {
             this.query.set(params['q'] || '');
+            this.treeName.set(params['tree'] || null);
         });
     }
 
-    performSearch(query: string) {
+    performSearch(query: string, tree?: string | null) {
         this.loading.set(true);
-        // We need a tree name. For now, use the first available tree or 'sperlich' via getTreeData logic
-        // Ideally, we should store the current tree in a service.
-        // Quick fix: fetch tree data first to interpret the 'best' tree
-        this.gedcomService.getTreeData().subscribe(treeData => {
-            if (treeData && treeData.meta && treeData.meta.tree) {
-                this.gedcomService.searchIndividuals(treeData.meta.tree, query).subscribe({
-                    next: (res: any) => {
-                        this.results.set(res.results || []);
-                        this.loading.set(false);
-                    },
-                    error: () => {
-                        this.loading.set(false);
-                        this.results.set([]);
-                    }
-                });
-            } else {
-                this.loading.set(false);
-            }
-        });
+
+        let t = tree;
+        if (!t) {
+            const active = this.authService.currentTree();
+            if (active) t = active.name;
+        }
+
+        if (t) {
+            this.gedcomService.searchIndividuals(t, query).subscribe({
+                next: (res: any) => {
+                    this.results.set(res.results || []);
+                    this.loading.set(false);
+                },
+                error: () => {
+                    this.loading.set(false);
+                    this.results.set([]);
+                }
+            });
+        } else {
+            // Fallback: get data to find the tree name
+            this.gedcomService.getTreeData().subscribe(treeData => {
+                if (treeData && treeData.meta && treeData.meta.tree) {
+                    this.performSearch(query, treeData.meta.tree);
+                } else {
+                    this.loading.set(false);
+                }
+            });
+        }
     }
 }

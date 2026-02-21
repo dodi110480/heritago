@@ -1,0 +1,390 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["relationJoins"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+enum Gender {
+  M
+  F
+  X
+  U
+  O
+}
+
+enum NameType {
+  BIRTH
+  MARRIED
+  AKA
+  NICK
+  ROMANIZED
+  OTHER
+}
+
+enum EventType {
+  BIRT
+  CHR
+  DEAT
+  BURI
+  CREM
+  ADOP
+  BAPM
+  BAR
+  BAS
+  BLES
+  CHRA
+  CONF
+  FCOM
+  NATU
+  EMIG
+  IMMI
+  CENS
+  PROB
+  WILL
+  GRAD
+  RETI
+  OCCU
+  EDUC
+  TITL
+  RESI
+  MARR
+  DIV
+  ANUL
+  MARB
+  MARC
+  MARL
+  MARS
+  EVEN
+}
+
+enum RoleType {
+  HUSB
+  WIFE
+  PART
+  CHIL
+  ADOP
+  FOST
+  STEP
+  OTHER
+}
+
+model Tree {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  title       String?
+  description String?
+  ownerId     String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  individuals Individual[]
+  families    Family[]
+  sources     Source[]
+  repositories Repository[]
+  notes       Note[]
+  places      Place[]
+  media       MediaObject[]
+  extensions  Extension[]
+}
+
+model Individual {
+  id          String      @id @default(uuid())
+  treeId      String
+  gedcomId    String
+  sex         Gender      @default(U)
+  private     Boolean     @default(false)
+
+  names       Name[]
+  events      Event[]     @relation("IndiEvents")
+  facts       Fact[]      @relation("IndiFacts")
+  families    FamilyMember[]
+  citations   Citation[]  @relation("IndiCitations")
+  notes       NoteLink[]  @relation("IndiNoteLinks")
+  media       MediaLink[] @relation("IndiMediaLinks")
+  extensions  Extension[] @relation("IndiExtensions")
+
+  tree        Tree        @relation(fields: [treeId], references: [id], onDelete: Cascade)
+
+  @@unique([treeId, gedcomId])
+  @@index([treeId, sex])
+}
+
+model Name {
+  id           String    @id @default(uuid())
+  individualId String
+  type         NameType  @default(BIRTH)
+  isPrimary    Boolean   @default(false)
+  full         String
+  given        String?
+  surname      String?
+  prefix       String?
+  suffix       String?
+  sortOrder    Int       @default(0)
+
+  individual   Individual @relation(fields: [individualId], references: [id], onDelete: Cascade)
+
+  @@index([individualId, isPrimary])
+  @@index([surname, given])
+  @@index([surname])
+}
+
+model Family {
+  id          String      @id @default(uuid())
+  treeId      String
+  gedcomId    String?
+  type        String?
+  sortDate    DateTime?
+
+  members     FamilyMember[]
+  events      Event[]     @relation("FamEvents")
+  facts       Fact[]      @relation("FamFacts")
+  citations   Citation[]  @relation("FamCitations")
+  notes       NoteLink[]  @relation("FamNoteLinks")
+  media       MediaLink[] @relation("FamMediaLinks")
+  extensions  Extension[] @relation("FamExtensions")
+
+  tree        Tree        @relation(fields: [treeId], references: [id], onDelete: Cascade)
+
+  @@unique([treeId, gedcomId])
+  @@index([treeId])
+}
+
+model FamilyMember {
+  id        String     @id @default(uuid())
+  familyId  String
+  individualId String
+  role      RoleType
+
+  family    Family     @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  person    Individual @relation(fields: [individualId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, individualId, role])
+  @@index([individualId])
+  @@index([familyId])
+}
+
+model Event {
+  id           String     @id @default(uuid())
+  type         EventType
+  typeCustom   String?
+  dateText     String?
+  dateSortLow  DateTime?
+  dateSortHigh DateTime?
+  ageAtEvent   String?
+  description  String?
+
+  indiOwnerId  String?
+  famOwnerId   String?
+
+  placeId      String?
+  place        Place?     @relation(fields: [placeId], references: [id])
+
+  indiOwner    Individual? @relation("IndiEvents", fields: [indiOwnerId], references: [id], onDelete: Cascade)
+  famOwner     Family?     @relation("FamEvents", fields: [famOwnerId], references: [id], onDelete: Cascade)
+
+  citations    Citation[]  @relation("EventCitations")
+  notes        NoteLink[]  @relation("EventNoteLinks")
+  media        MediaLink[] @relation("EventMediaLinks")
+
+  @@index([type])
+  @@index([dateSortLow])
+  @@index([indiOwnerId])
+  @@index([famOwnerId])
+}
+
+model Fact {
+  id           String     @id @default(uuid())
+  type         String
+  value        String
+  dateText     String?
+  dateSortLow  DateTime?
+
+  indiOwnerId  String?
+  famOwnerId   String?
+
+  indiOwner    Individual? @relation("IndiFacts", fields: [indiOwnerId], references: [id], onDelete: Cascade)
+  famOwner     Family?     @relation("FamFacts", fields: [famOwnerId], references: [id], onDelete: Cascade)
+
+  @@index([type])
+}
+
+model Place {
+  id             String   @id @default(uuid())
+  treeId         String
+  gedcomName     String
+  normalized     String?
+  hierarchy      String?
+  latitude       Float?
+  longitude      Float?
+
+  events         Event[]
+  tree           Tree     @relation(fields: [treeId], references: [id], onDelete: Cascade)
+
+  @@unique([treeId, gedcomName])
+  @@index([normalized])
+}
+
+model Source {
+  id          String      @id @default(uuid())
+  treeId      String
+  gedcomId    String?
+  title       String
+  author      String?
+  publication String?
+  repositoryId String?
+
+  citations   Citation[]
+  notes       NoteLink[]  @relation("SourceNoteLinks")
+  media       MediaLink[] @relation("SourceMediaLinks")
+  repository  Repository? @relation(fields: [repositoryId], references: [id])
+
+  tree        Tree        @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  
+  @@unique([treeId, gedcomId])
+}
+
+model Citation {
+  id          String     @id @default(uuid())
+  sourceId    String
+  page        String?
+  dateText    String?
+  quotation   String?
+
+  indiId      String?
+  famId       String?
+  eventId     String?
+
+  source      Source     @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  individual  Individual? @relation("IndiCitations", fields: [indiId], references: [id])
+  family      Family?     @relation("FamCitations", fields: [famId], references: [id])
+  event       Event?      @relation("EventCitations", fields: [eventId], references: [id])
+
+  @@index([sourceId])
+}
+
+model Note {
+  id        String     @id @default(uuid())
+  treeId    String
+  gedcomId  String?
+  text      String
+  private   Boolean    @default(false)
+
+  links     NoteLink[]
+  tree      Tree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
+
+  @@unique([treeId, gedcomId])
+}
+
+model NoteLink {
+  id            String    @id @default(uuid())
+  noteId        String
+  note          Note      @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  individualId  String?
+  familyId      String?
+  eventId       String?
+  sourceId      String?
+  repositoryId  String?
+
+  individual    Individual? @relation("IndiNoteLinks", fields: [individualId], references: [id], onDelete: Cascade)
+  family        Family?     @relation("FamNoteLinks", fields: [familyId], references: [id], onDelete: Cascade)
+  event         Event?      @relation("EventNoteLinks", fields: [eventId], references: [id], onDelete: Cascade)
+  source        Source?     @relation("SourceNoteLinks", fields: [sourceId], references: [id], onDelete: Cascade)
+  repository    Repository? @relation("RepoNoteLinks", fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+}
+
+model MediaObject {
+  id               String      @id @default(uuid())
+  treeId           String
+  gedcomId         String?
+  sha256           String?
+  title            String?
+  description      String?
+  originalFileName String?
+  filePath         String?
+  url              String?
+  mimeType         String?
+  fileSize         Int?
+  width            Int?
+  height           Int?
+  primaryFor       String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  links            MediaLink[]
+  tree             Tree        @relation(fields: [treeId], references: [id], onDelete: Cascade)
+
+  @@unique([treeId, gedcomId])
+  @@index([treeId, sha256])
+}
+
+model MediaLink {
+  id            String      @id @default(uuid())
+  mediaId       String
+  media         MediaObject @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  individualId  String?
+  familyId      String?
+  eventId       String?
+  sourceId      String?
+
+  individual    Individual? @relation("IndiMediaLinks", fields: [individualId], references: [id], onDelete: Cascade)
+  family        Family?     @relation("FamMediaLinks", fields: [familyId], references: [id], onDelete: Cascade)
+  event         Event?      @relation("EventMediaLinks", fields: [eventId], references: [id], onDelete: Cascade)
+  source        Source?     @relation("SourceMediaLinks", fields: [sourceId], references: [id], onDelete: Cascade)
+
+  isPrimary     Boolean     @default(false)
+
+  @@index([mediaId])
+}
+
+model Repository {
+  id          String     @id @default(uuid())
+  treeId      String
+  gedcomId    String?
+  name        String
+  address     Json?
+  phone       String?
+  email       String?
+  www         String?
+
+  sources     Source[]
+  notes       NoteLink[] @relation("RepoNoteLinks")
+
+  tree        Tree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
+
+  @@unique([treeId, gedcomId])
+}
+
+model Extension {
+  id          String     @id @default(uuid())
+  treeId      String
+  ownerType   String?
+  ownerId     String?
+  tag         String
+  value       Json?
+
+  individualId String?
+  individual   Individual? @relation("IndiExtensions", fields: [individualId], references: [id], onDelete: Cascade)
+
+  familyId     String?
+  family       Family?     @relation("FamExtensions", fields: [familyId], references: [id], onDelete: Cascade)
+
+  tree        Tree        @relation(fields: [treeId], references: [id], onDelete: Cascade)
+
+  @@index([ownerType, ownerId, tag])
+  @@index([individualId])
+  @@index([familyId])
+}

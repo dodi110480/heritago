@@ -1,0 +1,37 @@
+0 HEAD
+1 GEDC
+2 VERS 7.0
+1 SOUR Heritago
+1 SUBM @U1@
+0 @I1@ INDI
+1 NAME John /Doe/
+2 GIVN John
+2 SURN Doe
+1 SEX M
+1 BIRT
+2 DATE 1 JAN 1900
+2 PLAC Berlin, Germany
+0 @I2@ INDI
+1 NAME Jane /Smith/
+2 GIVN Jane
+2 SURN Smith
+1 SEX F
+1 BIRT
+2 DATE 10 MAY 1905
+2 PLAC Hamburg, Germany
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 DATE 20 JUN 1930
+2 PLAC Munich, Germany
+1 CHIL @I3@
+0 @I3@ INDI
+1 NAME Baby /Doe/
+1 SEX M
+1 BIRT
+2 DATE 5 MAR 1935
+1 FAMC @F1@
+0 @U1@ SUBM
+1 NAME Submitter
+0 TRLR

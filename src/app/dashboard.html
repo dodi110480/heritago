@@ -1,205 +1,147 @@
 <div class="dashboard-container">
-    <div class="glass-card wide-card">
-        <div class="header">
-            <h1>Willkommen zurück, {{ authService.currentUser()?.username }}</h1>
-            <p>Deine Familiengeschichte auf einen Blick</p>
-        </div>
-
-        <!-- KPI Overview Section -->
-        <div class="kpi-section" *ngIf="!loading()">
-            <div class="kpi-card clickable" (click)="toggleSwitcher()" (dragover)="onDragOver($event)"
-                (drop)="onDrop($event)" [class.drag-over]="isDragging()">
-                <div class="kpi-icon tree-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22v-5M9 7l3 3 3-3M8 10V7a4 4 0 0 1 8 0v3M12 22a9 9 0 1 1 0-18 9 9 0 0 1 0 18z" />
-                    </svg>
-                </div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Aktiver Stammbaum</span>
-                    <span class="kpi-value">{{ treeName() || 'Lädt...' }}</span>
-                </div>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-bg-accent"></div>
+        <div class="hero-content">
+            <div class="welcome-text">
+                <h1>Willkommen zurück, {{ authService.currentUser()?.username }}</h1>
+                <p>{{ funStat() || 'Deine Familiengeschichte auf einen Blick' }}</p>
             </div>
 
-            <!-- More Trees Switching Modal/Overlay -->
-            <div class="tree-switcher-overlay" *ngIf="showTreeSwitcher()" (click)="toggleSwitcher()">
-                <div class="switcher-card glass-card" (click)="$event.stopPropagation()">
-                    <h2>Stammbaum wählen</h2>
-                    <p class="subtitle">Klicke zum Auswählen oder ziehe einen Baum auf das Dashboard</p>
-                    <div class="tree-list">
-                        <div *ngFor="let tree of availableTrees()" class="tree-item"
-                            [class.active]="tree.name === treeName()" draggable="true"
-                            (dragstart)="onDragStart($event, tree)" (dragend)="onDragEnd()"
-                            (click)="selectTree(tree.name)">
-                            <div class="tree-item-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2">
-                                    <path
-                                        d="M12 22v-5M9 7l3 3 3-3M8 10V7a4 4 0 0 1 8 0v3M12 22a9 9 0 1 1 0-18 9 9 0 0 1 0 18z" />
-                                </svg>
-                            </div>
-                            <div class="tree-item-info">
-                                <span class="tree-name">{{ tree.title }}</span>
-                                <span class="tree-meta">{{ tree.name }}</span>
-                            </div>
-                            <div class="drag-handle">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2">
-                                    <circle cx="9" cy="5" r="1" />
-                                    <circle cx="9" cy="12" r="1" />
-                                    <circle cx="9" cy="19" r="1" />
-                                    <circle cx="15" cy="5" r="1" />
-                                    <circle cx="15" cy="12" r="1" />
-                                    <circle cx="15" cy="19" r="1" />
-                                </svg>
-                            </div>
+            <div class="hero-preview" *ngIf="treeName()">
+                <div class="mini-tree-container">
+                    <svg #miniTree class="mini-tree-svg"></svg>
+                    <div class="hero-info-overlay">
+                        <div class="pulsing-photos">
+                            <div class="photo-circle p1"></div>
+                            <div class="photo-circle p2"></div>
+                            <div class="photo-circle p3"></div>
+                        </div>
+                        <div class="active-tree-info">
+                            <span class="label">Aktiver Stammbaum</span>
+                            <span class="name text-glow">{{ treeName() }}</span>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <a routerLink="/persons" class="kpi-card clickable-link">
-                <div class="kpi-icon person-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
+    <div class="dashboard-content">
+        <!-- KPI Row -->
+        <div class="kpi-row" *ngIf="!loading()">
+            <div class="kpi-mini-card">
+                <span class="val">{{ stats()?.counts?.individuals || 0 }}</span>
+                <span class="lbl">Personen</span>
+            </div>
+            <div class="kpi-mini-card">
+                <span class="val">{{ stats()?.counts?.families || 0 }}</span>
+                <span class="lbl">Familien</span>
+            </div>
+            <div class="kpi-mini-card">
+                <span class="val">{{ stats()?.counts?.media || 0 }}</span>
+                <span class="lbl">Medien</span>
+            </div>
+            <div class="kpi-mini-card completeness">
+                <span class="val">{{ completeness() }}%</span>
+                <span class="lbl">Vollständigkeit</span>
+                <div class="progress-bar-mini">
+                    <div class="fill" [style.width.%]="completeness()"></div>
                 </div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Personen gesamt</span>
-                    <span class="kpi-value">{{ stats()?.counts?.individuals || 0 }}</span>
+            </div>
+        </div>
+
+        <!-- Main CTAs -->
+        <div class="cta-grid">
+            <a routerLink="/tree" class="cta-large primary">
+                <div class="cta-icon">
+                    <img src="/favicon.svg" alt="Tree" />
                 </div>
+                <div class="cta-text">
+                    <h3>Stammbaum ansehen</h3>
+                    <p>Erforsche deine Ahnen in der interaktiven Ansicht</p>
+                </div>
+                <div class="cta-arrow">→</div>
             </a>
 
-            <a routerLink="/tree" class="kpi-card clickable-link">
-                <div class="kpi-icon family-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M7 21v-2a4 4 0 0 1 3-3.87"></path>
-                        <path d="M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path>
-                        <path d="M15 3a4 4 0 1 1 0 8 4 4 0 0 1 0-8z"></path>
-                    </svg>
-                </div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Familien</span>
-                    <span class="kpi-value">{{ stats()?.counts?.families || 0 }}</span>
-                </div>
-            </a>
+            <div class="cta-group">
+                <a routerLink="/tree" class="cta-medium" (click)="$event.preventDefault(); toggleSwitcher()">
+                    <div class="cta-icon add-icon">＋</div>
+                    <div class="cta-text">
+                        <h3>Person hinzufügen</h3>
+                        <p>Erweitere deine Geschichte</p>
+                    </div>
+                </a>
+                <a class="cta-medium discover" (click)="discoverAncestor()">
+                    <div class="cta-icon discover-icon">✨</div>
+                    <div class="cta-text">
+                        <h3>Entdecken</h3>
+                        <p>Zufälligen Vorfahren finden</p>
+                    </div>
+                </a>
+            </div>
+        </div>
 
-            <a routerLink="/media" class="kpi-card clickable-link">
-                <div class="kpi-icon media-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <polyline points="21 15 16 10 5 21"></polyline>
-                    </svg>
-                </div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Medien</span>
-                    <span class="kpi-value">{{ stats()?.counts?.media || 0 }}</span>
-                </div>
+        <!-- Secondary Navigation -->
+        <div class="secondary-nav">
+            <a routerLink="/map" title="Karte">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                </svg>
+                <span>Karte</span>
             </a>
-
-            <a routerLink="/statistics" class="kpi-card clickable-link" *ngIf="stats()?.extremes?.oldest?.name">
-                <div class="kpi-icon age-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path>
-                        <path d="M12 6v6l4 2"></path>
-                    </svg>
-                </div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Älteste Person</span>
-                    <span class="kpi-value">{{ stats()?.extremes?.oldest?.name }} ({{ stats()?.extremes?.oldest?.year
-                        }})</span>
-                </div>
+            <a routerLink="/media" title="Galerie">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span>Galerie</span>
             </a>
-
-            <a routerLink="/statistics" class="kpi-card clickable-link" *ngIf="stats()?.extremes?.youngest?.name">
-                <div class="kpi-icon youth-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="m11.5 15-.5 5-4-5-4 5 .5-5-3.5-5 5-.5 2-4.5 2 4.5 5 .5Z" />
-                    </svg>
-                </div>
-                <div class="kpi-content">
-                    <span class="kpi-label">Jüngste Person</span>
-                    <span class="kpi-value">{{ stats()?.extremes?.youngest?.name }} ({{
-                        stats()?.extremes?.youngest?.year }})</span>
-                </div>
+            <a routerLink="/statistics" title="Statistik">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                <span>Statistik</span>
+            </a>
+            <a routerLink="/diagnostics" title="Fehlersuche">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span>Prüfung</span>
             </a>
         </div>
 
-        <div class="section-divider"></div>
-
-        <!-- Actions Section -->
-        <div class="actions-grid smaller-grid">
-            <a routerLink="/tree" class="action-card small-card">
-                <div class="icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22v-5M9 7l3 3 3-3M8 10V7a4 4 0 0 1 8 0v3M12 22a9 9 0 1 1 0-18 9 9 0 0 1 0 18z" />
-                    </svg>
+        <!-- Tree Switcher Overlay (Kept from original) -->
+        <div class="tree-switcher-overlay" *ngIf="showTreeSwitcher()"
+            (click)="$event.stopPropagation(); toggleSwitcher()">
+            <div class="switcher-card glass-card" (click)="$event.stopPropagation()">
+                <h2>Stammbaum wählen</h2>
+                <div class="tree-list">
+                    <div *ngFor="let tree of availableTrees()" class="tree-item"
+                        [class.active]="tree.name === treeName()" draggable="true"
+                        (dragstart)="onDragStart($event, tree)" (dragend)="onDragEnd()" (click)="selectTree(tree)">
+                        <div class="tree-item-icon">
+                            <img src="/favicon.svg" alt="Tree" class="item-logo" />
+                        </div>
+                        <div class="tree-item-info">
+                            <span class="tree-name">{{ tree.title }}</span>
+                            <span class="tree-meta">{{ tree.name }}</span>
+                        </div>
+                    </div>
                 </div>
-                <h3>Stammbaum</h3>
-                <p>Erkunde deine Vorfahren</p>
-            </a>
-
-            <a routerLink="/map" class="action-card small-card">
-                <div class="icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-                        <line x1="8" y1="2" x2="8" y2="18"></line>
-                        <line x1="16" y1="6" x2="16" y2="22"></line>
-                    </svg>
-                </div>
-                <h3>Karte</h3>
-                <p>Orte deiner Ahnen</p>
-            </a>
-
-            <a routerLink="/media" class="action-card small-card">
-                <div class="icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                        <polyline points="21 15 16 10 5 21"></polyline>
-                    </svg>
-                </div>
-                <h3>Galerie</h3>
-                <p>Fotos & Dokumente</p>
-            </a>
-
-            <a routerLink="/statistics" class="action-card small-card">
-                <div class="icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="20" x2="18" y2="10"></line>
-                        <line x1="12" y1="20" x2="12" y2="4"></line>
-                        <line x1="6" y1="20" x2="6" y2="14"></line>
-                    </svg>
-                </div>
-                <h3>Statistik</h3>
-                <p>Daten & Fakten</p>
-            </a>
-
-            <a routerLink="/places" class="action-card small-card">
-                <div class="icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                </div>
-                <h3>Orte</h3>
-                <p>Datenbank pflegen</p>
-            </a>
+            </div>
         </div>
 
+        <!-- Calendar Widget -->
         <div class="calendar-section">
             <app-calendar-widget></app-calendar-widget>
         </div>

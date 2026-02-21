@@ -1,0 +1,72 @@
+<div class="diagnostics-container">
+    <header class="diagnostics-header">
+        <div class="header-content">
+            <h1>Fehlerdiagnose — Stammbaum {{ treeName() }}</h1>
+            <p>Übersicht über GEDCOM-Compliance-Fehler und Datenprobleme</p>
+        </div>
+        <button class="refresh-btn" (click)="loadDiagnostics()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+            Aktualisieren
+        </button>
+    </header>
+
+    <div class="loading-state" *ngIf="isLoading()">
+        <div class="spinner"></div>
+        <p>Datenbank wird analysiert...</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading() && errors().length === 0">
+        <div class="success-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+        </div>
+        <h2>Keine Fehler gefunden</h2>
+        <p>Dein Stammbaum entspricht den GEDCOM 7.0 Standards.</p>
+    </div>
+
+    <div class="error-list" *ngIf="!isLoading() && errors().length > 0">
+        <div class="error-card" *ngFor="let error of errors()" [class.expanded]="error.expanded"
+            (click)="toggleExpand(error)">
+            <div class="error-summary">
+                <div class="error-icon" [ngClass]="error.code">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <div class="error-info">
+                    <span class="error-target">{{ error.type }}: {{ error.id }}</span>
+                    <span class="error-msg">{{ error.message }}</span>
+                </div>
+                <div class="error-meta">
+                    <span class="line-num">Zeile {{ error.line }}</span>
+                    <div class="chevron">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="error-details" *ngIf="error.expanded">
+                <div class="explanation">
+                    <h4>Erklärung</h4>
+                    <p>{{ error.explanation }}</p>
+                </div>
+                <div class="code-box">
+                    <h4>Datenfragment</h4>
+                    <pre><code>{{ error.content }}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

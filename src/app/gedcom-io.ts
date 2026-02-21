@@ -1,0 +1,100 @@
+import { Component, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { GedcomService } from './gedcom.service';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+
+@Component({
+    selector: 'app-gedcom-io',
+    standalone: true,
+    imports: [CommonModule, FormsModule],
+    templateUrl: './gedcom-io.html',
+    styleUrl: './gedcom-io.css'
+})
+export class GedcomIo {
+    private gedcomService = inject(GedcomService);
+    private http = inject(HttpClient);
+
+    isImporting = false;
+    isExporting = false;
+    message = signal<string | null>(null);
+    isError = signal(false);
+
+    selectedFile: File | null = null;
+
+    onFileSelected(event: any) {
+        this.selectedFile = event.target.files[0];
+    }
+
+    async importGedcom() {
+        if (!this.selectedFile) return;
+
+        const treeData = await firstValueFrom(this.gedcomService.getTreeData());
+        const treeName = treeData?.meta?.tree;
+        if (!treeName) {
+            this.showMsg('Fehler: Kein aktiver Stammbaum gefunden.', true);
+            return;
+        }
+
+        this.isImporting = true;
+        this.showMsg('Import läuft...', false);
+
+        const formData = new FormData();
+        formData.append('file', this.selectedFile);
+
+        try {
+            const res: any = await firstValueFrom(this.http.post(`http://${window.location.hostname}:3000/api/tree/${treeName}/import`, formData));
+            if (res.success) {
+                this.showMsg('Import erfolgreich!', false);
+            } else {
+                this.showMsg('Import fehlgeschlagen: ' + res.message, true);
+            }
+        } catch (err: any) {
+            this.showMsg('Fehler beim Import: ' + (err.error?.message || err.message), true);
+        } finally {
+            this.isImporting = false;
+        }
+    }
+
+    async exportGedcom() {
+        const treeData = await firstValueFrom(this.gedcomService.getTreeData());
+        const treeName = treeData?.meta?.tree;
+        if (!treeName) {
+            this.showMsg('Fehler: Kein aktiver Stammbaum gefunden.', true);
+            return;
+        }
+
+        this.isExporting = true;
+        this.showMsg('Export läuft...', false);
+
+        try {
+            const res: any = await firstValueFrom(this.http.get(`http://${window.location.hostname}:3000/api/tree/${treeName}/export`));
+
+            if (res.success && res.gedcom) {
+                const blob = new Blob([res.gedcom], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${treeName}.ged`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                this.showMsg('Export erfolgreich!', false);
+            } else {
+                this.showMsg('Export fehlgeschlagen.', true);
+            }
+        } catch (err: any) {
+            this.showMsg('Fehler beim Export: ' + (err.error?.message || err.message), true);
+        } finally {
+            this.isExporting = false;
+        }
+    }
+
+    private showMsg(msg: string, error: boolean) {
+        this.message.set(msg);
+        this.isError.set(error);
+        if (!error) {
+            setTimeout(() => this.message.set(null), 5000);
+        }
+    }
+}

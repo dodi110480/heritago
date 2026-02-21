@@ -33,6 +33,11 @@ export const routes: Routes = [
         canActivate: [authGuard]
     },
     {
+        path: 'diagnostics',
+        loadComponent: () => import('./diagnostics').then(m => m.Diagnostics),
+        canActivate: [authGuard]
+    },
+    {
         path: 'timeline/:xref',
         loadComponent: () => import('./timeline').then(m => m.TimelineView),
         canActivate: [authGuard]
@@ -46,6 +51,16 @@ export const routes: Routes = [
         path: 'settings',
         loadComponent: () => import('./settings').then(m => m.Settings),
         canActivate: [authGuard]
+    },
+    {
+        path: 'gedcom-io',
+        loadComponent: () => import('./gedcom-io').then(m => m.GedcomIo),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'settings/update',
+        loadComponent: () => import('./update-settings').then(m => m.UpdateSettings),
+        canActivate: [adminGuard]
     },
     {
         path: 'tree-selector',
