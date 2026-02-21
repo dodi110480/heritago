@@ -1,8 +1,10 @@
 import { Component, inject, signal, ElementRef, ViewChild, AfterViewInit, HostListener, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { GedcomService } from './gedcom.service';
+import { AuthService, Tree as AuthServiceTree } from './auth.service';
+import { ImageCropper } from './image-cropper';
 import { TreeData, Individual, Family, LifeEvent } from './models';
 import * as d3 from 'd3';
 
@@ -14,21 +16,24 @@ interface HierarchyNode {
     lastName: string;
     gender: string;
     dates: string;
+    profileImageUrl?: string;
     children?: HierarchyNode[];
 }
 
 @Component({
     selector: 'app-tree',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, ImageCropper],
     templateUrl: './tree.html',
     styleUrl: './tree.css'
 })
 export class Tree implements AfterViewInit, OnInit {
+    authService = inject(AuthService);
     private gedcomService = inject(GedcomService);
     private ngZone = inject(NgZone);
     private cdr = inject(ChangeDetectorRef);
     private router = inject(Router);
+    private route = inject(ActivatedRoute);
     treeData = signal<TreeData | null>(null);
     isSaving = false;
 
@@ -36,7 +41,7 @@ export class Tree implements AfterViewInit, OnInit {
     isModalOpen = false;
     modalTitle = '';
     modalMode: 'add' | 'edit' = 'add';
-    activeTab: 'basics' | 'relations' | 'events' = 'basics';
+    activeTab: 'basics' | 'events' | 'relations' | 'facts' | 'citations' | 'media' | 'notes' | 'extensions' = 'basics';
 
     // Family Modal State
     isFamilyModalOpen = false;
@@ -45,42 +50,34 @@ export class Tree implements AfterViewInit, OnInit {
         children: [],
         events: []
     };
-    newFamilyEvent: LifeEvent = { type: 'MARR', date: '', place: '', description: '' };
+    newFamilyEvent: LifeEvent = { type: 'MARR', date: '', place: '', description: '', isPrimary: false };
     modalData: any = {
         id: '',
-        firstName: '',
-        lastName: '',
-        birthName: '',
-        title: '',
-        suffix: '',
+        name: '',
+        names: [] as any[],
         gender: 'U',
-        birthDate: '',
-        birthPlace: '',
         isAlive: true,
-        deathDate: '',
-        deathPlace: '',
         email: '',
-        fatherId: '',
-        motherId: '',
-        spouseId: '',
-        events: [] as LifeEvent[]
+        relations: [] as any[], // Local UI relations
+        events: [] as any[],
+        facts: [] as any[],
+        citations: [] as any[],
+        media: [] as any[],
+        extensions: [] as { key: string; value: string }[],
+        updatedAt: ''
     };
+    activeFamilyTab = 'events';
 
-    newEvent: LifeEvent = { type: 'EVEN', date: '', place: '', description: '' };
+    newEvent: LifeEvent = { type: 'EVEN', date: '', place: '', description: '', isPrimary: false };
 
-    // Parent/Spouse Search State
-    fatherSearchQuery = '';
-    motherSearchQuery = '';
-    spouseSearchQuery = '';
-    potentialFathers: Individual[] = [];
-    potentialMothers: Individual[] = [];
-    potentialSpouses: Individual[] = [];
-    showFatherResults = false;
-    showMotherResults = false;
-    showSpouseResults = false;
+    // Relationship State
+    activeRelationIndex: number | null = null;
+    showRelationResults = false;
+    potentialRelationPersons: Individual[] = [];
+
     showPlaceResults = false;
     potentialPlaces: any[] = [];
-    activePlaceField: 'birth' | 'death' | 'event' | 'family' = 'birth';
+    activePlaceField: 'birth' | 'death' | 'event' | 'family' | 'family-event' = 'birth';
     activeEventIndex: number | null = null;
 
     // Place Creator Modal State
@@ -97,13 +94,37 @@ export class Tree implements AfterViewInit, OnInit {
         notes: ''
     };
 
+    // Validation Feedback State
+    showValidationModal = false;
+    validationErrors: string[] = [];
+    validationWarnings: string[] = [];
+
     private pendingRelation: { targetId: string, type: string, gender: string } | null = null;
+
+    // Search Results State
+    showSearch = false;
+    searchResults: any[] = [];
+
+    // Media Chooser State
+    showMediaChooser = signal(false);
+    libraryMedia = signal<any[]>([]);
+    mediaChooserTarget: 'person' | 'family' | 'event' = 'person';
+    mediaChooserLoading = signal(false);
+
+    // Cropper state
+    showCropper = signal(false);
+    cropImageUrl = signal<string | null>(null);
+    currentUploadFile = signal<File | null>(null);
+
+    get individuals(): Individual[] {
+        return this.treeData()?.individuals || [];
+    }
 
     ngOnInit() {
         // Initial data load already handled or can be done here
     }
 
-    @ViewChild('treeViewport') svgElement!: ElementRef<SVGElement>;
+    @ViewChild('svgViewport', { static: true }) svgElement!: ElementRef<SVGElement>;
 
     private svg: any;
     private g: any;
@@ -119,16 +140,54 @@ export class Tree implements AfterViewInit, OnInit {
         this.initBackgroundMap();
         this.gedcomService.getTreeData().subscribe(data => {
             if (data) {
+                // Transform all media URLs in individuals and families
+                if (data.individuals) {
+                    data.individuals.forEach(person => {
+                        if (person.media) {
+                            person.media.forEach((m: any) => m.url = this.gedcomService.getMediaUrl(m.url));
+                        }
+                    });
+                }
+                if (data.families) {
+                    data.families.forEach(fam => {
+                        if (fam.media) {
+                            fam.media.forEach((m: any) => m.url = this.gedcomService.getMediaUrl(m.url));
+                        }
+                    });
+                }
+
                 this.treeData.set(data);
                 this.renderTree();
+
+                // Check for focus parameter
+                this.route.queryParams.subscribe(params => {
+                    const focusId = params['focus'];
+                    if (focusId) {
+                        setTimeout(() => this.focusPerson(focusId), 500);
+                    }
+                });
             }
         });
     }
 
     private initSvg() {
-        this.svg = d3.select('#tree-viewport')
+        if (!this.svgElement) return;
+
+        this.svg = d3.select(this.svgElement.nativeElement)
             .attr('width', '100%')
             .attr('height', '100%');
+
+        // ClipPath EINMALIG definieren
+        if (this.svg.select('#avatarClip').empty()) {
+            const defs = this.svg.append('defs');
+
+            defs.append("clipPath")
+                .attr("id", "avatarClip")
+                .append("circle")
+                .attr("r", 30)
+                .attr("cx", 30)
+                .attr("cy", 30);
+        }
 
         this.g = this.svg.append('g');
 
@@ -221,54 +280,89 @@ export class Tree implements AfterViewInit, OnInit {
         // 1. Identify all "root" individuals
         // A root is someone whose parents are NOT in the dataset.
         const potentialRoots = data.individuals.filter(indi => {
-            const famsWhereChild = data.families.filter(f => f.children.includes(indi.id));
+            const iid = indi.id.trim();
+            const famsWhereChild = data.families.filter(f => f.children.some(c => c.trim() === iid));
             if (famsWhereChild.length === 0) return true;
 
             // If they are a child, check if ANY of their families have parents present in individuals list
             return !famsWhereChild.some(f => {
-                const husbandExists = f.husband && data.individuals.some(i => i.id === f.husband);
-                const wifeExists = f.wife && data.individuals.some(i => i.id === f.wife);
+                const husbandId = f.husband?.trim();
+                const wifeId = f.wife?.trim();
+                const husbandExists = husbandId && data.individuals.some(i => i.id.trim() === husbandId);
+                const wifeExists = wifeId && data.individuals.some(i => i.id.trim() === wifeId);
                 return husbandExists || wifeExists;
             });
         });
 
+        console.log(`Initial potential roots: ${potentialRoots.map(r => r.id).join(', ')}`);
+
+        // If a cycle exists, potentialRoots might be empty for a cluster.
+        // We ensure EVERY disconnected cluster gets at least one root.
+        const clusterRoots: string[] = [...potentialRoots.map(r => r.id)];
+        const allIds = new Set(data.individuals.map(i => i.id));
+        const coveredByRoots = new Set<string>();
+
+        const findClusterMembers = (id: string, members: Set<string>) => {
+            if (members.has(id)) return;
+            members.add(id);
+            // Add spouses
+            data.families.filter(f => f.husband === id || f.wife === id).forEach(f => {
+                if (f.husband) findClusterMembers(f.husband, members);
+                if (f.wife) findClusterMembers(f.wife, members);
+                f.children.forEach(c => findClusterMembers(c, members));
+            });
+            // Add parents
+            data.families.filter(f => f.children.includes(id)).forEach(f => {
+                if (f.husband) findClusterMembers(f.husband, members);
+                if (f.wife) findClusterMembers(f.wife, members);
+            });
+        };
+
+        // Mark everyone reachable from identified roots
+        clusterRoots.forEach(rid => findClusterMembers(rid, coveredByRoots));
+
+        // For individuals NOT reachable from a root, pick the one with most descendants as a new root
+        data.individuals.forEach(indi => {
+            if (!coveredByRoots.has(indi.id)) {
+                console.warn(`Individual ${indi.id} (${indi.name}) is in a disconnected/cyclic cluster. Picking as new root.`);
+                clusterRoots.push(indi.id);
+                findClusterMembers(indi.id, coveredByRoots);
+            }
+        });
+
         // Pick the actual roots and build hierarchies
-        potentialRoots.forEach(rootIndi => {
-            if (!visited.has(rootIndi.id)) {
-                // Improved root logic: If this root has a spouse who is also a root, 
-                // handle them together to avoid fragmented trees.
-                const fam = data.families.find(f => f.husband === rootIndi.id || f.wife === rootIndi.id);
-                if (fam && fam.husband && fam.wife) {
-                    const hNode = data.individuals.find(i => i.id === fam.husband);
-                    const wNode = data.individuals.find(i => i.id === fam.wife);
-                    if (hNode && wNode) {
-                        if (!visited.has(hNode.id)) rootNodes.push(this.buildHierarchy(hNode.id, data, visited));
-                        if (!visited.has(wNode.id)) rootNodes.push(this.buildHierarchy(wNode.id, data, visited));
+        clusterRoots.forEach(rootId => {
+            if (!visited.has(rootId)) {
+                // Handle spouse logic to keep families together at the root level
+                const spouseFam = data.families.find(f => (f.husband === rootId || f.wife === rootId) && f.husband && f.wife);
+                if (spouseFam) {
+                    const otherId = spouseFam.husband === rootId ? spouseFam.wife! : spouseFam.husband!;
+                    if (!visited.has(rootId)) {
+                        const node = this.buildHierarchy(rootId, data, visited);
+                        if (node) rootNodes.push(node);
                     }
-                } else if (!visited.has(rootIndi.id)) {
-                    rootNodes.push(this.buildHierarchy(rootIndi.id, data, visited));
+                    if (!visited.has(otherId)) {
+                        const node = this.buildHierarchy(otherId, data, visited);
+                        if (node) rootNodes.push(node);
+                    }
+                } else {
+                    const node = this.buildHierarchy(rootId, data, visited);
+                    if (node) rootNodes.push(node);
                 }
             }
         });
 
-        // 2. Catch any leftover disconnected people
-        data.individuals.forEach(indi => {
-            if (!visited.has(indi.id)) {
-                rootNodes.push(this.buildHierarchy(indi.id, data, visited));
-            }
-        });
+        console.log(`Identified ${rootNodes.length} hierarchies for the tree.`);
 
-        console.log(`Identified ${rootNodes.length} roots for the tree.`);
-
-        // 3. Create a virtual root if there are multiple roots
+        // 3. Create a virtual root if there are multiple hierarchies
         let hierarchy: HierarchyNode;
         if (rootNodes.length === 1) {
             hierarchy = rootNodes[0];
         } else {
             hierarchy = {
                 id: 'forest-root',
-                firstName: 'Hidden',
-                lastName: 'Root',
+                firstName: 'Stammbaum',
+                lastName: '',
                 gender: 'U',
                 dates: '',
                 children: rootNodes
@@ -278,100 +372,236 @@ export class Tree implements AfterViewInit, OnInit {
         // 4. Create d3 tree layout
         const root = d3.hierarchy(hierarchy);
         const treeLayout = d3.tree<HierarchyNode>()
-            .nodeSize([this.nodeWidth + 60, this.nodeHeight + 100])
-            .separation((a, b) => {
-                // Siblings are closer than cousins or unrelated roots
-                return a.parent === b.parent ? 1 : 1.5;
-            });
+            .nodeSize([this.nodeWidth + 60, this.nodeHeight + 120])
+            .separation((a, b) => (a.parent === b.parent ? 1 : 1.3));
 
         treeLayout(root);
 
-        // --- Partner Alignment: Ensure spouses are strictly on same level ---
         const descendants = root.descendants();
         const nodes_map = new Map(descendants.map(d => [d.data.id, d]));
 
+        // --- 1. Universal Base Leveling ---
+        const levelHeight = this.nodeHeight + 140; // Increased vertical gap for cleaner lines (Regel 4)
+        descendants.forEach((d: any) => {
+            if (d.data.id === 'forest-root') {
+                d.y = -levelHeight;
+            } else {
+                const effectiveDepth = d.data.id === 'forest-root' ? -1 : (d.depth - (hierarchy.id === 'forest-root' ? 1 : 0));
+                d.y = effectiveDepth * levelHeight;
+            }
+        });
+
+        // --- 2. Spouse Sync & Initial X ---
+        // Ensure partners share exact same Y.
         data.families.forEach(fam => {
             if (fam.husband && fam.wife) {
                 const hNode: any = nodes_map.get(fam.husband);
                 const wNode: any = nodes_map.get(fam.wife);
-
-                if (hNode && wNode && Math.abs(hNode.y - wNode.y) > 1) {
-                    // Force both to the same Y level
-                    const targetY = Math.min(hNode.y, wNode.y);
+                if (hNode && wNode) {
+                    const targetY = Math.max(hNode.y, wNode.y);
                     hNode.y = targetY;
                     wNode.y = targetY;
                 }
-
-                // Ensure proximity if they are far apart
-                if (hNode && wNode && Math.abs(hNode.x - wNode.x) > (this.nodeWidth + 200)) {
-                    const leftNode = hNode.x < wNode.x ? hNode : wNode;
-                    const rightNode = hNode.x < wNode.x ? wNode : hNode;
-                    const targetX = leftNode.x + this.nodeWidth + 60; // Standard spouse gap
-
-                    if (rightNode.x > targetX) {
-                        const shift = targetX - rightNode.x;
-                        rightNode.each((desc: any) => {
-                            if (desc.x !== undefined) desc.x += shift;
-                        });
-                    }
-                }
             }
         });
 
-        // --- Sibling Alignment & Proximity: Ensure siblings are on same level and adjacent ---
-        data.families.forEach(fam => {
-            if (fam.children && fam.children.length > 1) {
-                const childNodes = fam.children.map(cid => nodes_map.get(cid)).filter(n => !!n) as any[];
+        // --- 3. Sibling Group Block Processing (Rules 11, 12, 13) ---
+        // Process each generation to group children and reserve space for partners.
+        const CARD_WIDTH = this.nodeWidth;
+        const HORIZONTAL_GAP = 64; // Regel 4: >= 64px
+        const PARTNER_GAP = 40;   // Gap between partners in a block
 
-                if (childNodes.length > 0) {
-                    // 1. Force same level (y)
-                    const minY = d3.min(childNodes, d => d.y) || 0;
-                    childNodes.forEach(c => c.y = minY);
+        // 3a. Identify Sibling Groups
+        const familiesWithChildren = data.families.filter(f => f.children && f.children.length > 0);
+        const usedInBlock = new Set<string>();
 
-                    // 2. Ensure adjacency (x)
-                    // This is more complex because shifting one node affects others.
-                    // We'll sort them and ensure a minimum gap of 60px (No-Touch Rule).
-                    childNodes.sort((a, b) => a.x - b.x);
-                    const siblingGap = this.nodeWidth + 60; // 60px gap for siblings
+        familiesWithChildren.forEach(fam => {
+            const childrenNodes = fam.children.map(cid => nodes_map.get(cid)).filter(n => !!n) as any[];
+            if (childrenNodes.length === 0) return;
 
-                    for (let i = 1; i < childNodes.length; i++) {
-                        const targetX = childNodes[i - 1].x + siblingGap;
-                        if (childNodes[i].x < targetX) {
-                            const shift = targetX - childNodes[i].x;
-                            childNodes[i].each((desc: any) => {
+            const blocks: any[] = [];
+            childrenNodes.forEach(cNode => {
+                if (usedInBlock.has(cNode.data.id)) return;
+
+                const spouseFam = data.families.find(f => (f.husband === cNode.data.id || f.wife === cNode.data.id) && f.husband && f.wife);
+                const spouseId = spouseFam ? (spouseFam.husband === cNode.data.id ? spouseFam.wife : spouseFam.husband) : null;
+                const spouseNode: any = spouseId ? nodes_map.get(spouseId) : null;
+
+                if (spouseNode && !usedInBlock.has(spouseNode.data.id)) {
+                    const baseWidth = 2 * CARD_WIDTH + PARTNER_GAP;
+
+
+                    blocks.push({
+                        type: 'couple',
+                        nodes: [cNode, spouseNode],
+                        width: 2 * CARD_WIDTH + PARTNER_GAP
+                    });
+                    usedInBlock.add(cNode.data.id);
+                    usedInBlock.add(spouseNode.data.id);
+                } else {
+                    // Single sibling
+
+                    blocks.push({
+                        type: 'single',
+                        nodes: [cNode],
+                        width: CARD_WIDTH
+                    });
+                    usedInBlock.add(cNode.data.id);
+                }
+            });
+
+            // 3b. Center the Group under Parents (Rule 5 & 11)
+            const parentH: any = nodes_map.get(fam.husband || '');
+            const parentW: any = nodes_map.get(fam.wife || '');
+            let parentMidX = 0;
+            if (parentH && parentW && parentH.x !== undefined && parentW.x !== undefined) {
+                parentMidX = (parentH.x + parentW.x + CARD_WIDTH) / 2;
+            } else if (parentH && parentH.x !== undefined) {
+                parentMidX = parentH.x + CARD_WIDTH / 2;
+            } else if (parentW && parentW.x !== undefined) {
+                parentMidX = parentW.x + CARD_WIDTH / 2;
+            } else {
+                parentMidX = d3.mean(childrenNodes, d => d.x ?? 0) || 0;
+            }
+
+            const totalGroupWidth = blocks.reduce((acc, b) => acc + b.width, 0) + (blocks.length - 1) * HORIZONTAL_GAP;
+            let currentX = parentMidX - totalGroupWidth / 2;
+
+            blocks.forEach(block => {
+                const blockMidX = currentX + block.width / 2;
+                const firstNode = block.nodes[0];
+
+                // Position the person (and partner) within the block
+                let personTargetX;
+                if (block.type === 'couple') {
+                    // Couple base width is 2*CARD + PARTNER_GAP
+                    // Center the couple within the (potentially wider) block
+                    personTargetX = blockMidX - (2 * CARD_WIDTH + PARTNER_GAP) / 2;
+                } else {
+                    personTargetX = blockMidX - CARD_WIDTH / 2;
+                }
+
+                const shiftX = personTargetX - (firstNode.x ?? 0);
+
+                // IMPORTANT: Center descendants under the block midpoint (Rule 11)
+                // First, shift the individual so they are positioned correctly in the block
+                firstNode.x = personTargetX;
+
+                if (block.type === 'couple') {
+                    const secondNode = block.nodes[1];
+                    secondNode.x = personTargetX + CARD_WIDTH + PARTNER_GAP;
+                    secondNode.y = firstNode.y;
+                }
+
+                // Now shift all sub-descendants so they are centered under blockMidX
+                // Find sub-descendants (excluding the nodes in the block itself)
+                const subtreeRoots = block.nodes;
+                subtreeRoots.forEach((root: any) => {
+                    const children = root.children || [];
+                    children.forEach((child: any) => {
+                        // Calculate initial subtree center
+                        let minS = Infinity, maxS = -Infinity;
+                        child.each((d: any) => {
+                            minS = Math.min(minS, d.x ?? 0);
+                            maxS = Math.max(maxS, d.x ?? 0);
+                        });
+                        const currentSubCenter = (minS + maxS + CARD_WIDTH) / 2;
+                        const subShift = blockMidX - currentSubCenter;
+
+                        child.each((d: any) => {
+                            if (d.x !== undefined) d.x += subShift;
+                        });
+                    });
+                });
+
+                currentX += block.width + HORIZONTAL_GAP;
+            });
+        });
+
+        // --- 4. Global Collision Resolution (Rule 13) ---
+        // Identify all blocks in each generation and resolve collisions between them.
+        const yLevels = Array.from(d3.group(descendants.filter(d => d.data.id !== 'forest-root'), (d: any) => d.y ?? 0).keys()).sort((a, b) => a - b);
+
+        yLevels.forEach((y: any) => {
+            const nodesAtY = descendants.filter((d: any) => (d.y ?? 0) === y).sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
+            const levelBlocks: any[] = [];
+            const processed = new Set<string>();
+
+            nodesAtY.forEach(node => {
+                if (processed.has(node.data.id)) return;
+
+                // Determine if this node is part of a couple block
+                const spouseFam = data.families.find(f => (f.husband === node.data.id || f.wife === node.data.id) && f.husband && f.wife);
+                if (spouseFam) {
+                    const spouseId = spouseFam.husband === node.data.id ? spouseFam.wife : spouseFam.husband;
+                    const spouseNode = nodes_map.get(spouseId || '');
+                    if (spouseNode && (spouseNode.y ?? 0) === y) {
+                        const blockNodes = [node, spouseNode].sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
+                        levelBlocks.push({
+                            nodes: blockNodes,
+                            minX: blockNodes[0].x ?? 0,
+                            maxX: (blockNodes[1].x ?? 0) + CARD_WIDTH
+                        });
+                        processed.add(node.data.id);
+                        processed.add(spouseId!);
+                        return;
+                    }
+                }
+
+                // Single node block
+                levelBlocks.push({
+                    nodes: [node],
+                    minX: node.x ?? 0,
+                    maxX: (node.x ?? 0) + CARD_WIDTH
+                });
+                processed.add(node.data.id);
+            });
+
+            // 4b. Group blocks into Sibling Groups (Rule 13)
+            const levelGroups: any[] = [];
+            let currentGroup: any = null;
+
+            levelBlocks.forEach(block => {
+                // Find parent family ID for the first node in the block
+                const firstNode = block.nodes[0];
+                const famId = data.families.find(f => f.children.includes(firstNode.data.id))?.id || 'root-group';
+
+                if (!currentGroup || currentGroup.famId !== famId) {
+                    currentGroup = {
+                        famId: famId,
+                        blocks: [block],
+                        minX: block.minX,
+                        maxX: block.maxX
+                    };
+                    levelGroups.push(currentGroup);
+                } else {
+                    currentGroup.blocks.push(block);
+                    currentGroup.maxX = Math.max(currentGroup.maxX, block.maxX);
+                }
+            });
+
+            // 4c. Resolve collisions between Sibling Groups
+            for (let i = 1; i < levelGroups.length; i++) {
+                const prev = levelGroups[i - 1];
+                const curr = levelGroups[i];
+
+                const minX = prev.maxX + HORIZONTAL_GAP;
+                const currentMinX = curr.minX;
+
+                if (currentMinX < minX) {
+                    const shift = minX - currentMinX;
+                    curr.blocks.forEach((block: any) => {
+                        block.nodes.forEach((node: any) => {
+                            node.each((desc: any) => {
                                 if (desc.x !== undefined) desc.x += shift;
                             });
-                        }
-                    }
-                }
-            }
-        });
-
-        // --- Symmetry Adjustment: Center children between parents ---
-        data.families.forEach(fam => {
-            if (fam.husband && fam.wife && fam.children && fam.children.length > 0) {
-                const hNode: any = nodes_map.get(fam.husband);
-                const wNode: any = nodes_map.get(fam.wife);
-
-                if (hNode && wNode && hNode.x !== undefined && hNode.y !== undefined && wNode.x !== undefined && wNode.y !== undefined && Math.abs(hNode.y - wNode.y) < 10) {
-                    const familyChildren = fam.children.map(cid => nodes_map.get(cid)).filter(n => !!n) as any[];
-                    if (familyChildren.length > 0) {
-                        const minX = d3.min(familyChildren, d => d.x) || 0;
-                        const maxX = d3.max(familyChildren, d => d.x) || 0;
-                        const childrenCenter = (minX + maxX) / 2;
-                        const parentsCenter = (hNode.x + wNode.x) / 2;
-                        const offset = parentsCenter - childrenCenter;
-
-                        familyChildren.forEach(c => {
-                            c.each((desc: any) => {
-                                if (desc.x !== undefined) desc.x += offset;
-                            });
                         });
-                    }
+                    });
+                    curr.minX += shift;
+                    curr.maxX += shift;
                 }
             }
         });
-        // -----------------------------------------------------------
 
         // 3. Clear existing elements
         this.g.selectAll('*').remove();
@@ -523,18 +753,80 @@ export class Tree implements AfterViewInit, OnInit {
         const avatarSize = 60;
         const avatarMargin = 15;
 
-        node.append('circle')
-            .attr('class', 'avatar-bg')
-            .attr('cx', avatarMargin + avatarSize / 2)
-            .attr('cy', this.nodeHeight / 2)
-            .attr('r', avatarSize / 2)
-            .style('fill', '#f1f5f9');
+        node.each((d: any, i: number, nodesArr: any[]) => {
+            const gNode = d3.select(nodesArr[i]);
 
-        node.append('path')
-            .attr('class', 'avatar-icon')
-            .attr('transform', (d: any) => `translate(${avatarMargin + 15}, ${this.nodeHeight / 2 - 15}) scale(1.2)`)
-            .attr('d', 'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z')
-            .style('fill', '#94a3b8');
+            const avatarX = avatarMargin;
+            const avatarY = this.nodeHeight / 2 - avatarSize / 2;
+
+            if (d.data.profileImageUrl) {
+
+                const avatarGroup = gNode.append("g")
+                    .attr("transform", `translate(${avatarX}, ${avatarY})`);
+
+                // Kreis-Clip lokal definieren
+                avatarGroup.append("defs")
+                    .append("clipPath")
+                    .attr("id", `clip-${d.data.id}`)
+                    .append("circle")
+                    .attr("cx", avatarSize / 2)
+                    .attr("cy", avatarSize / 2)
+                    .attr("r", avatarSize / 2);
+
+                // Weißer Ring (optional aber empfohlen)
+                avatarGroup.append("circle")
+                    .attr("cx", avatarSize / 2)
+                    .attr("cy", avatarSize / 2)
+                    .attr("r", avatarSize / 2)
+                    .attr("fill", "#ffffff")
+                    .attr("stroke", "#e2e8f0")
+                    .attr("stroke-width", 2);
+
+                // Bild
+                avatarGroup.append("image")
+                    .attr("href", d.data.profileImageUrl)
+                    .attr("width", avatarSize)
+                    .attr("height", avatarSize)
+                    .attr("clip-path", `url(#clip-${d.data.id})`)
+                    .attr("preserveAspectRatio", "xMidYMid slice");
+            } else {
+                const avatarGroup = gNode.append("g")
+                    .attr("transform", `translate(${avatarX}, ${avatarY})`);
+
+                // Wie auf /persons: abgerundeter Kasten + Outline-Personen-Icon
+                const boxFill =
+                    d.data.gender === 'M' ? 'rgba(59, 130, 246, 0.15)' :
+                        d.data.gender === 'F' ? 'rgba(236, 72, 153, 0.15)' :
+                            'rgba(148, 163, 184, 0.15)';
+                const iconStroke =
+                    d.data.gender === 'M' ? '#60a5fa' :
+                        d.data.gender === 'F' ? '#f472b6' :
+                            '#94a3b8';
+
+                avatarGroup.append("rect")
+                    .attr("width", avatarSize)
+                    .attr("height", avatarSize)
+                    .attr("rx", 16)
+                    .attr("ry", 16)
+                    .attr("fill", boxFill);
+
+                const iconScale = avatarSize / 24;
+                const iconG = avatarGroup.append("g")
+                    .attr("transform", `translate(${avatarSize / 2}, ${avatarSize / 2}) scale(${iconScale}) translate(-12, -12)`);
+                iconG.append("path")
+                    .attr("d", "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2")
+                    .attr("fill", "none")
+                    .attr("stroke", iconStroke)
+                    .attr("stroke-width", 2);
+                iconG.append("circle")
+                    .attr("cx", 12)
+                    .attr("cy", 7)
+                    .attr("r", 4)
+                    .attr("fill", "none")
+                    .attr("stroke", iconStroke)
+                    .attr("stroke-width", 2);
+            }
+        });
 
         // FirstName
         node.append('text')
@@ -705,156 +997,104 @@ export class Tree implements AfterViewInit, OnInit {
             if (person && data) {
                 this.modalTitle = 'Person bearbeiten';
 
-                let firstName = '';
-                let lastName = '';
+                // Deep copy and ensure arrays exist
+                this.modalData = JSON.parse(JSON.stringify(person));
+                this.modalData.names = this.modalData.names || [];
+                this.modalData.events = this.modalData.events || [];
+                this.modalData.facts = this.modalData.facts || [];
+                this.modalData.citations = this.modalData.citations || [];
+                this.modalData.media = this.modalData.media || [];
+                this.modalData.notes = this.modalData.notes || [];
+                this.modalData.extensions = this.modalData.extensions || [];
+                this.modalData.relations = []; // Local UI relations
 
-                // Try to parse from gedcomName if available (e.g. "Create /Tree/")
-                if (person.gedcomName) {
-                    const parts = person.gedcomName.split('/');
-                    if (parts.length >= 2) {
-                        firstName = parts[0].trim();
-                        lastName = parts[1].trim();
-                    } else {
-                        firstName = person.gedcomName.trim();
-                    }
-                } else {
-                    // Fallback: split by last space (imperfect but better than nothing)
-                    const nameParts = person.name.split(' ');
-                    if (nameParts.length > 1) {
-                        lastName = nameParts.pop() || '';
-                        firstName = nameParts.join(' ');
-                    } else {
-                        firstName = person.name;
-                    }
+                // Resolve Names if empty
+                if (this.modalData.names.length === 0) {
+                    this.modalData.names.push({
+                        given: person.firstName || person.name.split(' ')[0],
+                        surname: person.lastName || person.name.split(' ').slice(1).join(' '),
+                        isPrimary: true,
+                        type: 'BIRTH'
+                    });
                 }
 
-                // Resolve Relationships
-                let fatherId = '';
-                let fatherName = '';
-                let motherId = '';
-                let motherName = '';
-                let spouseId = '';
-                let spouseName = '';
+                // Resolve Relationships for the UI
+                const relations: any[] = [];
+                const pid = person.id.trim().replace(/^@|@$/g, '');
 
-                // Find Parents (Family where this person is a child)
-                const parentFam = data.families.find(f => f.children.includes(person.id));
+                // Find Parents
+                const parentFam = data.families.find(f =>
+                    f.children.some(c => c.trim().replace(/^@|@$/g, '') === pid)
+                );
                 if (parentFam) {
                     if (parentFam.husband) {
-                        fatherId = parentFam.husband || '';
-                        fatherName = data.individuals.find(i => i.id === fatherId)?.name || '';
+                        const h = data.individuals.find(i => i.id.trim().replace(/^@|@$/g, '') === parentFam.husband!.trim().replace(/^@|@$/g, ''));
+                        relations.push({ type: 'FATHER', personId: h?.id || parentFam.husband, personName: h?.name || parentFam.husband, searchQuery: h?.name || '' });
                     }
                     if (parentFam.wife) {
-                        motherId = parentFam.wife || '';
-                        motherName = data.individuals.find(i => i.id === motherId)?.name || '';
+                        const w = data.individuals.find(i => i.id.trim().replace(/^@|@$/g, '') === parentFam.wife!.trim().replace(/^@|@$/g, ''));
+                        relations.push({ type: 'MOTHER', personId: w?.id || parentFam.wife, personName: w?.name || parentFam.wife, searchQuery: w?.name || '' });
                     }
                 }
 
-                // Find Spouse (Family where this person is husband or wife)
-                // Just take the first one for now if multiple
-                const spouseFam = data.families.find(f =>
-                    (f.husband === person.id && f.wife) ||
-                    (f.wife === person.id && f.husband)
-                );
-                if (spouseFam) {
-                    if (spouseFam.husband === person.id) {
-                        spouseId = spouseFam.wife || '';
-                    } else {
-                        spouseId = spouseFam.husband || '';
+                // Find Spouses and Children
+                data.families.filter(f => (f.husband?.trim().replace(/^@|@$/g, '') === pid || f.wife?.trim().replace(/^@|@$/g, '') === pid)).forEach(fam => {
+                    const isHusband = fam.husband?.trim().replace(/^@|@$/g, '') === pid;
+                    const spouseId = isHusband ? fam.wife : fam.husband;
+                    if (spouseId) {
+                        const s = data.individuals.find(i => i.id.trim().replace(/^@|@$/g, '') === spouseId.trim().replace(/^@|@$/g, ''));
+                        relations.push({ type: 'SPOUSE', personId: s?.id || spouseId, personName: s?.name || spouseId, searchQuery: s?.name || '' });
                     }
-                    spouseName = data.individuals.find(i => i.id === spouseId)?.name || '';
-                }
+                    fam.children.forEach(cid => {
+                        const child = data.individuals.find(i => i.id.trim().replace(/^@|@$/g, '') === cid.trim().replace(/^@|@$/g, ''));
+                        relations.push({ type: 'CHILD', personId: child?.id || cid, personName: child?.name || cid, searchQuery: child?.name || '' });
+                    });
+                });
 
-                this.modalData = {
-                    id: person.id,
-                    firstName: person.firstName || firstName,
-                    lastName: person.lastName || lastName,
-                    birthName: person.birthName || '',
-                    title: person.title || '',
-                    suffix: person.suffix || '',
-                    gender: person.gender,
-                    birthDate: person.birthDate || '',
-                    birthPlace: person.birthPlace || '',
-                    isAlive: person.isAlive ?? !person.deathDate,
-                    deathDate: person.deathDate || '',
-                    deathPlace: person.deathPlace || '',
-                    email: person.email || '',
-                    fatherId: fatherId,
-                    motherId: motherId,
-                    spouseId: spouseId,
-                    events: person.events ? [...person.events] : []
-                };
-
-                this.fatherSearchQuery = fatherName;
-                this.motherSearchQuery = motherName;
-                this.spouseSearchQuery = spouseName;
+                this.modalData.relations = relations;
             }
         } else {
             this.modalTitle = 'Neue Person hinzufügen';
             this.modalData = {
                 id: '',
-                firstName: '',
-                lastName: '',
-                birthName: '',
-                title: '',
-                suffix: '',
-                gender: this.pendingRelation?.gender || 'U',
-                birthDate: '',
-                birthPlace: '',
+                name: '',
+                names: [{ given: '', surname: '', isPrimary: true, type: 'BIRTH' }],
+                gender: 'U',
                 isAlive: true,
-                deathDate: '',
-                deathPlace: '',
                 email: '',
-                fatherId: '',
-                motherId: '',
-                spouseId: '',
-                events: []
+                relations: [],
+                events: [],
+                facts: [],
+                citations: [],
+                media: [],
+                notes: [],
+                extensions: [],
             };
 
-            this.fatherSearchQuery = '';
-            this.motherSearchQuery = '';
-            this.spouseSearchQuery = '';
-
-            // Pre-fill parent and last name if adding child
-            if (this.pendingRelation?.type === 'son' || this.pendingRelation?.type === 'daughter') {
+            // Handle pending relation from tree add button
+            if (this.pendingRelation) {
                 const individuals = this.treeData()?.individuals || [];
-                const families = this.treeData()?.families || [];
-                const anchor = individuals.find(i => i.id === this.pendingRelation?.targetId);
+                const anchorId = this.pendingRelation.targetId;
+                const anchor = individuals.find(i => i.id === anchorId);
 
                 if (anchor) {
-                    let suggestedLastName = '';
+                    const relTypeMap: any = {
+                        'brother': 'SIBLING',
+                        'sister': 'SIBLING',
+                        'partner': 'SPOUSE',
+                        'son': 'CHILD',
+                        'daughter': 'CHILD'
+                    };
 
-                    if (anchor.gender === 'M') {
-                        suggestedLastName = anchor.lastName || '';
-                        this.modalData.fatherId = anchor.id;
-                        this.fatherSearchQuery = anchor.name;
-                    } else if (anchor.gender === 'F') {
-                        this.modalData.motherId = anchor.id;
-                        this.motherSearchQuery = anchor.name;
-
-                        // Try to find a husband to get the family name
-                        const fam = families.find(f => f.wife === anchor.id && f.husband);
-                        if (fam && fam.husband) {
-                            const husband = individuals.find(i => i.id === fam.husband);
-                            if (husband) {
-                                suggestedLastName = husband.lastName || '';
-                            }
-                        }
-
-                        // Fallback to mother's current last name
-                        if (!suggestedLastName) {
-                            suggestedLastName = anchor.lastName || '';
-                        }
-                    }
-
-                    if (suggestedLastName) {
-                        this.modalData.lastName = suggestedLastName;
-                    }
+                    this.modalData.gender = this.pendingRelation.gender;
+                    this.modalData.relations.push({
+                        type: relTypeMap[this.pendingRelation.type] || 'OTHER',
+                        personId: anchor.id,
+                        personName: anchor.name,
+                        searchQuery: anchor.name
+                    });
                 }
             }
-
-            this.potentialFathers = [];
-            this.potentialMothers = [];
-            this.potentialSpouses = [];
         }
         this.cdr.markForCheck();
     }
@@ -866,54 +1106,75 @@ export class Tree implements AfterViewInit, OnInit {
     }
 
     savePerson() {
+        // Perform validation on all relationships
+        this.validationErrors = [];
+        this.validationWarnings = [];
+        const relations = this.modalData.relations || [];
+
+        relations.forEach((rel: any) => {
+            if (rel.personId) {
+                const validation = this.validateRelationship(this.modalData.id, rel.personId, rel.type);
+                if (!validation.valid) {
+                    this.validationErrors.push(...validation.errors.map(e => `[${this.getRelationLabel(rel.type)}: ${rel.personName}] ${e}`));
+                }
+                this.validationWarnings.push(...validation.warnings.map(w => `[${this.getRelationLabel(rel.type)}: ${rel.personName}] ${w}`));
+            }
+        });
+
+        // Add general validation
+        const primaryName = this.modalData.names.find((n: any) => n.isPrimary) || this.modalData.names[0];
+        if (!primaryName || (!primaryName.given && !primaryName.surname)) {
+            this.validationErrors.push('Bitte geben Sie mindestens einen Vornamen oder Nachnamen an.');
+        }
+
+        if (this.validationErrors.length > 0 || this.validationWarnings.length > 0) {
+            this.showValidationModal = true;
+            this.cdr.markForCheck();
+            return;
+        }
+
+        // If no issues at all, proceed immediately
+        this.proceedWithSave();
+    }
+
+    proceedWithSave() {
         const data = this.treeData();
         if (!data || this.isSaving) return;
 
+        this.showValidationModal = false;
         this.isSaving = true;
 
         const targetId = this.pendingRelation?.targetId;
         const relationType = this.pendingRelation?.type;
 
-        let fatherId = this.modalData.fatherId;
-        let motherId = this.modalData.motherId;
-
-        // If we are adding a child to a parent anchor, ensure that parent is set as father/mother
-        if (targetId && (relationType === 'son' || relationType === 'daughter')) {
-            const anchor = data.individuals.find(i => i.id === targetId);
-            if (anchor) {
-                if (anchor.gender === 'M' && !fatherId) fatherId = anchor.id;
-                if (anchor.gender === 'F' && !motherId) motherId = anchor.id;
-            }
-        }
+        const relations = this.modalData.relations || [];
+        const father = relations.find((r: any) => r.type === 'FATHER');
+        const mother = relations.find((r: any) => r.type === 'MOTHER');
+        const spouse = relations.find((r: any) => r.type === 'SPOUSE');
 
         const payload = {
             mode: this.modalMode,
             id: this.modalData.id,
-            firstName: this.modalData.firstName,
-            lastName: this.modalData.lastName,
-            birthName: this.modalData.birthName,
-            title: this.modalData.title,
-            suffix: this.modalData.suffix,
+            name: this.modalData.name,
+            names: this.modalData.names,
             gender: this.modalData.gender,
-            birthDate: this.modalData.birthDate,
-            birthPlace: this.modalData.birthPlace,
             isAlive: this.modalData.isAlive,
-            deathDate: this.modalData.deathDate,
-            deathPlace: this.modalData.deathPlace,
             email: this.modalData.email,
+            relations: relations,
+            events: this.modalData.events,
+            facts: this.modalData.facts,
+            citations: this.modalData.citations,
+            media: this.modalData.media,
+            notes: this.modalData.notes,
+            extensions: this.modalData.extensions,
             targetId: targetId,
-            relationType: relationType,
-            fatherId: fatherId,
-            motherId: motherId,
-            spouseId: this.modalData.spouseId,
-            events: this.modalData.events
+            relationType: relationType
         };
 
         console.log('Sending Save Payload:', payload);
-        console.log('Father ID:', fatherId, 'Mother ID:', motherId);
 
-        // Assume current tree is 'sperlich' or derive from URL/meta
-        const treeName = 'sperlich'; // TODO: Get from route/meta
+        const activeTree = this.authService.currentTree() as any;
+        const treeName = activeTree?.name || this.treeData()?.meta?.tree || 'sperlich';
 
         this.gedcomService.savePerson(treeName, payload).subscribe({
             next: (res) => {
@@ -936,6 +1197,18 @@ export class Tree implements AfterViewInit, OnInit {
         });
     }
 
+    familyEventLabels: { [key: string]: string } = {
+        'MARR': 'Hochzeit',
+        'DIV': 'Scheidung',
+        'ENGA': 'Verlobung',
+        'MARC': 'Ehevertrag',
+        'MARS': 'Eheversprechen',
+        'EVEN': 'Ereignis (Sonstige)',
+        'ANUL': 'Annullierung',
+        'MARB': 'Aufgebot',
+        'MARL': 'Heiratslizenz'
+    };
+
     openFamilyModal(famId: string) {
         const data = this.treeData();
         if (!data) return;
@@ -956,15 +1229,36 @@ export class Tree implements AfterViewInit, OnInit {
 
     addFamilyEvent() {
         if (!this.familyModalData.events) this.familyModalData.events = [];
-        this.familyModalData.events.push({ ...this.newFamilyEvent });
-        this.newFamilyEvent = { type: 'MARR', date: '', place: '', description: '' };
+        this.familyModalData.events.push({
+            type: 'MARR',
+            date: '',
+            place: '',
+            description: '',
+            isPrimary: false
+        });
+    }
+
+    removeFamilyEvent(index: number) {
+        if (this.familyModalData.events) {
+            this.familyModalData.events.splice(index, 1);
+        }
+    }
+
+    addFamilyMedia() {
+        this.openMediaChooser('family');
+    }
+
+    removeFamilyMedia(index: number) {
+        if (this.familyModalData.media) {
+            this.familyModalData.media.splice(index, 1);
+        }
     }
 
     saveFamily() {
         if (this.isSaving) return;
         this.isSaving = true;
 
-        const treeName = 'sperlich'; // TODO: Get from route/meta
+        const treeName = this.treeData()?.meta?.tree || 'sperlich';
 
         this.gedcomService.saveFamily(treeName, this.familyModalData).subscribe({
             next: (res) => {
@@ -991,16 +1285,18 @@ export class Tree implements AfterViewInit, OnInit {
         const data = this.treeData();
         if (!data || !this.modalData.id) return;
 
-        if (!confirm(`Möchten Sie ${this.modalData.firstName} ${this.modalData.lastName} wirklich löschen?`)) {
+        const primaryName = this.modalData.names.find((n: any) => n.isPrimary) || this.modalData.names[0];
+        const personName = primaryName ? `${primaryName.given} ${primaryName.surname}` : (this.modalData.name || 'diese Person');
+
+        if (!confirm(`Möchten Sie ${personName} wirklich löschen?`)) {
             return;
         }
 
-        // Assume current tree is 'sperlich' or derive from URL/meta
-        const treeName = 'sperlich'; // TODO: Get from route/meta
+        const activeTree = this.authService.currentTree() as any;
+        const treeName = activeTree?.name || data?.meta?.tree || 'sperlich';
 
         this.gedcomService.deletePerson(treeName, this.modalData.id).subscribe({
             next: () => {
-                // Reload tree data to reflect changes from server
                 this.gedcomService.getTreeData(treeName).subscribe(newData => {
                     this.treeData.set(newData);
                     this.renderTree();
@@ -1014,25 +1310,41 @@ export class Tree implements AfterViewInit, OnInit {
         });
     }
 
-    private buildHierarchy(rootId: string, data: TreeData, visited: Set<string>): HierarchyNode {
+    private buildHierarchy(rootId: string, data: TreeData, visited: Set<string>): HierarchyNode | null {
         const indi = data.individuals.find(i => i.id === rootId);
+        let profileImageUrl: string | undefined;
+        if (indi?.media && indi.media.length > 0) {
+            const primary = indi.media.find((m: any) => m.isPrimary);
+            const img = primary || indi.media[0];
+            if (img?.url) {
+                profileImageUrl = img.url;
+            }
+        }
         if (!indi) {
-            return { id: 'unknown', firstName: 'Unknown', lastName: '', gender: 'U', dates: '' };
+            return null;
         }
 
         visited.add(rootId);
 
-        const fullName = this.stripHtml(indi.name);
-        const nameParts = fullName.split(' ');
-        const lastName = nameParts.length > 1 ? (nameParts.pop() || '') : '';
-        const firstName = nameParts.join(' ');
+        let firstName = indi.firstName || '';
+        let lastName = indi.lastName || '';
+
+        if (!firstName && !lastName && indi.name) {
+            const fullName = this.stripHtml(indi.name);
+            if (fullName !== 'undefined') {
+                const nameParts = fullName.split(' ');
+                lastName = nameParts.length > 1 ? (nameParts.pop() || '') : '';
+                firstName = nameParts.join(' ');
+            }
+        }
 
         const node: HierarchyNode = {
             id: indi.id,
             firstName: firstName,
             lastName: lastName,
             gender: indi.gender,
-            dates: `${this.stripHtml(indi.birthDate || '')} - ${this.stripHtml(indi.deathDate || '')}`.trim(),
+            dates: `${this.stripHtml(indi.birthDate || '')} - ${this.stripHtml(indi.deathDate || '')}`.trim().replace(/^undefined - undefined$/, ''),
+            profileImageUrl: profileImageUrl,
             children: []
         };
         if (node.dates === '-') node.dates = '';
@@ -1041,7 +1353,10 @@ export class Tree implements AfterViewInit, OnInit {
         parentFamilies.forEach(fam => {
             fam.children.forEach(childId => {
                 if (!visited.has(childId)) {
-                    node.children?.push(this.buildHierarchy(childId, data, visited));
+                    const childNode = this.buildHierarchy(childId, data, visited);
+                    if (childNode) {
+                        node.children?.push(childNode);
+                    }
                 }
             });
         });
@@ -1053,48 +1368,12 @@ export class Tree implements AfterViewInit, OnInit {
         return node;
     }
 
-
-    private renderRoot(hierarchy: HierarchyNode) {
-        const root = d3.hierarchy(hierarchy);
-        const treeLayout = d3.tree<HierarchyNode>()
-            .nodeSize([this.nodeWidth + 40, this.nodeHeight + 100]);
-
-        treeLayout(root);
-
-        this.g.selectAll('*').remove();
-        this.drawTreeElements(root);
-        this.resetZoom();
-    }
-
-    private drawTreeElements(root: d3.HierarchyNode<HierarchyNode>) {
-        // Abstracted drawing logic from renderTree
-        // Draw links
-        this.g.selectAll('.link')
-            .data(root.links())
-            .enter()
-            .append('path')
-            .attr('class', 'link')
-            .style('fill', 'none')
-            .style('stroke', '#cbd5e1')
-            .style('stroke-width', '2.5px')
-            .attr('d', (d: any) => {
-                const sourceX = d.source.x + this.nodeWidth / 2;
-                const sourceY = d.source.y + this.nodeHeight;
-                const targetX = d.target.x + this.nodeWidth / 2;
-                const targetY = d.target.y + this.nodeHeight / 2; // Adjust target Y
-                const midY = (sourceY + d.target.y) / 2;
-
-                return `M ${sourceX} ${sourceY} V ${midY} H ${targetX} V ${d.target.y}`;
-            });
-
-        // Re-use full logic from renderTree for nodes... 
-        // Note: For brevity in this replace call, I'll keep the renderTree mostly but add this navigation.
-        this.renderTree(); // Simplest for now
-    }
-    private stripHtml(html: string): string {
+    private stripHtml(html: string | undefined | null): string {
+        if (!html) return '';
         const tmp = document.createElement('DIV');
         tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || '';
+        const text = tmp.textContent || tmp.innerText || '';
+        return text === 'undefined' ? '' : text;
     }
 
     @HostListener('window:resize')
@@ -1117,94 +1396,393 @@ export class Tree implements AfterViewInit, OnInit {
             d3.zoomIdentity.translate(this.width / 2 - this.nodeWidth / 2, 100).scale(0.8)
         );
     }
-    searchPerson(type: 'father' | 'mother' | 'spouse', query: string) {
-        if (type === 'father') this.fatherSearchQuery = query;
-        else if (type === 'mother') this.motherSearchQuery = query;
-        else this.spouseSearchQuery = query;
 
-        if (!query) {
-            if (type === 'father') {
-                this.modalData.fatherId = '';
-                this.potentialFathers = [];
-                this.showFatherResults = false;
-            } else if (type === 'mother') {
-                this.modalData.motherId = '';
-                this.potentialMothers = [];
-                this.showMotherResults = false;
-            } else {
-                this.modalData.spouseId = '';
-                this.potentialSpouses = [];
-                this.showSpouseResults = false;
+    // --- Tab Management ---
+    setActiveTab(tab: any) {
+        this.activeTab = tab;
+        this.cdr.markForCheck();
+    }
+
+    // --- UI Helpers for Modal Arrays ---
+    addNameRow() {
+        this.modalData.names.push({ given: '', surname: '', isPrimary: false, type: 'AKA' });
+    }
+    removeNameRow(index: number) {
+        this.modalData.names.splice(index, 1);
+    }
+    setPrimaryName(index: number) {
+        this.modalData.names.forEach((n: any, i: number) => n.isPrimary = (i === index));
+    }
+
+    addEvent() {
+        if (!this.modalData.events) this.modalData.events = [];
+        this.modalData.events.push({ ...this.newEvent });
+        this.newEvent = { type: 'EVEN', date: '', place: '', description: '', isPrimary: false };
+    }
+    removeEvent(index: number) {
+        this.modalData.events.splice(index, 1);
+    }
+
+    addFact() {
+        if (!this.modalData.facts) this.modalData.facts = [];
+        this.modalData.facts.push({ type: 'OCCU', value: '', description: '' });
+    }
+    removeFact(index: number) {
+        this.modalData.facts.splice(index, 1);
+    }
+
+    addCitation() {
+        if (!this.modalData.citations) this.modalData.citations = [];
+        this.modalData.citations.push({ source: '', page: '', quality: '3', text: '' });
+    }
+    removeCitation(index: number) {
+        this.modalData.citations.splice(index, 1);
+    }
+
+    addMedia() {
+        this.openMediaChooser('person');
+    }
+    removeMedia(index: number) {
+        this.modalData.media.splice(index, 1);
+    }
+
+    // Media Chooser Methods
+    openMediaChooser(target: 'person' | 'family' | 'event') {
+        this.mediaChooserTarget = target;
+        this.showMediaChooser.set(true);
+        this.loadLibraryMedia();
+    }
+
+    loadLibraryMedia() {
+        this.mediaChooserLoading.set(true);
+        const treeId = this.treeData()?.meta?.treeId || this.authService.currentTree()?.id;
+        if (!treeId) {
+            this.mediaChooserLoading.set(false);
+            return;
+        }
+
+        this.gedcomService.getMedia(treeId).subscribe({
+            next: (res: any) => {
+                const items = (res.media || []).map((m: any) => ({
+                    ...m,
+                    url: this.gedcomService.getMediaUrl(m.url)
+                }));
+                this.libraryMedia.set(items);
+                this.mediaChooserLoading.set(false);
+                this.cdr.markForCheck();
+            },
+            error: () => {
+                this.mediaChooserLoading.set(false);
+                this.cdr.markForCheck();
             }
+        });
+    }
+
+    selectMediaForResult(item: any) {
+        const targetObj = this.mediaChooserTarget === 'person' ? this.modalData : this.familyModalData;
+        if (!targetObj.media) targetObj.media = [];
+
+        // Check if already linked
+        if (targetObj.media.find((m: any) => m.id === item.id)) {
+            this.showMediaChooser.set(false);
+            return;
+        }
+
+        targetObj.media.push({
+            id: item.id,
+            url: item.url,
+            title: item.title || item.originalFileName,
+            isPrimary: false,
+            mimeType: item.mimeType
+        });
+
+        this.showMediaChooser.set(false);
+        this.cdr.markForCheck();
+    }
+
+    onMediaUploadInModal(event: any) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        if (file.type.startsWith('image/')) {
+            this.currentUploadFile.set(file);
+            const reader = new FileReader();
+            reader.onload = (e: any) => {
+                this.cropImageUrl.set(e.target.result);
+                this.showCropper.set(true);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            this.proceedWithUpload(file);
+        }
+    }
+
+    onCropped(blob: Blob) {
+        this.showCropper.set(false);
+        const originalFile = this.currentUploadFile()!;
+        const croppedFile = new File([blob], originalFile.name.replace(/\.[^/.]+$/, "") + ".webp", { type: 'image/webp' });
+        this.proceedWithUpload(croppedFile);
+    }
+
+    proceedWithUpload(file: File) {
+        const treeId = this.treeData()?.meta?.treeId || this.authService.currentTree()?.id;
+        if (!treeId) return;
+
+        this.mediaChooserLoading.set(true);
+        this.gedcomService.uploadMedia(treeId, file).subscribe({
+            next: (res: any) => {
+                // Transform URL of the new media
+                if (res.media) {
+                    res.media.url = this.gedcomService.getMediaUrl(res.media.url);
+                }
+                this.selectMediaForResult(res.media);
+                this.mediaChooserLoading.set(false);
+                this.cdr.markForCheck();
+            },
+            error: (err) => {
+                console.error('Modal upload failed', err);
+                this.mediaChooserLoading.set(false);
+                this.cdr.markForCheck();
+            }
+        });
+    }
+
+    addNote() {
+        if (!this.modalData.notes) this.modalData.notes = [];
+        this.modalData.notes.push('');
+    }
+    removeNote(index: number) {
+        this.modalData.notes.splice(index, 1);
+    }
+
+    addExtension() {
+        if (!this.modalData.extensions) this.modalData.extensions = [];
+        this.modalData.extensions.push({ key: '', value: '' });
+    }
+    removeExtension(index: number) {
+        this.modalData.extensions.splice(index, 1);
+    }
+
+    addRelationRow() {
+        if (!this.modalData.relations) this.modalData.relations = [];
+        this.modalData.relations.push({ type: 'SPOUSE', personId: '', personName: '', searchQuery: '' });
+    }
+    removeRelation(index: number) {
+        this.modalData.relations.splice(index, 1);
+    }
+
+    // --- Relationship Management ---
+    getRelationPlaceholder(type: string): string {
+        switch (type) {
+            case 'FATHER': return 'Vater suchen...';
+            case 'MOTHER': return 'Mutter suchen...';
+            case 'SPOUSE': return 'Partner suchen...';
+            case 'CHILD': return 'Kind suchen...';
+            case 'SIBLING': return 'Geschwister suchen...';
+            default: return 'Person suchen...';
+        }
+    }
+
+    getRelationLabel(type: string): string {
+        switch (type) {
+            case 'FATHER': return 'Vater';
+            case 'MOTHER': return 'Mutter';
+            case 'SPOUSE': return 'Partner/in';
+            case 'CHILD': return 'Kind';
+            case 'SIBLING': return 'Geschwister';
+            default: return 'Unbekannt';
+        }
+    }
+
+    searchPersonForRelation(index: number, query: string) {
+        this.activeRelationIndex = index;
+        if (!query || query.length < 2) {
+            this.potentialRelationPersons = [];
+            this.showRelationResults = false;
             return;
         }
 
         const data = this.treeData();
         if (!data) return;
 
-        const results = data.individuals.filter(i =>
+        this.potentialRelationPersons = data.individuals.filter(i =>
             i.name.toLowerCase().includes(query.toLowerCase()) &&
-            i.id !== this.modalData.id // Cannot be own parent/spouse
-        );
+            i.id !== this.modalData.id
+        ).slice(0, 10);
 
-        if (type === 'father') {
-            this.potentialFathers = results;
-            this.showFatherResults = true;
-        } else if (type === 'mother') {
-            this.potentialMothers = results;
-            this.showMotherResults = true;
-        } else {
-            this.potentialSpouses = results;
-            this.showSpouseResults = true;
+        this.showRelationResults = true;
+    }
+
+    selectPersonForRelation(index: number, person: Individual) {
+        const rel = this.modalData.relations[index];
+        if (!rel) return;
+
+        const validation = this.validateRelationship(this.modalData.id, person.id, rel.type);
+        if (!validation.valid) {
+            alert('Aktion nicht möglich:\n' + validation.errors.join('\n'));
+            return;
+        }
+
+        if (validation.warnings.length > 0) {
+            if (!confirm('Warnung - Möchten Sie trotzdem fortfahren?\n\n' + validation.warnings.join('\n'))) {
+                return;
+            }
+        }
+
+        rel.personId = person.id;
+        rel.personName = person.name;
+        rel.searchQuery = person.name;
+        this.showRelationResults = false;
+        this.activeRelationIndex = null;
+    }
+
+    createNewPersonForRelation(index: number) {
+        const rel = this.modalData.relations[index];
+        if (!rel) return;
+
+        const query = rel.searchQuery;
+        const type = rel.type.toLowerCase();
+
+        if (confirm(`Möchten Sie eine neue Person (${query}) als "${type}" erstellen?`)) {
+            this.pendingRelation = {
+                targetId: this.modalData.id,
+                type: type,
+                gender: rel.type === 'FATHER' ? 'M' : (rel.type === 'MOTHER' ? 'F' : 'U')
+            };
+
+            this.openModal('add');
+
+            if (query) {
+                const parts = query.trim().split(' ');
+                if (parts.length > 1) {
+                    const ln = parts.pop() || '';
+                    const fn = parts.join(' ');
+                    this.modalData.names = [{ given: fn, surname: ln, isPrimary: true, type: 'BIRTH' }];
+                } else {
+                    this.modalData.names = [{ given: query, surname: '', isPrimary: true, type: 'BIRTH' }];
+                }
+            }
         }
     }
 
-    selectPerson(type: 'father' | 'mother' | 'spouse', person: Individual) {
-        if (type === 'father') {
-            this.modalData.fatherId = person.id;
-            this.fatherSearchQuery = person.name;
-            this.showFatherResults = false;
-        } else if (type === 'mother') {
-            this.modalData.motherId = person.id;
-            this.motherSearchQuery = person.name;
-            this.showMotherResults = false;
-        } else {
-            this.modalData.spouseId = person.id;
-            this.spouseSearchQuery = person.name;
-            this.showSpouseResults = false;
+    private validateRelationship(personId: string, candidateId: string, type: string): { valid: boolean, errors: string[], warnings: string[] } {
+        const errors: string[] = [];
+        const warnings: string[] = [];
+        const data = this.treeData();
+        if (!data) return { valid: true, errors, warnings };
+
+        const candidate = data.individuals.find(i => i.id === candidateId);
+        if (!candidate) return { valid: true, errors, warnings };
+
+        const pBirth = this.getYear(this.modalData.birthDate);
+        const pDeath = this.getYear(this.modalData.deathDate);
+        const cBirth = this.getYear(candidate.birthDate);
+        const cDeath = this.getYear(candidate.deathDate);
+
+        if (personId && candidateId) {
+            const pid = personId.trim();
+            const cid = candidateId.trim();
+
+            if (type === 'FATHER' || type === 'MOTHER') {
+                if (this.isDescendantOf(cid, pid, new Set())) {
+                    errors.push('Diese Person ist bereits ein Nachfahre von Ihnen.');
+                }
+                if (pid === cid) {
+                    errors.push('Man kann nicht sein eigener Elternteil sein.');
+                }
+            } else if (type === 'CHILD') {
+                if (this.isAncestorOf(cid, pid, new Set())) {
+                    errors.push('Diese Person ist bereits ein Vorfahre von Ihnen.');
+                }
+                if (pid === cid) {
+                    errors.push('Man kann nicht sein eigenes Kind sein.');
+                }
+            }
         }
-    }
 
-    clearPerson(type: 'father' | 'mother' | 'spouse') {
-        if (type === 'father') {
-            this.modalData.fatherId = '';
-            this.fatherSearchQuery = '';
-        } else if (type === 'mother') {
-            this.modalData.motherId = '';
-            this.motherSearchQuery = '';
-        } else {
-            this.modalData.spouseId = '';
-            this.spouseSearchQuery = '';
+        if (type === 'FATHER' && candidate.gender === 'F') {
+            warnings.push('Der Vater ist als weiblich markiert.');
+        } else if (type === 'MOTHER' && candidate.gender === 'M') {
+            warnings.push('Die Mutter ist als männlich markiert.');
         }
+
+        if (pBirth && cBirth) {
+            const ageDiff = pBirth - cBirth;
+            if (type === 'FATHER' || type === 'MOTHER') {
+                if (ageDiff < 14) warnings.push(`Biologisch unwahrscheinlich: Der Elternteil wäre bei der Geburt nur ${ageDiff} Jahre alt.`);
+                if (ageDiff > 70) warnings.push(`Biologisch unwahrscheinlich: Der Elternteil wäre bei der Geburt bereits ${ageDiff} Jahre alt.`);
+                if (ageDiff < 0) errors.push('Ein Elternteil muss vor dem Kind geboren sein.');
+            } else if (type === 'CHILD') {
+                const childAgeDiff = cBirth - pBirth;
+                if (childAgeDiff < 14) warnings.push(`Biologisch unwahrscheinlich: Sie wären bei der Geburt des Kindes erst ${childAgeDiff} Jahre alt.`);
+                if (childAgeDiff < 0) errors.push('Ein Kind muss nach dem Elternteil geboren sein.');
+            }
+        }
+
+        if (pBirth && cDeath) {
+            if (type === 'FATHER' && pBirth > cDeath + 1) {
+                warnings.push('Der Vater verstarb mehr als 9 Monate vor der Geburt.');
+            } else if (type === 'MOTHER' && pBirth > cDeath) {
+                errors.push('Die Mutter verstarb vor der Geburt.');
+            }
+        }
+
+        if (pDeath && cBirth) {
+            if (type === 'CHILD' && cBirth > pDeath + (this.modalData.gender === 'M' ? 1 : 0)) {
+                errors.push('Das Kind wurde nach Ihrem Tod geboren.');
+            }
+        }
+
+        return { valid: errors.length === 0, errors, warnings };
     }
 
-    // Event Management
-    setActiveTab(tab: 'basics' | 'relations' | 'events') {
-        this.activeTab = tab;
+    private isAncestorOf(personId: string, potentialDescendantId: string, visited: Set<string>): boolean {
+        const pid = personId.trim();
+        const tid = potentialDescendantId.trim();
+        if (visited.has(pid)) return false;
+        visited.add(pid);
+
+        const data = this.treeData();
+        if (!data) return false;
+
+        const parentFams = data.families.filter(f => (f.husband?.trim() === pid) || (f.wife?.trim() === pid));
+
+        for (const fam of parentFams) {
+            if (fam.children.some(c => c.trim() === tid)) return true;
+            for (const childId of fam.children) {
+                if (this.isAncestorOf(childId, tid, visited)) return true;
+            }
+        }
+        return false;
     }
 
-    addEvent() {
-        if (!this.newEvent.type) return;
-        this.modalData.events.push({ ...this.newEvent });
-        this.newEvent = { type: 'EVEN', date: '', place: '', description: '' };
+    private isDescendantOf(personId: string, potentialAncestorId: string, visited: Set<string>): boolean {
+        const pid = personId.trim();
+        const aid = potentialAncestorId.trim();
+        if (visited.has(pid)) return false;
+        visited.add(pid);
+
+        const data = this.treeData();
+        if (!data) return false;
+
+        const childFams = data.families.filter(f => f.children.some(c => c.trim() === pid));
+
+        for (const fam of childFams) {
+            if (fam.husband?.trim() === aid || fam.wife?.trim() === aid) return true;
+            if (fam.husband && this.isDescendantOf(fam.husband, aid, visited)) return true;
+            if (fam.wife && this.isDescendantOf(fam.wife, aid, visited)) return true;
+        }
+        return false;
     }
 
-    removeEvent(index: number) {
-        this.modalData.events.splice(index, 1);
+    private getYear(dateStr?: string): number | null {
+        if (!dateStr) return null;
+        const match = dateStr.match(/\d{4}/);
+        return match ? parseInt(match[0], 10) : null;
     }
 
-    // Place Management
-    searchPlaces(query: string, field: 'birth' | 'death' | 'event' | 'family', eventIndex: number | null = null) {
+    // --- Place Management ---
+    searchPlaces(query: string, field: 'birth' | 'death' | 'event' | 'family' | 'family-event', eventIndex: number | null = null) {
         this.activePlaceField = field;
         this.activeEventIndex = eventIndex;
 
@@ -1226,23 +1804,32 @@ export class Tree implements AfterViewInit, OnInit {
     }
 
     selectPlace(place: any) {
-        if (this.activePlaceField === 'birth') {
-            this.modalData.birthPlace = place.name;
-        } else if (this.activePlaceField === 'death') {
-            this.modalData.deathPlace = place.name;
-        } else if (this.activePlaceField === 'event' && this.activeEventIndex !== null) {
-            this.modalData.events[this.activeEventIndex].place = place.name;
-        } else if (this.activePlaceField === 'family') {
+        const field = this.activePlaceField as string;
+        const idx = this.activeEventIndex;
+
+        if (field === 'birth') {
+            const birthEvent = this.modalData.events.find((e: any) => e.type === 'BIRT' || e.type === 'BIRTH');
+            if (birthEvent) birthEvent.place = place.name;
+            else this.modalData.events.push({ type: 'BIRT', date: '', place: place.name, isPrimary: true });
+        } else if (field === 'death') {
+            const deathEvent = this.modalData.events.find((e: any) => e.type === 'DEAT' || e.type === 'DEATH');
+            if (deathEvent) deathEvent.place = place.name;
+            else this.modalData.events.push({ type: 'DEAT', date: '', place: place.name, isPrimary: true });
+        } else if (field === 'event' && idx !== null) {
+            this.modalData.events[idx].place = place.name;
+        } else if (field === 'family') {
             this.newFamilyEvent.place = place.name;
+        } else if (field === 'family-event' && idx !== null) {
+            if (this.familyModalData.events && this.familyModalData.events[idx]) {
+                this.familyModalData.events[idx].place = place.name;
+            }
         }
         this.showPlaceResults = false;
     }
 
     openPlaceModal(prefill: string = '') {
         this.placeErrorMessage = '';
-
         const parts = prefill.split(',').map(p => p.trim());
-        // Right-align if fewer than 5 parts
         const fullParts = new Array(5).fill('');
         const offset = Math.max(0, 5 - parts.length);
         for (let i = 0; i < parts.length; i++) {
@@ -1279,7 +1866,7 @@ export class Tree implements AfterViewInit, OnInit {
             this.placeModalData.district.trim(),
             this.placeModalData.region.trim(),
             this.placeModalData.country.trim()
-        ].join(', ');
+        ].filter(p => p).join(', ');
 
         const payload = {
             name: name,
@@ -1292,14 +1879,20 @@ export class Tree implements AfterViewInit, OnInit {
             next: (response: any) => {
                 this.isSaving = false;
                 if (response.success) {
-                    // Apply name to the active field
-                    if (this.activePlaceField === 'birth') {
-                        this.modalData.birthPlace = response.place.name;
-                    } else if (this.activePlaceField === 'death') {
-                        this.modalData.deathPlace = response.place.name;
-                    } else if (this.activePlaceField === 'event' && this.activeEventIndex !== null) {
-                        this.modalData.events[this.activeEventIndex].place = response.place.name;
-                    } else if (this.activePlaceField === 'family') {
+                    const field = this.activePlaceField;
+                    const idx = this.activeEventIndex;
+
+                    if (field === 'birth') {
+                        const b = this.modalData.events.find((e: any) => e.type === 'BIRT' || e.type === 'BIRTH');
+                        if (b) b.place = response.place.name;
+                        else this.modalData.events.push({ type: 'BIRT', date: '', place: response.place.name, isPrimary: true });
+                    } else if (field === 'death') {
+                        const d = this.modalData.events.find((e: any) => e.type === 'DEAT' || e.type === 'DEATH');
+                        if (d) d.place = response.place.name;
+                        else this.modalData.events.push({ type: 'DEAT', date: '', place: response.place.name, isPrimary: true });
+                    } else if (field === 'event' && idx !== null) {
+                        this.modalData.events[idx].place = response.place.name;
+                    } else if (field === 'family') {
                         this.newFamilyEvent.place = response.place.name;
                     }
                     this.closePlaceModal();
@@ -1312,5 +1905,42 @@ export class Tree implements AfterViewInit, OnInit {
                 this.placeErrorMessage = err.error?.message || 'Fehler beim Speichern des Ortes.';
             }
         });
+    }
+
+    // --- New Helpers & Search ---
+
+    trackByIndex(index: number, item: any): any {
+        return index;
+    }
+
+    searchTree(query: string) {
+        if (!query || query.length < 2) {
+            this.searchResults = [];
+            return;
+        }
+        const q = query.toLowerCase();
+        this.searchResults = this.individuals
+            .filter((p: any) => (p.name || '').toLowerCase().includes(q))
+            .slice(0, 10);
+    }
+
+    focusPerson(id: string) {
+        this.showSearch = false;
+        // Search in SVG for the node with this ID
+        const node = d3.selectAll('.node').filter(function (d: any) {
+            return d.id === id;
+        });
+
+        if (!node.empty()) {
+            const d: any = node.datum();
+            const svg: any = this.svgElement.nativeElement;
+            const width = svg.clientWidth;
+            const height = svg.clientHeight;
+
+            d3.select(svg).transition().duration(750).call(
+                this.zoom.transform,
+                d3.zoomIdentity.translate(width / 2 - d.x, height / 2 - d.y).scale(1)
+            );
+        }
     }
 }
