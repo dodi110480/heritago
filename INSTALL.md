@@ -21,9 +21,16 @@ Diese Anleitung erklärt Schritt für Schritt, wie du Heritago auf einem Linux-S
 # System aktualisieren
 sudo apt update && sudo apt upgrade -y
 
-# Node.js 22.x installieren (via NodeSource)
+# Node.js 22.x installieren (npm wird automatisch mitgeliefert)
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs
+
+# npm auf die neueste Version aktualisieren
+sudo npm install -g npm@latest
+
+# Versionen prüfen
+node -v   # Sollte v22.x.x anzeigen
+npm -v    # Sollte 10.x.x oder höher anzeigen
 
 # PostgreSQL installieren
 sudo apt install -y postgresql postgresql-contrib
