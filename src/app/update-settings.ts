@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -19,6 +19,7 @@ export class UpdateSettings implements OnInit {
     public currentVersion: string = '...';
 
     private apiUrl = `http://${window.location.hostname}:3000/api/system`;
+    private cdr = inject(ChangeDetectorRef);
 
     ngOnInit() {
         this.loadSystemInfo();
@@ -31,22 +32,10 @@ export class UpdateSettings implements OnInit {
             const data = await res.json();
             if (data.success) {
                 this.systemInfo = data;
+                this.cdr.detectChanges();
             }
         } catch (err) {
             console.error('Failed to load system info', err);
-        }
-    }
-
-    async loadCurrentVersion() {
-        try {
-            // Quick check to get the current version without full update check
-            const res = await fetch(`${this.apiUrl}/check-update`);
-            const data = await res.json();
-            if (data.success) {
-                this.currentVersion = data.currentVersion || '...';
-            }
-        } catch (err) {
-            console.error('Failed to load current version', err);
         }
     }
 
@@ -55,6 +44,7 @@ export class UpdateSettings implements OnInit {
         this.error = null;
         this.updateStatus = null;
         this.updateResult = null;
+        this.cdr.detectChanges();
 
         try {
             const res = await fetch(`${this.apiUrl}/check-update`);
@@ -69,17 +59,20 @@ export class UpdateSettings implements OnInit {
             this.error = 'Verbindung zum Server fehlgeschlagen.';
         } finally {
             this.checking = false;
+            this.cdr.detectChanges();
         }
     }
 
     async performUpdate() {
         if (!this.updateStatus?.latestVersion) {
             this.error = 'Keine Ziel-Version gefunden. Bitte zuerst auf Updates prüfen.';
+            this.cdr.detectChanges();
             return;
         }
 
         this.updating = true;
         this.error = null;
+        this.cdr.detectChanges();
 
         try {
             const res = await fetch(`${this.apiUrl}/update`, {
@@ -92,7 +85,6 @@ export class UpdateSettings implements OnInit {
                 this.updateResult = data;
                 this.currentVersion = this.updateStatus.latestVersion;
                 this.updateStatus = null;
-                // Reload system info to see new version
                 setTimeout(() => this.loadSystemInfo(), 2000);
             } else {
                 this.error = data.message;
@@ -101,6 +93,7 @@ export class UpdateSettings implements OnInit {
             this.error = 'Update-Prozess fehlgeschlagen.';
         } finally {
             this.updating = false;
+            this.cdr.detectChanges();
         }
     }
 }
