@@ -1100,6 +1100,16 @@ app.get('/api/system/check-update', async (req, res) => {
             return res.status(500).json({ success: false, message: 'GITHUB_TOKEN not configured in .env' });
         }
 
+        // Project root is one level up from server/
+        const projectRoot = path.resolve(__dirname, '../../');
+
+        // Ensure git trusts this directory (required for www-data user)
+        try {
+            await execAsync(`git config --global --add safe.directory ${projectRoot}`);
+        } catch (e) {
+            // Ignore if already set
+        }
+
         // 1. Fetch latest release from GitHub API
         const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, {
             headers: {
@@ -1114,12 +1124,15 @@ app.get('/api/system/check-update', async (req, res) => {
         // 2. Get current local tag or hash
         let currentTag = '';
         try {
-            const { stdout: tagStdout } = await execAsync('git describe --tags --abbrev=0');
+            const { stdout: tagStdout } = await execAsync('git describe --tags --abbrev=0', { cwd: projectRoot });
             currentTag = tagStdout.trim();
         } catch (e) {
-            // If no tags locally, use short hash as version
-            const { stdout: hashStdout } = await execAsync('git rev-parse --short HEAD');
-            currentTag = hashStdout.trim();
+            try {
+                const { stdout: hashStdout } = await execAsync('git rev-parse --short HEAD', { cwd: projectRoot });
+                currentTag = hashStdout.trim();
+            } catch (e2) {
+                currentTag = 'unknown';
+            }
         }
 
         const hasUpdate = currentTag !== latestTag;
@@ -1141,6 +1154,7 @@ app.get('/api/system/check-update', async (req, res) => {
         });
     }
 });
+
 
 app.post('/api/system/update', async (req, res) => {
     try {
