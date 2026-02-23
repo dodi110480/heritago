@@ -11,6 +11,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import sharp from 'sharp';
+import axios from 'axios';
 
 const execAsync = promisify(exec);
 
@@ -1091,47 +1092,79 @@ app.get('/api/system/info', async (req, res) => {
 
 app.get('/api/system/check-update', async (req, res) => {
     try {
-        // Fetch latest info from remote
-        await execAsync('git fetch origin main');
+        const token = process.env.GITHUB_TOKEN;
+        const owner = process.env.GITHUB_OWNER || 'dodi110480';
+        const repo = process.env.GITHUB_REPO || 'heritago';
 
-        // Compare local main with origin/main
-        const { stdout: localHash } = await execAsync('git rev-parse HEAD');
-        const { stdout: remoteHash } = await execAsync('git rev-parse origin/main');
-
-        const hasUpdate = localHash.trim() !== remoteHash.trim();
-
-        let updateDetails = '';
-        if (hasUpdate) {
-            const { stdout: diff } = await execAsync('git log HEAD..origin/main --oneline -n 5');
-            updateDetails = diff;
+        if (!token) {
+            return res.status(500).json({ success: false, message: 'GITHUB_TOKEN not configured in .env' });
         }
+
+        // 1. Fetch latest release from GitHub API
+        const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+
+        const latestRelease = response.data;
+        const latestTag = latestRelease.tag_name;
+
+        // 2. Get current local tag or hash
+        let currentTag = '';
+        try {
+            const { stdout: tagStdout } = await execAsync('git describe --tags --abbrev=0');
+            currentTag = tagStdout.trim();
+        } catch (e) {
+            // If no tags locally, use short hash as version
+            const { stdout: hashStdout } = await execAsync('git rev-parse --short HEAD');
+            currentTag = hashStdout.trim();
+        }
+
+        const hasUpdate = currentTag !== latestTag;
 
         res.json({
             success: true,
             hasUpdate,
-            currentHash: localHash.trim().substring(0, 7),
-            remoteHash: remoteHash.trim().substring(0, 7),
-            details: updateDetails
+            currentVersion: currentTag,
+            latestVersion: latestTag,
+            releaseName: latestRelease.name,
+            details: latestRelease.body
         });
     } catch (error: any) {
-        console.error('Update check error:', error);
-        res.status(500).json({ success: false, message: 'Git command failed. Is git installed?' });
+        console.error('Update check error:', error.response?.data || error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to check for updates',
+            error: error.response?.data?.message || error.message
+        });
     }
 });
 
 app.post('/api/system/update', async (req, res) => {
     try {
-        console.log('[server]: Starting application update...');
-        const { stdout, stderr } = await execAsync('git pull origin main');
-        console.log('[server]: git pull output:', stdout);
+        const { tag } = req.body;
+        if (!tag) {
+            return res.status(400).json({ success: false, message: 'No target tag provided' });
+        }
 
-        if (stderr && !stderr.includes('From https://github.com')) {
-            console.error('[server]: git pull stderr:', stderr);
+        console.log(`[server]: Starting application update to ${tag}...`);
+
+        // 1. Fetch tags from remote
+        await execAsync('git fetch --tags');
+
+        // 2. Checkout the specific tag
+        const { stdout, stderr } = await execAsync(`git checkout tags/${tag}`);
+        console.log('[server]: git checkout output:', stdout);
+
+        if (stderr && !stderr.includes('HEAD is now at')) {
+            console.warn('[server]: git checkout warning:', stderr);
         }
 
         res.json({
             success: true,
-            message: 'Update successful. Server might need a restart if backend code changed.',
+            message: `Update to ${tag} successful. Server might need a restart if backend code changed.`,
             output: stdout
         });
     } catch (error: any) {
