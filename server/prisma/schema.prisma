@@ -1,390 +1,303 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["relationJoins"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  password  String
-  createdAt DateTime @default(now())
-}
-
-enum Gender {
-  M
-  F
-  X
-  U
-  O
-}
-
-enum NameType {
-  BIRTH
-  MARRIED
-  AKA
-  NICK
-  ROMANIZED
-  OTHER
-}
-
-enum EventType {
-  BIRT
-  CHR
-  DEAT
-  BURI
-  CREM
-  ADOP
-  BAPM
-  BAR
-  BAS
-  BLES
-  CHRA
-  CONF
-  FCOM
-  NATU
-  EMIG
-  IMMI
-  CENS
-  PROB
-  WILL
-  GRAD
-  RETI
-  OCCU
-  EDUC
-  TITL
-  RESI
-  MARR
-  DIV
-  ANUL
-  MARB
-  MARC
-  MARL
-  MARS
-  EVEN
-}
-
-enum RoleType {
-  HUSB
-  WIFE
-  PART
-  CHIL
-  ADOP
-  FOST
-  STEP
-  OTHER
-}
-
+// Global Tree to keep multiple trees separate
 model Tree {
-  id          String      @id @default(uuid())
-  name        String      @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
   title       String?
   description String?
-  ownerId     String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  individuals Individual[]
+  persons     Person[]
   families    Family[]
   sources     Source[]
   repositories Repository[]
   notes       Note[]
   places      Place[]
-  media       MediaObject[]
-  extensions  Extension[]
+  media       Media[]
 }
 
-model Individual {
-  id          String      @id @default(uuid())
-  treeId      String
-  gedcomId    String
-  sex         Gender      @default(U)
-  private     Boolean     @default(false)
+model Person {
+  id            String       @id @default(uuid())
+  treeId        String
+  sex           String?      // M/F/X/U
+  restriction   String?      
+  rin           String?      
+  gedcomId      String?      // Cross-ref ID like @I1@
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  names       Name[]
-  events      Event[]     @relation("IndiEvents")
-  facts       Fact[]      @relation("IndiFacts")
-  families    FamilyMember[]
-  citations   Citation[]  @relation("IndiCitations")
-  notes       NoteLink[]  @relation("IndiNoteLinks")
-  media       MediaLink[] @relation("IndiMediaLinks")
-  extensions  Extension[] @relation("IndiExtensions")
-
-  tree        Tree        @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  tree          Tree         @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  names         Name[]
+  events        Event[]      @relation("PersonEvents")
+  facts         Fact[]
+  attributes    Attribute[]
+  associations  Association[] @relation("PersonAssociations")
+  asAssociated  Association[] @relation("AssociatedPerson")
+  sources       Citation[]
+  mediaLinks    MediaLink[]
+  noteLinks     NoteLink[]
+  
+  parentRelationships Relationship[] @relation("ChildToParent")
+  childRelationships  Relationship[] @relation("ParentToChild")
 
   @@unique([treeId, gedcomId])
-  @@index([treeId, sex])
 }
 
 model Name {
-  id           String    @id @default(uuid())
-  individualId String
-  type         NameType  @default(BIRTH)
-  isPrimary    Boolean   @default(false)
-  full         String
-  given        String?
-  surname      String?
-  prefix       String?
-  suffix       String?
-  sortOrder    Int       @default(0)
+  id         String   @id @default(uuid())
+  personId   String
+  value      String   
+  type       String?  
+  lang       String?  
+  prefix     String?  
+  given      String?  
+  surname    String?  
+  surPrefix  String?  
+  suffix     String?  
+  nick       String?  
+  isPrimary  Boolean  @default(false)
 
-  individual   Individual @relation(fields: [individualId], references: [id], onDelete: Cascade)
-
-  @@index([individualId, isPrimary])
-  @@index([surname, given])
-  @@index([surname])
-}
-
-model Family {
-  id          String      @id @default(uuid())
-  treeId      String
-  gedcomId    String?
-  type        String?
-  sortDate    DateTime?
-
-  members     FamilyMember[]
-  events      Event[]     @relation("FamEvents")
-  facts       Fact[]      @relation("FamFacts")
-  citations   Citation[]  @relation("FamCitations")
-  notes       NoteLink[]  @relation("FamNoteLinks")
-  media       MediaLink[] @relation("FamMediaLinks")
-  extensions  Extension[] @relation("FamExtensions")
-
-  tree        Tree        @relation(fields: [treeId], references: [id], onDelete: Cascade)
-
-  @@unique([treeId, gedcomId])
-  @@index([treeId])
-}
-
-model FamilyMember {
-  id        String     @id @default(uuid())
-  familyId  String
-  individualId String
-  role      RoleType
-
-  family    Family     @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  person    Individual @relation(fields: [individualId], references: [id], onDelete: Cascade)
-
-  @@unique([familyId, individualId, role])
-  @@index([individualId])
-  @@index([familyId])
+  person     Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  sources    Citation[]
+  notes      NoteLink[]
 }
 
 model Event {
-  id           String     @id @default(uuid())
-  type         EventType
-  typeCustom   String?
-  dateText     String?
-  dateSortLow  DateTime?
-  dateSortHigh DateTime?
-  ageAtEvent   String?
-  description  String?
+  id          String   @id @default(uuid())
+  personId    String?  
+  familyId    String?  
+  type        String   // BIRT, DEAT, MARR...
+  date        Json?    // { modifier, value, phrase }
+  dateText    String?  // Original/Display text
+  placeId     String?  
+  address     Json?    
+  cause       String?  
+  age         String?  
+  description String?  
 
-  indiOwnerId  String?
-  famOwnerId   String?
-
-  placeId      String?
-  place        Place?     @relation(fields: [placeId], references: [id])
-
-  indiOwner    Individual? @relation("IndiEvents", fields: [indiOwnerId], references: [id], onDelete: Cascade)
-  famOwner     Family?     @relation("FamEvents", fields: [famOwnerId], references: [id], onDelete: Cascade)
-
-  citations    Citation[]  @relation("EventCitations")
-  notes        NoteLink[]  @relation("EventNoteLinks")
-  media        MediaLink[] @relation("EventMediaLinks")
-
-  @@index([type])
-  @@index([dateSortLow])
-  @@index([indiOwnerId])
-  @@index([famOwnerId])
+  person      Person?  @relation("PersonEvents", fields: [personId], references: [id], onDelete: Cascade)
+  family      Family?  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  place       Place?   @relation(fields: [placeId], references: [id])
+  sources     Citation[]
+  notes       NoteLink[]
+  media       MediaLink[]
 }
 
 model Fact {
-  id           String     @id @default(uuid())
-  type         String
-  value        String
-  dateText     String?
-  dateSortLow  DateTime?
+  id          String   @id @default(uuid())
+  personId    String
+  type        String   
+  value       String?  
+  date        Json?    
+  dateText    String?
+  placeId     String?
+  description String?
 
-  indiOwnerId  String?
-  famOwnerId   String?
+  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  place       Place?   @relation(fields: [placeId], references: [id])
+  sources     Citation[]
+  notes       NoteLink[]
+  media       MediaLink[]
+}
 
-  indiOwner    Individual? @relation("IndiFacts", fields: [indiOwnerId], references: [id], onDelete: Cascade)
-  famOwner     Family?     @relation("FamFacts", fields: [famOwnerId], references: [id], onDelete: Cascade)
+model Family {
+  id          String   @id @default(uuid())
+  treeId      String
+  gedcomId    String?  
+  type        String?  
+  rin         String?
 
-  @@index([type])
+  tree          Tree         @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  events        Event[]
+  sources       Citation[]
+  noteLinks     NoteLink[]
+  mediaLinks    MediaLink[]
+  relationships Relationship[]
+
+  @@unique([treeId, gedcomId])
+}
+
+model Relationship {
+  id             String   @id @default(uuid())
+  childId        String?  
+  parentId       String?  
+  familyId       String?  
+  type           String   // parent, spouse, partner
+  role           String?  // husband, wife, child
+  status         String?  
+
+  child          Person?  @relation("ChildToParent", fields: [childId], references: [id], onDelete: Cascade)
+  parent         Person?  @relation("ParentToChild", fields: [parentId], references: [id], onDelete: Cascade)
+  family         Family?  @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  noteLinks      NoteLink[]
+
+  @@unique([childId, parentId, type])
 }
 
 model Place {
-  id             String   @id @default(uuid())
-  treeId         String
-  gedcomName     String
-  normalized     String?
-  hierarchy      String?
-  latitude       Float?
-  longitude      Float?
+  id          String   @id @default(uuid())
+  treeId      String
+  name        String   
+  hierarchy   Json?    
+  latitude    Float?
+  longitude   Float?   
+  jurisdiction String?  
 
-  events         Event[]
-  tree           Tree     @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  tree        Tree     @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  events      Event[]
+  facts       Fact[]
+  noteLinks   NoteLink[]
 
-  @@unique([treeId, gedcomName])
-  @@index([normalized])
+  @@unique([treeId, name])
 }
 
 model Source {
-  id          String      @id @default(uuid())
+  id          String   @id @default(uuid())
   treeId      String
   gedcomId    String?
   title       String
   author      String?
   publication String?
   repositoryId String?
+  quality     String?  
 
+  tree        Tree     @relation(fields: [treeId], references: [id], onDelete: Cascade)
   citations   Citation[]
-  notes       NoteLink[]  @relation("SourceNoteLinks")
-  media       MediaLink[] @relation("SourceMediaLinks")
+  noteLinks   NoteLink[]
+  mediaLinks  MediaLink[]
   repository  Repository? @relation(fields: [repositoryId], references: [id])
 
-  tree        Tree        @relation(fields: [treeId], references: [id], onDelete: Cascade)
-  
   @@unique([treeId, gedcomId])
 }
 
 model Citation {
-  id          String     @id @default(uuid())
+  id          String   @id @default(uuid())
   sourceId    String
-  page        String?
-  dateText    String?
-  quotation   String?
-
-  indiId      String?
-  famId       String?
+  personId    String?
   eventId     String?
+  factId      String?
+  nameId      String?
+  familyId    String?
+  page        String?  
+  quality     String?  
+  text        String?  
 
-  source      Source     @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  individual  Individual? @relation("IndiCitations", fields: [indiId], references: [id])
-  family      Family?     @relation("FamCitations", fields: [famId], references: [id])
-  event       Event?      @relation("EventCitations", fields: [eventId], references: [id])
+  source      Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  person      Person?  @relation(fields: [personId], references: [id])
+  event       Event?   @relation(fields: [eventId], references: [id])
+  fact        Fact?    @relation(fields: [factId], references: [id])
+  name        Name?    @relation(fields: [nameId], references: [id])
+  family      Family?  @relation(fields: [familyId], references: [id])
+}
 
-  @@index([sourceId])
+model Repository {
+  id          String   @id @default(uuid())
+  treeId      String
+  name        String
+  address     Json?    
+
+  tree        Tree     @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  sources     Source[]
+}
+
+model Media {
+  id          String   @id @default(uuid())
+  treeId      String
+  url               String   
+  format            String?  
+  title             String?
+  originalFileName  String?
+  sha256            String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tree        Tree     @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  links       MediaLink[]
+  noteLinks   NoteLink[]
+}
+
+model MediaLink {
+  id          String   @id @default(uuid())
+  mediaId     String
+  personId    String?
+  eventId     String?
+  factId      String?
+  sourceId    String?
+  familyId    String?
+  isPrimary   Boolean  @default(false)
+
+  media       Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  person      Person?  @relation(fields: [personId], references: [id])
+  event       Event?   @relation(fields: [eventId], references: [id])
+  fact        Fact?    @relation(fields: [factId], references: [id])
+  source      Source?  @relation(fields: [sourceId], references: [id])
+  family      Family?  @relation(fields: [familyId], references: [id])
 }
 
 model Note {
-  id        String     @id @default(uuid())
-  treeId    String
-  gedcomId  String?
-  text      String
-  private   Boolean    @default(false)
+  id          String   @id @default(uuid())
+  treeId      String
+  text        String
 
-  links     NoteLink[]
-  tree      Tree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
-
-  @@unique([treeId, gedcomId])
+  tree        Tree     @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  links       NoteLink[]
 }
 
 model NoteLink {
   id            String    @id @default(uuid())
   noteId        String
+  personId      String?
+  eventId       String?
+  factId        String?
+  nameId        String?
+  placeId       String?
+  sourceId      String?
+  mediaId       String?
+  familyId      String?
+  relationshipId String?
+
   note          Note      @relation(fields: [noteId], references: [id], onDelete: Cascade)
-
-  individualId  String?
-  familyId      String?
-  eventId       String?
-  sourceId      String?
-  repositoryId  String?
-
-  individual    Individual? @relation("IndiNoteLinks", fields: [individualId], references: [id], onDelete: Cascade)
-  family        Family?     @relation("FamNoteLinks", fields: [familyId], references: [id], onDelete: Cascade)
-  event         Event?      @relation("EventNoteLinks", fields: [eventId], references: [id], onDelete: Cascade)
-  source        Source?     @relation("SourceNoteLinks", fields: [sourceId], references: [id], onDelete: Cascade)
-  repository    Repository? @relation("RepoNoteLinks", fields: [repositoryId], references: [id], onDelete: Cascade)
-
-  @@index([noteId])
+  person        Person?   @relation(fields: [personId], references: [id])
+  event         Event?    @relation(fields: [eventId], references: [id])
+  fact          Fact?     @relation(fields: [factId], references: [id])
+  name          Name?     @relation(fields: [nameId], references: [id])
+  place         Place?    @relation(fields: [placeId], references: [id])
+  source        Source?   @relation(fields: [sourceId], references: [id])
+  media         Media?    @relation(fields: [mediaId], references: [id])
+  family        Family?   @relation(fields: [familyId], references: [id])
+  relationship  Relationship? @relation(fields: [relationshipId], references: [id])
 }
 
-model MediaObject {
-  id               String      @id @default(uuid())
-  treeId           String
-  gedcomId         String?
-  sha256           String?
-  title            String?
-  description      String?
-  originalFileName String?
-  filePath         String?
-  url              String?
-  mimeType         String?
-  fileSize         Int?
-  width            Int?
-  height           Int?
-  primaryFor       String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+model Association {
+  id          String   @id @default(uuid())
+  personId    String
+  associatedPersonId String
+  relation    String   
 
-  links            MediaLink[]
-  tree             Tree        @relation(fields: [treeId], references: [id], onDelete: Cascade)
-
-  @@unique([treeId, gedcomId])
-  @@index([treeId, sha256])
+  person      Person   @relation("PersonAssociations", fields: [personId], references: [id], onDelete: Cascade)
+  associated  Person   @relation("AssociatedPerson", fields: [associatedPersonId], references: [id])
 }
 
-model MediaLink {
-  id            String      @id @default(uuid())
-  mediaId       String
-  media         MediaObject @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+model Attribute {
+  id          String   @id @default(uuid())
+  personId    String
+  type        String   
+  value       Json?    
 
-  individualId  String?
-  familyId      String?
-  eventId       String?
-  sourceId      String?
-
-  individual    Individual? @relation("IndiMediaLinks", fields: [individualId], references: [id], onDelete: Cascade)
-  family        Family?     @relation("FamMediaLinks", fields: [familyId], references: [id], onDelete: Cascade)
-  event         Event?      @relation("EventMediaLinks", fields: [eventId], references: [id], onDelete: Cascade)
-  source        Source?     @relation("SourceMediaLinks", fields: [sourceId], references: [id], onDelete: Cascade)
-
-  isPrimary     Boolean     @default(false)
-
-  @@index([mediaId])
+  person      Person   @relation(fields: [personId], references: [id], onDelete: Cascade)
 }
 
-model Repository {
-  id          String     @id @default(uuid())
-  treeId      String
-  gedcomId    String?
-  name        String
-  address     Json?
-  phone       String?
-  email       String?
-  www         String?
-
-  sources     Source[]
-  notes       NoteLink[] @relation("RepoNoteLinks")
-
-  tree        Tree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
-
-  @@unique([treeId, gedcomId])
-}
-
-model Extension {
-  id          String     @id @default(uuid())
-  treeId      String
-  ownerType   String?
-  ownerId     String?
-  tag         String
-  value       Json?
-
-  individualId String?
-  individual   Individual? @relation("IndiExtensions", fields: [individualId], references: [id], onDelete: Cascade)
-
-  familyId     String?
-  family       Family?     @relation("FamExtensions", fields: [familyId], references: [id], onDelete: Cascade)
-
-  tree        Tree        @relation(fields: [treeId], references: [id], onDelete: Cascade)
-
-  @@index([ownerType, ownerId, tag])
-  @@index([individualId])
-  @@index([familyId])
+model User {
+  id          String   @id @default(uuid())
+  username    String   @unique
+  password    String
+  createdAt   DateTime @default(now())
 }

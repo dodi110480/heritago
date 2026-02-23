@@ -19,6 +19,7 @@ export class Navbar {
     private router = inject(Router);
 
     errorCount = signal<number>(0);
+    isMobileMenuOpen = signal<boolean>(false);
 
     constructor() {
         // Automatically fetch diagnostics when tree might have changed
@@ -57,5 +58,13 @@ export class Navbar {
                 queryParams: { q: query, tree: activeTree.name }
             });
         }
+    }
+
+    toggleMobileMenu() {
+        this.isMobileMenuOpen.update(v => !v);
+    }
+
+    closeMobileMenu() {
+        this.isMobileMenuOpen.set(false);
     }
 }

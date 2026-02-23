@@ -99,4 +99,12 @@ export class AuthService {
             catchError(err => of({ success: false, message: err.error?.message || 'Ein unbekannter Fehler ist aufgetreten.' }))
         );
     }
+
+    updateTree(id: string, data: { title?: string, description?: string }): Observable<any> {
+        return this.http.put<any>(`${this.apiUrl}/tree/${id}`, data, { withCredentials: true });
+    }
+
+    deleteTree(id: string): Observable<any> {
+        return this.http.delete<any>(`${this.apiUrl}/tree/${id}`, { withCredentials: true });
+    }
 }

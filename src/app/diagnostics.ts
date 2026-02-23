@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
+import { GenealogyValidationService, ValidationResult } from './genealogy-validation.service';
 
 interface GedcomError {
     id: string;
@@ -18,15 +19,17 @@ interface GedcomError {
 @Component({
     selector: 'app-diagnostics',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, RouterLink],
     templateUrl: './diagnostics.html',
     styleUrl: './diagnostics.css'
 })
 export class Diagnostics implements OnInit {
     private gedcomService = inject(GedcomService);
+    private validationService = inject(GenealogyValidationService);
     authService = inject(AuthService);
 
     errors = signal<GedcomError[]>([]);
+    logicalErrors = signal<ValidationResult[]>([]);
     isLoading = signal<boolean>(true);
     treeName = signal<string>('');
 
@@ -51,6 +54,14 @@ export class Diagnostics implements OnInit {
                     error: () => {
                         this.errors.set([]);
                         this.isLoading.set(false);
+                    }
+                });
+
+                // Logical validation
+                this.gedcomService.getTreeData(tree.name).subscribe(data => {
+                    if (data) {
+                        const results = this.validationService.validateTree(data);
+                        this.logicalErrors.set(results);
                     }
                 });
             }

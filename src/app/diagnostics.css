@@ -40,6 +40,92 @@
     border-color: #60a5fa;
 }
 
+.section-title {
+    font-size: 1.25rem;
+    color: #94a3b8;
+    margin: 2rem 0 1rem 0;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.logical-validation-results {
+    margin-bottom: 2.5rem;
+}
+
+.logical-card {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 1rem;
+}
+
+.logical-card.error {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.logical-card.warning {
+    border-color: rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.result-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.logical-card.error .result-icon {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.logical-card.warning .result-icon {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.result-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.result-msg {
+    color: #f1f5f9;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.involved-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.person-link {
+    font-size: 0.8125rem;
+    color: #60a5fa;
+    text-decoration: none;
+    padding: 0.25rem 0.75rem;
+    background: rgba(96, 165, 250, 0.1);
+    border-radius: 9999px;
+    transition: all 0.2s;
+}
+
+.person-link:hover {
+    background: rgba(96, 165, 250, 0.2);
+    color: #93c5fd;
+}
+
 .error-list {
     display: flex;
     flex-direction: column;

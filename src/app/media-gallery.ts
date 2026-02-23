@@ -20,6 +20,7 @@ export class MediaGallery implements OnInit {
     loading = signal(true);
     viewMode = signal<'grid' | 'list'>('grid');
     selectedImage = signal<any | null>(null);
+    isEditing = signal(false);
 
     // Cropper state
     showCropper = signal(false);
@@ -59,7 +60,8 @@ export class MediaGallery implements OnInit {
                 console.log("MEDIA RAW RESPONSE:", res);
                 const items = (res.media || []).map((m: any) => ({
                     ...m,
-                    url: this.gedcomService.getMediaUrl(m.url)
+                    url: this.gedcomService.getMediaUrl(m.url),
+                    mimeType: m.mimeType || 'application/octet-stream' // Fallback
                 }));
                 this.mediaItems.set(items);
                 this.loading.set(false);
@@ -134,11 +136,28 @@ export class MediaGallery implements OnInit {
     }
 
     openLightbox(item: any) {
-        this.selectedImage.set(item);
+        this.selectedImage.set({ ...item }); // create a copy for editing
+        this.isEditing.set(false);
     }
 
     closeLightbox() {
         this.selectedImage.set(null);
+        this.isEditing.set(false);
+    }
+
+    saveMedia() {
+        const item = this.selectedImage();
+        if (!item) return;
+
+        this.gedcomService.updateMedia(item.id, { title: item.title, description: item.description }).subscribe({
+            next: (res) => {
+                if (res.success) {
+                    this.isEditing.set(false);
+                    this.loadMedia(); // refresh list
+                }
+            },
+            error: (err) => console.error('Failed to update media', err)
+        });
     }
 
     getMimeIcon(mime: string): string {

@@ -8,7 +8,9 @@
                 <p>{{ funStat() || 'Deine Familiengeschichte auf einen Blick' }}</p>
             </div>
 
-            <div class="hero-preview" *ngIf="treeName()">
+            <div class="hero-preview" *ngIf="treeName()" (dragover)="onDragOver($event)" (drop)="onDrop($event)"
+                [class.drop-target]="isDragging()" (click)="toggleSwitcher()"
+                title="Klicken oder Stammbaum hierher ziehen zum Wechseln">
                 <div class="mini-tree-container">
                     <svg #miniTree class="mini-tree-svg"></svg>
                     <div class="hero-info-overlay">
@@ -19,7 +21,7 @@
                         </div>
                         <div class="active-tree-info">
                             <span class="label">Aktiver Stammbaum</span>
-                            <span class="name text-glow">{{ treeName() }}</span>
+                            <span class="name text-glow">{{ authService.currentTree()?.title || treeName() }}</span>
                         </div>
                     </div>
                 </div>

@@ -88,6 +88,30 @@ app.post('/api/auth/login', async (req, res) => {
 });
 // This will eventually handle the validation logic from the /rules folder
 export class GedcomManager {
+    static async ensureMediaObject(prisma: PrismaClient, treeId: string, med: any) {
+        if (med.id) {
+            const existing = await prisma.media.findUnique({ where: { id: med.id } });
+            if (existing) return existing;
+        }
+
+        if (med.url) {
+            let cleanUrl = med.url;
+            if (cleanUrl.includes('/uploads/')) {
+                cleanUrl = '/uploads/' + cleanUrl.split('/uploads/')[1];
+            }
+            let mediaObj = await prisma.media.findFirst({
+                where: { treeId, url: cleanUrl }
+            });
+            if (!mediaObj) {
+                mediaObj = await prisma.media.create({
+                    data: { treeId, url: cleanUrl, title: med.title }
+                });
+            }
+            return mediaObj;
+        }
+        return null;
+    }
+
     static formatGedcomDate(dateStr: string): string {
         if (!dateStr) return '';
         const dmyMatch = dateStr.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
@@ -106,67 +130,82 @@ export class GedcomManager {
     static async createPerson(prisma: PrismaClient, treeId: string, data: any) {
         const xref = data.id || `@I${Date.now()}@`;
 
-        // 1. Upsert Individual
-        const person = await prisma.individual.upsert({
+        const person = await prisma.person.upsert({
             where: { treeId_gedcomId: { treeId, gedcomId: xref } },
-            update: {
-                sex: (data.gender || 'U') as any,
-            },
-            create: {
-                treeId,
-                gedcomId: xref,
-                sex: (data.gender || 'U') as any,
-            }
+            update: { sex: data.gender || 'U' },
+            create: { treeId, gedcomId: xref, sex: data.gender || 'U' }
         });
 
-        // 2. Names
-        await prisma.name.deleteMany({ where: { individualId: person.id } });
+        await prisma.name.deleteMany({ where: { personId: person.id } });
         if (data.names && Array.isArray(data.names)) {
             for (const n of data.names) {
                 await prisma.name.create({
                     data: {
-                        individualId: person.id,
+                        personId: person.id,
                         isPrimary: !!n.isPrimary,
-                        type: (n.type || 'BIRTH') as any,
-                        full: `${n.given || ''} /${n.surname || ''}/`.trim(),
+                        type: n.type || 'BIRTH',
+                        value: `${n.given || ''} /${n.surname || ''}/`.trim(),
                         given: n.given || '',
                         surname: n.surname || '',
                     }
                 });
             }
+        } else {
+            await prisma.name.create({
+                data: {
+                    personId: person.id,
+                    isPrimary: true,
+                    type: 'BIRTH',
+                    value: `${data.firstName || ''} /${data.lastName || ''}/`.trim(),
+                    given: data.firstName || '',
+                    surname: data.lastName || '',
+                }
+            });
         }
 
-        // 3. Events (includes BIRT, DEAT, etc.)
-        await prisma.event.deleteMany({ where: { indiOwnerId: person.id } });
+        // 3. Events
+        await prisma.event.deleteMany({ where: { personId: person.id } });
         if (data.events && Array.isArray(data.events)) {
             for (const e of data.events) {
-                let placeId = undefined;
+                let placeId: string | undefined = undefined;
                 if (e.place) {
                     const place = await prisma.place.upsert({
-                        where: { treeId_gedcomName: { treeId, gedcomName: e.place } },
+                        where: { treeId_name: { treeId, name: e.place } },
                         update: {},
-                        create: { treeId, gedcomName: e.place }
+                        create: { treeId, name: e.place }
                     });
                     placeId = place.id;
                 }
-                await prisma.event.create({
+                const createdEvent = await prisma.event.create({
                     data: {
-                        indiOwnerId: person.id,
-                        type: (e.type || 'EVEN') as any,
-                        dateText: e.date ? this.formatGedcomDate(e.date) : null,
-                        placeId: placeId
+                        personId: person.id,
+                        type: e.type || 'EVEN',
+                        dateText: e.dateText || e.date || null,
+                        placeId: placeId,
+                        description: e.description || null
                     }
                 });
+
+                if (e.media && Array.isArray(e.media)) {
+                    for (const med of e.media) {
+                        const mediaObj = await this.ensureMediaObject(prisma, treeId, med);
+                        if (mediaObj) {
+                            await prisma.mediaLink.create({
+                                data: { eventId: createdEvent.id, mediaId: mediaObj.id }
+                            });
+                        }
+                    }
+                }
             }
         }
 
         // 4. Facts
-        await prisma.fact.deleteMany({ where: { indiOwnerId: person.id } });
+        await prisma.fact.deleteMany({ where: { personId: person.id } });
         if (data.facts && Array.isArray(data.facts)) {
             for (const f of data.facts) {
                 await prisma.fact.create({
                     data: {
-                        indiOwnerId: person.id,
+                        personId: person.id,
                         type: f.type || 'FACT',
                         value: f.value || '',
                     }
@@ -175,10 +214,9 @@ export class GedcomManager {
         }
 
         // 5. Citations
-        await prisma.citation.deleteMany({ where: { indiId: person.id } });
+        await prisma.citation.deleteMany({ where: { personId: person.id } });
         if (data.citations && Array.isArray(data.citations)) {
             for (const cit of data.citations) {
-                // Find or create source
                 let source = await prisma.source.findFirst({
                     where: { treeId, title: cit.source }
                 });
@@ -190,10 +228,10 @@ export class GedcomManager {
                 if (source) {
                     await prisma.citation.create({
                         data: {
-                            indiId: person.id,
+                            personId: person.id,
                             sourceId: source.id,
                             page: cit.page || null,
-                            quotation: cit.text || null,
+                            text: cit.text || null,
                         }
                     });
                 }
@@ -201,21 +239,14 @@ export class GedcomManager {
         }
 
         // 6. Media
-        await prisma.mediaLink.deleteMany({ where: { individualId: person.id } });
+        await prisma.mediaLink.deleteMany({ where: { personId: person.id } });
         if (data.media && Array.isArray(data.media)) {
             for (const med of data.media) {
-                let mediaObj = await prisma.mediaObject.findFirst({
-                    where: { treeId, url: med.url }
-                });
-                if (!mediaObj && med.url) {
-                    mediaObj = await prisma.mediaObject.create({
-                        data: { treeId, url: med.url, title: med.title }
-                    });
-                }
+                const mediaObj = await this.ensureMediaObject(prisma, treeId, med);
                 if (mediaObj) {
                     await prisma.mediaLink.create({
                         data: {
-                            individualId: person.id,
+                            personId: person.id,
                             mediaId: mediaObj.id,
                             isPrimary: !!med.isPrimary
                         }
@@ -225,16 +256,18 @@ export class GedcomManager {
         }
 
         // 7. Notes
-        await prisma.noteLink.deleteMany({ where: { individualId: person.id } });
+        await prisma.noteLink.deleteMany({ where: { personId: person.id } });
         if (data.notes && Array.isArray(data.notes)) {
             for (const noteText of data.notes) {
                 if (noteText && noteText.trim()) {
-                    const note = await prisma.note.create({
+                    const note = await prisma.note.findFirst({
+                        where: { treeId, text: noteText }
+                    }) || await prisma.note.create({
                         data: { treeId, text: noteText }
                     });
                     await prisma.noteLink.create({
                         data: {
-                            individualId: person.id,
+                            personId: person.id,
                             noteId: note.id
                         }
                     });
@@ -243,174 +276,48 @@ export class GedcomManager {
         }
 
         // 8. Extensions
-        await prisma.extension.deleteMany({ where: { ownerId: person.id, ownerType: 'INDI' } });
-        // Also delete by individualId for safety with the new relation
-        await prisma.extension.deleteMany({ where: { individualId: person.id } });
-
-        if (data.extensions && Array.isArray(data.extensions)) {
-            for (const ext of data.extensions) {
-                await prisma.extension.create({
-                    data: {
-                        treeId,
-                        ownerType: 'INDI',
-                        ownerId: person.id,
-                        individualId: person.id, // Fill new field
-                        tag: ext.key,
-                        value: ext.value
-                    }
-                });
-            }
-        }
-
-        // 9. Relations (Sync Enabled)
-        const processRel = async (targetGedcomId: string, type: string) => {
-            const target = await prisma.individual.findUnique({ where: { treeId_gedcomId: { treeId, gedcomId: targetGedcomId } } });
-            if (!target) return;
-
-            const relType = type.toUpperCase();
-
-            if (relType === 'FATHER' || relType === 'MOTHER') {
-                // person is child, target is parent
-                let fam = await prisma.family.findFirst({
-                    where: { treeId, members: { some: { individualId: person.id, role: 'CHIL' } } }
-                });
-                if (!fam) {
-                    fam = await prisma.family.create({ data: { treeId, gedcomId: `@F${Date.now()}_${Math.floor(Math.random() * 1000)}@` } });
-                    await prisma.familyMember.create({ data: { familyId: fam.id, individualId: person.id, role: 'CHIL' } });
-                }
-                const role = relType === 'FATHER' ? 'HUSB' : 'WIFE';
-                const existingParent = await prisma.familyMember.findFirst({ where: { familyId: fam.id, role } });
-                if (existingParent) {
-                    await prisma.familyMember.update({ where: { id: existingParent.id }, data: { individualId: target.id } });
-                } else {
-                    await prisma.familyMember.create({ data: { familyId: fam.id, individualId: target.id, role } });
-                }
-            } else if (relType === 'SPOUSE' || relType === 'PARTNER') {
-                // Check if they are ALREADY in a family together
-                const existingFam = await prisma.family.findFirst({
-                    where: {
-                        treeId,
-                        AND: [
-                            { members: { some: { individualId: person.id } } },
-                            { members: { some: { individualId: target.id } } }
-                        ]
-                    }
-                });
-                if (!existingFam) {
-                    // Create new family
-                    const fam = await prisma.family.create({ data: { treeId, gedcomId: `@F${Date.now()}_${Math.floor(Math.random() * 1000)}@` } });
-
-                    // Assign roles intelligently: if genders match or are missing, use HUSB/WIFE as slots
-                    const pRole = person.sex === 'F' ? 'WIFE' : 'HUSB';
-                    let tRole = target.sex === 'F' ? 'WIFE' : 'HUSB';
-
-                    if (pRole === tRole) {
-                        tRole = pRole === 'HUSB' ? 'WIFE' : 'HUSB'; // Force distinct slots for same-sex partners in current DB schema
-                    }
-
-                    await prisma.familyMember.create({ data: { familyId: fam.id, individualId: person.id, role: pRole as any } });
-                    await prisma.familyMember.create({ data: { familyId: fam.id, individualId: target.id, role: tRole as any } });
-                }
-            } else if (relType === 'CHILD') {
-                // target is child, person is parent
-                let fam = await prisma.family.findFirst({
-                    where: { treeId, members: { some: { individualId: person.id, role: { in: ['HUSB', 'WIFE'] } } } }
-                });
-                if (!fam) {
-                    fam = await prisma.family.create({ data: { treeId, gedcomId: `@F${Date.now()}_${Math.floor(Math.random() * 1000)}@` } });
-                    await prisma.familyMember.create({ data: { familyId: fam.id, individualId: person.id, role: (person.sex === 'F' ? 'WIFE' : 'HUSB') } });
-                }
-                const existingChild = await prisma.familyMember.findFirst({ where: { familyId: fam.id, individualId: target.id, role: 'CHIL' } });
-                if (!existingChild) {
-                    await prisma.familyMember.create({ data: { familyId: fam.id, individualId: target.id, role: 'CHIL' } });
-                }
-            }
-        };
-
-        // SYNC: Identify and remove relationships not in incoming payload
         if (data.relations && Array.isArray(data.relations)) {
-            const incoming = data.relations.filter((r: any) => r.personId);
-            const currentMemberships = await prisma.familyMember.findMany({
-                where: { individualId: person.id },
-                include: { family: { include: { members: { include: { person: true } } } } }
+            await prisma.relationship.deleteMany({
+                where: {
+                    OR: [
+                        { childId: person.id },
+                        { parentId: person.id }
+                    ]
+                }
             });
 
-            for (const membership of currentMemberships) {
-                const fam = membership.family;
-                let removeMembership = false;
-
-                if (membership.role === 'CHIL') {
-                    const father = fam.members.find(m => m.role === 'HUSB')?.person?.gedcomId;
-                    const mother = fam.members.find(m => m.role === 'WIFE')?.person?.gedcomId;
-                    const fatherStillExists = father && incoming.some((r: any) => r.type === 'FATHER' && r.personId === father);
-                    const motherStillExists = mother && incoming.some((r: any) => r.type === 'MOTHER' && r.personId === mother);
-
-                    if ((father && !fatherStillExists) || (mother && !motherStillExists)) {
-                        removeMembership = true;
-                    }
-                } else if (membership.role === 'HUSB' || membership.role === 'WIFE') {
-                    // Check Spouse
-                    const otherRole = membership.role === 'HUSB' ? 'WIFE' : 'HUSB';
-                    const spouse = fam.members.find(m => m.role === otherRole)?.person?.gedcomId;
-                    const spouseStillExists = spouse && incoming.some((r: any) => (r.type === 'SPOUSE' || r.type === 'PARTNER') && r.personId === spouse);
-                    if (spouse && !spouseStillExists) {
-                        removeMembership = true;
-                    }
-
-                    // Check Children
-                    const childMembers = fam.members.filter(m => m.role === 'CHIL');
-                    for (const cm of childMembers) {
-                        const cid = cm.person?.gedcomId;
-                        if (cid && !incoming.some((r: any) => r.type === 'CHILD' && r.personId === cid)) {
-                            await prisma.familyMember.delete({ where: { id: cm.id } });
-                        }
-                    }
-                }
-
-                if (removeMembership) {
-                    await prisma.familyMember.delete({ where: { id: membership.id } });
-                }
-            }
-
-            // Process new/updated relations
-            for (const rel of incoming) {
-                await processRel(rel.personId, rel.type);
-            }
-        }
-
-        // Handle legacy targetId/relationType from "Add Mode"
-        if (data.targetId && data.relationType) {
-            let mappedType = data.relationType;
-            if (mappedType === 'son' || mappedType === 'daughter') mappedType = 'CHILD';
-            if (mappedType === 'partner') mappedType = 'SPOUSE';
-            await processRel(data.targetId, mappedType);
-        }
-
-        // 10. Media (Sync Enabled)
-        await prisma.mediaLink.deleteMany({ where: { individualId: person.id } });
-        if (data.media && Array.isArray(data.media)) {
-            for (const med of data.media) {
-                if (!med.id) continue;
-                await prisma.mediaLink.create({
-                    data: {
-                        individualId: person.id,
-                        mediaId: med.id,
-                        isPrimary: !!med.isPrimary
-                    }
+            for (const rel of data.relations) {
+                const target = await prisma.person.findUnique({
+                    where: { treeId_gedcomId: { treeId, gedcomId: rel.personId } }
                 });
+                if (!target) continue;
+
+                if (rel.type === 'FATHER' || rel.type === 'MOTHER' || rel.type === 'PARENT') {
+                    await prisma.relationship.create({
+                        data: { childId: person.id, parentId: target.id, type: 'parent' }
+                    });
+                } else if (rel.type === 'CHILD') {
+                    await prisma.relationship.create({
+                        data: { childId: target.id, parentId: person.id, type: 'parent' }
+                    });
+                } else if (rel.type === 'SPOUSE' || rel.type === 'PARTNER') {
+                    const existing = await prisma.relationship.findFirst({
+                        where: {
+                            OR: [
+                                { childId: person.id, parentId: target.id, type: 'spouse' },
+                                { childId: target.id, parentId: person.id, type: 'spouse' }
+                            ]
+                        }
+                    });
+                    if (!existing) {
+                        await prisma.relationship.create({
+                            data: { childId: person.id, parentId: target.id, type: 'spouse' }
+                        });
+                    }
+                }
             }
         }
 
-        // Clean up empty families 
-        const familiesToCheck = await prisma.family.findMany({
-            where: { treeId },
-            include: { members: true }
-        });
-        for (const f of familiesToCheck) {
-            if (f.members.length === 0 || (f.members.length === 1 && f.members[0].role !== 'CHIL')) {
-                await prisma.family.delete({ where: { id: f.id } });
-            }
-        }
         return person;
     }
 
@@ -419,6 +326,21 @@ export class GedcomManager {
         const birthEvent = person.events.find((e: any) => e.type === 'BIRT' || e.type === 'BIRTH');
         const deathEvent = person.events.find((e: any) => e.type === 'DEAT' || e.type === 'DEATH');
 
+        // Robust relationship extraction
+        const parentFamilyIds = [
+            ...(person.parentRelationships || []),
+            ...(person.childRelationships || [])
+        ].filter(r => r.type === 'parent' && r.role === 'child' && r.familyId)
+            .map(r => r.family?.gedcomId)
+            .filter(Boolean);
+
+        const spouseFamilyIds = [
+            ...(person.parentRelationships || []),
+            ...(person.childRelationships || [])
+        ].filter(r => r.type === 'spouse' && (r.role === 'husband' || r.role === 'wife' || !r.role) && r.familyId)
+            .map(r => r.family?.gedcomId)
+            .filter(Boolean);
+
         return {
             id: person.gedcomId,
             name: `${primaryName.given || ''} ${primaryName.surname || ''}`.trim(),
@@ -426,7 +348,8 @@ export class GedcomManager {
             lastName: primaryName.surname || '',
             gender: person.sex || 'U',
             isAlive: !deathEvent,
-            // Rich data arrays for the new modal
+            parents: Array.from(new Set(parentFamilyIds)),
+            spouses: Array.from(new Set(spouseFamilyIds)),
             names: person.names.map((n: any) => ({
                 given: n.given,
                 surname: n.surname,
@@ -436,202 +359,382 @@ export class GedcomManager {
             events: person.events.map((e: any) => ({
                 type: e.type,
                 date: e.dateText,
-                place: e.place?.gedcomName,
+                place: e.place?.name,
                 description: e.description || ''
             })),
             facts: person.facts?.map((f: any) => ({
                 type: f.type,
                 value: f.value
             })) || [],
-            citations: person.citations?.map((c: any) => ({
-                source: c.source?.title,
-                page: c.page,
-                text: c.quotation,
-                quality: '3' // Default
+            media: person.mediaLinks?.map((ml: any) => ({
+                id: ml.media?.id,
+                url: ml.media?.url,
+                title: ml.media?.title || ml.media?.originalFileName,
+                isPrimary: ml.isPrimary,
+                mimeType: ml.media?.format
             })) || [],
-            media: person.media?.map((m: any) => ({
-                id: m.media?.id,
-                url: m.media?.url,
-                title: m.media?.title || m.media?.originalFileName,
-                isPrimary: m.isPrimary,
-                mimeType: m.media?.mimeType,
-                originalFileName: m.media?.originalFileName,
-                fileSize: m.media?.fileSize
-            })) || [],
-            notes: person.notes?.map((n: any) => n.note?.text) || [],
-            extensions: person.extensions?.map((ex: any) => ({
-                key: ex.tag,
-                value: ex.value
-            })) || [],
-            // Backward compatibility
+            notes: person.noteLinks?.map((nl: any) => nl.note?.text).filter(Boolean) || [],
             birthDate: birthEvent?.dateText || '',
-            birthPlace: birthEvent?.place?.gedcomName || '',
+            birthPlace: birthEvent?.place?.name || '',
             deathDate: deathEvent?.dateText || '',
-            deathPlace: deathEvent?.place?.gedcomName || ''
+            deathPlace: deathEvent?.place?.name || ''
         };
     }
 
     static formatFamily(fam: any): any {
-        const partnerMembers = fam.members.filter((m: any) => m.role === 'HUSB' || m.role === 'WIFE' || m.role === 'PART');
-
-        let husband = null;
-        let wife = null;
-
-        if (partnerMembers.length > 0) {
-            husband = partnerMembers[0].person?.gedcomId;
-        }
-        if (partnerMembers.length > 1) {
-            wife = partnerMembers[1].person?.gedcomId;
-        }
-
-        const children = fam.members.filter((m: any) => m.role === 'CHIL').map((m: any) => m.person?.gedcomId);
-
         return {
             id: fam.gedcomId || fam.id,
-            husband,
-            wife,
-            children,
-            events: fam.events.map((e: any) => ({
+            type: fam.type,
+            events: (fam.events || []).map((e: any) => ({
                 type: e.type,
                 date: e.dateText,
-                place: e.place?.gedcomName,
-                description: e.description || ''
+                place: e.place?.name,
+                description: e.description
             })),
-            media: fam.media?.map((m: any) => ({
-                id: m.media?.id,
-                url: m.media?.url,
-                title: m.media?.title || m.media?.originalFileName,
-                isPrimary: m.isPrimary,
-                mimeType: m.media?.mimeType,
-                originalFileName: m.media?.originalFileName,
-                fileSize: m.media?.fileSize
-            })) || []
+            husband: fam.relationships?.find((r: any) => r.role === 'husband' && r.parent?.gedcomId)?.parent?.gedcomId,
+            wife: fam.relationships?.find((r: any) => r.role === 'wife' && r.parent?.gedcomId)?.parent?.gedcomId,
+            children: fam.relationships
+                ?.filter((r: any) => r.role === 'child' && r.child?.gedcomId)
+                .map((r: any) => r.child.gedcomId) || []
         };
     }
 
     static async exportTree(prisma: PrismaClient, treeId: string): Promise<string> {
-        const individuals = await prisma.individual.findMany({
+        console.log(`[GedcomManager]: Exporting tree ${treeId}`);
+        const individuals = await prisma.person.findMany({
             where: { treeId },
-            include: { names: true, events: { include: { place: true } } }
-        });
-        const families = await prisma.family.findMany({
-            where: { treeId },
-            include: { members: { include: { person: true } }, events: { include: { place: true } } }
+            include: {
+                names: true,
+                events: { include: { place: true } }
+            }
         });
 
-        const lines: string[] = ['0 HEAD', '1 GEDC', '2 VERS 7.0', '1 SOUR Heritago', '1 SUBM @U1@'];
+        const families = await prisma.family.findMany({
+            where: { treeId },
+            include: {
+                events: { include: { place: true } },
+                relationships: { include: { parent: true, child: true } }
+            }
+        });
+
+        const lines: string[] = [
+            '0 HEAD',
+            '1 GEDC',
+            '2 VERS 7.0',
+            '1 SOUR Heritago',
+            '1 CHAR UTF-8',
+            '1 SUBM @U1@'
+        ];
+
+        // --- 1. Export Individuals ---
         for (const person of individuals) {
             lines.push(`0 ${person.gedcomId} INDI`);
             if (person.sex && person.sex !== 'U') lines.push(`1 SEX ${person.sex}`);
+
             for (const name of person.names) {
-                lines.push(`1 NAME ${name.full || (name.given + ' /' + name.surname + '/')}`);
+                lines.push(`1 NAME ${name.value}`);
                 if (name.given) lines.push(`2 GIVN ${name.given}`);
                 if (name.surname) lines.push(`2 SURN ${name.surname}`);
             }
+
             for (const event of person.events) {
                 lines.push(`1 ${event.type}`);
                 if (event.dateText) lines.push(`2 DATE ${event.dateText}`);
-                if (event.place) lines.push(`2 PLAC ${event.place.gedcomName}`);
+                if (event.place) lines.push(`2 PLAC ${event.place.name}`);
+                if (event.description) lines.push(`2 NOTE ${event.description}`);
             }
-            const familyMemberships = await prisma.familyMember.findMany({ where: { individualId: person.id }, include: { family: true } });
-            for (const membership of familyMemberships) {
-                const tag = membership.role === 'CHIL' ? 'FAMC' : 'FAMS';
-                lines.push(`1 ${tag} ${membership.family.gedcomId}`);
+
+            // FAMC (Family as child)
+            const birthFams = families.filter(f =>
+                f.relationships.some(r => r.childId === person.id && r.role === 'child')
+            );
+            for (const bf of birthFams) {
+                lines.push(`1 FAMC ${bf.gedcomId}`);
+            }
+
+            // FAMS (Family as spouse)
+            const spouseFams = families.filter(f =>
+                f.relationships.some(r => r.parentId === person.id && (r.role === 'husband' || r.role === 'wife' || r.type === 'spouse'))
+            );
+            for (const sf of spouseFams) {
+                lines.push(`1 FAMS ${sf.gedcomId}`);
             }
         }
+
+        // --- 2. Export Families ---
         for (const fam of families) {
             lines.push(`0 ${fam.gedcomId} FAM`);
-            for (const member of fam.members) {
-                const tag = member.role === 'HUSB' ? 'HUSB' : member.role === 'WIFE' ? 'WIFE' : 'CHIL';
-                lines.push(`1 ${tag} ${member.person.gedcomId}`);
+
+            const husb = fam.relationships.find(r => r.role === 'husband')?.parent;
+            const wife = fam.relationships.find(r => r.role === 'wife')?.parent;
+            const children = fam.relationships.filter(r => r.role === 'child').map(r => r.child);
+
+            if (husb) lines.push(`1 HUSB ${husb.gedcomId}`);
+            if (wife) lines.push(`1 WIFE ${wife.gedcomId}`);
+            for (const child of children) {
+                if (child) lines.push(`1 CHIL ${child.gedcomId}`);
             }
+
             for (const event of fam.events) {
                 lines.push(`1 ${event.type}`);
                 if (event.dateText) lines.push(`2 DATE ${event.dateText}`);
-                if (event.place) lines.push(`2 PLAC ${event.place.gedcomName}`);
+                if (event.place) lines.push(`2 PLAC ${event.place.name}`);
+                if (event.description) lines.push(`2 NOTE ${event.description}`);
             }
         }
+
+        // --- 3. Trailer ---
         lines.push('0 @U1@ SUBM', '1 NAME Heritago Submitter', '0 TRLR');
+
         return lines.join('\n');
     }
 
     static async importGedcom(prisma: PrismaClient, treeId: string, content: string) {
-        console.log(`[GedcomManager]: Starting import for tree ${treeId}, length: ${content.length}`);
-        const lines = content.split(/\r?\n/).filter(l => l.trim().length > 0);
 
-        await prisma.individual.deleteMany({ where: { treeId } });
+        // --- Helper: Tree-based Parsing ---
+        interface GedcomNode {
+            level: number;
+            xref?: string;
+            tag: string;
+            value?: string;
+            children: GedcomNode[];
+        }
+
+        const parseToTree = (raw: string): GedcomNode[] => {
+            const lines = raw.split(/\r?\n/).filter(l => l.trim().length > 0);
+            const rootRecords: GedcomNode[] = [];
+            const stack: GedcomNode[] = [];
+
+            for (const line of lines) {
+                const match = line.match(/^(\d+)\s+(@\S+@)?\s*(\S+)\s*(.*)?$/);
+                if (!match) continue;
+
+                const level = parseInt(match[1]);
+                const xref = match[2];
+                const tag = match[3];
+                const value = match[4]?.trim();
+
+                const node: GedcomNode = { level, xref, tag, value, children: [] };
+
+                if (level === 0) {
+                    rootRecords.push(node);
+                    stack.length = 0;
+                    stack[0] = node;
+                } else {
+                    while (stack.length > 0 && stack[stack.length - 1].level >= level) {
+                        stack.pop();
+                    }
+                    if (stack.length > 0) {
+                        stack[stack.length - 1].children.push(node);
+                    }
+                    stack.push(node);
+                }
+            }
+            return rootRecords;
+        };
+
+        const getFullValue = (node: GedcomNode): string => {
+            let val = node.value || '';
+            for (const child of node.children) {
+                if (child.tag === 'CONT') {
+                    val += '\n' + (child.value || '');
+                } else if (child.tag === 'CONC') {
+                    val += (child.value || '');
+                }
+            }
+            return val;
+        };
+
+        const findChild = (node: GedcomNode, tag: string) => node.children.find(c => c.tag === tag);
+        const findChildren = (node: GedcomNode, tag: string) => node.children.filter(c => c.tag === tag);
+
+        const treeRecords = parseToTree(content);
+
+        // --- Pass 1: Clean Data ---
+        await prisma.person.deleteMany({ where: { treeId } });
         await prisma.family.deleteMany({ where: { treeId } });
+        await prisma.place.deleteMany({ where: { treeId } });
+        await prisma.source.deleteMany({ where: { treeId } });
+        await prisma.note.deleteMany({ where: { treeId } });
+        await prisma.media.deleteMany({ where: { treeId } });
 
-        console.log(`[GedcomManager]: Pass 1: Creating skeletons...`);
-        for (const line of lines) {
-            const match = line.match(/^0\s+(@\S+@)\s+(INDI|FAM)\s*$/);
-            if (match) {
-                const xref = match[1], tag = match[2];
-                if (tag === 'INDI') await prisma.individual.create({ data: { treeId, gedcomId: xref } });
-                else if (tag === 'FAM') await prisma.family.create({ data: { treeId, gedcomId: xref } });
+        // --- Pass 2: Create Identity Records (INDI & FAM) ---
+        // Map original GEDCOM IDs to internal database IDs
+        const gedIdToDbId: Record<string, string> = {};
+
+        for (const rec of treeRecords) {
+            if (rec.tag === 'INDI' && rec.xref) {
+                const p = await prisma.person.create({
+                    data: { treeId, gedcomId: rec.xref, sex: 'U' }
+                });
+                gedIdToDbId[rec.xref] = p.id;
+            } else if (rec.tag === 'FAM' && rec.xref) {
+                const f = await prisma.family.create({
+                    data: { treeId, gedcomId: rec.xref }
+                });
+                gedIdToDbId[rec.xref] = f.id;
             }
         }
 
-        console.log(`[GedcomManager]: Pass 2: Filling details...`);
-        let currentIndiId: string | null = null, currentFamId: string | null = null, currentEventId: string | null = null;
-        for (const line of lines) {
-            const match = line.match(/^(\d+)\s+(@\S+@)?\s*(\S+)\s*(.*)?$/);
-            if (!match) continue;
-            const level = parseInt(match[1]), xref = match[2], tag = match[3], payload = match[4]?.trim();
+        // --- Pass 3: Details (Names, Events, Places, etc.) ---
+        const gedEvents = ['BIRT', 'DEAT', 'MARR', 'BURI', 'CHR', 'ADOP', 'RETI', 'GRAD', 'EMIG', 'IMMI', 'CENS', 'EVEN'];
 
-            if (level === 0) {
-                currentEventId = null;
-                if (tag === 'INDI' && xref) {
-                    const indi = await prisma.individual.findUnique({ where: { treeId_gedcomId: { treeId, gedcomId: xref } } });
-                    currentIndiId = indi?.id || null; currentFamId = null;
-                } else if (tag === 'FAM' && xref) {
-                    const fam = await prisma.family.findUnique({ where: { treeId_gedcomId: { treeId, gedcomId: xref } } });
-                    currentFamId = fam?.id || null; currentIndiId = null;
-                } else { currentIndiId = null; currentFamId = null; }
-            } else if (level === 1 && currentIndiId) {
-                currentEventId = null;
-                if (tag === 'NAME' && payload) {
-                    const parts = payload.split('/');
-                    const given = parts[0]?.trim() || '';
-                    const surname = parts[1]?.trim() || '';
-                    const cleanFull = payload.replace(/\//g, '').trim();
-                    await prisma.name.create({ data: { individualId: currentIndiId, isPrimary: true, full: cleanFull, given, surname } });
-                } else if (tag === 'SEX') {
-                    await prisma.individual.update({ where: { id: currentIndiId }, data: { sex: (payload === 'F' ? 'F' : payload === 'M' ? 'M' : 'U') as any } });
-                } else if (['BIRT', 'DEAT', 'CHR', 'BURI'].includes(tag)) {
-                    const event = await prisma.event.create({ data: { indiOwnerId: currentIndiId, type: tag as any } });
-                    currentEventId = event.id;
+        for (const rec of treeRecords) {
+            const dbId = rec.xref ? gedIdToDbId[rec.xref] : null;
+
+            if (rec.tag === 'INDI' && dbId) {
+                // Sex
+                const sexNode = findChild(rec, 'SEX');
+                if (sexNode) {
+                    await prisma.person.update({
+                        where: { id: dbId },
+                        data: { sex: sexNode.value === 'F' ? 'F' : (sexNode.value === 'M' ? 'M' : 'U') }
+                    });
                 }
-            } else if (level === 1 && currentFamId) {
-                currentEventId = null;
-                if (['HUSB', 'WIFE', 'CHIL'].includes(tag)) {
-                    const person = await prisma.individual.findUnique({ where: { treeId_gedcomId: { treeId, gedcomId: payload } } });
-                    if (person) {
-                        const role = tag === 'CHIL' ? 'CHIL' : (tag === 'HUSB' ? 'HUSB' : 'WIFE');
-                        await prisma.familyMember.create({ data: { familyId: currentFamId, individualId: person.id, role } });
+
+                // Names
+                for (const nameNode of findChildren(rec, 'NAME')) {
+                    const full = getFullValue(nameNode);
+                    const givenNode = findChild(nameNode, 'GIVN');
+                    const surnNode = findChild(nameNode, 'SURN');
+
+                    let given = givenNode?.value || '';
+                    let surname = surnNode?.value || '';
+
+                    if (!given && !surname) {
+                        const parts = full.split('/');
+                        given = parts[0]?.trim() || '';
+                        surname = parts[1]?.trim() || '';
                     }
-                } else if (['MARR', 'DIV'].includes(tag)) {
-                    const event = await prisma.event.create({ data: { famOwnerId: currentFamId, type: tag as any } });
-                    currentEventId = event.id;
-                }
-            } else if (level === 2 && currentEventId) {
-                if (tag === 'DATE') await prisma.event.update({ where: { id: currentEventId }, data: { dateText: payload } });
-                else if (tag === 'PLAC') {
-                    await prisma.event.update({
-                        where: { id: currentEventId },
+
+                    await prisma.name.create({
                         data: {
-                            place: {
-                                connectOrCreate: {
-                                    where: { treeId_gedcomName: { treeId, gedcomName: payload } },
-                                    create: { treeId, gedcomName: payload }
-                                }
-                            }
+                            personId: dbId,
+                            value: full.replace(/\//g, '').trim(),
+                            given,
+                            surname,
+                            isPrimary: nameNode === findChildren(rec, 'NAME')[0]
                         }
                     });
                 }
+
+                // Events
+                for (const child of rec.children) {
+                    if (gedEvents.includes(child.tag)) {
+                        const dateNode = findChild(child, 'DATE');
+                        const placeNode = findChild(child, 'PLAC');
+
+                        let dbPlaceId = null;
+                        if (placeNode?.value) {
+                            const p = await prisma.place.upsert({
+                                where: { treeId_name: { treeId, name: placeNode.value } },
+                                update: {},
+                                create: { treeId, name: placeNode.value }
+                            });
+                            dbPlaceId = p.id;
+                        }
+
+                        await prisma.event.create({
+                            data: {
+                                personId: dbId,
+                                type: child.tag,
+                                dateText: dateNode?.value || null,
+                                placeId: dbPlaceId,
+                                description: child.value || null
+                            }
+                        });
+                    }
+                }
+            } else if (rec.tag === 'FAM' && dbId) {
+                // Family Events (MARR etc)
+                for (const child of rec.children) {
+                    if (gedEvents.includes(child.tag)) {
+                        const dateNode = findChild(child, 'DATE');
+                        const placeNode = findChild(child, 'PLAC');
+
+                        let dbPlaceId = null;
+                        if (placeNode?.value) {
+                            const p = await prisma.place.upsert({
+                                where: { treeId_name: { treeId, name: placeNode.value } },
+                                update: {},
+                                create: { treeId, name: placeNode.value }
+                            });
+                            dbPlaceId = p.id;
+                        }
+
+                        await prisma.event.create({
+                            data: {
+                                familyId: dbId,
+                                type: child.tag,
+                                dateText: dateNode?.value || null,
+                                placeId: dbPlaceId,
+                                description: child.value || null
+                            }
+                        });
+                    }
+                }
+
+                // Relationships
+                const husb = findChild(rec, 'HUSB');
+                const wife = findChild(rec, 'WIFE');
+                const children = findChildren(rec, 'CHIL');
+
+                const hId = husb?.value && gedIdToDbId[husb.value];
+                const wId = wife?.value && gedIdToDbId[wife.value];
+
+                if (hId) {
+                    await prisma.relationship.create({
+                        data: { parentId: hId, familyId: dbId, type: 'spouse', role: 'husband' }
+                    });
+                    console.log(`[GedcomManager]: Linked husband ${husb.value} to family ${rec.xref}`);
+                }
+                if (wId) {
+                    await prisma.relationship.create({
+                        data: { parentId: wId, familyId: dbId, type: 'spouse', role: 'wife' }
+                    });
+                    console.log(`[GedcomManager]: Linked wife ${wife.value} to family ${rec.xref}`);
+                }
+
+                // Spouse-spouse direct link (no familyId) for some tree layouts
+                if (hId && wId) {
+                    await prisma.relationship.upsert({
+                        where: { childId_parentId_type: { childId: wId, parentId: hId, type: 'spouse' } },
+                        update: {},
+                        create: { childId: wId, parentId: hId, type: 'spouse' }
+                    });
+                }
+
+                for (const childRec of children) {
+                    const cId = childRec.value && gedIdToDbId[childRec.value];
+                    if (cId) {
+                        // Link child to family record
+                        await prisma.relationship.create({
+                            data: { childId: cId, familyId: dbId, type: 'parent', role: 'child' }
+                        });
+                        console.log(`[GedcomManager]: Linked child ${childRec.value} to family ${rec.xref}`);
+
+                        // Direct parent-child links for easier traversal/rendering
+                        if (hId) {
+                            await prisma.relationship.upsert({
+                                where: { childId_parentId_type: { childId: cId, parentId: hId, type: 'parent' } },
+                                update: {},
+                                create: { childId: cId, parentId: hId, type: 'parent' }
+                            });
+                        }
+                        if (wId) {
+                            await prisma.relationship.upsert({
+                                where: { childId_parentId_type: { childId: cId, parentId: wId, type: 'parent' } },
+                                update: {},
+                                create: { childId: cId, parentId: wId, type: 'parent' }
+                            });
+                        }
+                    }
+                }
             }
         }
-        console.log(`[GedcomManager]: Import completed successfully.`);
+
+
+        console.log(`[GedcomManager]: Import completed. Records parsed: ${treeRecords.length}`);
     }
 }
 
@@ -668,45 +771,92 @@ app.post('/api/tree/create', async (req, res) => {
     }
 });
 
+app.put('/api/tree/:id', async (req, res) => {
+    const { id } = req.params;
+    const { title, description } = req.body;
+    try {
+        const tree = await prisma.tree.update({
+            where: { id },
+            data: { title, description }
+        });
+        res.json({ success: true, tree });
+    } catch (error) {
+        res.status(400).json({ success: false, message: 'Could not update tree' });
+    }
+});
+
+app.delete('/api/tree/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Find media to delete files
+        const media = await prisma.media.findMany({ where: { treeId: id } });
+        for (const m of media) {
+            const fname = (m.url?.includes('/uploads/') ? m.url.split('/uploads/').pop() : null);
+            if (fname) {
+                const fullPath = path.join(UPLOADS_DIR, fname);
+                if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+            }
+        }
+
+        await prisma.tree.delete({ where: { id } });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(400).json({ success: false, message: 'Could not delete tree' });
+    }
+});
+
 app.get('/api/tree/:tree', async (req, res) => {
     const { tree: treeName } = req.params;
     const tree = await prisma.tree.findUnique({
         where: { name: treeName },
         include: {
-            individuals: {
+            persons: {
                 include: {
                     names: true,
-                    events: { include: { place: true } },
-                    facts: true,
-                    citations: { include: { source: true } },
-                    media: { include: { media: true } },
-                    notes: { include: { note: true } },
-                    extensions: true
+                    events: {
+                        include: {
+                            place: true,
+                            media: { include: { media: true } }
+                        }
+                    },
+                    facts: {
+                        include: {
+                            media: { include: { media: true } }
+                        }
+                    },
+                    sources: { include: { source: true } },
+                    mediaLinks: { include: { media: true } },
+                    noteLinks: { include: { note: true } },
+                    parentRelationships: { include: { family: true } },
+                    childRelationships: { include: { family: true } }
                 }
             },
             families: {
                 include: {
-                    members: { include: { person: true } },
                     events: { include: { place: true } },
-                    media: { include: { media: true } }
+                    relationships: {
+                        include: {
+                            parent: true,
+                            child: true
+                        }
+                    },
+                    mediaLinks: { include: { media: true } }
                 }
             }
-        },
-        // @ts-ignore - Prisma 7 specific preview feature
-        relationLoadStrategy: 'join'
+        }
     });
 
     if (!tree) return res.status(404).json({ success: false });
 
-    const individuals = tree.individuals.map(i => GedcomManager.formatGedcom(i));
+    const individuals = tree.persons.map(i => GedcomManager.formatGedcom(i));
     const families = tree.families.map(f => GedcomManager.formatFamily(f));
 
-    res.json({
-        success: true,
-        meta: { tree: tree.name, treeId: tree.id, title: tree.title },
-        individuals,
-        families
-    });
+    console.log(`[API]: Tree ${treeName} - Individuals: ${individuals.length}, Families: ${families.length}`);
+    if (families.length > 0) {
+        console.log(`[API]: Sample Family ${families[0].id}: husband=${families[0].husband}, wife=${families[0].wife}, children=${families[0].children.length}`);
+    }
+
+    res.json({ success: true, individuals, families, meta: { tree: treeName, treeId: tree.id } });
 });
 
 app.post('/api/tree/:tree/person', async (req, res) => {
@@ -717,26 +867,12 @@ app.post('/api/tree/:tree/person', async (req, res) => {
     if (!tree) return res.status(404).json({ success: false });
 
     if (mode === 'delete' && id) {
-        const personToDelete = await prisma.individual.findUnique({
+        const personToDelete = await prisma.person.findUnique({
             where: { treeId_gedcomId: { treeId: tree.id, gedcomId: id } }
         });
 
         if (personToDelete) {
-            await prisma.individual.delete({ where: { id: personToDelete.id } });
-
-            // Clean up potentially empty families
-            const emptyFams = await prisma.family.findMany({
-                where: {
-                    treeId: tree.id,
-                    members: { none: {} }
-                }
-            });
-
-            if (emptyFams.length > 0) {
-                await prisma.family.deleteMany({
-                    where: { id: { in: emptyFams.map(f => f.id) } }
-                });
-            }
+            await prisma.person.delete({ where: { id: personToDelete.id } });
         }
         return res.json({ success: true });
     }
@@ -753,7 +889,7 @@ app.get('/api/tree/:tree/search', async (req, res) => {
     const tree = await prisma.tree.findUnique({ where: { name: treeName } });
     if (!tree) return res.status(404).json({ success: false });
 
-    const people = await prisma.individual.findMany({
+    const people = await prisma.person.findMany({
         where: {
             treeId: tree.id,
             names: {
@@ -761,7 +897,7 @@ app.get('/api/tree/:tree/search', async (req, res) => {
                     OR: [
                         { given: { contains: q as string, mode: 'insensitive' } },
                         { surname: { contains: q as string, mode: 'insensitive' } },
-                        { full: { contains: q as string, mode: 'insensitive' } }
+                        { value: { contains: q as string, mode: 'insensitive' } }
                     ]
                 }
             }
@@ -778,81 +914,121 @@ app.get('/api/tree/:tree/search', async (req, res) => {
 });
 
 app.post('/api/tree/:tree/family', async (req, res) => {
+    // Note: In the new relational model, "Family" is more of a grouping.
+    // Relationships are stored in the Relationship model.
+    // This route might need a significant rethink if we want to keep it.
+    // For now, let's keep it minimal and just handle the legacy spouse/children logic.
     const { tree: treeName } = req.params;
     const data = req.body;
 
     const tree = await prisma.tree.findUnique({ where: { name: treeName } });
     if (!tree) return res.status(404).json({ success: false });
 
-    const gedcomId = data.id;
-    let fam;
-    if (gedcomId) {
-        fam = await prisma.family.findUnique({ where: { treeId_gedcomId: { treeId: tree.id, gedcomId } } });
-    }
-
-    if (!fam) {
-        fam = await prisma.family.create({ data: { treeId: tree.id, gedcomId: gedcomId || `@F${Date.now()}@` } });
-    }
-
-    // Update members
-    await prisma.familyMember.deleteMany({ where: { familyId: fam.id } });
-
-    if (data.husband) {
-        const indi = await prisma.individual.findUnique({ where: { treeId_gedcomId: { treeId: tree.id, gedcomId: data.husband } } });
-        if (indi) await prisma.familyMember.create({ data: { familyId: fam.id, individualId: indi.id, role: 'HUSB' } });
-    }
-    if (data.wife) {
-        const indi = await prisma.individual.findUnique({ where: { treeId_gedcomId: { treeId: tree.id, gedcomId: data.wife } } });
-        if (indi) await prisma.familyMember.create({ data: { familyId: fam.id, individualId: indi.id, role: 'WIFE' } });
-    }
-    if (data.children) {
-        for (const childId of data.children) {
-            const indi = await prisma.individual.findUnique({ where: { treeId_gedcomId: { treeId: tree.id, gedcomId: childId } } });
-            if (indi) await prisma.familyMember.create({ data: { familyId: fam.id, individualId: indi.id, role: 'CHIL' } });
+    // Legacy support: if we receive husbands/wifes/children, we create relationships
+    if (data.husband && data.wife) {
+        const h = await prisma.person.findUnique({ where: { treeId_gedcomId: { treeId: tree.id, gedcomId: data.husband } } });
+        const w = await prisma.person.findUnique({ where: { treeId_gedcomId: { treeId: tree.id, gedcomId: data.wife } } });
+        if (h && w) {
+            await prisma.relationship.upsert({
+                where: { childId_parentId_type: { childId: h.id, parentId: w.id, type: 'spouse' } },
+                update: {},
+                create: { childId: h.id, parentId: w.id, type: 'spouse' }
+            });
         }
     }
 
-    // Update events (Multiple events sync)
-    await prisma.event.deleteMany({ where: { famOwnerId: fam.id } });
-    if (data.events && Array.isArray(data.events)) {
-        for (const e of data.events) {
-            let placeId = undefined;
-            if (e.place) {
-                const place = await prisma.place.upsert({
-                    where: { treeId_gedcomName: { treeId: tree.id, gedcomName: e.place } },
-                    update: {},
-                    create: { treeId: tree.id, gedcomName: e.place }
-                });
-                placeId = place.id;
+    res.json({ success: true });
+});
+
+app.get('/api/tree/:tree/place', async (req, res) => {
+    const { tree: treeName } = req.params;
+    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+    if (!tree) return res.status(404).json({ success: false });
+
+    const places = await prisma.place.findMany({
+        where: { treeId: tree.id },
+        orderBy: { name: 'asc' }
+    });
+
+    res.json({
+        success: true, places: places.map(p => ({
+            name: p.name,
+            latitude: p.latitude,
+            longitude: p.longitude
+        }))
+    });
+});
+
+app.post('/api/tree/:tree/place', async (req, res) => {
+    const { tree: treeName } = req.params;
+    const { name, old_name, latitude, longitude, mode } = req.body;
+
+    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+    if (!tree) return res.status(404).json({ success: false });
+
+    try {
+        if (mode === 'delete' && name) {
+            const placeToDelete = await prisma.place.findUnique({
+                where: { treeId_name: { treeId: tree.id, name: name } }
+            });
+            if (placeToDelete) {
+                await prisma.place.delete({ where: { id: placeToDelete.id } });
             }
-            await prisma.event.create({
+            return res.json({ success: true });
+        }
+
+        const lat = (latitude !== undefined && latitude !== '') ? parseFloat(latitude) : null;
+        const lng = (longitude !== undefined && longitude !== '') ? parseFloat(longitude) : null;
+
+        if (old_name && old_name !== name) {
+            await prisma.place.update({
+                where: { treeId_name: { treeId: tree.id, name: old_name } },
                 data: {
-                    famOwnerId: fam.id,
-                    type: (e.type || 'EVEN') as any,
-                    dateText: e.date || null,
-                    placeId: placeId,
-                    description: e.description || null
+                    name: name,
+                    latitude: lat,
+                    longitude: lng
+                }
+            });
+        } else {
+            await prisma.place.upsert({
+                where: { treeId_name: { treeId: tree.id, name: name } },
+                update: {
+                    latitude: lat,
+                    longitude: lng
+                },
+                create: {
+                    treeId: tree.id,
+                    name: name,
+                    latitude: lat,
+                    longitude: lng
                 }
             });
         }
-    }
 
-    // Update media
-    await prisma.mediaLink.deleteMany({ where: { familyId: fam.id } });
-    if (data.media && Array.isArray(data.media)) {
-        for (const med of data.media) {
-            if (!med.id) continue;
-            await prisma.mediaLink.create({
-                data: {
-                    familyId: fam.id,
-                    mediaId: med.id,
-                    isPrimary: !!med.isPrimary
-                }
-            });
-        }
+        res.json({ success: true });
+    } catch (error: any) {
+        console.error('Place save error:', error);
+        res.status(500).json({ success: false, message: error.message });
     }
+});
 
-    res.json({ success: true, family: fam });
+app.get('/api/tree/:tree/places/search', async (req, res) => {
+    const { tree: treeName } = req.params;
+    const { q } = req.query;
+    if (!q) return res.json({ success: true, results: [] });
+
+    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+    if (!tree) return res.status(404).json({ success: false });
+
+    const places = await prisma.place.findMany({
+        where: {
+            treeId: tree.id,
+            name: { contains: q as string, mode: 'insensitive' }
+        },
+        take: 10
+    });
+
+    res.json({ success: true, results: places.map(p => p.name) });
 });
 
 app.get('/api/tree/:tree/statistics', async (req, res) => {
@@ -861,9 +1037,9 @@ app.get('/api/tree/:tree/statistics', async (req, res) => {
     if (!tree) return res.status(404).json({ success: false });
 
     const counts = {
-        individuals: await prisma.individual.count({ where: { treeId: tree.id } }),
+        individuals: await prisma.person.count({ where: { treeId: tree.id } }),
         families: await prisma.family.count({ where: { treeId: tree.id } }),
-        media: await prisma.mediaObject.count({ where: { treeId: tree.id } }),
+        media: await prisma.media.count({ where: { treeId: tree.id } }),
     };
 
     res.json({ success: true, counts });
@@ -886,8 +1062,9 @@ app.post('/api/tree/:tree/import', upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
 
     try {
-        const content = req.file.buffer.toString('utf-8');
+        const content = fs.readFileSync(req.file.path, 'utf-8');
         await GedcomManager.importGedcom(prisma, tree.id, content);
+        fs.unlinkSync(req.file.path);
         res.json({ success: true });
     } catch (error: any) {
         console.error('Import error:', error);
@@ -985,20 +1162,59 @@ app.get('/api/media', async (req, res) => {
             ];
         }
 
-        const media = await prisma.mediaObject.findMany({
+        const media = await prisma.media.findMany({
             where,
             include: {
                 links: {
                     include: {
-                        individual: { include: { names: { where: { isPrimary: true } } } },
-                        family: { include: { members: { include: { person: { include: { names: { where: { isPrimary: true } } } } } } } }
+                        person: { include: { names: { where: { isPrimary: true } } } },
+                        family: { include: { mediaLinks: { include: { media: true } } } }
                     }
                 }
             },
             orderBy: { createdAt: 'desc' }
         });
 
-        res.json({ success: true, media });
+        // --- Helper for filename extraction ---
+        const getFileName = (m: any) => {
+            if (m.filePath) return m.filePath;
+            if (m.url?.includes('/uploads/')) {
+                const parts = m.url.split('/uploads/');
+                return parts[parts.length - 1];
+            }
+            return null;
+        };
+
+        // --- Sync/Pruning Logic ---
+        const validMedia = [];
+        const orphanedIds = [];
+
+        for (const item of media) {
+            let fileFound = true;
+            const fname = getFileName(item);
+
+            if (fname) {
+                const fullPath = path.join(UPLOADS_DIR, fname);
+                if (!fs.existsSync(fullPath)) {
+                    fileFound = false;
+                }
+            }
+
+            if (fileFound) {
+                validMedia.push(item);
+            } else {
+                console.log(`[server]: Pruning orphaned media entry: ${item.id} (Filename: ${fname})`);
+                orphanedIds.push(item.id);
+            }
+        }
+
+        if (orphanedIds.length > 0) {
+            await prisma.media.deleteMany({
+                where: { id: { in: orphanedIds } }
+            });
+        }
+
+        res.json({ success: true, media: validMedia });
     } catch (error: any) {
         console.error('Fetch media error:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -1024,7 +1240,7 @@ app.post('/api/media/upload', upload.single('file'), async (req, res) => {
         const hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
         // Check for duplicates based on hash
-        const existing = await prisma.mediaObject.findFirst({
+        const existing = await prisma.media.findFirst({
             where: { treeId, sha256: hash }
         });
 
@@ -1032,6 +1248,7 @@ app.post('/api/media/upload', upload.single('file'), async (req, res) => {
             fs.unlinkSync(file.path);
             return res.json({ success: true, media: existing, duplicate: true });
         }
+
 
         const isImage = file.mimetype.startsWith('image/');
         let finalFilename = file.filename;
@@ -1069,19 +1286,14 @@ app.post('/api/media/upload', upload.single('file'), async (req, res) => {
 
         const stats = fs.statSync(finalPath);
 
-        const media = await prisma.mediaObject.create({
+        const media = await prisma.media.create({
             data: {
                 treeId,
                 sha256: hash,
                 title: title || file.originalname,
-                description: description || null,
                 originalFileName: file.originalname,
-                filePath: finalFilename,
                 url: `/uploads/${finalFilename}`,
-                mimeType: finalMimeType,
-                fileSize: stats.size,
-                width,
-                height
+                format: finalMimeType
             }
         });
 
@@ -1094,7 +1306,7 @@ app.post('/api/media/upload', upload.single('file'), async (req, res) => {
 
 app.get('/api/media/:id', async (req, res) => {
     try {
-        const media = await prisma.mediaObject.findUnique({
+        const media = await prisma.media.findUnique({
             where: { id: req.params.id },
             include: {
                 links: true
@@ -1107,15 +1319,29 @@ app.get('/api/media/:id', async (req, res) => {
     }
 });
 
+app.put('/api/media/:id', async (req, res) => {
+    try {
+        const { title } = req.body;
+        const media = await prisma.media.update({
+            where: { id: req.params.id },
+            data: { title }
+        });
+        res.json({ success: true, media });
+    } catch (error: any) {
+        console.error('Update media error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 app.post('/api/media/:id/link', async (req, res) => {
     try {
-        const { individualId, familyId, sourceId, isPrimary } = req.body;
+        const { personId, familyId, sourceId, isPrimary } = req.body;
         const mediaId = req.params.id;
 
         const link = await prisma.mediaLink.create({
             data: {
                 mediaId,
-                individualId: individualId || null,
+                personId: personId || null,
                 familyId: familyId || null,
                 sourceId: sourceId || null,
                 isPrimary: isPrimary || false
@@ -1130,20 +1356,60 @@ app.post('/api/media/:id/link', async (req, res) => {
 
 app.delete('/api/media/:id', async (req, res) => {
     try {
-        const media = await prisma.mediaObject.findUnique({ where: { id: req.params.id } });
+        const media = await prisma.media.findUnique({ where: { id: req.params.id } });
         if (!media) return res.status(404).json({ success: false, message: 'Media not found' });
 
-        // Delete file
-        if (media.filePath) {
-            const fullPath = path.join(UPLOADS_DIR, media.filePath);
+        // Delete file logic (mirrors pruning)
+        const fname = (media.url?.includes('/uploads/') ? media.url.split('/uploads/').pop() : null);
+        if (fname) {
+            const fullPath = path.join(UPLOADS_DIR, fname);
             if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
         }
 
-        await prisma.mediaObject.delete({ where: { id: req.params.id } });
+        await prisma.media.delete({ where: { id: req.params.id } });
         res.json({ success: true });
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
+});
+
+app.get('/api/tree/:tree/diagnostics', async (req, res) => {
+    // For now, return empty errors to satisfy the frontend and avoid 404
+    // Later this can integrate with a more deep syntactic check
+    res.json({ success: true, errors: [] });
+});
+
+app.get('/api/tree/:tree/calendar', async (req, res) => {
+    // Empty calendar for now to avoid 404
+    res.json({ success: true, events: [] });
+});
+
+app.get('/api/tree/:tree/map', async (req, res) => {
+    const { tree: treeName } = req.params;
+    const tree = await prisma.tree.findUnique({
+        where: { name: treeName },
+        include: {
+            places: {
+                where: {
+                    AND: [
+                        { latitude: { not: null } },
+                        { longitude: { not: null } }
+                    ]
+                }
+            }
+        }
+    });
+
+    if (!tree) return res.status(404).json({ success: false });
+
+    const markers = tree.places.map(p => ({
+        id: p.id,
+        name: p.name,
+        lat: p.latitude,
+        lng: p.longitude
+    }));
+
+    res.json({ success: true, markers });
 });
 
 app.listen(port, () => {

@@ -2,11 +2,13 @@ import { Component, inject, signal, ElementRef, ViewChild, AfterViewInit, HostLi
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { Observable, switchMap, of, catchError } from 'rxjs';
 import { GedcomService } from './gedcom.service';
 import { AuthService, Tree as AuthServiceTree } from './auth.service';
 import { ImageCropper } from './image-cropper';
 import { TreeData, Individual, Family, LifeEvent } from './models';
 import * as d3 from 'd3';
+import { CleanDatePipe } from './clean-date.pipe';
 
 declare const L: any;
 
@@ -20,10 +22,263 @@ interface HierarchyNode {
     children?: HierarchyNode[];
 }
 
+class HourglassLayouter {
+    nodes: any[] = [];
+    links: any[] = [];
+    nodeWidth = 240;
+    nodeHeight = 110;
+    horizontalGap = 64;
+    verticalGap = 80; // bisschen mehr Platz vertikal für saubere Linien
+
+    constructor(private data: TreeData) { }
+
+    draw(focusPersonId: string) {
+        this.nodes = [];
+        this.links = [];
+        if (!focusPersonId && this.data.individuals.length > 0) {
+            focusPersonId = this.data.individuals[0].id;
+        }
+        if (focusPersonId) {
+            // Fokusperson zeichnen (Zentrum bei 0,0 bedeutet top-left Kante ist bei -nodeWidth/2)
+            this.addNode(focusPersonId, -this.nodeWidth / 2, 0, 1);
+
+            // Nachkommen (Kinder, Enkel) - wachsen nach unten
+            this.drawDescendants(focusPersonId, 0, 0, 1);
+
+            // Vorfahren (Eltern, Großeltern) - wachsen nach oben
+            this.drawAncestors(focusPersonId, 0, 0, 1);
+        }
+    }
+
+    // --- BREITENBERECHNUNG FÜR VORFAHREN (Wachsen nach oben) ---
+    private calculateAncestorsWidth(personId: string, generation: number): number {
+        if (generation > 15) return this.nodeWidth;
+
+        const famAsChild = this.data.families.find(f => f.children.includes(personId));
+        if (!famAsChild || (!famAsChild.husband && !famAsChild.wife)) {
+            return this.nodeWidth;
+        }
+
+        const husbandWidth = famAsChild.husband ? this.calculateAncestorsWidth(famAsChild.husband, generation + 1) : 0;
+        const wifeWidth = famAsChild.wife ? this.calculateAncestorsWidth(famAsChild.wife, generation + 1) : 0;
+
+        const siblings = famAsChild.children; // inklusive personId
+        const childrenWidth = siblings.length * this.nodeWidth + (siblings.length - 1) * this.horizontalGap;
+
+        if (husbandWidth && wifeWidth) {
+            return Math.max(childrenWidth, husbandWidth + wifeWidth + this.horizontalGap);
+        }
+        return Math.max(childrenWidth, husbandWidth + wifeWidth, this.nodeWidth);
+    }
+
+    // --- BREITENBERECHNUNG FÜR NACHKOMMEN (Wachsen nach unten) ---
+    private calculateDescendantsWidth(personId: string, generation: number): number {
+        if (generation > 15) return this.nodeWidth;
+
+        const famsAsSpouse = this.data.families.filter(f => f.husband === personId || f.wife === personId);
+        if (famsAsSpouse.length === 0) return this.nodeWidth;
+
+        let totalWidth = 0;
+        famsAsSpouse.forEach(fam => {
+            let famWidth = this.nodeWidth * 2 + this.horizontalGap; // Person + Partner
+            let childrenWidth = 0;
+            fam.children.forEach(childId => {
+                childrenWidth += this.calculateDescendantsWidth(childId, generation + 1) + this.horizontalGap;
+            });
+            childrenWidth -= this.horizontalGap; // letztes Gap entfernen
+            totalWidth += Math.max(famWidth, childrenWidth > 0 ? childrenWidth : 0);
+        });
+
+        return totalWidth;
+    }
+
+    // --- RENDERING PHASE ---
+
+    private drawAncestors(personId: string, x: number, y: number, generation: number) {
+        if (generation > 15) return;
+
+        const famAsChild = this.data.families.find(f => f.children.includes(personId));
+        if (!famAsChild) return;
+
+        const husband = famAsChild.husband;
+        const wife = famAsChild.wife;
+
+        const husbandWidth = husband ? this.calculateAncestorsWidth(husband, generation + 1) : 0;
+        const wifeWidth = wife ? this.calculateAncestorsWidth(wife, generation + 1) : 0;
+
+        // Eltern eine Ebene nach oben
+        const newY = y - this.nodeHeight - this.verticalGap;
+        const midY = y - this.verticalGap / 2; // T-Kreuzungspunkt vertikal
+
+        let hx = x;
+        let wx = x;
+
+        if (husband && wife) {
+            hx = x - this.horizontalGap / 2 - husbandWidth / 2;
+            wx = x + this.horizontalGap / 2 + wifeWidth / 2;
+        }
+
+        // Ehelicher Knotenpunkt (Mittelpunkt zwischen den Eltern)
+        const familyMidX = (husband && wife) ? (hx + wx) / 2 : x;
+
+        // VATER
+        if (husband) {
+            this.addNode(husband, hx - this.nodeWidth / 2, newY, generation + 1);
+            // T-Stück von Vater runter zur Mitte
+            this.links.push({
+                d: `M ${hx} ${newY + this.nodeHeight} V ${midY} H ${familyMidX}`,
+                type: 'parent-link'
+            });
+            this.drawAncestors(husband, hx, newY, generation + 1); // Rekursion nach oben
+        }
+
+        // MUTTER
+        if (wife) {
+            this.addNode(wife, wx - this.nodeWidth / 2, newY, generation + 1);
+            // T-Stück von Mutter runter zur Mitte
+            this.links.push({
+                d: `M ${wx} ${newY + this.nodeHeight} V ${midY} H ${familyMidX}`,
+                type: 'parent-link'
+            });
+            this.drawAncestors(wife, wx, newY, generation + 1); // Rekursion nach oben
+        }
+
+        // Linie von familiärer Mitte nach unten zum Kind
+        if (husband || wife) {
+            this.links.push({
+                d: `M ${familyMidX} ${midY} V ${y}`,
+                type: 'parent-link'
+            });
+        }
+
+        // GESCHWISTER von personId (werden auf gleicher Ebene Y verteilt)
+        const siblings = famAsChild.children.filter(id => id !== personId);
+        let leftSiblings: string[] = [];
+        let rightSiblings: string[] = [];
+        siblings.forEach((sib, idx) => {
+            if (idx % 2 === 0) leftSiblings.push(sib);
+            else rightSiblings.push(sib);
+        });
+
+        let sibX = x - this.nodeWidth - this.horizontalGap;
+        leftSiblings.forEach(sib => {
+            this.addNode(sib, sibX - this.nodeWidth / 2, y, generation);
+            this.links.push({
+                d: `M ${sibX} ${y} V ${midY} H ${familyMidX}`,
+                type: 'sibling-link'
+            });
+            sibX -= (this.nodeWidth + this.horizontalGap);
+        });
+
+        sibX = x + this.nodeWidth + this.horizontalGap;
+        rightSiblings.forEach(sib => {
+            this.addNode(sib, sibX - this.nodeWidth / 2, y, generation);
+            this.links.push({
+                d: `M ${sibX} ${y} V ${midY} H ${familyMidX}`,
+                type: 'sibling-link'
+            });
+            sibX += (this.nodeWidth + this.horizontalGap);
+        });
+    }
+
+    private drawDescendants(personId: string, x: number, y: number, generation: number) {
+        if (generation > 15) return;
+
+        const famsAsSpouse = this.data.families.filter(f => f.husband === personId || f.wife === personId);
+        if (famsAsSpouse.length === 0) return;
+
+        let currentX = x;
+
+        famsAsSpouse.forEach(fam => {
+            const spouseId = fam.husband === personId ? fam.wife : fam.husband;
+
+            // Ehepartner wird direkt daneben (+X) gezeichnet
+            const spouseX = currentX + this.nodeWidth + this.horizontalGap;
+            if (spouseId) {
+                this.addNode(spouseId, spouseX - this.nodeWidth / 2, y, generation);
+                // Direkte Heirats-Linie auf halber Höhe der Karte
+                this.links.push({
+                    d: `M ${currentX + this.nodeWidth / 2} ${y + this.nodeHeight / 2} H ${spouseX - this.nodeWidth / 2}`,
+                    type: 'spouse-link'
+                });
+            }
+
+            const midFamilyX = spouseId ? (currentX + spouseX) / 2 : currentX;
+            const childY = y + this.nodeHeight + this.verticalGap;
+            const midY = y + this.nodeHeight + this.verticalGap / 2;
+
+            let totalChildrenWidth = 0;
+            const childWidths = fam.children.map(cid => {
+                const w = this.calculateDescendantsWidth(cid, generation + 1);
+                totalChildrenWidth += w;
+                return w;
+            });
+            totalChildrenWidth += Math.max(0, fam.children.length - 1) * this.horizontalGap;
+
+            let cx = midFamilyX - totalChildrenWidth / 2;
+
+            fam.children.forEach((childId, index) => {
+                const cW = childWidths[index];
+                const childCenterX = cx + cW / 2;
+
+                this.addNode(childId, childCenterX - this.nodeWidth / 2, childY, generation + 1);
+
+                // Linie vom Eltern-Mittelpunkt tief zum Kind
+                this.links.push({
+                    d: `M ${midFamilyX} ${y + this.nodeHeight} V ${midY} H ${childCenterX} V ${childY}`,
+                    type: 'child-link'
+                });
+
+                this.drawDescendants(childId, childCenterX, childY, generation + 1); // Rekursion nach unten
+
+                cx += cW + this.horizontalGap;
+            });
+
+            currentX += this.calculateDescendantsWidth(personId, generation) + this.horizontalGap;
+        });
+    }
+
+    private addNode(personId: string, x: number, y: number, generation: number) {
+        // Verhindern, dass eine Person doppelt gezeichnet wird.
+        if (this.nodes.some(n => n.data.id === personId)) return;
+
+        const person = this.data.individuals.find(i => i.id === personId);
+        if (!person) return;
+
+        let profileImageUrl: string | undefined;
+        if (person.media && person.media.length > 0) {
+            const primary = person.media.find((m: any) => m.isPrimary);
+            const img = primary || person.media[0];
+            if (img?.url) {
+                profileImageUrl = img.url;
+            }
+        }
+
+        let firstName = person.firstName || '';
+        let lastName = person.lastName || '';
+        if (!firstName && !lastName && person.name) {
+            const nameParts = person.name.replace(/<\/?[^>]+(>|$)/g, "").split(' ');
+            lastName = nameParts.length > 1 ? (nameParts.pop() || '') : '';
+            firstName = nameParts.join(' ');
+        }
+
+        const cleanDate = (d: string | undefined) => d ? d.replace(/<\/?[^>]+(>|$)/g, "").replace(/^(ABT|EST|CAL|BEF|AFT)\s+/i, '').trim() : '';
+        const dates = `${cleanDate(person.birthDate)} - ${cleanDate(person.deathDate)}`.trim().replace(/^ - $/, '');
+
+
+        this.nodes.push({
+            data: { ...person, firstName, lastName, dates: dates === '-' ? '' : dates, profileImageUrl },
+            x,
+            y,
+            generation
+        });
+    }
+}
+
 @Component({
     selector: 'app-tree',
     standalone: true,
-    imports: [CommonModule, FormsModule, ImageCropper],
+    imports: [CommonModule, FormsModule, ImageCropper, CleanDatePipe],
     templateUrl: './tree.html',
     styleUrl: './tree.css'
 })
@@ -104,6 +359,7 @@ export class Tree implements AfterViewInit, OnInit {
     // Search Results State
     showSearch = false;
     searchResults: any[] = [];
+    focusedPersonId: string | null = null;
 
     // Media Chooser State
     showMediaChooser = signal(false);
@@ -163,7 +419,9 @@ export class Tree implements AfterViewInit, OnInit {
                 this.route.queryParams.subscribe(params => {
                     const focusId = params['focus'];
                     if (focusId) {
+                        this.focusedPersonId = focusId;
                         setTimeout(() => this.focusPerson(focusId), 500);
+                        this.renderTree(); // Re-render to show focus highlight
                     }
                 });
             }
@@ -231,7 +489,7 @@ export class Tree implements AfterViewInit, OnInit {
             }).addTo(map);
 
             // Fetch markers
-            // We need tree name. Assuming 'sperlich' or wait for treeData
+            // Assumption: treeData will eventually load or be available
             // If treeData is not yet loaded, we might need to call this later?
             // Actually, let's just use the current tree from service if available, or default.
             // Better: subscribe to treeData and then update map. But for now, let's try to load once.
@@ -272,466 +530,53 @@ export class Tree implements AfterViewInit, OnInit {
         const data = this.treeData();
         if (!data || data.individuals.length === 0) return;
 
-        console.log(`Rendering tree with ${data.individuals.length} individuals and ${data.families.length} families.`);
+        console.log(`Rendering pedigree tree...`);
 
-        const visited = new Set<string>();
-        const rootNodes: HierarchyNode[] = [];
-
-        // 1. Identify all "root" individuals
-        // A root is someone whose parents are NOT in the dataset.
-        const potentialRoots = data.individuals.filter(indi => {
-            const iid = indi.id.trim();
-            const famsWhereChild = data.families.filter(f => f.children.some(c => c.trim() === iid));
-            if (famsWhereChild.length === 0) return true;
-
-            // If they are a child, check if ANY of their families have parents present in individuals list
-            return !famsWhereChild.some(f => {
-                const husbandId = f.husband?.trim();
-                const wifeId = f.wife?.trim();
-                const husbandExists = husbandId && data.individuals.some(i => i.id.trim() === husbandId);
-                const wifeExists = wifeId && data.individuals.some(i => i.id.trim() === wifeId);
-                return husbandExists || wifeExists;
-            });
-        });
-
-        console.log(`Initial potential roots: ${potentialRoots.map(r => r.id).join(', ')}`);
-
-        // If a cycle exists, potentialRoots might be empty for a cluster.
-        // We ensure EVERY disconnected cluster gets at least one root.
-        const clusterRoots: string[] = [...potentialRoots.map(r => r.id)];
-        const allIds = new Set(data.individuals.map(i => i.id));
-        const coveredByRoots = new Set<string>();
-
-        const findClusterMembers = (id: string, members: Set<string>) => {
-            if (members.has(id)) return;
-            members.add(id);
-            // Add spouses
-            data.families.filter(f => f.husband === id || f.wife === id).forEach(f => {
-                if (f.husband) findClusterMembers(f.husband, members);
-                if (f.wife) findClusterMembers(f.wife, members);
-                f.children.forEach(c => findClusterMembers(c, members));
-            });
-            // Add parents
-            data.families.filter(f => f.children.includes(id)).forEach(f => {
-                if (f.husband) findClusterMembers(f.husband, members);
-                if (f.wife) findClusterMembers(f.wife, members);
-            });
-        };
-
-        // Mark everyone reachable from identified roots
-        clusterRoots.forEach(rid => findClusterMembers(rid, coveredByRoots));
-
-        // For individuals NOT reachable from a root, pick the one with most descendants as a new root
-        data.individuals.forEach(indi => {
-            if (!coveredByRoots.has(indi.id)) {
-                console.warn(`Individual ${indi.id} (${indi.name}) is in a disconnected/cyclic cluster. Picking as new root.`);
-                clusterRoots.push(indi.id);
-                findClusterMembers(indi.id, coveredByRoots);
-            }
-        });
-
-        // Pick the actual roots and build hierarchies
-        clusterRoots.forEach(rootId => {
-            if (!visited.has(rootId)) {
-                // Handle spouse logic to keep families together at the root level
-                const spouseFam = data.families.find(f => (f.husband === rootId || f.wife === rootId) && f.husband && f.wife);
-                if (spouseFam) {
-                    const otherId = spouseFam.husband === rootId ? spouseFam.wife! : spouseFam.husband!;
-                    if (!visited.has(rootId)) {
-                        const node = this.buildHierarchy(rootId, data, visited);
-                        if (node) rootNodes.push(node);
-                    }
-                    if (!visited.has(otherId)) {
-                        const node = this.buildHierarchy(otherId, data, visited);
-                        if (node) rootNodes.push(node);
-                    }
-                } else {
-                    const node = this.buildHierarchy(rootId, data, visited);
-                    if (node) rootNodes.push(node);
-                }
-            }
-        });
-
-        console.log(`Identified ${rootNodes.length} hierarchies for the tree.`);
-
-        // 3. Create a virtual root if there are multiple hierarchies
-        let hierarchy: HierarchyNode;
-        if (rootNodes.length === 1) {
-            hierarchy = rootNodes[0];
-        } else {
-            hierarchy = {
-                id: 'forest-root',
-                firstName: 'Stammbaum',
-                lastName: '',
-                gender: 'U',
-                dates: '',
-                children: rootNodes
-            };
-        }
-
-        // 4. Create d3 tree layout
-        const root = d3.hierarchy(hierarchy);
-        const treeLayout = d3.tree<HierarchyNode>()
-            .nodeSize([this.nodeWidth + 60, this.nodeHeight + 120])
-            .separation((a, b) => (a.parent === b.parent ? 1 : 1.3));
-
-        treeLayout(root);
-
-        const descendants = root.descendants();
-        const nodes_map = new Map(descendants.map(d => [d.data.id, d]));
-
-        // --- 1. Universal Base Leveling ---
-        const levelHeight = this.nodeHeight + 140; // Increased vertical gap for cleaner lines (Regel 4)
-        descendants.forEach((d: any) => {
-            if (d.data.id === 'forest-root') {
-                d.y = -levelHeight;
-            } else {
-                const effectiveDepth = d.data.id === 'forest-root' ? -1 : (d.depth - (hierarchy.id === 'forest-root' ? 1 : 0));
-                d.y = effectiveDepth * levelHeight;
-            }
-        });
-
-        // --- 2. Spouse Sync & Initial X ---
-        // Ensure partners share exact same Y.
-        data.families.forEach(fam => {
-            if (fam.husband && fam.wife) {
-                const hNode: any = nodes_map.get(fam.husband);
-                const wNode: any = nodes_map.get(fam.wife);
-                if (hNode && wNode) {
-                    const targetY = Math.max(hNode.y, wNode.y);
-                    hNode.y = targetY;
-                    wNode.y = targetY;
-                }
-            }
-        });
-
-        // --- 3. Sibling Group Block Processing (Rules 11, 12, 13) ---
-        // Process each generation to group children and reserve space for partners.
-        const CARD_WIDTH = this.nodeWidth;
-        const HORIZONTAL_GAP = 64; // Regel 4: >= 64px
-        const PARTNER_GAP = 40;   // Gap between partners in a block
-
-        // 3a. Identify Sibling Groups
-        const familiesWithChildren = data.families.filter(f => f.children && f.children.length > 0);
-        const usedInBlock = new Set<string>();
-
-        familiesWithChildren.forEach(fam => {
-            const childrenNodes = fam.children.map(cid => nodes_map.get(cid)).filter(n => !!n) as any[];
-            if (childrenNodes.length === 0) return;
-
-            const blocks: any[] = [];
-            childrenNodes.forEach(cNode => {
-                if (usedInBlock.has(cNode.data.id)) return;
-
-                const spouseFam = data.families.find(f => (f.husband === cNode.data.id || f.wife === cNode.data.id) && f.husband && f.wife);
-                const spouseId = spouseFam ? (spouseFam.husband === cNode.data.id ? spouseFam.wife : spouseFam.husband) : null;
-                const spouseNode: any = spouseId ? nodes_map.get(spouseId) : null;
-
-                if (spouseNode && !usedInBlock.has(spouseNode.data.id)) {
-                    const baseWidth = 2 * CARD_WIDTH + PARTNER_GAP;
-
-
-                    blocks.push({
-                        type: 'couple',
-                        nodes: [cNode, spouseNode],
-                        width: 2 * CARD_WIDTH + PARTNER_GAP
-                    });
-                    usedInBlock.add(cNode.data.id);
-                    usedInBlock.add(spouseNode.data.id);
-                } else {
-                    // Single sibling
-
-                    blocks.push({
-                        type: 'single',
-                        nodes: [cNode],
-                        width: CARD_WIDTH
-                    });
-                    usedInBlock.add(cNode.data.id);
-                }
-            });
-
-            // 3b. Center the Group under Parents (Rule 5 & 11)
-            const parentH: any = nodes_map.get(fam.husband || '');
-            const parentW: any = nodes_map.get(fam.wife || '');
-            let parentMidX = 0;
-            if (parentH && parentW && parentH.x !== undefined && parentW.x !== undefined) {
-                parentMidX = (parentH.x + parentW.x + CARD_WIDTH) / 2;
-            } else if (parentH && parentH.x !== undefined) {
-                parentMidX = parentH.x + CARD_WIDTH / 2;
-            } else if (parentW && parentW.x !== undefined) {
-                parentMidX = parentW.x + CARD_WIDTH / 2;
-            } else {
-                parentMidX = d3.mean(childrenNodes, d => d.x ?? 0) || 0;
-            }
-
-            const totalGroupWidth = blocks.reduce((acc, b) => acc + b.width, 0) + (blocks.length - 1) * HORIZONTAL_GAP;
-            let currentX = parentMidX - totalGroupWidth / 2;
-
-            blocks.forEach(block => {
-                const blockMidX = currentX + block.width / 2;
-                const firstNode = block.nodes[0];
-
-                // Position the person (and partner) within the block
-                let personTargetX;
-                if (block.type === 'couple') {
-                    // Couple base width is 2*CARD + PARTNER_GAP
-                    // Center the couple within the (potentially wider) block
-                    personTargetX = blockMidX - (2 * CARD_WIDTH + PARTNER_GAP) / 2;
-                } else {
-                    personTargetX = blockMidX - CARD_WIDTH / 2;
-                }
-
-                const shiftX = personTargetX - (firstNode.x ?? 0);
-
-                // IMPORTANT: Center descendants under the block midpoint (Rule 11)
-                // First, shift the individual so they are positioned correctly in the block
-                firstNode.x = personTargetX;
-
-                if (block.type === 'couple') {
-                    const secondNode = block.nodes[1];
-                    secondNode.x = personTargetX + CARD_WIDTH + PARTNER_GAP;
-                    secondNode.y = firstNode.y;
-                }
-
-                // Now shift all sub-descendants so they are centered under blockMidX
-                // Find sub-descendants (excluding the nodes in the block itself)
-                const subtreeRoots = block.nodes;
-                subtreeRoots.forEach((root: any) => {
-                    const children = root.children || [];
-                    children.forEach((child: any) => {
-                        // Calculate initial subtree center
-                        let minS = Infinity, maxS = -Infinity;
-                        child.each((d: any) => {
-                            minS = Math.min(minS, d.x ?? 0);
-                            maxS = Math.max(maxS, d.x ?? 0);
-                        });
-                        const currentSubCenter = (minS + maxS + CARD_WIDTH) / 2;
-                        const subShift = blockMidX - currentSubCenter;
-
-                        child.each((d: any) => {
-                            if (d.x !== undefined) d.x += subShift;
-                        });
-                    });
-                });
-
-                currentX += block.width + HORIZONTAL_GAP;
-            });
-        });
-
-        // --- 4. Global Collision Resolution (Rule 13) ---
-        // Identify all blocks in each generation and resolve collisions between them.
-        const yLevels = Array.from(d3.group(descendants.filter(d => d.data.id !== 'forest-root'), (d: any) => d.y ?? 0).keys()).sort((a, b) => a - b);
-
-        yLevels.forEach((y: any) => {
-            const nodesAtY = descendants.filter((d: any) => (d.y ?? 0) === y).sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
-            const levelBlocks: any[] = [];
-            const processed = new Set<string>();
-
-            nodesAtY.forEach(node => {
-                if (processed.has(node.data.id)) return;
-
-                // Determine if this node is part of a couple block
-                const spouseFam = data.families.find(f => (f.husband === node.data.id || f.wife === node.data.id) && f.husband && f.wife);
-                if (spouseFam) {
-                    const spouseId = spouseFam.husband === node.data.id ? spouseFam.wife : spouseFam.husband;
-                    const spouseNode = nodes_map.get(spouseId || '');
-                    if (spouseNode && (spouseNode.y ?? 0) === y) {
-                        const blockNodes = [node, spouseNode].sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
-                        levelBlocks.push({
-                            nodes: blockNodes,
-                            minX: blockNodes[0].x ?? 0,
-                            maxX: (blockNodes[1].x ?? 0) + CARD_WIDTH
-                        });
-                        processed.add(node.data.id);
-                        processed.add(spouseId!);
-                        return;
-                    }
-                }
-
-                // Single node block
-                levelBlocks.push({
-                    nodes: [node],
-                    minX: node.x ?? 0,
-                    maxX: (node.x ?? 0) + CARD_WIDTH
-                });
-                processed.add(node.data.id);
-            });
-
-            // 4b. Group blocks into Sibling Groups (Rule 13)
-            const levelGroups: any[] = [];
-            let currentGroup: any = null;
-
-            levelBlocks.forEach(block => {
-                // Find parent family ID for the first node in the block
-                const firstNode = block.nodes[0];
-                const famId = data.families.find(f => f.children.includes(firstNode.data.id))?.id || 'root-group';
-
-                if (!currentGroup || currentGroup.famId !== famId) {
-                    currentGroup = {
-                        famId: famId,
-                        blocks: [block],
-                        minX: block.minX,
-                        maxX: block.maxX
-                    };
-                    levelGroups.push(currentGroup);
-                } else {
-                    currentGroup.blocks.push(block);
-                    currentGroup.maxX = Math.max(currentGroup.maxX, block.maxX);
-                }
-            });
-
-            // 4c. Resolve collisions between Sibling Groups
-            for (let i = 1; i < levelGroups.length; i++) {
-                const prev = levelGroups[i - 1];
-                const curr = levelGroups[i];
-
-                const minX = prev.maxX + HORIZONTAL_GAP;
-                const currentMinX = curr.minX;
-
-                if (currentMinX < minX) {
-                    const shift = minX - currentMinX;
-                    curr.blocks.forEach((block: any) => {
-                        block.nodes.forEach((node: any) => {
-                            node.each((desc: any) => {
-                                if (desc.x !== undefined) desc.x += shift;
-                            });
-                        });
-                    });
-                    curr.minX += shift;
-                    curr.maxX += shift;
-                }
-            }
-        });
-
-        // 3. Clear existing elements
+        // 1. Clear existing elements
         this.g.selectAll('*').remove();
 
-        // 4. Draw links
-        const nodes = root.descendants().filter((d: any) => d.data.id !== 'forest-root');
+        // 2. Build Layout (Hourglass Concept)
+        const layouter = new HourglassLayouter(data);
 
+        // Use focusedPersonId or default to the first individual (or a better root heuristic later)
+        let rootNodeId = this.focusedPersonId;
+        if (!rootNodeId) {
+            const anyRoot = data.individuals.find(i => {
+                const isChild = data.families.some(f => f.children.includes(i.id));
+                return !isChild;
+            });
+            rootNodeId = anyRoot ? anyRoot.id : data.individuals[0].id;
+            this.focusedPersonId = rootNodeId;
+        }
+
+        layouter.draw(rootNodeId);
+
+        // 3. Draw links
         this.g.selectAll('.link')
-            .data(root.links().filter((d: any) => d.source.data.id !== 'forest-root'))
+            .data(layouter.links)
             .enter()
             .append('path')
             .attr('class', 'link')
             .style('fill', 'none')
             .style('stroke', '#cbd5e1')
             .style('stroke-width', '2.5px')
-            .attr('d', (d: any) => {
-                let sourceX = d.source.x + this.nodeWidth / 2;
-                let sourceY = d.source.y + this.nodeHeight;
-                const targetX = d.target.x + this.nodeWidth / 2;
-                const targetY = d.target.y;
+            .attr('d', (d: any) => d.d);
 
-                // Adjust sourceX if this is a family with two parents present
-                const fam = data.families.find(f =>
-                    (f.husband === d.source.data.id || f.wife === d.source.data.id) &&
-                    f.children.includes(d.target.data.id)
-                );
-
-                if (fam && fam.husband && fam.wife) {
-                    const hNode: any = nodes.find(n => n.data.id === fam.husband);
-                    const wNode: any = nodes.find(n => n.data.id === fam.wife);
-                    if (hNode && wNode && hNode.x !== undefined && hNode.y !== undefined && wNode.x !== undefined && wNode.y !== undefined) {
-                        // If they are on the same level (likely roots or siblings), start between them
-                        if (Math.abs(hNode.y - wNode.y) < 10) {
-                            sourceX = (hNode.x + wNode.x) / 2 + this.nodeWidth / 2;
-                            sourceY = hNode.y + this.nodeHeight / 2;
-                        }
-                    }
-                }
-
-                let midY = (sourceY + targetY) / 2;
-
-                // For single parent families, move the horizontal line closer to the parent
-                // to avoid visual collision with the "couple" bus line
-                if (fam && (!fam.husband || !fam.wife)) {
-                    midY = sourceY + (targetY - sourceY) * 0.25;
-                }
-
-                const radius = 12;
-
-                if (Math.abs(sourceX - targetX) < 1) {
-                    return `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
-                }
-
-                const direction = targetX > sourceX ? 1 : -1;
-
-                return `M ${sourceX} ${sourceY}
-                        V ${midY - radius}
-                        Q ${sourceX} ${midY} ${sourceX + direction * radius} ${midY}
-                        H ${targetX - direction * radius}
-                        Q ${targetX} ${midY} ${targetX} ${midY + radius}
-                        V ${targetY}`;
-            });
-
-        // 5. Draw Spouse Links
-        data.families.forEach(fam => {
-            if (fam.husband && fam.wife) {
-                const hNode: any = nodes.find(n => n.data.id === fam.husband);
-                const wNode: any = nodes.find(n => n.data.id === fam.wife);
-                if (hNode && wNode && hNode.x !== undefined && hNode.y !== undefined && wNode.x !== undefined && wNode.y !== undefined && Math.abs(hNode.y - wNode.y) < 10) {
-                    const leftNode = hNode.x < wNode.x ? hNode : wNode;
-                    const rightNode = hNode.x < wNode.x ? wNode : hNode;
-
-                    const centerX = (leftNode.x + this.nodeWidth + rightNode.x) / 2;
-                    const centerY = leftNode.y + this.nodeHeight / 2;
-
-                    // The Link
-                    this.g.append('line')
-                        .attr('class', 'spouse-link')
-                        .attr('x1', leftNode.x + this.nodeWidth)
-                        .attr('y1', centerY)
-                        .attr('x2', rightNode.x)
-                        .attr('y2', centerY)
-                        .style('stroke', '#cbd5e1')
-                        .style('stroke-width', '2.5px');
-
-                    // The Circle / Icon Group
-                    const group = this.g.append('g')
-                        .attr('class', 'family-node')
-                        .style('cursor', 'pointer')
-                        .on('click', () => {
-                            this.ngZone.run(() => this.openFamilyModal(fam.id));
-                        });
-
-                    group.append('circle')
-                        .attr('cx', centerX)
-                        .attr('cy', centerY)
-                        .attr('r', 18)
-                        .style('fill', '#ffffff')
-                        .style('stroke', '#cbd5e1')
-                        .style('stroke-width', '2px');
-
-                    // Check if they are married (has MARR event)
-                    const isMarried = fam.events?.some(e => e.type === 'MARR');
-                    if (isMarried) {
-                        group.append('image')
-                            .attr('href', 'icons/marriage.svg')
-                            .attr('x', centerX - 10)
-                            .attr('y', centerY - 10)
-                            .attr('width', 20)
-                            .attr('height', 20);
-                    } else {
-                        // Default plus or just empty circle? User asked for marriage_symbol
-                        // Let's just put it there if married, otherwise maybe a subtle plus?
-                        // For now just the circle if not married.
-                    }
-                }
-            }
-        });
-
-        // 5. Draw nodes (Filter out forest-root)
+        // 4. Draw nodes
         const node = this.g.selectAll('.node')
-            .data(root.descendants().filter((d: any) => d.data.id !== 'forest-root'))
+            .data(layouter.nodes)
             .enter()
             .append('g')
             .attr('class', (d: any) => {
                 const gender = d.data.gender === 'M' ? 'male' : (d.data.gender === 'F' ? 'female' : (d.data.gender === 'X' ? 'other' : 'unknown'));
-                return `node ${gender}`;
+                const focused = d.data.id === this.focusedPersonId ? 'focused' : '';
+                return `node ${gender} ${focused}`;
             })
             .style('cursor', 'pointer')
-            .attr('transform', (d: any) => `translate(${d.x},${d.y})`);
+            .attr('transform', (d: any) => `translate(${d.x},${d.y})`)
+            .on('click', (event: any, d: any) => {
+                this.ngZone.run(() => this.focusPerson(d.data.id));
+            });
 
         // Node card
         node.append('rect')
@@ -1051,6 +896,20 @@ export class Tree implements AfterViewInit, OnInit {
                     });
                 });
 
+                // Find Siblings
+                if (parentFam) {
+                    (parentFam.children || []).forEach(cid => {
+                        const cidNorm = cid.trim().replace(/^@|@$/g, '');
+                        if (cidNorm !== pid) {
+                            const sibling = data.individuals.find(i => i.id.trim().replace(/^@|@$/g, '') === cidNorm);
+                            // Avoid duplicates since parents might share children across multiple families, though rare in valid GEDCOM structure for the same exact child
+                            if (!relations.some(r => r.type === 'SIBLING' && r.personId === (sibling?.id || cid))) {
+                                relations.push({ type: 'SIBLING', personId: sibling?.id || cid, personName: sibling?.name || cid, searchQuery: sibling?.name || '' });
+                            }
+                        }
+                    });
+                }
+
                 this.modalData.relations = relations;
             }
         } else {
@@ -1101,8 +960,19 @@ export class Tree implements AfterViewInit, OnInit {
 
     closeModal() {
         this.isModalOpen = false;
+        this.activeTab = 'basics';
+        this.validationErrors = [];
+        this.validationWarnings = [];
+        this.showValidationModal = false;
+        // Optionally update URL if needed
         this.pendingRelation = null;
         this.cdr.markForCheck();
+    }
+
+    goToProfile() {
+        if (this.modalData && this.modalData.id) {
+            this.router.navigate(['/person', this.modalData.id]);
+        }
     }
 
     savePerson() {
@@ -1174,7 +1044,7 @@ export class Tree implements AfterViewInit, OnInit {
         console.log('Sending Save Payload:', payload);
 
         const activeTree = this.authService.currentTree() as any;
-        const treeName = activeTree?.name || this.treeData()?.meta?.tree || 'sperlich';
+        const treeName = activeTree?.name || this.treeData()?.meta?.tree || '';
 
         this.gedcomService.savePerson(treeName, payload).subscribe({
             next: (res) => {
@@ -1258,7 +1128,7 @@ export class Tree implements AfterViewInit, OnInit {
         if (this.isSaving) return;
         this.isSaving = true;
 
-        const treeName = this.treeData()?.meta?.tree || 'sperlich';
+        const treeName = this.treeData()?.meta?.tree || '';
 
         this.gedcomService.saveFamily(treeName, this.familyModalData).subscribe({
             next: (res) => {
@@ -1293,7 +1163,7 @@ export class Tree implements AfterViewInit, OnInit {
         }
 
         const activeTree = this.authService.currentTree() as any;
-        const treeName = activeTree?.name || data?.meta?.tree || 'sperlich';
+        const treeName = activeTree?.name || data?.meta?.tree || '';
 
         this.gedcomService.deletePerson(treeName, this.modalData.id).subscribe({
             next: () => {
@@ -1310,76 +1180,28 @@ export class Tree implements AfterViewInit, OnInit {
         });
     }
 
-    private buildHierarchy(rootId: string, data: TreeData, visited: Set<string>): HierarchyNode | null {
-        const indi = data.individuals.find(i => i.id === rootId);
-        let profileImageUrl: string | undefined;
-        if (indi?.media && indi.media.length > 0) {
-            const primary = indi.media.find((m: any) => m.isPrimary);
-            const img = primary || indi.media[0];
-            if (img?.url) {
-                profileImageUrl = img.url;
-            }
+    @HostListener('window:keydown', ['$event'])
+    handleKeyboardEvent(event: KeyboardEvent) {
+        if (event.ctrlKey && event.key === 'f') {
+            event.preventDefault();
+            this.toggleSearch();
         }
-        if (!indi) {
-            return null;
+        if (event.key === 'Escape') {
+            this.showSearch = false;
+            this.cdr.markForCheck();
         }
-
-        visited.add(rootId);
-
-        let firstName = indi.firstName || '';
-        let lastName = indi.lastName || '';
-
-        if (!firstName && !lastName && indi.name) {
-            const fullName = this.stripHtml(indi.name);
-            if (fullName !== 'undefined') {
-                const nameParts = fullName.split(' ');
-                lastName = nameParts.length > 1 ? (nameParts.pop() || '') : '';
-                firstName = nameParts.join(' ');
-            }
-        }
-
-        const node: HierarchyNode = {
-            id: indi.id,
-            firstName: firstName,
-            lastName: lastName,
-            gender: indi.gender,
-            dates: `${this.stripHtml(indi.birthDate || '')} - ${this.stripHtml(indi.deathDate || '')}`.trim().replace(/^undefined - undefined$/, ''),
-            profileImageUrl: profileImageUrl,
-            children: []
-        };
-        if (node.dates === '-') node.dates = '';
-
-        const parentFamilies = data.families.filter(f => f.husband === rootId || f.wife === rootId);
-        parentFamilies.forEach(fam => {
-            fam.children.forEach(childId => {
-                if (!visited.has(childId)) {
-                    const childNode = this.buildHierarchy(childId, data, visited);
-                    if (childNode) {
-                        node.children?.push(childNode);
-                    }
-                }
-            });
-        });
-
-        if (node.children?.length === 0) {
-            delete node.children;
-        }
-
-        return node;
-    }
-
-    private stripHtml(html: string | undefined | null): string {
-        if (!html) return '';
-        const tmp = document.createElement('DIV');
-        tmp.innerHTML = html;
-        const text = tmp.textContent || tmp.innerText || '';
-        return text === 'undefined' ? '' : text;
     }
 
     @HostListener('window:resize')
     onResize() {
         this.width = window.innerWidth;
         this.height = window.innerHeight;
+        this.renderTree();
+    }
+
+    toggleSearch() {
+        this.showSearch = !this.showSearch;
+        this.cdr.markForCheck();
     }
 
     zoomIn() {
@@ -1634,6 +1456,15 @@ export class Tree implements AfterViewInit, OnInit {
         rel.searchQuery = person.name;
         this.showRelationResults = false;
         this.activeRelationIndex = null;
+    }
+
+    changePersonForRelation(index: number) {
+        const rel = this.modalData.relations[index];
+        if (rel) {
+            rel.personId = '';
+            rel.personName = '';
+            rel.searchQuery = '';
+        }
     }
 
     createNewPersonForRelation(index: number) {
@@ -1926,6 +1757,15 @@ export class Tree implements AfterViewInit, OnInit {
 
     focusPerson(id: string) {
         this.showSearch = false;
+        this.focusedPersonId = id;
+
+        // Update URL without reload
+        this.router.navigate([], {
+            relativeTo: this.route,
+            queryParams: { focus: id },
+            queryParamsHandling: 'merge'
+        });
+
         // Search in SVG for the node with this ID
         const node = d3.selectAll('.node').filter(function (d: any) {
             return d.id === id;

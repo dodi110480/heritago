@@ -4,6 +4,7 @@
 
   <!-- Controls -->
   <div class="controls">
+    <button class="btn-zoom" (click)="toggleSearch()" title="Suchen (Strg+F)">🔍</button>
     <button class="btn-zoom" (click)="zoomIn()" title="Zoom In">+</button>
     <button class="btn-zoom" (click)="zoomOut()" title="Zoom Out">-</button>
     <button class="btn-zoom" (click)="resetZoom()" title="Reset Zoom">⚓</button>
@@ -31,19 +32,9 @@
         <!-- Tab Navigation -->
         <div class="modal-tabs">
           <button class="tab-btn" [class.active]="activeTab === 'basics'"
-            (click)="setActiveTab('basics')">Basics</button>
-          <button class="tab-btn" [class.active]="activeTab === 'events'"
-            (click)="setActiveTab('events')">Events</button>
+            (click)="setActiveTab('basics')">Basisdaten</button>
           <button class="tab-btn" [class.active]="activeTab === 'relations'"
-            (click)="setActiveTab('relations')">Beziehungen</button>
-          <button class="tab-btn" [class.active]="activeTab === 'facts'" (click)="setActiveTab('facts')">Fakten</button>
-          <button class="tab-btn" [class.active]="activeTab === 'citations'"
-            (click)="setActiveTab('citations')">Quellen</button>
-          <button class="tab-btn" [class.active]="activeTab === 'media'" (click)="setActiveTab('media')">Medien</button>
-          <button class="tab-btn" [class.active]="activeTab === 'notes'"
-            (click)="setActiveTab('notes')">Notizen</button>
-          <button class="tab-btn" [class.active]="activeTab === 'extensions'"
-            (click)="setActiveTab('extensions')">Extras</button>
+            (click)="setActiveTab('relations')">Familie</button>
         </div>
 
         <div class="tab-content" style="min-height: 450px;">
@@ -109,53 +100,6 @@
             </div>
           </div>
 
-          <!-- EVENTS TAB -->
-          <div *ngIf="activeTab === 'events'" class="tab-pane">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-              <h4 style="margin: 0;">Lebensereignisse</h4>
-              <button class="btn btn-secondary btn-sm" (click)="addEvent()">+ Ereignis</button>
-            </div>
-
-            <div class="event-list scrollable-area" style="max-height: 380px; overflow-y: auto;">
-              <div *ngFor="let event of modalData.events; let i = index" class="row-card"
-                style="border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 10px; background: #fff;">
-                <div class="form-row" style="display: grid; grid-template-columns: 120px 120px 1fr 40px; gap: 10px;">
-                  <select [(ngModel)]="event.type" class="form-control">
-                    <option value="BIRT">Geburt</option>
-                    <option value="BAPM">Taufe</option>
-                    <option value="CONF">Konf.</option>
-                    <option value="RESI">Wohnort</option>
-                    <option value="OCCU">Beruf</option>
-                    <option value="DEAT">Tod</option>
-                    <option value="BURI">Begräbnis</option>
-                    <option value="EVEN">Sonstiges</option>
-                  </select>
-                  <input type="text" [(ngModel)]="event.date" placeholder="Datum" class="form-control">
-                  <div style="position: relative;">
-                    <div style="display: flex; gap: 5px;">
-                      <input type="text" [(ngModel)]="event.place" (input)="searchPlaces(event.place || '', 'event', i)"
-                        placeholder="Ort" class="form-control" style="flex: 1;">
-                      <button class="btn-icon" (click)="openPlaceModal(event.place || '')">+</button>
-                    </div>
-                    <div
-                      *ngIf="showPlaceResults && activePlaceField === 'event' && activeEventIndex === i && potentialPlaces.length > 0"
-                      class="search-results-dropdown">
-                      <div *ngFor="let p of potentialPlaces" class="search-result-item" (click)="selectPlace(p)">{{
-                        p.name }}</div>
-                    </div>
-                  </div>
-                  <button class="btn-icon text-danger" (click)="removeEvent(i)">&times;</button>
-                </div>
-                <input type="text" [(ngModel)]="event.description" placeholder="Zusatzinfo / Notiz" class="form-control"
-                  style="margin-top: 8px;">
-              </div>
-              <div *ngIf="modalData.events.length === 0"
-                style="text-align: center; color: #94a3b8; padding: 40px 0; font-style: italic;">
-                Keine Ereignisse hinterlegt.
-              </div>
-            </div>
-          </div>
-
           <!-- RELATIONS TAB -->
           <div *ngIf="activeTab === 'relations'" class="tab-pane">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -167,7 +111,7 @@
               <div *ngFor="let rel of modalData.relations; let i = index" class="row-card relation-row"
                 style="border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 10px; background: #fff;">
                 <div style="display: grid; grid-template-columns: 120px 1fr 40px; gap: 10px; align-items: start;">
-                  <select [(ngModel)]="rel.type" class="form-control" [disabled]="rel.personId">
+                  <select [(ngModel)]="rel.type" class="form-control">
                     <option value="FATHER">Vater</option>
                     <option value="MOTHER">Mutter</option>
                     <option value="SPOUSE">Partner/in</option>
@@ -184,15 +128,17 @@
                       <button class="btn-icon" (click)="createNewPersonForRelation(i)">+</button>
                     </div>
                     <div *ngIf="rel.personId" class="fixed-person-item"
-                      style="padding: 8px 12px; background: #f1f5f9; border-radius: 4px; font-weight: 500; display: flex; align-items: center; gap: 8px;">
+                      style="padding: 8px 12px; background: #f1f5f9; border-radius: 4px; font-weight: 500; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                       <span class="status-indicator" [class]="rel.type.toLowerCase()"></span>
-                      {{ rel.personName }}
+                      <span style="flex: 1;">{{ rel.personName }}</span>
+                      <button type="button" class="btn btn-sm btn-outline-secondary"
+                        (click)="changePersonForRelation(i)">Person ändern</button>
                     </div>
 
                     <div *ngIf="activeRelationIndex === i && showRelationResults" class="search-results-dropdown">
                       <div *ngFor="let p of potentialRelationPersons" class="search-result-item"
                         (click)="selectPersonForRelation(i, p)">
-                        {{ p.name }} ({{ p.birthDate || '?' }})
+                        {{ p.name }} ({{ (p.birthDate | cleanDate) || '?' }})
                       </div>
                       <div *ngIf="potentialRelationPersons.length === 0" class="search-result-item disabled">Keine
                         Treffer</div>
@@ -209,156 +155,17 @@
             </div>
           </div>
 
-          <!-- FACTS TAB -->
-          <div *ngIf="activeTab === 'facts'" class="tab-pane">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-              <h4 style="margin: 0;">Fakten & Ausprägungen</h4>
-              <button class="btn btn-secondary btn-sm" (click)="addFact()">+ Fakt</button>
-            </div>
-            <div class="fact-list scrollable-area" style="max-height: 380px; overflow-y: auto;">
-              <div *ngFor="let fact of modalData.facts; let i = index" class="row-card"
-                style="border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 10px; background: #fff;">
-                <div class="form-row" style="display: grid; grid-template-columns: 140px 1fr 40px; gap: 10px;">
-                  <select [(ngModel)]="fact.type" class="form-control">
-                    <option value="OCCU">Beruf</option>
-                    <option value="RELI">Religion</option>
-                    <option value="EDUC">Bildung</option>
-                    <option value="TITL">Titel</option>
-                    <option value="NATI">Nationalität/Herkunft</option>
-                    <option value="DSCR">Körperl. Merkmale</option>
-                    <option value="FACT">Anderes Fakt</option>
-                  </select>
-                  <input type="text" [(ngModel)]="fact.value" placeholder="Wert / Beschreibung" class="form-control">
-                  <button class="btn-icon text-danger" (click)="removeFact(i)">&times;</button>
-                </div>
-              </div>
-              <div *ngIf="modalData.facts.length === 0"
-                style="text-align: center; color: #94a3b8; padding: 40px 0; font-style: italic;">
-                Keine Fakten eingetragen.
-              </div>
-            </div>
-          </div>
 
-          <!-- CITATIONS TAB -->
-          <div *ngIf="activeTab === 'citations'" class="tab-pane">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-              <h4 style="margin: 0;">Quellen & Belege</h4>
-              <button class="btn btn-secondary btn-sm" (click)="addCitation()">+ Quelle</button>
-            </div>
-            <div class="citation-list scrollable-area" style="max-height: 380px; overflow-y: auto;">
-              <div *ngFor="let cit of modalData.citations; let i = index" class="row-card"
-                style="border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 10px; background: #fff;">
-                <div class="form-row"
-                  style="display: grid; grid-template-columns: 1fr 140px 40px; gap: 10px; margin-bottom: 8px;">
-                  <input type="text" [(ngModel)]="cit.source" placeholder="Quelle (z.B. Kirchenbuch Coburg)"
-                    class="form-control">
-                  <select [(ngModel)]="cit.quality" class="form-control">
-                    <option value="0">Unzuverlässig</option>
-                    <option value="1">Fragwürdig</option>
-                    <option value="2">Sekundär</option>
-                    <option value="3">Primär / Sicher</option>
-                  </select>
-                  <button class="btn-icon text-danger" (click)="removeCitation(i)">&times;</button>
-                </div>
-                <div class="form-row" style="display: grid; grid-template-columns: 120px 1fr; gap: 10px;">
-                  <input type="text" [(ngModel)]="cit.page" placeholder="Seite / ID" class="form-control">
-                  <input type="text" [(ngModel)]="cit.text" placeholder="Zitierter Text oder Anmerkung"
-                    class="form-control">
-                </div>
-              </div>
-              <div *ngIf="modalData.citations.length === 0"
-                style="text-align: center; color: #94a3b8; padding: 40px 0; font-style: italic;">
-                Keine Quellenbelege vorhanden.
-              </div>
-            </div>
-          </div>
-
-          <!-- MEDIA TAB -->
-          <div *ngIf="activeTab === 'media'" class="tab-pane">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-              <h4 style="margin: 0;">Medien (Fotos / Dokumente)</h4>
-              <div style="display: flex; gap: 8px;">
-                <label class="btn btn-secondary btn-sm" style="cursor: pointer;">
-                  <span>+ Hochladen</span>
-                  <input type="file" (change)="onMediaUploadInModal($event)" hidden accept="image/*,application/pdf">
-                </label>
-                <button class="btn btn-primary btn-sm" (click)="addMedia()">Mediathek durchsuchen</button>
-              </div>
-            </div>
-
-            <div class="media-preview-grid scrollable-area"
-              style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; max-height: 380px; overflow-y: auto;">
-              <div *ngFor="let med of modalData.media; let i = index" class="media-preview-card glass"
-                style="padding: 10px; border-radius: 12px; position: relative;">
-                <div class="media-thumb-wrapper"
-                  style="height: 100px; background: rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
-                  <img *ngIf="med.url" [src]="med.url" style="width: 100%; height: 100%; object-fit: cover;">
-                </div>
-                <div style="margin-top: 8px;">
-                  <input type="text" [(ngModel)]="med.title" placeholder="Titel" class="form-control form-control-sm">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
-                    <label style="font-size: 0.75em; display: flex; align-items: center; gap: 4px;">
-                      <input type="checkbox" [(ngModel)]="med.isPrimary"> Profilbild
-                    </label>
-                    <button class="btn-icon text-danger" (click)="removeMedia(i)">&times;</button>
-                  </div>
-                </div>
-              </div>
-              <div *ngIf="!modalData.media || modalData.media.length === 0"
-                style="grid-column: 1 / -1; text-align: center; color: #94a3b8; padding: 40px 0; font-style: italic;">
-                Keine Medien verknüpft.
-              </div>
-            </div>
-          </div>
-
-          <!-- NOTES TAB -->
-          <div *ngIf="activeTab === 'notes'" class="tab-pane">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-              <h4 style="margin: 0;">Persönliche Notizen</h4>
-              <button class="btn btn-secondary btn-sm" (click)="addNote()">+ Notiz</button>
-            </div>
-            <div class="note-list scrollable-area" style="max-height: 380px; overflow-y: auto;">
-              <div *ngFor="let note of modalData.notes; let i = index; trackBy: trackByIndex" class="row-card note-item"
-                style="border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 10px; background: #fff; display: flex; flex-direction: column;">
-                <textarea [(ngModel)]="modalData.notes[i]" placeholder="Ihre Anmerkungen..." class="form-control"
-                  style="min-height: 120px; resize: vertical;"></textarea>
-                <button class="btn-text text-danger" (click)="removeNote(i)"
-                  style="align-self: flex-end; margin-top: 5px;">Notiz löschen</button>
-              </div>
-              <div *ngIf="modalData.notes.length === 0"
-                style="text-align: center; color: #94a3b8; padding: 40px 0; font-style: italic;">
-                Keine Notizen vorhanden.
-              </div>
-            </div>
-          </div>
-
-          <!-- EXTENSIONS TAB -->
-          <div *ngIf="activeTab === 'extensions'" class="tab-pane">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-              <h4 style="margin: 0;">Spezialfelder (Fremddaten)</h4>
-              <button class="btn btn-secondary btn-sm" (click)="addExtension()">+ Feld</button>
-            </div>
-            <p style="font-size: 0.85em; color: #64748b; margin-bottom: 15px;">Hier können Sie proprietäre Felder aus
-              anderen Programmen verwalten oder eigene Tags definieren.</p>
-            <div class="extension-list scrollable-area" style="max-height: 380px; overflow-y: auto;">
-              <div *ngFor="let ext of modalData.extensions; let i = index" class="row-card extension-row"
-                style="border: 1px solid #e2e8f0; padding: 12px; border-radius: 8px; margin-bottom: 10px; background: #fff;">
-                <div style="display: grid; grid-template-columns: 150px 1fr 40px; gap: 10px;">
-                  <input type="text" [(ngModel)]="ext.key" placeholder="_TAG_NAME" class="form-control">
-                  <input type="text" [(ngModel)]="ext.value" placeholder="Datenwert" class="form-control">
-                  <button class="btn-icon text-danger" (click)="removeExtension(i)">&times;</button>
-                </div>
-              </div>
-              <div *ngIf="modalData.extensions.length === 0"
-                style="text-align: center; color: #94a3b8; padding: 40px 0; font-style: italic;">
-                Keine benutzerdefinierten Felder.
-              </div>
-            </div>
-          </div>
         </div>
 
         <div class="modal-footer">
           <button class="btn btn-danger" *ngIf="modalMode === 'edit'" (click)="deletePerson()">Löschen</button>
+
+          <button *ngIf="modalMode === 'edit'" class="btn btn-outline-primary" style="margin-left: 15px;"
+            (click)="goToProfile()">
+            Zur vollständigen Profilseite
+          </button>
+
           <div class="spacer"></div>
           <button class="btn btn-secondary" (click)="closeModal()">Abbrechen</button>
           <button class="btn btn-primary" (click)="savePerson()" [disabled]="isSaving">

@@ -1,0 +1,28 @@
+<div class="modal" *ngIf="visible">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Aus Galerie wählen</h3>
+            <button class="btn-close" (click)="close()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="search-bar mb-4">
+                <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="onSearch()"
+                    placeholder="Nach Titel oder Dateiname suchen..." class="form-control">
+                <button class="btn btn-secondary" (click)="onSearch()">Suchen</button>
+            </div>
+
+            <div *ngIf="loading()" class="loading-state">Lade Medien...</div>
+
+            <div *ngIf="!loading() && mediaItems().length === 0" class="empty-state">
+                Keine Medien gefunden. Lade zunächst Dateien in der Galerie hoch!
+            </div>
+
+            <div *ngIf="!loading() && mediaItems().length > 0" class="media-grid">
+                <div *ngFor="let item of mediaItems()" class="media-thumb" (click)="selectItem(item)">
+                    <img [src]="item.url" [alt]="item.title || 'Bild'" />
+                    <div class="media-title">{{ item.title || item.originalFileName || 'Ohne Titel' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -69,6 +69,15 @@
     justify-content: center;
     overflow: hidden;
     box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.hero-preview.drop-target {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
 }
 
 .mini-tree-svg {

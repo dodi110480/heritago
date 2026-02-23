@@ -14,7 +14,7 @@ export class GedcomService {
     private baseApiUrl = `http://${window.location.hostname}:3000/api/tree/`;
     private baseMediaUrl = `http://${window.location.hostname}:3000`;
 
-    getMediaUrl(url: string): string {
+    getMediaUrl(url: string | undefined): string {
         if (!url) return '';
         if (url.startsWith('http')) return url;
         return `${this.baseMediaUrl}${url}`;
@@ -22,25 +22,37 @@ export class GedcomService {
 
     getTreeData(treeName?: string): Observable<TreeData | null> {
         const timestamp = new Date().getTime();
+
         if (treeName) {
-            return this.http.get<TreeData>(`${this.baseApiUrl}${treeName}?t=${timestamp}`, { withCredentials: true });
+            return this.http.get<TreeData>(`${this.baseApiUrl}${treeName}?t=${timestamp}`, { withCredentials: true }).pipe(
+                catchError(() => {
+                    return this.loadFallbackTree(timestamp);
+                })
+            );
         }
 
-        // 1. Try active tree from AuthService
         const activeTree = this.authService.currentTree();
         if (activeTree) {
-            return this.http.get<TreeData>(`${this.baseApiUrl}${activeTree.name}?t=${timestamp}`, { withCredentials: true });
+            return this.http.get<TreeData>(`${this.baseApiUrl}${activeTree.name}?t=${timestamp}`, { withCredentials: true }).pipe(
+                catchError(() => {
+                    // If error (e.g. 404 because tree was deleted), clear active tree and try fallback
+                    localStorage.removeItem('activeTree');
+                    return this.loadFallbackTree(timestamp);
+                })
+            );
         }
 
-        // 2. Fallback: load first available tree
+        return this.loadFallbackTree(timestamp);
+    }
+
+    private loadFallbackTree(timestamp: number): Observable<TreeData | null> {
         return this.authService.getTrees().pipe(
             switchMap(trees => {
                 if (trees.length > 0) {
                     const validTrees = trees.filter(t => t.name !== 'DEFAULT_TREE');
                     if (validTrees.length > 0) {
-                        const sperlichTree = validTrees.find(t => t.name.toLowerCase() === 'sperlich');
-                        const treeToLoad = sperlichTree || validTrees[0];
-                        // Also set it as active if none was set
+                        const treeToLoad = validTrees[0];
+                        // Set it as active
                         this.authService.selectTree(treeToLoad);
                         return this.http.get<TreeData>(`${this.baseApiUrl}${treeToLoad.name}?t=${timestamp}`, { withCredentials: true });
                     }
@@ -84,6 +96,10 @@ export class GedcomService {
 
     deleteMedia(id: string): Observable<any> {
         return this.http.delete<any>(`http://${window.location.hostname}:3000/api/media/${id}`, { withCredentials: true });
+    }
+
+    updateMedia(id: string, data: { title?: string, description?: string }): Observable<any> {
+        return this.http.put<any>(`http://${window.location.hostname}:3000/api/media/${id}`, data, { withCredentials: true });
     }
 
     linkMedia(mediaId: string, linkData: { individualId?: string, familyId?: string, isPrimary?: boolean }): Observable<any> {

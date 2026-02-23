@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GedcomService } from './gedcom.service';
 import { TreeData } from './models';
+import { PlaceModal } from './place-modal';
 
 @Component({
     selector: 'app-place-list',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, PlaceModal],
     templateUrl: './place-list.html',
     styleUrl: './place-list.css'
 })
@@ -23,16 +24,7 @@ export class PlaceList implements OnInit {
     // Modal State
     isModalOpen = false;
     modalMode: 'add' | 'edit' = 'add';
-    modalData = {
-        detail: '',
-        city: '',
-        district: '',
-        region: '',
-        country: '',
-        old_name: '',
-        latitude: '',
-        longitude: ''
-    };
+    selectedPlaceData: any = null;
 
     ngOnInit() {
         this.loadPlaces();
@@ -64,43 +56,14 @@ export class PlaceList implements OnInit {
     }
 
     openAddModal() {
-        this.errorMessage.set(null);
         this.modalMode = 'add';
-        this.modalData = {
-            detail: '',
-            city: '',
-            district: '',
-            region: '',
-            country: '',
-            old_name: '',
-            latitude: '',
-            longitude: ''
-        };
+        this.selectedPlaceData = null;
         this.isModalOpen = true;
     }
 
     openEditModal(place: any) {
-        this.errorMessage.set(null);
         this.modalMode = 'edit';
-
-        const parts = (place.name || '').split(',').map((p: string) => p.trim());
-        // Right-align if fewer than 5 parts
-        const fullParts = new Array(5).fill('');
-        const offset = Math.max(0, 5 - parts.length);
-        for (let i = 0; i < parts.length; i++) {
-            if (i + offset < 5) fullParts[i + offset] = parts[i];
-        }
-
-        this.modalData = {
-            detail: fullParts[0],
-            city: fullParts[1],
-            district: fullParts[2],
-            region: fullParts[3],
-            country: fullParts[4],
-            old_name: place.name,
-            latitude: place.latitude?.toString() || '',
-            longitude: place.longitude?.toString() || ''
-        };
+        this.selectedPlaceData = place;
         this.isModalOpen = true;
     }
 
@@ -108,43 +71,9 @@ export class PlaceList implements OnInit {
         this.isModalOpen = false;
     }
 
-    savePlace() {
-        const tree = this.currentTree();
-        if (!tree) return;
-
-        // Construct name strictly with 4 commas
-        const name = [
-            this.modalData.detail.trim(),
-            this.modalData.city.trim(),
-            this.modalData.district.trim(),
-            this.modalData.region.trim(),
-            this.modalData.country.trim()
-        ].join(', ');
-
-        const payload = {
-            name: name,
-            old_name: this.modalMode === 'edit' ? this.modalData.old_name : undefined,
-            latitude: this.modalData.latitude,
-            longitude: this.modalData.longitude
-        };
-
-        this.errorMessage.set(null);
-        this.isSaving.set(true);
-        this.gedcomService.savePlace(tree, payload).subscribe({
-            next: (res: any) => {
-                this.isSaving.set(false);
-                if (res.success) {
-                    this.refreshList();
-                    this.closeModal();
-                } else {
-                    this.errorMessage.set(res.message);
-                }
-            },
-            error: (err: any) => {
-                this.isSaving.set(false);
-                this.errorMessage.set(err.error?.message || 'Ein Fehler ist aufgetreten beim Speichern des Ortes.');
-            }
-        });
+    onPlaceSaved() {
+        this.refreshList();
+        this.closeModal();
     }
 
     deletePlace(name: string) {

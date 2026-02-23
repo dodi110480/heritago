@@ -4,11 +4,12 @@ import { RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { Individual } from './models';
 import { FormsModule } from '@angular/forms';
+import { CleanDatePipe } from './clean-date.pipe';
 
 @Component({
     selector: 'app-person-list',
     standalone: true,
-    imports: [CommonModule, RouterLink, FormsModule],
+    imports: [CommonModule, RouterLink, FormsModule, CleanDatePipe],
     templateUrl: './person-list.html',
     styleUrl: './person-list.css'
 })
@@ -55,5 +56,11 @@ export class PersonList {
         const death = person.deathDate || '';
         if (!birth && !death) return '';
         return `${birth} - ${death}`.trim();
+    }
+
+    getProfileImage(person: Individual): string | null {
+        if (!person.media || person.media.length === 0) return null;
+        const primary = person.media.find(m => m.isPrimary) || person.media[0];
+        return primary?.url ? this.gedcomService.getMediaUrl(primary.url) : null;
     }
 }

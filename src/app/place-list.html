@@ -72,58 +72,7 @@
         </div>
     </div>
 
-    <!-- Modal -->
-    <div class="modal-backdrop" *ngIf="isModalOpen" (click)="closeModal()">
-        <div class="modal glass-card" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-                <h2>{{ modalMode === 'add' ? 'Neuen Ort anlegen' : 'Ort bearbeiten' }}</h2>
-                <button class="close-btn" (click)="closeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="error-box" *ngIf="errorMessage()">
-                    {{ errorMessage() }}
-                </div>
-
-                <div class="form-group">
-                    <label>Ortsteil / Gebäude (optional)</label>
-                    <input type="text" [(ngModel)]="modalData.detail" class="form-control" placeholder="z.B. Rathaus">
-                </div>
-                <div class="form-group">
-                    <label>Stadt / Gemeinde (optional)</label>
-                    <input type="text" [(ngModel)]="modalData.city" class="form-control" placeholder="z.B. Ahorn">
-                </div>
-                <div class="form-group">
-                    <label>Landkreis / Bezirk (optional)</label>
-                    <input type="text" [(ngModel)]="modalData.district" class="form-control" placeholder="z.B. Coburg">
-                </div>
-                <div class="form-group">
-                    <label>Bundesland / Region (optional)</label>
-                    <input type="text" [(ngModel)]="modalData.region" class="form-control" placeholder="z.B. Bayern">
-                </div>
-                <div class="form-group">
-                    <label>Staat / Land</label>
-                    <input type="text" [(ngModel)]="modalData.country" class="form-control"
-                        placeholder="z.B. Deutschland">
-                </div>
-
-                <div class="form-row" style="margin-top: 15px;">
-                    <div class="form-group">
-                        <label>Breitengrad (Lat)</label>
-                        <input type="text" [(ngModel)]="modalData.latitude" class="form-control" placeholder="52.52">
-                    </div>
-                    <div class="form-group">
-                        <label>Längengrad (Long)</label>
-                        <input type="text" [(ngModel)]="modalData.longitude" class="form-control" placeholder="13.40">
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" (click)="closeModal()">Abbrechen</button>
-                <button class="btn-primary" (click)="savePlace()"
-                    [disabled]="isSaving() || (!modalData.detail && !modalData.city && !modalData.district && !modalData.region && !modalData.country)">
-                    {{ isSaving() ? 'Speichere...' : 'Speichern' }}
-                </button>
-            </div>
-        </div>
-    </div>
+    <app-place-modal [visible]="isModalOpen" [mode]="modalMode" [initialData]="selectedPlaceData"
+        (saved)="onPlaceSaved()" (closed)="closeModal()">
+    </app-place-modal>
 </div>

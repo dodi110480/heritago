@@ -40,33 +40,40 @@
     </div>
 
     <div class="person-grid" *ngIf="!loading() && filteredIndividuals().length > 0">
-        <a *ngFor="let person of filteredIndividuals()" [routerLink]="['/tree']" [queryParams]="{focus: person.id}"
-            class="person-card">
+        <a *ngFor="let person of filteredIndividuals()" [routerLink]="['/person', person.id]" class="person-card">
 
-            <div class="avatar-box" [class]="'gender-' + person.gender">
-                <svg *ngIf="person.gender === 'M'" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                <svg *ngIf="person.gender === 'F'" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
-                <svg *ngIf="person.gender !== 'M' && person.gender !== 'F'" xmlns="http://www.w3.org/2000/svg"
-                    width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
+            <div class="avatar-box" [class]="'gender-' + person.gender" [class.has-image]="getProfileImage(person)"
+                [style.background-image]="getProfileImage(person) ? 'url(' + getProfileImage(person) + ')' : 'none'"
+                style="background-size: cover; background-position: center;">
+
+                <ng-container *ngIf="!getProfileImage(person)">
+                    <svg *ngIf="person.gender === 'M'" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <svg *ngIf="person.gender === 'F'" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <svg *ngIf="person.gender !== 'M' && person.gender !== 'F'" xmlns="http://www.w3.org/2000/svg"
+                        width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </ng-container>
             </div>
 
             <div class="person-info">
                 <div class="name-row">
-                    <h3>{{ person.firstName }} {{ person.lastName }}</h3>
-                    <span class="id-tag">{{ person.id }}</span>
+                    <h3 style="line-height: 1.2;">
+                        <span style="display: block;">{{ person.firstName || '?' }}</span>
+                        <span style="display: block; opacity: 0.8; font-size: 0.9em;">{{ person.lastName || '?'
+                            }}</span>
+                    </h3>
                 </div>
-                <p class="lifespan">{{ getLifespan(person) }}</p>
+                <p class="lifespan">{{ getLifespan(person) | cleanDate }}</p>
                 <p class="meta-info" *ngIf="person.birthPlace">
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">

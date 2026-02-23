@@ -102,6 +102,45 @@
     transform: scale(1.02);
 }
 
+/* Rule 10: Focus Highlight */
+.node.focused rect.card {
+    stroke: #f59e0b !important;
+    stroke-width: 3.5px !important;
+    filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.6));
+    animation: focused-pulse 2s infinite ease-in-out;
+}
+
+@keyframes focused-pulse {
+    0% {
+        filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.4));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 25px rgba(245, 158, 11, 0.8));
+    }
+
+    100% {
+        filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.4));
+    }
+}
+
+/* Rule 9: Zoom Simplification */
+svg.zoom-low .avatar-group,
+svg.zoom-low .add-btn,
+svg.zoom-low .last-name,
+svg.zoom-low .dates {
+    display: none;
+}
+
+svg.zoom-low .first-name {
+    font-size: 24px !important;
+    text-anchor: middle;
+    x: 120;
+    /* Center of nodeWidth 240 */
+    y: 65;
+    /* Center of nodeHeight 110 */
+}
+
 .avatar-bg {
     fill: #f1f5f9;
 }
@@ -134,8 +173,10 @@
 }
 
 .link.highlight {
-    stroke: #6366f1;
-    stroke-width: 3px;
+    stroke: #f59e0b;
+    /* Golden highlight for focus-related lines */
+    stroke-width: 4px;
+    filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.4));
 }
 
 .add-btn {
@@ -146,6 +187,39 @@
 
 .add-btn:hover {
     transform: scale(1.1);
+}
+
+.edit-btn {
+    cursor: pointer;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    transition: transform 0.2s ease;
+}
+
+.edit-btn:hover {
+    transform: scale(1.1);
+}
+
+.more-ancestors-btn,
+.more-descendants-btn {
+    cursor: pointer;
+    filter: drop-shadow(0 4px 6px rgba(59, 130, 246, 0.4));
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.more-ancestors-btn:hover,
+.more-descendants-btn:hover {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.8));
+}
+
+.more-ancestors-btn circle,
+.more-descendants-btn circle {
+    transition: fill 0.2s ease;
+}
+
+.more-ancestors-btn:hover circle,
+.more-descendants-btn:hover circle {
+    fill: #2563eb !important;
 }
 
 /* Modal General */
@@ -507,16 +581,7 @@
     font-weight: 500;
 }
 
-.edit-icon {
-    cursor: pointer;
-    opacity: 0.7;
-    transition: all 0.2s;
-}
 
-.edit-icon:hover {
-    transform: scale(1.1);
-    opacity: 1;
-}
 
 .controls {
     position: fixed;

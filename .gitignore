@@ -33,8 +33,18 @@ yarn-error.log
 /.angular/cache
 .sass-cache/
 /connect.lock
-/coverage
-/libpeerconnection.log
+/generated/prisma
+
+# Heritago specific
+server/uploads/*
+!server/uploads/.gitkeep
+*.ged
+server/prisma/*.db
+server/prisma/*.db-journal
+server/dist/
+.env
+/server/.env
+bpeerconnection.log
 testem.log
 /typings
 __screenshots__/

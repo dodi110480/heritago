@@ -1,0 +1,20 @@
+<div class="image-viewer-overlay" *ngIf="url" (click)="close()">
+    <div class="viewer-container" (click)="$event.stopPropagation()">
+        <div class="viewer-header">
+            <span class="image-title">{{ title }}</span>
+            <div class="viewer-actions">
+                <button class="btn-icon" (click)="zoomOut()" title="Zoom Out">➖</button>
+                <button class="btn-icon" (click)="resetZoom()" title="Reset Zoom">🔄</button>
+                <button class="btn-icon" (click)="zoomIn()" title="Zoom In">➕</button>
+                <div class="divider"></div>
+                <button class="btn-icon" (click)="download()" title="Download">💾</button>
+                <button class="btn-icon close-btn" (click)="close()" title="Schließen">&times;</button>
+            </div>
+        </div>
+        <div class="viewer-content" (wheel)="onWheel($event)">
+            <div class="image-wrapper" [style.transform]="'scale(' + zoom() + ')'">
+                <img [src]="url" [alt]="title">
+            </div>
+        </div>
+    </div>
+</div>

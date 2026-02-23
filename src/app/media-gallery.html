@@ -106,7 +106,7 @@
             <div class="media-grid" *ngIf="!loading() && viewMode() === 'grid'">
                 <div *ngFor="let item of mediaItems()" class="media-card glass hover-lift" (click)="openLightbox(item)">
                     <div class="card-preview">
-                        <img *ngIf="item.mimeType.startsWith('image/')" [src]="item.url" loading="lazy">
+                        <img *ngIf="item.mimeType?.startsWith('image/')" [src]="item.url" loading="lazy">
                         <div *ngIf="item.mimeType === 'application/pdf'" class="pdf-placeholder">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -153,8 +153,8 @@
                     <tbody>
                         <tr *ngFor="let item of mediaItems()" (click)="openLightbox(item)">
                             <td>
-                                <img *ngIf="item.mimeType.startsWith('image/')" [src]="item.url" class="mini-thumb">
-                                <span *ngIf="!item.mimeType.startsWith('image/')" class="mini-icon">📄</span>
+                                <img *ngIf="item.mimeType?.startsWith('image/')" [src]="item.url" class="mini-thumb">
+                                <span *ngIf="!item.mimeType?.startsWith('image/')" class="mini-icon">📄</span>
                             </td>
                             <td><strong>{{ item.title }}</strong><br><small>{{ item.originalFileName }}</small></td>
                             <td>{{ item.mimeType }}</td>
@@ -185,7 +185,7 @@
     <div class="lightbox-overlay" *ngIf="selectedImage()" (click)="closeLightbox()">
         <div class="lightbox-container glass" (click)="$event.stopPropagation()">
             <div class="lightbox-main">
-                <img *ngIf="selectedImage().mimeType.startsWith('image/')" [src]="selectedImage().url">
+                <img *ngIf="selectedImage().mimeType?.startsWith('image/')" [src]="selectedImage().url">
                 <iframe *ngIf="selectedImage().mimeType === 'application/pdf'" [src]="selectedImage().url" width="100%"
                     height="100%"></iframe>
             </div>
@@ -199,12 +199,27 @@
                 <div class="detail-body">
                     <div class="info-group">
                         <label>Titel</label>
-                        <p>{{ selectedImage().title }}</p>
+                        <p *ngIf="!isEditing()">{{ selectedImage().title }} <button class="btn-text btn-sm"
+                                (click)="isEditing.set(true)">✎</button></p>
+                        <input *ngIf="isEditing()" type="text" [(ngModel)]="selectedImage().title"
+                            class="form-control mb-2">
                     </div>
-                    <div class="info-group" *ngIf="selectedImage().description">
+                    <div class="info-group" *ngIf="!isEditing() && selectedImage().description">
                         <label>Beschreibung</label>
                         <p>{{ selectedImage().description }}</p>
                     </div>
+                    <div class="info-group" *ngIf="isEditing()">
+                        <label>Beschreibung</label>
+                        <textarea [(ngModel)]="selectedImage().description" class="form-control"
+                            style="min-height: 80px;"></textarea>
+                    </div>
+
+                    <div class="info-group pt-2" *ngIf="isEditing()">
+                        <button class="btn btn-primary btn-sm mr-2" (click)="saveMedia()">Speichern</button>
+                        <button class="btn btn-secondary btn-sm" (click)="isEditing.set(false)"
+                            style="margin-left: 10px;">Abbrechen</button>
+                    </div>
+
                     <div class="info-group">
                         <label>Dateiname</label>
                         <small>{{ selectedImage().originalFileName }}</small>

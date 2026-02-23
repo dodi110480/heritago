@@ -63,6 +63,7 @@ export interface Individual {
     deathDate?: string;
     birthPlace?: string;
     deathPlace?: string;
+    profileImageUrl?: string;
 }
 
 export interface LifeEvent {

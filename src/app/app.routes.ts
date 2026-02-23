@@ -8,9 +8,9 @@ export const routes: Routes = [
         loadComponent: () => import('./login').then(m => m.Login)
     },
     {
-        path: 'create-tree',
-        loadComponent: () => import('./create-tree').then(m => m.CreateTree),
-        canActivate: [adminGuard]
+        path: 'tree-management',
+        loadComponent: () => import('./tree-management').then(m => m.TreeManagement),
+        canActivate: [authGuard]
     },
     {
         path: 'search',
@@ -62,11 +62,7 @@ export const routes: Routes = [
         loadComponent: () => import('./update-settings').then(m => m.UpdateSettings),
         canActivate: [adminGuard]
     },
-    {
-        path: 'tree-selector',
-        loadComponent: () => import('./tree-selector').then(m => m.TreeSelector),
-        canActivate: [authGuard]
-    },
+    /* old tree-selector removed */
     {
         path: 'admin/users',
         loadComponent: () => import('./user-management').then(m => m.UserManagement),
@@ -75,6 +71,11 @@ export const routes: Routes = [
     {
         path: 'persons',
         loadComponent: () => import('./person-list').then(m => m.PersonList),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'person/:id',
+        loadComponent: () => import('./person-detail').then(m => m.PersonDetail),
         canActivate: [authGuard]
     },
     {
