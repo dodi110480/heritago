@@ -116,9 +116,6 @@ PORT=3000
 DATABASE_URL="postgresql://heritago:dein_sicheres_passwort@127.0.0.1:5432/heritago?schema=public"
 JWT_SECRET="ein-langes-zufaelliges-geheimnis"
 NODE_ENV=production
-GITHUB_TOKEN="dein_github_personal_access_token"
-GITHUB_OWNER="dodi110480"
-GITHUB_REPO="heritago"
 ```
 
 > [!IMPORTANT]
