@@ -16,11 +16,13 @@ export class UpdateSettings implements OnInit {
     public checking = false;
     public updating = false;
     public error: string | null = null;
+    public currentVersion: string = '...';
 
-    private apiUrl = 'http://localhost:3000/api/system';
+    private apiUrl = `http://${window.location.hostname}:3000/api/system`;
 
     ngOnInit() {
         this.loadSystemInfo();
+        this.checkUpdate();
     }
 
     async loadSystemInfo() {
@@ -35,6 +37,19 @@ export class UpdateSettings implements OnInit {
         }
     }
 
+    async loadCurrentVersion() {
+        try {
+            // Quick check to get the current version without full update check
+            const res = await fetch(`${this.apiUrl}/check-update`);
+            const data = await res.json();
+            if (data.success) {
+                this.currentVersion = data.currentVersion || '...';
+            }
+        } catch (err) {
+            console.error('Failed to load current version', err);
+        }
+    }
+
     async checkUpdate() {
         this.checking = true;
         this.error = null;
@@ -46,6 +61,7 @@ export class UpdateSettings implements OnInit {
             const data = await res.json();
             if (data.success) {
                 this.updateStatus = data;
+                this.currentVersion = data.currentVersion || this.currentVersion;
             } else {
                 this.error = data.message;
             }
@@ -57,16 +73,26 @@ export class UpdateSettings implements OnInit {
     }
 
     async performUpdate() {
+        if (!this.updateStatus?.latestVersion) {
+            this.error = 'Keine Ziel-Version gefunden. Bitte zuerst auf Updates prüfen.';
+            return;
+        }
+
         this.updating = true;
         this.error = null;
 
         try {
-            const res = await fetch(`${this.apiUrl}/update`, { method: 'POST' });
+            const res = await fetch(`${this.apiUrl}/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tag: this.updateStatus.latestVersion })
+            });
             const data = await res.json();
             if (data.success) {
                 this.updateResult = data;
+                this.currentVersion = this.updateStatus.latestVersion;
                 this.updateStatus = null;
-                // Reload system info to see new version (after build/restart)
+                // Reload system info to see new version
                 setTimeout(() => this.loadSystemInfo(), 2000);
             } else {
                 this.error = data.message;

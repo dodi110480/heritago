@@ -19,8 +19,8 @@
                 <!-- Status Card -->
                 <div class="section-card">
                     <div class="card-header">
-                        <h3 style="color: #f1f5f9; margin: 0;">Installations-Status</h3>
-                        <span class="version-badge">{{ systemInfo?.version || '...' }}</span>
+                        <h3 style="color: #f1f5f9; margin: 0;">Installierte Version</h3>
+                        <span class="version-badge">{{ currentVersion }}</span>
                     </div>
 
                     <div class="info-grid">
@@ -48,7 +48,7 @@
                             <polyline points="7 10 12 15 17 10"></polyline>
                             <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        <span>{{ updateStatus.hasUpdate ? 'Update verfügbar' : 'System aktuell' }}</span>
+                        <span>{{ updateStatus.hasUpdate ? 'Update verfügbar!' : 'System ist aktuell ✓' }}</span>
                     </div>
                 </div>
 
@@ -76,12 +76,13 @@
                     <div style="display: flex; gap: 1rem; margin-top: auto;">
                         <button *ngIf="!updateStatus?.hasUpdate" (click)="checkUpdate()" [disabled]="checking"
                             class="btn btn-primary">
-                            {{ checking ? 'Prüfe...' : 'Auf Updates prüfen' }}
+                            {{ checking ? 'Suche...' : 'Nach Updates suchen' }}
                         </button>
 
                         <button *ngIf="updateStatus?.hasUpdate" (click)="performUpdate()" [disabled]="updating"
-                            class="btn btn-primary">
-                            {{ updating ? 'Wird aktualisiert...' : 'Update jetzt durchführen' }}
+                            class="btn btn-success">
+                            {{ updating ? 'Wird installiert...' : 'Version ' + updateStatus.latestVersion + '
+                            installieren' }}
                         </button>
 
                         <button *ngIf="updateStatus" (click)="updateStatus = null" class="btn btn-outline">
@@ -91,26 +92,62 @@
                 </div>
             </div>
 
-            <!-- Detailed Info / Results -->
-            <div *ngIf="updateStatus?.hasUpdate" class="section-card" style="margin-top: 1rem;">
-                <h4 style="margin: 0; color: #f1f5f9;">Update Details</h4>
-                <div class="log-box">
-                    <div style="margin-bottom: 0.5rem; color: #60a5fa;">{{ updateStatus.currentHash }} → {{
-                        updateStatus.remoteHash }}</div>
+            <!-- Found Update Details -->
+            <div *ngIf="updateStatus?.hasUpdate" class="section-card update-details-card" style="margin-top: 1rem;">
+                <h4 style="margin: 0; color: #f1f5f9;">Gefundenes Update</h4>
+                <div class="version-comparison">
+                    <div class="version-box current">
+                        <span class="version-label">Installiert</span>
+                        <span class="version-number">{{ updateStatus.currentVersion }}</span>
+                    </div>
+                    <div class="version-arrow">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </div>
+                    <div class="version-box latest">
+                        <span class="version-label">Verfügbar</span>
+                        <span class="version-number">{{ updateStatus.latestVersion }}</span>
+                    </div>
+                </div>
+                <div *ngIf="updateStatus.releaseName" class="release-name">
+                    <span class="label">Release:</span> {{ updateStatus.releaseName }}
+                </div>
+                <div *ngIf="updateStatus.details" class="log-box">
                     <pre>{{ updateStatus.details }}</pre>
                 </div>
             </div>
 
+            <!-- No Update Found -->
+            <div *ngIf="updateStatus && !updateStatus.hasUpdate" class="section-card" style="margin-top: 1rem;">
+                <div class="status-indicator success">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Kein Update verfügbar. Du nutzt bereits die neueste Version <strong>{{
+                            updateStatus.currentVersion }}</strong>.</span>
+                </div>
+            </div>
+
+            <!-- Update Result -->
             <div *ngIf="updateResult" class="section-card" style="margin-top: 1rem;">
                 <h4 style="margin: 0; color: #f1f5f9;">Update Ergebnis</h4>
                 <div class="status-indicator success" style="margin-top: 1rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
                     <span>{{ updateResult.message }}</span>
                 </div>
-                <div class="log-box">
+                <div *ngIf="updateResult.output" class="log-box">
                     <pre>{{ updateResult.output }}</pre>
                 </div>
             </div>
 
+            <!-- Error -->
             <div *ngIf="error" class="status-indicator error" style="margin-top: 1rem;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -134,258 +171,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    /* General Layout */
-    .settings-container {
-        padding: 2rem;
-        max-width: 1000px;
-        margin: 0 auto;
-    }
-
-    .glass-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 20px;
-        padding: 2.5rem;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-    }
-
-    /* Header */
-    .header {
-        margin-bottom: 3rem;
-    }
-
-    .title-row {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .back-link-icon {
-        color: #64748b;
-        transition: all 0.2s;
-    }
-
-    .back-link-icon:hover {
-        color: #3b82f6;
-    }
-
-    h1 {
-        margin: 0;
-        font-size: 2.2rem;
-        background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-    }
-
-    .header p {
-        color: #94a3b8;
-        margin-left: 2.5rem;
-    }
-
-    /* Content Grid */
-    .content {
-        margin-top: 3rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .update-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-    }
-
-    @media (max-width: 768px) {
-        .update-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* Section Card */
-    .section-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 20px;
-        padding: 2rem;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .version-badge {
-        padding: 0.5rem 1rem;
-        border-radius: 9999px;
-        background: rgba(59, 130, 246, 0.1);
-        color: #60a5fa;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-
-    /* Info Grid */
-    .info-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-    }
-
-    .info-item .label {
-        display: block;
-        color: #64748b;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-    }
-
-    .info-item .value {
-        color: #e2e8f0;
-        font-weight: 500;
-    }
-
-    /* Status Indicator */
-    .status-indicator {
-        padding: 1rem;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
-
-    .status-indicator.success {
-        background: rgba(16, 185, 129, 0.1);
-        border: 1px solid rgba(16, 185, 129, 0.2);
-        color: #34d399;
-    }
-
-    .status-indicator.warning {
-        background: rgba(245, 158, 11, 0.1);
-        border: 1px solid rgba(245, 158, 11, 0.2);
-        color: #fbbf24;
-    }
-
-    .status-indicator.error {
-        background: rgba(239, 68, 68, 0.1);
-        border: 1px solid rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
-    }
-
-    /* IO Icon */
-    .io-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 14px;
-        background: rgba(168, 85, 247, 0.15);
-        color: #a855f7;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* Buttons */
-    .btn {
-        border: none;
-        border-radius: 12px;
-        padding: 0.75rem 1.5rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .btn-primary {
-        background: #3b82f6;
-        color: white;
-    }
-
-    .btn-primary:hover {
-        background: #2563eb !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-
-    .btn-primary:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
-
-    .btn-outline {
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #94a3b8;
-    }
-
-    .btn-outline:hover {
-        background: rgba(255, 255, 255, 0.05) !important;
-        color: #f1f5f9 !important;
-        border-color: rgba(255, 255, 255, 0.2) !important;
-    }
-
-    .btn-outline:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
-
-    /* Log Box */
-    .log-box {
-        margin-top: 1rem;
-        font-family: monospace;
-        font-size: 0.8rem;
-        padding: 0.5rem;
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 4px;
-        overflow: auto;
-        max-height: 200px;
-        white-space: pre-wrap;
-    }
-
-    /* Back Link */
-    .back-link {
-        margin-top: 4rem;
-        padding-top: 2rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .back-btn {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: #94a3b8;
-        text-decoration: none;
-        font-weight: 500;
-        transition: color 0.2s;
-    }
-
-    .back-btn:hover {
-        color: #3b82f6 !important;
-    }
-
-    /* Animations */
-    @keyframes rotate {
-        from {
-            transform: rotate(0deg);
-        }
-
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    .rotating svg {
-        animation: rotate 2s linear infinite;
-    }
-</style>
