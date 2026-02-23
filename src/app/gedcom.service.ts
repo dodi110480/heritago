@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, switchMap, of } from 'rxjs';
+import { Observable, switchMap, of, catchError } from 'rxjs';
 import { TreeData } from './models';
 import { AuthService } from './auth.service';
 
