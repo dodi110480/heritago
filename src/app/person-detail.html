@@ -1,4 +1,4 @@
-<div class="page-container" *ngIf="person() as p">
+<div class="page-container" *ngIf="person() as p" (input)="markDirty()">
     <div class="header-glass">
         <button class="btn btn-secondary btn-sm back-btn" (click)="goBack()">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"

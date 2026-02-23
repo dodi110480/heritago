@@ -64,7 +64,7 @@ export class PersonList {
             next: (res: any) => {
                 this.isCreating = false;
                 if (res.success && res.person?.id) {
-                    this.router.navigate(['/person', res.person.id], { queryParams: { new: 'true' } });
+                    this.router.navigate(['/person', res.person.id]);
                 }
             },
             error: () => {

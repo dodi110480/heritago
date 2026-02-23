@@ -74,8 +74,8 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     individualSearchResults = signal<Individual[]>([]);
     showIndividualResults = signal<number | null>(null);
 
-    // New Person & Unsaved Changes Guard
-    isNewPerson = false;
+    // Unsaved Changes Guard
+    isDirty = false;
     hasSaved = false;
     showLeaveModal = signal(false);
     private leaveResolver: ((value: boolean) => void) | null = null;
@@ -118,10 +118,11 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         return primary?.url ? this.gedcomService.getMediaUrl(primary.url) : null;
     }
 
+    markDirty() {
+        this.isDirty = true;
+    }
+
     ngOnInit() {
-        this.route.queryParamMap.subscribe(qp => {
-            this.isNewPerson = qp.get('new') === 'true';
-        });
         this.route.paramMap.subscribe(params => {
             const id = params.get('id');
             if (id) {
@@ -132,7 +133,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     }
 
     canDeactivate(): boolean | Promise<boolean> {
-        if (!this.isNewPerson || this.hasSaved) {
+        if (!this.isDirty || this.hasSaved) {
             return true;
         }
         // Show modal and wait for user decision
@@ -153,16 +154,22 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     }
 
     async confirmDiscardAndLeave() {
-        // Delete the unsaved new person
+        const p = this.person();
         const data = this.treeData();
         const treeName = data?.meta?.tree || '';
-        if (treeName && this.personId) {
+
+        // Check if person is "empty" (no name, no events) → delete from DB
+        const hasName = !!(p?.firstName?.trim() || p?.lastName?.trim());
+        const hasEvents = !!(p?.events && p.events.length > 0);
+
+        if (!hasName && !hasEvents && treeName && this.personId) {
             try {
                 await firstValueFrom(this.gedcomService.deletePersonById(treeName, this.personId));
             } catch (e) {
-                console.error('Failed to delete discarded person:', e);
+                console.error('Failed to delete empty person:', e);
             }
         }
+
         this.hasSaved = true; // Prevent re-triggering
         this.showLeaveModal.set(false);
         if (this.leaveResolver) {
@@ -284,12 +291,14 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     addRelation() {
         const current = this.relations();
         this.relations.set([...current, { type: 'CHILD', personId: '', personName: '' }]);
+        this.markDirty();
     }
 
     removeRelation(index: number) {
         const current = this.relations();
         current.splice(index, 1);
         this.relations.set([...current]);
+        this.markDirty();
     }
 
     getMediaUrlExt(url: string | undefined): string | null {
@@ -719,7 +728,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             next: () => {
                 this.isSaving = false;
                 this.hasSaved = true;
-                this.isNewPerson = false;
+                this.isDirty = false;
                 // Toast oder ähnliches anzeigen
                 this.loadPersonData(); // Reload
             },
