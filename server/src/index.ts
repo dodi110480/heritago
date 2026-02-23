@@ -1108,7 +1108,7 @@ app.get('/api/system/check-update', async (req, res) => {
             }
         });
 
-        const latestRelease = response.data;
+        const latestRelease: any = response.data;
         const latestTag = latestRelease.tag_name;
 
         // 2. Get current local tag or hash
