@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { Individual } from './models';
 import { FormsModule } from '@angular/forms';
@@ -15,11 +15,13 @@ import { CleanDatePipe } from './clean-date.pipe';
 })
 export class PersonList {
     private gedcomService = inject(GedcomService);
+    private router = inject(Router);
 
     individuals = signal<Individual[]>([]);
     loading = signal(true);
     searchTerm = signal('');
     treeName = signal('');
+    isCreating = false;
 
     filteredIndividuals = computed(() => {
         const term = this.searchTerm().toLowerCase();
@@ -35,6 +37,41 @@ export class PersonList {
 
     constructor() {
         this.loadPersons();
+    }
+
+    createPerson() {
+        this.isCreating = true;
+        const treeName = this.treeName();
+        if (!treeName) {
+            this.isCreating = false;
+            return;
+        }
+
+        const emptyPerson = {
+            gender: 'U',
+            firstName: '',
+            lastName: '',
+            name: '',
+            events: [],
+            facts: [],
+            relations: [],
+            media: [],
+            notes: [],
+            citations: []
+        };
+
+        this.gedcomService.savePerson(treeName, emptyPerson).subscribe({
+            next: (res: any) => {
+                this.isCreating = false;
+                if (res.success && res.person?.id) {
+                    this.router.navigate(['/person', res.person.id], { queryParams: { new: 'true' } });
+                }
+            },
+            error: () => {
+                this.isCreating = false;
+                alert('Fehler beim Erstellen der Person');
+            }
+        });
     }
 
     loadPersons() {

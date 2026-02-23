@@ -123,6 +123,10 @@ export class GedcomService {
         return this.http.post<any>(`${this.baseApiUrl}${treeName}/person`, { mode: 'delete', id }, { withCredentials: true });
     }
 
+    deletePersonById(treeName: string, id: string): Observable<any> {
+        return this.http.delete<any>(`${this.baseApiUrl}${treeName}/person/${id}`, { withCredentials: true });
+    }
+
     saveFamily(treeName: string, data: any): Observable<any> {
         return this.http.post<any>(`${this.baseApiUrl}${treeName}/family`, data, { withCredentials: true });
     }

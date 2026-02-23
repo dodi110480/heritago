@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './auth.guard';
 import { adminGuard } from './admin.guard';
+import { unsavedChangesGuard } from './unsaved-changes.guard';
 
 export const routes: Routes = [
     {
@@ -76,7 +77,8 @@ export const routes: Routes = [
     {
         path: 'person/:id',
         loadComponent: () => import('./person-detail').then(m => m.PersonDetail),
-        canActivate: [authGuard]
+        canActivate: [authGuard],
+        canDeactivate: [unsavedChangesGuard]
     },
     {
         path: 'places',

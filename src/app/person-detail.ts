@@ -9,6 +9,8 @@ import { CleanDatePipe } from './clean-date.pipe';
 import { MediaSelector } from './media-selector';
 import { PlaceModal } from './place-modal';
 import { ImageViewer } from './image-viewer';
+import { CanComponentDeactivate } from './unsaved-changes.guard';
+import { firstValueFrom } from 'rxjs';
 
 interface TimelineItem {
     originalType: 'event' | 'fact';
@@ -33,7 +35,7 @@ interface TimelineItem {
     templateUrl: './person-detail.html',
     styleUrl: './person-detail.css'
 })
-export class PersonDetail implements OnInit {
+export class PersonDetail implements OnInit, CanComponentDeactivate {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private gedcomService = inject(GedcomService);
@@ -71,6 +73,12 @@ export class PersonDetail implements OnInit {
 
     individualSearchResults = signal<Individual[]>([]);
     showIndividualResults = signal<number | null>(null);
+
+    // New Person & Unsaved Changes Guard
+    isNewPerson = false;
+    hasSaved = false;
+    showLeaveModal = signal(false);
+    private leaveResolver: ((value: boolean) => void) | null = null;
 
     getTagLabel(tag: string): string {
         const labels: { [key: string]: string } = {
@@ -111,6 +119,9 @@ export class PersonDetail implements OnInit {
     }
 
     ngOnInit() {
+        this.route.queryParamMap.subscribe(qp => {
+            this.isNewPerson = qp.get('new') === 'true';
+        });
         this.route.paramMap.subscribe(params => {
             const id = params.get('id');
             if (id) {
@@ -118,6 +129,54 @@ export class PersonDetail implements OnInit {
                 this.loadPersonData();
             }
         });
+    }
+
+    canDeactivate(): boolean | Promise<boolean> {
+        if (!this.isNewPerson || this.hasSaved) {
+            return true;
+        }
+        // Show modal and wait for user decision
+        this.showLeaveModal.set(true);
+        return new Promise<boolean>((resolve) => {
+            this.leaveResolver = resolve;
+        });
+    }
+
+    async confirmSaveAndLeave() {
+        this.savePerson();
+        this.hasSaved = true;
+        this.showLeaveModal.set(false);
+        if (this.leaveResolver) {
+            this.leaveResolver(true);
+            this.leaveResolver = null;
+        }
+    }
+
+    async confirmDiscardAndLeave() {
+        // Delete the unsaved new person
+        const data = this.treeData();
+        const treeName = data?.meta?.tree || '';
+        if (treeName && this.personId) {
+            try {
+                await firstValueFrom(this.gedcomService.deletePersonById(treeName, this.personId));
+            } catch (e) {
+                console.error('Failed to delete discarded person:', e);
+            }
+        }
+        this.hasSaved = true; // Prevent re-triggering
+        this.showLeaveModal.set(false);
+        if (this.leaveResolver) {
+            this.leaveResolver(true);
+            this.leaveResolver = null;
+        }
+    }
+
+    cancelLeave() {
+        this.showLeaveModal.set(false);
+        if (this.leaveResolver) {
+            this.leaveResolver(false);
+            this.leaveResolver = null;
+        }
     }
 
     loadPersonData() {
@@ -659,6 +718,8 @@ export class PersonDetail implements OnInit {
         this.gedcomService.savePerson(treeName, payload).subscribe({
             next: () => {
                 this.isSaving = false;
+                this.hasSaved = true;
+                this.isNewPerson = false;
                 // Toast oder ähnliches anzeigen
                 this.loadPersonData(); // Reload
             },

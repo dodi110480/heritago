@@ -882,6 +882,17 @@ app.post('/api/tree/:tree/person', async (req, res) => {
     res.json({ success: true, person: record });
 });
 
+app.delete('/api/tree/:tree/person/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await prisma.person.delete({ where: { id } });
+        res.json({ success: true });
+    } catch (error: any) {
+        console.error('Delete person error:', error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 app.get('/api/tree/:tree/search', async (req, res) => {
     const { tree: treeName } = req.params;
     const { q } = req.query;
