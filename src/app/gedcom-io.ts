@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { GedcomService } from './gedcom.service';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { environment } from './environment';
 
 @Component({
     selector: 'app-gedcom-io',
@@ -44,7 +45,7 @@ export class GedcomIo {
         formData.append('file', this.selectedFile);
 
         try {
-            const res: any = await firstValueFrom(this.http.post(`http://${window.location.hostname}:3000/api/tree/${treeName}/import`, formData));
+            const res: any = await firstValueFrom(this.http.post(`${environment.apiUrl}/tree/${treeName}/import`, formData));
             if (res.success) {
                 this.showMsg('Import erfolgreich!', false);
             } else {
@@ -69,7 +70,7 @@ export class GedcomIo {
         this.showMsg('Export läuft...', false);
 
         try {
-            const res: any = await firstValueFrom(this.http.get(`http://${window.location.hostname}:3000/api/tree/${treeName}/export`));
+            const res: any = await firstValueFrom(this.http.get(`${environment.apiUrl}/tree/${treeName}/export`));
 
             if (res.success && res.gedcom) {
                 const blob = new Blob([res.gedcom], { type: 'text/plain' });

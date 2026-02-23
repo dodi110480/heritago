@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { environment } from './environment';
 
 @Component({
     selector: 'app-update-settings',
@@ -18,7 +19,7 @@ export class UpdateSettings implements OnInit {
     public error: string | null = null;
     public currentVersion: string = '...';
 
-    private apiUrl = `http://${window.location.hostname}:3000/api/system`;
+    private apiUrl = `${environment.apiUrl}/system`;
     private cdr = inject(ChangeDetectorRef);
 
     ngOnInit() {

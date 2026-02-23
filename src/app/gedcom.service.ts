@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, switchMap, of, catchError } from 'rxjs';
 import { TreeData } from './models';
 import { AuthService } from './auth.service';
+import { environment } from './environment';
 
 @Injectable({
     providedIn: 'root'
@@ -11,8 +12,8 @@ export class GedcomService {
     private http = inject(HttpClient);
     private authService = inject(AuthService);
     // New clean base URL for the Node.js server
-    private baseApiUrl = `http://${window.location.hostname}:3000/api/tree/`;
-    private baseMediaUrl = `http://${window.location.hostname}:3000`;
+    private baseApiUrl = `${environment.apiUrl}/tree/`;
+    private baseMediaUrl = environment.baseUrl;
 
     getMediaUrl(url: string | undefined): string {
         if (!url) return '';
@@ -78,7 +79,7 @@ export class GedcomService {
     }
 
     getMedia(treeId: string, type?: string, search?: string): Observable<any> {
-        return this.http.get<any>(`http://${window.location.hostname}:3000/api/media`, {
+        return this.http.get<any>(`${environment.apiUrl}/media`, {
             params: { treeId, type: type || '', search: search || '' },
             withCredentials: true
         });
@@ -91,19 +92,19 @@ export class GedcomService {
         if (title) formData.append('title', title);
         if (description) formData.append('description', description);
 
-        return this.http.post<any>(`http://${window.location.hostname}:3000/api/media/upload`, formData, { withCredentials: true });
+        return this.http.post<any>(`${environment.apiUrl}/media/upload`, formData, { withCredentials: true });
     }
 
     deleteMedia(id: string): Observable<any> {
-        return this.http.delete<any>(`http://${window.location.hostname}:3000/api/media/${id}`, { withCredentials: true });
+        return this.http.delete<any>(`${environment.apiUrl}/media/${id}`, { withCredentials: true });
     }
 
     updateMedia(id: string, data: { title?: string, description?: string }): Observable<any> {
-        return this.http.put<any>(`http://${window.location.hostname}:3000/api/media/${id}`, data, { withCredentials: true });
+        return this.http.put<any>(`${environment.apiUrl}/media/${id}`, data, { withCredentials: true });
     }
 
     linkMedia(mediaId: string, linkData: { individualId?: string, familyId?: string, isPrimary?: boolean }): Observable<any> {
-        return this.http.post<any>(`http://${window.location.hostname}:3000/api/media/${mediaId}/link`, linkData, { withCredentials: true });
+        return this.http.post<any>(`${environment.apiUrl}/media/${mediaId}/link`, linkData, { withCredentials: true });
     }
 
     getStatistics(treeName: string): Observable<any> {

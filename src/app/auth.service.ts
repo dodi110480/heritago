@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, of, catchError, map } from 'rxjs';
+import { environment } from './environment';
 
 export interface User {
     id: number;
@@ -21,7 +22,7 @@ export interface Tree {
 export class AuthService {
     private http = inject(HttpClient);
     // New base URL for Node.js
-    private apiUrl = `http://${window.location.hostname}:3000/api`;
+    private apiUrl = environment.apiUrl;
 
     currentUser = signal<User | null>(null);
     currentTree = signal<Tree | null>(null);
