@@ -1096,10 +1096,6 @@ app.get('/api/system/check-update', async (req, res) => {
         const owner = process.env.GITHUB_OWNER || 'dodi110480';
         const repo = process.env.GITHUB_REPO || 'heritago';
 
-        if (!token) {
-            return res.status(500).json({ success: false, message: 'GITHUB_TOKEN not configured in .env' });
-        }
-
         // Project root is one level up from server/
         const projectRoot = path.resolve(__dirname, '../../');
 
@@ -1111,11 +1107,13 @@ app.get('/api/system/check-update', async (req, res) => {
         }
 
         // 1. Fetch latest release from GitHub API
+        const headers: any = { 'Accept': 'application/vnd.github.v3+json' };
+        if (token) {
+            headers['Authorization'] = `token ${token}`;
+        }
+
         const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, {
-            headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
+            headers
         });
 
         const latestRelease: any = response.data;
