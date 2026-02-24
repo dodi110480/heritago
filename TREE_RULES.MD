@@ -1,334 +1,391 @@
-# Stammbaum-Layout-Regelwerk
-## Pedigree- & Familienansicht – Deterministisches Grid-Layout
-
-Version 1.5 · Stand: 24. Februar 2026  
-Formal abgeschlossen · Deterministisch · Edge-Case-resistent · Produktionsreif
+Stammbaum-Layout-Regelwerk  
+Pedigree- & Familienansicht – Deterministisches Grid-Layout  
+Version 1.7 · Stand: 24. Februar 2026  
+Formal abgeschlossen · Deterministisch · Traversal-definiert · Produktionsreif
 
 Gültig für: Angular + Prisma + PostgreSQL + GEDCOM 7.0
 
----
+────────────────────────────────────────────────────────────
 
-# 1. Grundprinzipien
+0. Begriffe, Datenmodell & Normen (Layout-relevant)
 
-## 1.1 Determinismus
+0.1 Entitäten
+
+Person
+- eindeutige personId
+
+Union
+- eindeutige unionId
+- verbindet genau zwei Personen
+
+ChildLink
+- childId → unionId
+- childLink.type (biologisch/adoptiert) beeinflusst nur Linienstil
+
+Fokusperson
+- focusId
+
+Dieses Regelwerk beschreibt ausschließlich Layout/Rendering.
+
+────────────────────────────────────────────────────────────
+
+0.2 Deterministische Tie-Breaker (global)
+
+Wenn Sortierkriterien Gleichstand haben:
+
+1. explizite Sortierfelder (Datum etc.)
+2. personId asc
+3. unionId asc
+
+Damit ist jede Reihenfolge total bestimmt.
+
+────────────────────────────────────────────────────────────
+
+1. Grundprinzipien
+
+1.1 Determinismus
 - Jede Person erhält exakt berechnete (x, y)-Koordinaten.
 - Keine automatische Zentrierung.
 - Kein Balancing.
-- Keine Force-Directed-Algorithmen.
-- Gleiche Daten + gleiche Fokusperson + gleiche Ansicht → pixelidentisches Layout.
+- Kein Force-Directed-Algorithmus.
+- Gleiche Daten + gleiche Fokusperson + gleiche Config → pixelidentisch.
 
----
+1.2 Pixel-Rundung
 
-# 2. Koordinatensystem
+Alle finalen Koordinaten werden nach vollständiger Berechnung gerundet:
+
+layout.rounding = "round"
+
+Math.round() auf:
+- node.minX / maxX / centerX
+- node.minY / maxY / centerY
+- alle Linienpunkte
+
+Rundung erfolgt NACH Kollisionspass.
+
+────────────────────────────────────────────────────────────
+
+2. Koordinatensystem
 
 - SVG-Standard
 - (0,0) oben links
-- x wächst nach rechts
-- y wächst nach unten
+- x → rechts
+- y → unten
 
----
+────────────────────────────────────────────────────────────
 
-# 3. Generationen-Grid
+3. Generationen-Grid
 
-## 3.1 Generationsformel
+3.1 Vorzeichenregel
+
+Generation 0 → Fokus  
+Negative → Vorfahren  
+Positive → Nachfahren  
+
+3.2 Formel
 
 generationY(gen) = gen × spacing.generationVertical
 
-- Generation 0 = Fokusperson
-- Keine virtuellen oder zusätzlichen Generationsebenen
-- Partner, Geschwister, Halbgeschwister teilen exakt dieselbe generationY
+Keine virtuellen Ebenen.
 
----
+────────────────────────────────────────────────────────────
 
-# 4. Node-Definition
+4. Node-Definition
 
-## 4.1 Node-Größen (generationsabhängig)
-
-| Typ | Breite | Höhe |
-|------|--------|------|
-| Standard | 150 px | 240 px |
-| Compact  | 120 px | 200 px |
-| Mini     | 100 px | 160 px |
-
-## 4.2 Größenregel
+4.1 Größenregel
 
 currentNodeWidth(gen):
-- wenn abs(gen) ≥ generations.compactFromGen → node.compactWidth
-- sonst → node.defaultWidth
+- abs(gen) ≥ miniFromGen → miniWidth
+- abs(gen) ≥ compactFromGen → compactWidth
+- sonst defaultWidth
 
-Node-Größe ist ausschließlich generationsabhängig.
+currentNodeHeight(gen):
+analog zur Breite
 
----
+4.2 NodeBox
 
-## 4.3 NodeBox
+node.minX  
+node.maxX = node.minX + width  
+node.minY = generationY(gen)  
+node.maxY = node.minY + height  
+node.centerX = (minX + maxX) / 2  
+node.centerY = (minY + maxY) / 2  
 
-Jede Node besitzt:
+────────────────────────────────────────────────────────────
 
-- minX
-- maxX
-- minY
-- maxY
-- centerX = (minX + maxX) / 2
-- centerY = (minY + maxY) / 2
+5. PartnerBlock
 
----
+5.1 Definition
 
-# 5. PartnerBlock
+Ein PartnerBlock gehört zu genau einer Primärperson.
 
-## 5.1 Definition
+5.2 Zuweisung von centerX (wichtig)
 
-Ein PartnerBlock besteht aus:
-- Primärperson (immer links)
-- allen sichtbaren Partnern
+partnerBlock.centerX wird ausschließlich im Top-Down-Pass (§19) gesetzt.
 
-## 5.2 Horizontale Positionierung
+Vor diesem Schritt existiert kein valider centerX.
 
-partnerX[i] = baseX + i × (currentNodeWidth + spacing.spouseHorizontalGap)
+5.3 Breite
 
-## 5.3 Breitenberechnung
+block.width =
+(k × width) +
+((k - 1) × spacing.spouseHorizontalGap)
 
-partnerBlock.width =
-(partnerCount × currentNodeWidth) +
-((partnerCount - 1) × spacing.spouseHorizontalGap)
+5.4 Positionierung
 
-block.minX = min aller Node.minX  
-block.maxX = max aller Node.maxX  
-block.centerX = (block.minX + block.maxX) / 2  
+block.minX = block.centerX - block.width / 2
 
-Block wächst ausschließlich horizontal.
+node[i].minX =
+block.minX + i × (width + spacing.spouseHorizontalGap)
 
----
+Block wächst nur horizontal.
 
-# 6. ChildrenGroup
+────────────────────────────────────────────────────────────
 
-## 6.1 Definition
+6. CoupleBlock (Union-Anker)
 
-- Pro Ehe genau eine ChildrenGroup
-- Keine Vermischung verschiedener Ehen
+6.1 Definition
 
-## 6.2 Zentrierung
+CoupleBlock gehört zu genau einer Union.
 
-childrenGroup.centerX = parentPartnerBlock.centerX
+6.2 centerX
 
-## 6.3 Reihenfolge
+Wenn beide Partner gerendert:
+coupleCenterX = (centerX_A + centerX_B) / 2
 
-Strikt nach Geburtsdatum (älter → jünger)
+Wenn nur einer gerendert:
+coupleCenterX = centerX_rendered
 
----
+ChildrenGroups beziehen sich ausschließlich auf coupleCenterX.
 
-# 7. Subtree-Berechnung
+────────────────────────────────────────────────────────────
 
-## 7.1 Leaf-Node
+7. ChildrenGroup
+
+7.1 Definition
+
+Genau eine ChildrenGroup pro Union.
+
+7.2 Reihenfolge
+
+Sortierung:
+birthDate asc
+teilweise Datum asc
+Jahr asc
+unknown last
+personId asc
+
+7.3 childrenYTop (eindeutig)
+
+childrenYTop = child.node.minY
+
+Keine Alternativen.
+
+────────────────────────────────────────────────────────────
+
+8. Subtree (Bottom-Up)
+
+8.1 Leaf
 
 subtree.width = partnerBlock.width
 
-## 7.2 Interne Node
+8.2 Interne Node
+
+childrenTotalWidth =
+sum(child.subtree.width) +
+(childCount - 1) × spacing.siblingHorizontal
 
 subtree.width =
-max(
-    partnerBlock.width,
-    sum(child.subtree.width) +
-    (childCount - 1) × spacing.siblingHorizontal
-)
+max(partnerBlock.width, childrenTotalWidth)
 
-## 7.3 Clearance-Regel
+────────────────────────────────────────────────────────────
 
-Zwischen zwei benachbarten Subtrees gilt:
+9. Subtree-Box (Top-Down)
 
-child[i].minX ≥ child[i-1].maxX + spacing.minBoxClearance
+subtree.centerX = partnerBlock.centerX
+subtree.minX = centerX - subtree.width / 2
+subtree.maxX = subtree.minX + subtree.width
 
----
+────────────────────────────────────────────────────────────
 
-# 8. Positionsberechnung
+10. Elternpositionierung
 
-## 8.1 Fokusperson
-
-generation = 0  
-x = 0  
-y = 0  
-
-Der gesamte Baum wird relativ zu (0,0) berechnet.
-
----
-
-## 8.2 Elternposition
-
-Eltern beziehen sich auf childPartnerBlock.centerX.
-
-### Beide Eltern vorhanden
+anchorX = parentUnion.coupleBlock.centerX
 
 offset =
-(parentNodeWidth / 2) +
-(spacing.siblingHorizontal / 2)
+(currentNodeWidth(gen) / 2) +
+(spacing.parentGapHorizontal / 2)
 
-father.centerX = childBlock.centerX - offset  
-mother.centerX = childBlock.centerX + offset  
+Beide Eltern:
+A.centerX = anchorX - offset
+B.centerX = anchorX + offset
 
-### Nur ein Elternteil
+Nur ein Elternteil:
+centerX = anchorX
 
-centerX = childBlock.centerX
+────────────────────────────────────────────────────────────
 
-Keine Magic Numbers erlaubt.
+11. Mehrfachvorkommen
 
----
+11.1 BFS-Strategie (vollständig definiert)
 
-# 9. Kollisionsauflösung (formalisiert)
+Traversal:
+- BFS vom Fokus
+- Kantenpriorität:
+  1. Eltern/Kind (vertikal)
+  2. Partner (horizontal)
 
-Innerhalb einer Generation:
+Traversalrichtung:
+- BFS arbeitet symmetrisch in beide Richtungen,
+  aber Priorität bestimmt Reihenfolge im Queue.
 
-Für i von 1 bis n:
+Tie-Breaker:
+personId asc
+unionId asc
+
+Erste Instanz → Primär-Node
+Weitere → Referenz-Nodes
+
+11.2 Referenz-Node
+
+- subtree.width = 0
+- keine Kinder
+- opacity 60 %
+- Nummerierung nach BFS-Reihenfolge
+
+────────────────────────────────────────────────────────────
+
+12. Render-Tiefen-Regel
+
+Wenn abs(gen) > maxRenderDepth:
+
+→ CollapsedPlaceholder
+
+subtree.width = miniWidth
+
+────────────────────────────────────────────────────────────
+
+13. Kollisionsauflösung (1D pro Generation)
+
+13.1 Scope
+
+Kollisionen werden ausschließlich innerhalb derselben Generation geprüft.
+
+Keine 2D-Inter-Generations-Kollisionserkennung.
+
+13.2 Algorithmus
+
+Sortiere Blocks nach minX asc.
+
+Für i = 1..n-1:
 
 Wenn block[i].minX <
 block[i-1].maxX + spacing.minBoxClearance
-
-Dann:
 
 delta =
 (block[i-1].maxX + spacing.minBoxClearance)
 - block[i].minX
 
-block[i] und gesamter Subtree werden um delta nach rechts verschoben.
+Verschiebe gesamten Subtree nach rechts um delta.
 
-Diese Verschiebung wird rekursiv auf alle Nachfahren angewendet.
+Ein links→rechts-Pass ist ausreichend,
+da nur nach rechts verschoben wird.
 
-Keine Skalierung. Keine Überlappung.
+────────────────────────────────────────────────────────────
 
----
+14. Linienrouting
 
-# 10. Mehrfachvorkommen (Referenz-Nodes)
+14.1 Union-Linie
 
-## 10.1 Primär-Node
-- Wird normal gerendert
-- Enthält Subtree
+yUnion =
+node.minY + (node.height / 2)
 
-## 10.2 Referenz-Node
+14.2 Eltern-Kind-Bus
 
-- Wird an der strukturell korrekten Position gerendert
-- subtree.width = 0
-- Keine Kinderberechnung
-- Opacity 60 %
-- Wiederholungsnummer (①②③)
+parentHeight = currentNodeHeight(parentGen)
 
-Referenz-Nodes teilen keine Koordinaten mit Primär-Node.
+yBus =
+parent.node.minY +
+(parentHeight × line.parentBusOffsetFactor)
 
----
+line.parentBusOffsetFactor ∈ [0,1]
 
-# 11. Render-Tiefen-Regel
+Standard:
+0.5 (Mitte der Box)
 
-Wenn:
+childrenYTop =
+child.node.minY
 
-abs(generation) > maxRenderDepth
+────────────────────────────────────────────────────────────
 
-Dann:
-
-- Node wird nicht gerendert
-- subtree.width = 0
-- Expand-Icon wird angezeigt
-
----
-
-# 12. Verbindungslinien (nur orthogonal)
-
-## 12.1 Ehe-Linie
-
-y = node.minY + (node.height / 2)
-
-Horizontale Linie zwischen centerX der Partner.
-
-## 12.2 Eltern-Kind-Verbindung
-
-1. Vertikale Linie von childBlock.centerX
-2. Horizontale Sammellinie auf parentY + parentHeight / 2
-3. Vertikale Stummel zu Eltern
-
-## 12.3 Sonderformen
-
-- Scheidung → horizontale Linie mit //
-- Adoption → gestrichelte Linie
-- Verwandtenehe → doppelte Linie
-
----
-
-# 13. Wide-Generation-Regel
+15. Wide-Generation
 
 generationWidth =
-maxX(generation) - minX(generation)
+maxX - minX
 
-Wenn generationWidth >
-layout.wideGenerationThreshold
+Wenn >
+wideGenerationThreshold
 
-Dann:
+→ layoutWarning = "wideGeneration"
 
-layoutWarning = "wideGeneration"
+────────────────────────────────────────────────────────────
 
-Kein automatisches Skalieren.
+16. Algorithmus-Pipeline (verbindlich)
 
----
+1. Graph laden & normalisieren
+2. Generationen berechnen
+3. BFS Primär-/Referenz
+4. Bottom-Up subtree.width
+5. Top-Down centerX setzen
+6. Kinder platzieren
+7. Eltern positionieren
+8. Kollisionspass
+9. Rundung
+10. Linienrouting
 
-# 14. Z-Index (SVG-Reihenfolge)
+Diese Reihenfolge ist verpflichtend.
 
-1. Eltern-/Kind-Linien
-2. Ehe-Linien
-3. Node-Karten
-4. Warn-Icons
-5. Interaktions-Icons
+────────────────────────────────────────────────────────────
 
----
+17. Konfiguration
 
-# 15. Validierung
+node.defaultWidth = 150
+node.defaultHeight = 240
+node.compactWidth = 120
+node.compactHeight = 200
+node.miniWidth = 100
+node.miniHeight = 160
 
-- Eltern-Kind-Alter < 13 → rotes Warnsymbol
-- Eltern-Kind-Alter > 55 → gelbes Hinweis-Icon
-- Zyklus erkannt → Fehlerstatus CYCLIC_GRAPH
-- WideGeneration → Warnflag
+spacing.generationVertical = 260
+spacing.siblingHorizontal = 50
+spacing.spouseHorizontalGap = 30
+spacing.minBoxClearance = 40
+spacing.parentGapHorizontal = 50
 
----
+generations.compactFromGen = 5
+generations.miniFromGen = 9
+generations.maxRenderDepth = 10
 
-# 16. Scroll- & Fokusverhalten
+line.parentBusOffsetFactor = 0.5
+line.doubleLineGap = 4
 
-- Fokuswechsel → vollständige Neuberechnung
-- Optionale CSS-Transition ≤ 400 ms
-- Kein implizites Rezentrieren
-- centerOnNode() nur explizit
+layout.wideGenerationThreshold = 5000
+layout.rounding = "round"
 
----
+────────────────────────────────────────────────────────────
 
-# 17. Konfiguration (layout-config.ts)
-
-node.defaultWidth: 150  
-node.defaultHeight: 240  
-node.compactWidth: 120  
-node.compactHeight: 200  
-node.miniWidth: 100  
-node.miniHeight: 160  
-
-spacing.generationVertical: 260  
-spacing.siblingHorizontal: 50  
-spacing.spouseHorizontalGap: 30  
-spacing.minBoxClearance: 40  
-
-generations.compactFromGen: 5  
-generations.maxRenderDepth: 10  
-
-layout.wideGenerationThreshold: 5000  
-
----
-
-# 18. Governance
+18. Governance
 
 Änderungen an:
 - Formeln
 - Blockdefinitionen
+- Traversalregeln
 - Konstanten
-- Kollisionsalgorithmus
 
 erfordern:
+1. Versionsanhebung
+2. Review
+3. Unit-Test-Anpassung
+4. Pixel-Diff-Prüfung
 
-1. Versionsanhebung (1.6, …)
-2. Review durch Lead-Entwickler
-3. Anpassung aller Unit-Tests
-4. Reproduzierbarkeitsprüfung (Pixel-Diff-Test)
-
----
-
-Ende Regelwerk Version 1.5
+Ende Regelwerk Version 1.7
