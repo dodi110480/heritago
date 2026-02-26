@@ -16,7 +16,7 @@ import f3 from '../../family-chart-master/src/index';
     <div class="f3-literal-wrapper">
       <button class="toggle-btn" (click)="toggleConfig()">Configure</button>
       
-      <div id="ConfigPanel" [style.display]="configOpen() ? 'block' : 'none'" [style.left.px]="310">
+      <div id="ConfigPanel" [style.display]="configOpen() ? 'block' : 'none'">
         <h3>Tree Configuration</h3>
 
         <div class="config-group">
@@ -86,7 +86,8 @@ import f3 from '../../family-chart-master/src/index';
 
     #ConfigPanel {
         position: absolute;
-        top: 10px;
+        top: 50px;
+        left: 10px;
         background: rgba(45, 45, 45, 0.95);
         border: 1px solid #444;
         padding: 15px;
@@ -126,7 +127,6 @@ import f3 from '../../family-chart-master/src/index';
         cursor: pointer;
         z-index: 2001;
         font-weight: bold;
-        transition: left 0.3s;
     }
     .toggle-btn:hover { background: #2979ff; }
 
@@ -161,12 +161,14 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
     single_parent_empty_card: true
   };
 
+  private readonly STORAGE_KEY_CONFIG = 'heritago_tree_config';
   private readonly FOCUS_PERSON_KEY = 'heritago_last_focus_person';
 
   private store: any;
   private svg: any;
 
   ngOnInit() {
+    this.loadSavedConfig();
     this.gedcomService.getTreeData().subscribe(data => {
       if (data) {
         const transformedData = transformToFamilyChart(data);
@@ -186,13 +188,22 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
 
   public toggleConfig() {
     this.configOpen.set(!this.configOpen());
-    const btn = document.querySelector('.toggle-btn') as HTMLElement;
-    if (btn) {
-      btn.style.left = this.configOpen() ? '300px' : '10px';
+  }
+
+  private loadSavedConfig() {
+    const saved = localStorage.getItem(this.STORAGE_KEY_CONFIG);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        this.config = { ...this.config, ...parsed };
+      } catch (e) {
+        console.error('Error parsing saved tree config', e);
+      }
     }
   }
 
   public updateTree() {
+    localStorage.setItem(this.STORAGE_KEY_CONFIG, JSON.stringify(this.config));
     if (this.treeData().length > 0) {
       this.renderChart();
     }
