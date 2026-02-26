@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, switchMap, of, catchError } from 'rxjs';
 import { TreeData } from './models';
@@ -15,6 +15,8 @@ export class GedcomService {
     private baseApiUrl = `${environment.apiUrl}/tree/`;
     private baseMediaUrl = environment.baseUrl;
 
+    currentTreeData = signal<TreeData | null>(null);
+
     getMediaUrl(url: string | undefined): string {
         if (!url) return '';
         if (url.startsWith('http')) return url;
@@ -26,6 +28,10 @@ export class GedcomService {
 
         if (treeName) {
             return this.http.get<TreeData>(`${this.baseApiUrl}${treeName}?t=${timestamp}`, { withCredentials: true }).pipe(
+                switchMap(data => {
+                    this.currentTreeData.set(data);
+                    return of(data);
+                }),
                 catchError(() => {
                     return this.loadFallbackTree(timestamp);
                 })
@@ -55,9 +61,15 @@ export class GedcomService {
                         const treeToLoad = validTrees[0];
                         // Set it as active
                         this.authService.selectTree(treeToLoad);
-                        return this.http.get<TreeData>(`${this.baseApiUrl}${treeToLoad.name}?t=${timestamp}`, { withCredentials: true });
+                        return this.http.get<TreeData>(`${this.baseApiUrl}${treeToLoad.name}?t=${timestamp}`, { withCredentials: true }).pipe(
+                            switchMap(data => {
+                                this.currentTreeData.set(data);
+                                return of(data);
+                            })
+                        );
                     }
                 }
+                this.currentTreeData.set(null);
                 return of(null);
             })
         );

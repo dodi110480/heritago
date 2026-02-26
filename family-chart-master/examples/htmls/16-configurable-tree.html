@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>16-configurable-tree</title>
+    <link rel="shortcut icon" type="image/svg" href="/examples/logo.svg">
+    <script src="https://unpkg.com/d3@7"></script>
+    <link rel="stylesheet" href="/src/styles/family-chart.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #fff;
+            margin: 0;
+        }
+
+        #ConfigPanel {
+            position: absolute;
+            top: 10px;
+            left: 310px;
+            /* Offset for sidebar */
+            background: rgba(45, 45, 45, 0.95);
+            border: 1px solid #444;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 2000;
+            width: 280px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            display: none;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        #ConfigPanel h3 {
+            margin-top: 0;
+            font-size: 16px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+            color: #448aff;
+        }
+
+        .config-group {
+            margin-bottom: 15px;
+        }
+
+        .config-label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #bbb;
+        }
+
+        .config-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+        }
+
+        input[type="number"] {
+            width: 50px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 3px;
+        }
+
+        select {
+            width: 100%;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            padding: 4px;
+            border-radius: 3px;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            top: 10px;
+            left: 310px;
+            padding: 8px 15px;
+            background: #448aff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 2001;
+            font-weight: bold;
+        }
+
+        .toggle-btn:hover {
+            background: #2979ff;
+        }
+    </style>
+</head>
+
+<body>
+    <button class="toggle-btn" onclick="toggleConfig()">Configure</button>
+    <div id="ConfigPanel">
+        <h3>Tree Configuration</h3>
+
+        <div class="config-group">
+            <label class="config-label">Layout</label>
+            <div class="config-row">
+                <span>Horizontal</span>
+                <input type="checkbox" id="is_horizontal">
+            </div>
+        </div>
+
+        <div class="config-group">
+            <label class="config-label">Depth (Generations)</label>
+            <div class="config-row">
+                <span>Ancestry</span>
+                <input type="number" id="ancestry_depth" value="2" min="0" max="10">
+            </div>
+            <div class="config-row">
+                <span>Progeny</span>
+                <input type="number" id="progeny_depth" value="2" min="0" max="10">
+            </div>
+        </div>
+
+        <div class="config-group">
+            <label class="config-label">Separation</label>
+            <div class="config-row">
+                <span>Nodes</span>
+                <input type="range" id="node_separation" min="150" max="500" value="250">
+            </div>
+            <div class="config-row">
+                <span>Levels</span>
+                <input type="range" id="level_separation" min="100" max="400" value="150">
+            </div>
+        </div>
+
+        <div class="config-group">
+            <label class="config-label">Card Style</label>
+            <select id="card_style">
+                <option value="svg">SVG Cards (Standard)</option>
+                <option value="circle">SVG Circles</option>
+            </select>
+        </div>
+
+        <div class="config-group">
+            <div class="config-row">
+                <span>Single Parent Placeholders</span>
+                <input type="checkbox" id="single_parent_empty_card">
+            </div>
+        </div>
+    </div>
+
+    <div id="FamilyChart" class="f3"
+        style="width:100%;height:900px;margin:auto;background-color:rgb(33,33,33);color:#fff;"></div>
+
+    <script type="module">
+        import f3 from '../../src/index.js'
+        import sidebar from '../sidebar.js'
+        import { fetchHeritagoData } from '../data-bridge.js'
+
+        sidebar()
+
+        let store, svg, Card, fullData;
+
+        function init() {
+            fetchHeritagoData()
+                .then(data => {
+                    fullData = data;
+                    createTree();
+                    setupControls();
+                })
+                .catch(err => console.error(err))
+        }
+
+        function createTree() {
+            const cont = document.querySelector("#FamilyChart")
+            cont.innerHTML = ""; // Clear for re-init
+
+            const config = {
+                data: fullData,
+                node_separation: parseInt(document.getElementById('node_separation').value),
+                level_separation: parseInt(document.getElementById('level_separation').value),
+                is_horizontal: document.getElementById('is_horizontal').checked,
+                ancestry_depth: parseInt(document.getElementById('ancestry_depth').value),
+                progeny_depth: parseInt(document.getElementById('progeny_depth').value),
+                single_parent_empty_card: document.getElementById('single_parent_empty_card').checked
+            }
+
+            store = f3.createStore(config)
+            svg = f3.createSvg(cont)
+
+            const cardStyle = document.getElementById('card_style').value;
+
+            Card = f3.elements.CardSvg({
+                store,
+                svg,
+                card_dim: cardStyle === 'circle' ? { w: 80, h: 80, text_x: 40, text_y: 85, img_w: 70, img_h: 70, img_x: 5, img_y: 5 } : { w: 220, h: 70, text_x: 75, text_y: 15, img_w: 60, img_h: 60, img_x: 5, img_y: 5 },
+                card_display: cardStyle === 'circle' ? [d => d.data["first name"]] : [d => `${d.data["first name"]} ${d.data["last name"]}`, d => d.data["birthday"] || ""],
+                mini_tree: true,
+                link_break: false,
+                onCardClick: (e, d) => {
+                    store.updateMainId(d.data.id)
+                    store.updateTree({})
+                }
+            })
+
+            store.setOnUpdate(props => f3.view(store.getTree(), svg, Card, props || {}))
+            store.updateMainId(fullData[0].id)
+            store.updateTree({ initial: true })
+
+            setupSearch(fullData);
+        }
+
+        function setupControls() {
+            const inputs = document.querySelectorAll('#ConfigPanel input, #ConfigPanel select');
+            inputs.forEach(input => {
+                input.addEventListener('change', () => {
+                    createTree();
+                })
+            });
+        }
+
+        function setupSearch(data) {
+            const all_select_options = []
+            data.forEach(d => {
+                if (all_select_options.find(d0 => d0.value === d["id"])) return
+                all_select_options.push({ label: `${d.data["first name"]} ${d.data["last name"]}`, value: d["id"] })
+            })
+
+            // Basic search overlay similar to example 9
+            const search_cont = d3.select(document.querySelector("#FamilyChart")).append("div")
+                .attr("style", "position: absolute; top: 10px; right: 10px; width: 150px; z-index: 1000;")
+
+            const search_input = search_cont.append("input")
+                .attr("style", "width: 100%; padding: 5px; background: #333; color: #white; border: 1px solid #555;")
+                .attr("type", "text")
+                .attr("placeholder", "Search...")
+                .on("input", function () {
+                    const val = this.value.toLowerCase();
+                    const options = all_select_options.filter(o => o.label.toLowerCase().includes(val));
+                    updateSearchDropdown(options);
+                })
+
+            const dropdown = search_cont.append("div")
+                .attr("style", "background: #111; max-height: 200px; overflow-y: auto;");
+
+            function updateSearchDropdown(options) {
+                dropdown.selectAll("div").data(options).join("div")
+                    .attr("style", "padding: 5px; cursor: pointer; border-bottom: 1px solid #222; font-size: 12px;")
+                    .text(d => d.label)
+                    .on("click", (e, d) => {
+                        store.updateMainId(d.value);
+                        store.updateTree({ initial: true });
+                        dropdown.selectAll("div").remove();
+                        search_input.property("value", "");
+                    })
+            }
+        }
+
+        window.toggleConfig = function () {
+            const panel = document.getElementById('ConfigPanel');
+            const btn = document.querySelector('.toggle-btn');
+            if (panel.style.display === 'block') {
+                panel.style.display = 'none';
+                btn.style.left = '310px';
+            } else {
+                panel.style.display = 'block';
+                btn.style.left = '595px'; // Move btn next to panel
+            }
+        }
+
+        init();
+
+    </script>
+</body>
+
+</html>

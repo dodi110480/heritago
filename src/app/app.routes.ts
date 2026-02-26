@@ -5,48 +5,13 @@ import { unsavedChangesGuard } from './unsaved-changes.guard';
 
 export const routes: Routes = [
     {
+        path: 'tree',
+        loadComponent: () => import('./family-chart.component').then(m => m.FamilyChartComponent),
+        canActivate: [authGuard]
+    },
+    {
         path: 'login',
         loadComponent: () => import('./login').then(m => m.Login)
-    },
-    {
-        path: 'tree-management',
-        loadComponent: () => import('./tree-management').then(m => m.TreeManagement),
-        canActivate: [authGuard]
-    },
-    {
-        path: 'search',
-        loadComponent: () => import('./search-results').then(m => m.SearchResults),
-        canActivate: [authGuard]
-    },
-    {
-        path: 'map',
-        loadComponent: () => import('./map-view').then(m => m.MapView),
-        canActivate: [authGuard]
-    },
-    {
-        path: 'media',
-        loadComponent: () => import('./media-gallery').then(m => m.MediaGallery),
-        canActivate: [authGuard]
-    },
-    {
-        path: 'statistics',
-        loadComponent: () => import('./statistics').then(m => m.StatisticsDashboard),
-        canActivate: [authGuard]
-    },
-    {
-        path: 'diagnostics',
-        loadComponent: () => import('./diagnostics').then(m => m.Diagnostics),
-        canActivate: [authGuard]
-    },
-    {
-        path: 'timeline/:xref',
-        loadComponent: () => import('./timeline').then(m => m.TimelineView),
-        canActivate: [authGuard]
-    },
-    {
-        path: 'tree',
-        loadComponent: () => import('./tree').then(m => m.Tree),
-        canActivate: [authGuard]
     },
     {
         path: 'settings',

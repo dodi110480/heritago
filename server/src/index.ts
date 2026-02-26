@@ -276,8 +276,9 @@ export class GedcomManager {
             }
         }
 
-        // 8. Extensions
+        // 8. Relationships
         if (data.relations && Array.isArray(data.relations)) {
+            // Remove old relationships for this person
             await prisma.relationship.deleteMany({
                 where: {
                     OR: [
@@ -294,27 +295,127 @@ export class GedcomManager {
                 if (!target) continue;
 
                 if (rel.type === 'FATHER' || rel.type === 'MOTHER' || rel.type === 'PARENT') {
-                    await prisma.relationship.create({
-                        data: { childId: person.id, parentId: target.id, type: 'parent' }
-                    });
-                } else if (rel.type === 'CHILD') {
-                    await prisma.relationship.create({
-                        data: { childId: target.id, parentId: person.id, type: 'parent' }
-                    });
-                } else if (rel.type === 'SPOUSE' || rel.type === 'PARTNER') {
-                    const existing = await prisma.relationship.findFirst({
+                    // This person is the child, target is the parent.
+                    // We need a family where target is parent and person is child.
+                    // Find or create a family
+                    let family = await prisma.family.findFirst({
                         where: {
-                            OR: [
-                                { childId: person.id, parentId: target.id, type: 'spouse' },
-                                { childId: target.id, parentId: person.id, type: 'spouse' }
+                            treeId,
+                            relationships: {
+                                some: { parentId: target.id, type: 'spouse' }
+                            }
+                        }
+                    });
+
+                    if (!family) {
+                        family = await prisma.family.create({ data: { treeId } });
+                        // Link target to this family as parent
+                        await prisma.relationship.create({
+                            data: {
+                                parentId: target.id,
+                                familyId: family.id,
+                                type: 'spouse',
+                                role: rel.type === 'FATHER' ? 'husband' : (rel.type === 'MOTHER' ? 'wife' : 'parent')
+                            }
+                        });
+                    }
+
+                    // Link person to family as child
+                    await prisma.relationship.create({
+                        data: {
+                            childId: person.id,
+                            familyId: family.id,
+                            type: 'parent',
+                            role: 'child'
+                        }
+                    });
+
+                    // Direct link for easier traversal
+                    await prisma.relationship.upsert({
+                        where: { childId_parentId_type: { childId: person.id, parentId: target.id, type: 'parent' } },
+                        update: {},
+                        create: { childId: person.id, parentId: target.id, type: 'parent' }
+                    });
+
+                } else if (rel.type === 'CHILD') {
+                    // This person is the parent, target is the child.
+                    // Find or create a family where person is parent
+                    let family = await prisma.family.findFirst({
+                        where: {
+                            treeId,
+                            relationships: {
+                                some: { parentId: person.id, type: 'spouse' }
+                            }
+                        }
+                    });
+
+                    if (!family) {
+                        family = await prisma.family.create({ data: { treeId } });
+                        await prisma.relationship.create({
+                            data: {
+                                parentId: person.id,
+                                familyId: family.id,
+                                type: 'spouse',
+                                role: person.sex === 'F' ? 'wife' : 'husband'
+                            }
+                        });
+                    }
+
+                    // Link target to family as child
+                    await prisma.relationship.create({
+                        data: {
+                            childId: target.id,
+                            familyId: family.id,
+                            type: 'parent',
+                            role: 'child'
+                        }
+                    });
+
+                    // Direct link
+                    await prisma.relationship.upsert({
+                        where: { childId_parentId_type: { childId: target.id, parentId: person.id, type: 'parent' } },
+                        update: {},
+                        create: { childId: target.id, parentId: person.id, type: 'parent' }
+                    });
+
+                } else if (rel.type === 'SPOUSE' || rel.type === 'PARTNER') {
+                    // Find or create family where both are spouses
+                    let family = await prisma.family.findFirst({
+                        where: {
+                            treeId,
+                            AND: [
+                                { relationships: { some: { parentId: person.id, type: 'spouse' } } },
+                                { relationships: { some: { parentId: target.id, type: 'spouse' } } }
                             ]
                         }
                     });
-                    if (!existing) {
+
+                    if (!family) {
+                        family = await prisma.family.create({ data: { treeId } });
                         await prisma.relationship.create({
-                            data: { childId: person.id, parentId: target.id, type: 'spouse' }
+                            data: {
+                                parentId: person.id,
+                                familyId: family.id,
+                                type: 'spouse',
+                                role: person.sex === 'F' ? 'wife' : 'husband'
+                            }
+                        });
+                        await prisma.relationship.create({
+                            data: {
+                                parentId: target.id,
+                                familyId: family.id,
+                                type: 'spouse',
+                                role: target.sex === 'F' ? 'wife' : 'husband'
+                            }
                         });
                     }
+
+                    // Direct link
+                    await prisma.relationship.upsert({
+                        where: { childId_parentId_type: { childId: person.id, parentId: target.id, type: 'spouse' } },
+                        update: {},
+                        create: { childId: person.id, parentId: target.id, type: 'spouse' }
+                    });
                 }
             }
         }
