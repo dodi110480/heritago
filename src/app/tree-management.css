@@ -1,0 +1,259 @@
+.management-container {
+    padding: 60px 20px;
+    display: flex;
+    justify-content: center;
+    min-height: calc(100vh - 40px);
+}
+
+.glass-card {
+    background: rgba(30, 41, 59, 0.5);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 32px;
+    padding: 3rem;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.3);
+}
+
+.header {
+    margin-bottom: 2.5rem;
+}
+
+.title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.title-row h1 {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.header p {
+    color: #94a3b8;
+    font-size: 1.1rem;
+}
+
+.tree-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.tree-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    display: flex;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.tree-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-2px);
+}
+
+.tree-item.active {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.tree-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+}
+
+.tree-icon {
+    font-size: 1.5rem;
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tree-info h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.tree-meta {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.status-pill {
+    background: #3b82f6;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.tree-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1.5rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.btn-icon.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+}
+
+/* FORM STYLES */
+.management-form {
+    padding: 2.5rem;
+    border-radius: 24px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.management-form h2 {
+    margin-top: 0;
+    margin-bottom: 2rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.form-group.full {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #fff;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.error-msg {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.1);
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+/* LOADER */
+.loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem;
+    color: #94a3b8;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.back-link {
+    margin-top: 3rem;
+    text-align: center;
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.back-btn:hover {
+    color: #3b82f6;
+}

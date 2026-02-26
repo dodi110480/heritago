@@ -274,14 +274,16 @@ export default function calculateTree(data: Data, {
 
         d.rels.children.forEach(d0 => {
           const child = data.find(d1 => d1.id === d0) as Datum
-          if (child.rels.parents.length === 2) return
+          if (!child) return
+          if (!child.rels.parents.includes(d.id)) child.rels.parents.push(d.id)
+          if (child.rels.parents.length >= 2) return
+
           if (!to_add_spouse) {
             to_add_spouse = findOrCreateToAddSpouse(d)
           }
           if (!to_add_spouse.rels.children) to_add_spouse.rels.children = []
           to_add_spouse.rels.children.push(child.id)
-          if (child.rels.parents.length !== 1) throw new Error('child has more than 1 parent')
-          child.rels.parents.push(to_add_spouse.id)
+          if (child.rels.parents.length === 1) child.rels.parents.push(to_add_spouse.id)
         })
       }
     }

@@ -28,6 +28,11 @@ export const routes: Routes = [
         loadComponent: () => import('./update-settings').then(m => m.UpdateSettings),
         canActivate: [adminGuard]
     },
+    {
+        path: 'tree-management',
+        loadComponent: () => import('./tree-management').then(m => m.TreeManagement),
+        canActivate: [authGuard]
+    },
     /* old tree-selector removed */
     {
         path: 'admin/users',

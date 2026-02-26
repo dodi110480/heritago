@@ -22,6 +22,7 @@ export function transformToFamilyChart(treeData: TreeData): FamilyChartNode[] {
     const nodes: FamilyChartNode[] = [];
     const individuals = treeData.individuals || [];
     const families = treeData.families || [];
+    const individualIds = new Set(individuals.map(i => i.id));
 
     for (const person of individuals) {
         const node: FamilyChartNode = {
@@ -49,23 +50,27 @@ export function transformToFamilyChart(treeData: TreeData): FamilyChartNode[] {
         // Resolve relationships
         const personId = person.id;
 
-        // Parents: Find family where this person is a child
-        const birthFam = families.find(f => (f.children || []).includes(personId));
-        if (birthFam) {
-            if (birthFam.husband) node.rels.parents.push(birthFam.husband);
-            if (birthFam.wife) node.rels.parents.push(birthFam.wife);
+        // Parents: Find all families where this person is a child and collect parents
+        const birthFams = families.filter(f => (f.children || []).includes(personId));
+        for (const fam of birthFams) {
+            if (fam.husband && individualIds.has(fam.husband) && !node.rels.parents.includes(fam.husband)) {
+                node.rels.parents.push(fam.husband);
+            }
+            if (fam.wife && individualIds.has(fam.wife) && !node.rels.parents.includes(fam.wife)) {
+                node.rels.parents.push(fam.wife);
+            }
         }
 
         // Spouses and Children: Find families where this person is husband or wife
         const ownFamilies = families.filter(f => f.husband === personId || f.wife === personId);
         for (const fam of ownFamilies) {
             const spouseId = fam.husband === personId ? fam.wife : fam.husband;
-            if (spouseId && !node.rels.spouses.includes(spouseId)) {
+            if (spouseId && individualIds.has(spouseId) && !node.rels.spouses.includes(spouseId)) {
                 node.rels.spouses.push(spouseId);
             }
 
             for (const childId of (fam.children || [])) {
-                if (!node.rels.children.includes(childId)) {
+                if (individualIds.has(childId) && !node.rels.children.includes(childId)) {
                     node.rels.children.push(childId);
                 }
             }

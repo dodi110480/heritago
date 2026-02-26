@@ -161,6 +161,8 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
     single_parent_empty_card: true
   };
 
+  private readonly FOCUS_PERSON_KEY = 'heritago_last_focus_person';
+
   private store: any;
   private svg: any;
 
@@ -197,14 +199,21 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
   }
 
   private renderChart() {
-    const data = this.treeData();
+    const data = JSON.parse(JSON.stringify(this.treeData())); // Clone to avoid in-place mutations by the library
     const cont = this.chartElement.nativeElement;
     cont.innerHTML = '';
 
     const svgCont = f3.createSvg(cont);
     this.svg = svgCont;
 
-    const mainId = data[0]?.id || '';
+    const storedMainId = localStorage.getItem(this.FOCUS_PERSON_KEY);
+    const mainId = (storedMainId && data.find((d: any) => d.id === storedMainId))
+      ? storedMainId
+      : (data[0]?.id || '');
+
+    if (mainId) {
+      localStorage.setItem(this.FOCUS_PERSON_KEY, mainId);
+    }
 
     this.store = f3.createStore({
       data,
@@ -240,6 +249,7 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
         if (clickGap < 400) {
           this.router.navigate(['/person', d.data.id]);
         } else {
+          localStorage.setItem(this.FOCUS_PERSON_KEY, d.data.id);
           this.store.updateMainId(d.data.id);
           this.store.updateTree({});
         }
@@ -277,13 +287,14 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
       .attr("style", "background: #1e1e1e; max-height: 300px; overflow-y: auto; border: 1px solid #444; border-top: none; shadow: 0 4px 10px rgba(0,0,0,0.5);");
 
     const self = this;
-    function updateSearchDropdown(options: any[]) {
+    const updateSearchDropdown = (options: any[]) => {
       dropdown.selectAll("div").data(options).join("div")
         .attr("style", "padding: 10px; cursor: pointer; border-bottom: 1px solid #333; font-size: 14px; color: white;")
         .text(d => d.label)
-        .on("mouseover", function () { d3.select(this).style("background", "#448aff"); })
-        .on("mouseout", function () { d3.select(this).style("background", "transparent"); })
+        .on("mouseover", (event) => { d3.select(event.currentTarget).style("background", "#448aff"); })
+        .on("mouseout", (event) => { d3.select(event.currentTarget).style("background", "transparent"); })
         .on("click", (e, d) => {
+          localStorage.setItem(this.FOCUS_PERSON_KEY, d.value);
           self.store.updateMainId(d.value);
           self.store.updateTree({ initial: true });
           dropdown.selectAll("div").remove();
