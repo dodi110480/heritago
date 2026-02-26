@@ -478,3 +478,24 @@
         font-size: 2.5rem;
     }
 }
+
+@media (max-width: 600px) {
+    .secondary-nav {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .secondary-nav a {
+        padding: 12px 8px;
+        justify-content: center;
+        flex-direction: column;
+        gap: 6px;
+        text-align: center;
+    }
+
+    .secondary-nav a span {
+        font-size: 0.75rem;
+    }
+}

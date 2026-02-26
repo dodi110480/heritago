@@ -56,6 +56,26 @@ export const routes: Routes = [
         canActivate: [authGuard]
     },
     {
+        path: 'map',
+        loadComponent: () => import('./map-view').then(m => m.MapView),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'media',
+        loadComponent: () => import('./media-gallery').then(m => m.MediaGallery),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'statistics',
+        loadComponent: () => import('./statistics').then(m => m.StatisticsDashboard),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'diagnostics',
+        loadComponent: () => import('./diagnostics').then(m => m.Diagnostics),
+        canActivate: [authGuard]
+    },
+    {
         path: '',
         loadComponent: () => import('./dashboard').then(m => m.Dashboard),
         canActivate: [authGuard]
