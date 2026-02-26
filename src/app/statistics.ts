@@ -44,11 +44,15 @@ export class StatisticsDashboard implements OnInit {
         const s = this.stats();
         if (!s || !s.gender) return { male: 0, female: 0, unknown: 0 };
 
-        const total = s.gender.male + s.gender.female + s.gender.unknown;
+        const male = s.gender.male || 0;
+        const female = s.gender.female || 0;
+        const unknown = s.gender.unknown || 0;
+        const total = male + female + unknown;
+
         return {
-            male: total ? (s.gender.male / total) * 100 : 0,
-            female: total ? (s.gender.female / total) * 100 : 0,
-            unknown: total ? (s.gender.unknown / total) * 100 : 0
+            male: total ? (male / total) * 100 : 0,
+            female: total ? (female / total) * 100 : 0,
+            unknown: total ? (unknown / total) * 100 : 0
         };
     }
 }

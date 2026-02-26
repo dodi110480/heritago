@@ -1153,9 +1153,16 @@ app.get('/api/tree/:tree/statistics', async (req, res) => {
         individuals: await prisma.person.count({ where: { treeId: tree.id } }),
         families: await prisma.family.count({ where: { treeId: tree.id } }),
         media: await prisma.media.count({ where: { treeId: tree.id } }),
+        places: await prisma.place.count({ where: { treeId: tree.id } }),
     };
 
-    res.json({ success: true, counts });
+    const gender = {
+        male: await prisma.person.count({ where: { treeId: tree.id, sex: 'M' } }),
+        female: await prisma.person.count({ where: { treeId: tree.id, sex: 'F' } }),
+        unknown: await prisma.person.count({ where: { treeId: tree.id, sex: 'U' } }),
+    };
+
+    res.json({ success: true, counts, gender });
 });
 
 app.get('/api/tree/:tree/export', async (req, res) => {

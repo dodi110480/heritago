@@ -7,22 +7,22 @@
     <div *ngIf="!loading() && stats()" class="dashboard-grid">
         <!-- Key Metrics Cards -->
         <div class="card metric-card">
-            <div class="metric-value">{{ stats().counts.individuals }}</div>
+            <div class="metric-value">{{ stats()?.counts?.individuals || 0 }}</div>
             <div class="metric-label">Personen</div>
             <div class="icon">👥</div>
         </div>
         <div class="card metric-card">
-            <div class="metric-value">{{ stats().counts.families }}</div>
+            <div class="metric-value">{{ stats()?.counts?.families || 0 }}</div>
             <div class="metric-label">Familien</div>
             <div class="icon">👨‍👩‍👧‍👦</div>
         </div>
         <div class="card metric-card">
-            <div class="metric-value">{{ stats().counts.places }}</div>
+            <div class="metric-value">{{ stats()?.counts?.places || 0 }}</div>
             <div class="metric-label">Orte</div>
             <div class="icon">🌍</div>
         </div>
         <div class="card metric-card">
-            <div class="metric-value">{{ stats().counts.media }}</div>
+            <div class="metric-value">{{ stats()?.counts?.media || 0 }}</div>
             <div class="metric-label">Medien</div>
             <div class="icon">🖼️</div>
         </div>
@@ -37,10 +37,13 @@
                     <div class="bar unknown" [style.width.%]="genderPercentages.unknown"></div>
                 </div>
                 <div class="legend">
-                    <div class="legend-item"><span class="dot male"></span> Männlich ({{ stats().gender.male }})</div>
-                    <div class="legend-item"><span class="dot female"></span> Weiblich ({{ stats().gender.female }})
+                    <div class="legend-item"><span class="dot male"></span> Männlich ({{ stats()?.gender?.male || 0 }})
                     </div>
-                    <div class="legend-item"><span class="dot unknown"></span> Unbekannt ({{ stats().gender.unknown }})
+                    <div class="legend-item"><span class="dot female"></span> Weiblich ({{ stats()?.gender?.female || 0
+                        }})
+                    </div>
+                    <div class="legend-item"><span class="dot unknown"></span> Unbekannt ({{ stats()?.gender?.unknown ||
+                        0 }})
                     </div>
                 </div>
             </div>
