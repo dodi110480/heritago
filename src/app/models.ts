@@ -64,6 +64,17 @@ export interface Individual {
     birthPlace?: string;
     deathPlace?: string;
     profileImageUrl?: string;
+
+    // Simple Mode UI derived fields
+    fatherId?: string;
+    fatherName?: string;
+    motherId?: string;
+    motherName?: string;
+    familiesAsSpouse?: {
+        spouseId?: string;
+        spouseName?: string;
+        children: { id: string; name: string }[];
+    }[];
 }
 
 export interface LifeEvent {

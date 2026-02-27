@@ -48,6 +48,26 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     isSaving = false;
 
     activeTab: 'basics' | 'timeline' | 'relations' | 'media' | 'notes' | 'citations' = 'basics';
+    isExpertMode = signal<boolean>(localStorage.getItem('heritago_expert_mode') === 'true');
+    openSections = new Set<string>(['notes', 'gallery']); // Default open sections
+
+    toggleSection(section: string) {
+        if (this.openSections.has(section)) {
+            this.openSections.delete(section);
+        } else {
+            this.openSections.add(section);
+        }
+    }
+
+    isSectionOpen(section: string): boolean {
+        return this.openSections.has(section);
+    }
+
+    toggleMode() {
+        const newVal = !this.isExpertMode();
+        this.isExpertMode.set(newVal);
+        localStorage.setItem('heritago_expert_mode', newVal ? 'true' : 'false');
+    }
 
     // Die verschmolzene Liste aus Events und Fakten
     timeline = signal<TimelineItem[]>([]);
@@ -216,6 +236,36 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         });
     }
 
+    // --- Helpers for Simple Mode ---
+    getSimpleEvent(tag: string): TimelineItem | undefined {
+        return this.timeline().find(t => t.tag === tag);
+    }
+
+    updateSimpleEvent(tag: string, field: 'date' | 'place', value: string) {
+        const current = this.timeline();
+        let item = current.find(t => t.tag === tag);
+        if (!item) {
+            // Create if not exists
+            item = {
+                originalType: 'event',
+                originalIndex: -1,
+                tag: tag,
+                date: '',
+                place: '',
+                editing: false,
+                expanded: false,
+                media: [],
+                notes: [],
+                citations: []
+            };
+            current.push(item);
+        }
+        item[field] = value;
+        item.editing = false; // Ensure it's not in "Expert" editing mode
+        this.timeline.set([...current]);
+        this.markDirty();
+    }
+
     buildTimeline() {
         const p = this.person();
         if (!p) return;
@@ -286,6 +336,42 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         // Resolve names and set initial search query
         rels.forEach(r => r.personName = this.getPersonName(r.personId));
         this.relations.set(rels);
+
+        // Populate Simple Mode specialized fields on the person object
+        const pVal = this.person();
+        if (pVal) {
+            const updatedPerson = { ...pVal };
+            updatedPerson.familiesAsSpouse = [];
+
+            data.families.forEach(fam => {
+                // Parents
+                if (fam.children.includes(pVal.id)) {
+                    if (fam.husband) {
+                        updatedPerson.fatherId = fam.husband;
+                        updatedPerson.fatherName = this.getPersonName(fam.husband);
+                    }
+                    if (fam.wife) {
+                        updatedPerson.motherId = fam.wife;
+                        updatedPerson.motherName = this.getPersonName(fam.wife);
+                    }
+                }
+                // Partners & Children
+                if (fam.husband === pVal.id || fam.wife === pVal.id) {
+                    const spouseId = fam.husband === pVal.id ? fam.wife : fam.husband;
+                    if (!updatedPerson.familiesAsSpouse) updatedPerson.familiesAsSpouse = [];
+                    updatedPerson.familiesAsSpouse.push({
+                        spouseId: spouseId,
+                        spouseName: spouseId ? this.getPersonName(spouseId) : 'Unbekannt',
+                        children: fam.children.map(childId => ({
+                            id: childId,
+                            name: this.getPersonName(childId)
+                        }))
+                    });
+                }
+            });
+
+            this.person.set(updatedPerson);
+        }
     }
 
     addRelation() {

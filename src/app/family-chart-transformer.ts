@@ -41,10 +41,13 @@ export function transformToFamilyChart(treeData: TreeData): FamilyChartNode[] {
             }
         };
 
-        // Add avatar if primary media exists
-        if (person.media && person.media.length > 0) {
-            const primary = person.media.find(m => m.isPrimary) || person.media[0];
-            node.data.avatar = primary.url;
+        // Add avatar if primary media exists, else fallback to centralized asset
+        const primaryMedia = person.media && person.media.length > 0 ? (person.media.find(m => m.isPrimary) || person.media[0]) : null;
+        if (primaryMedia?.url) {
+            node.data.avatar = primaryMedia.url;
+        } else {
+            const gender = person.gender === 'M' ? 'male' : (person.gender === 'F' ? 'female' : 'unknown');
+            node.data.avatar = `assets/avatars/${gender}.svg`;
         }
 
         // Resolve relationships
@@ -53,9 +56,11 @@ export function transformToFamilyChart(treeData: TreeData): FamilyChartNode[] {
         // Parents: Find all families where this person is a child and collect parents
         const birthFams = families.filter(f => (f.children || []).includes(personId));
         for (const fam of birthFams) {
+            if (node.rels.parents.length >= 2) break;
             if (fam.husband && individualIds.has(fam.husband) && !node.rels.parents.includes(fam.husband)) {
                 node.rels.parents.push(fam.husband);
             }
+            if (node.rels.parents.length >= 2) break;
             if (fam.wife && individualIds.has(fam.wife) && !node.rels.parents.includes(fam.wife)) {
                 node.rels.parents.push(fam.wife);
             }

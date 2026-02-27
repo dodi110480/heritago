@@ -111,21 +111,28 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat !important;
+}
+
+.avatar-box[style*="assets/avatars/"] {
+    background-size: 32px !important;
 }
 
 .gender-M {
-    background: rgba(59, 130, 246, 0.15);
+    background-color: rgba(59, 130, 246, 0.15);
     color: #60a5fa;
 }
 
 .gender-F {
-    background: rgba(236, 72, 153, 0.15);
+    background-color: rgba(236, 72, 153, 0.15);
     color: #f472b6;
 }
 
 .gender-U,
 .gender-X {
-    background: rgba(148, 163, 184, 0.15);
+    background-color: rgba(148, 163, 184, 0.15);
     color: #94a3b8;
 }
 

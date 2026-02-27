@@ -5,7 +5,9 @@ import { FormsModule } from '@angular/forms';
 import { GedcomService } from './gedcom.service';
 import { transformToFamilyChart } from './family-chart-transformer';
 import * as d3 from 'd3';
-import f3 from '../../family-chart-master/src/index';
+// @ts-ignore
+import * as f3 from 'family-chart';
+import 'family-chart/styles/family-chart.css';
 
 @Component({
   selector: 'app-family-chart',
@@ -14,55 +16,97 @@ import f3 from '../../family-chart-master/src/index';
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="f3-literal-wrapper">
-      <button class="toggle-btn" (click)="toggleConfig()">Configure</button>
-      
-      <div id="ConfigPanel" [style.display]="configOpen() ? 'block' : 'none'">
-        <h3>Tree Configuration</h3>
+      <div class="toolbar">
+        <button class="icon-btn config-btn" (click)="toggleConfig()" title="Baum konfigurieren">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.81,11.69,4.81,12c0,0.31,0.02,0.65,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+            <span>Einstellungen</span>
+        </button>
+      </div>
 
-        <div class="config-group">
-            <label class="config-label">Layout</label>
-            <div class="config-row">
-                <span>Horizontal</span>
-                <input type="checkbox" [(ngModel)]="config.is_horizontal" (change)="updateTree()">
+      <!-- Config Popup Overlay -->
+      <div class="config-overlay" *ngIf="configOpen()" (click)="toggleConfig()">
+        <div class="config-popup" (click)="$event.stopPropagation()">
+            <div class="popup-header">
+                <h3>Baum-Konfiguration</h3>
+                <button class="close-btn" (click)="toggleConfig()">&times;</button>
             </div>
-        </div>
+            
+            <div class="popup-body">
+                <div class="config-section">
+                    <label>Layout & Karten</label>
+                    <div class="config-field">
+                        <span>Horizontale Ausrichtung</span>
+                        <label class="switch">
+                            <input type="checkbox" [(ngModel)]="config.is_horizontal" (change)="updateTree()">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="config-field flex-col">
+                        <span>Kartendesign</span>
+                        <div class="design-selector">
+                            <button [class.active]="config.card_design === 'imageRect'" (click)="setCardDesign('imageRect')">Foto Eckig</button>
+                            <button [class.active]="config.card_design === 'imageCircle'" (click)="setCardDesign('imageCircle')">Foto Rund</button>
+                            <button [class.active]="config.card_design === 'rect'" (click)="setCardDesign('rect')">Nur Text</button>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="config-group">
-            <label class="config-label">Depth (Generations)</label>
-            <div class="config-row">
-                <span>Ancestry</span>
-                <input type="number" [(ngModel)]="config.ancestry_depth" (change)="updateTree()" min="0" max="10">
-            </div>
-            <div class="config-row">
-                <span>Progeny</span>
-                <input type="number" [(ngModel)]="config.progeny_depth" (change)="updateTree()" min="0" max="10">
-            </div>
-        </div>
+                <div class="config-section">
+                    <label>Sichtbare Generationen</label>
+                    <div class="config-field">
+                        <span>Vorfahren</span>
+                        <div class="range-group">
+                            <input type="range" [(ngModel)]="config.ancestry_depth" (change)="updateTree()" min="0" max="6">
+                            <span class="val">{{config.ancestry_depth}}</span>
+                        </div>
+                    </div>
+                    <div class="config-field">
+                        <span>Nachfahren</span>
+                        <div class="range-group">
+                            <input type="range" [(ngModel)]="config.progeny_depth" (change)="updateTree()" min="0" max="6">
+                            <span class="val">{{config.progeny_depth}}</span>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="config-group">
-            <label class="config-label">Separation</label>
-            <div class="config-row">
-                <span>Nodes</span>
-                <input type="range" [(ngModel)]="config.node_separation" (input)="updateTree()" min="150" max="500">
-            </div>
-            <div class="config-row">
-                <span>Levels</span>
-                <input type="range" [(ngModel)]="config.level_separation" (input)="updateTree()" min="100" max="400">
-            </div>
-        </div>
+                <div class="config-section">
+                    <label>Abstände</label>
+                    <div class="config-field">
+                        <span>Breite</span>
+                        <div class="range-group">
+                            <input type="range" [(ngModel)]="config.node_separation" (input)="updateTree()" min="100" max="400">
+                            <span class="val">{{config.node_separation}}px</span>
+                        </div>
+                    </div>
+                    <div class="config-field">
+                        <span>Höhe</span>
+                        <div class="range-group">
+                            <input type="range" [(ngModel)]="config.level_separation" (input)="updateTree()" min="100" max="400">
+                            <span class="val">{{config.level_separation}}px</span>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="config-group">
-            <label class="config-label">Card Style</label>
-            <select [(ngModel)]="config.card_style" (change)="updateTree()">
-                <option value="rect">SVG Cards (Standard)</option>
-                <option value="circle">SVG Kreise</option>
-            </select>
-        </div>
-
-        <div class="config-group">
-            <div class="config-row">
-                <span>Single Parent Placeholders</span>
-                <input type="checkbox" [(ngModel)]="config.single_parent_empty_card" (change)="updateTree()">
+                <div class="config-section">
+                    <label>Zusätzliche Optionen</label>
+                    <div class="config-field">
+                        <span>Geschwister des Fokus zeigen</span>
+                        <label class="switch">
+                            <input type="checkbox" [(ngModel)]="config.show_siblings" (change)="updateTree()">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="config-field">
+                        <span>Platzhalter für Eltern</span>
+                        <label class="switch">
+                            <input type="checkbox" [(ngModel)]="config.single_parent_empty_card" (change)="updateTree()">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="popup-footer">
+                <button class="btn-primary" (click)="toggleConfig()">Fertig</button>
             </div>
         </div>
       </div>
@@ -71,76 +115,186 @@ import f3 from '../../family-chart-master/src/index';
     </div>
   `,
   styles: [`
-    @import "../../family-chart-master/src/styles/family-chart.css";
+
+  .f3 {
+    --female-color: rgba(119, 24, 37, 1);
+    --male-color: rgba(7, 93, 151, 1);
+    --genderless-color: lightgray;
+    --background-color: rgb(33, 33, 33);
+    --text-color: #fff;
+    font-family: 'Roboto', sans-serif;
+}
 
     .f3-literal-wrapper {
         position: relative;
         width: 100%;
         height: calc(100vh - 64px);
-        background-color: #121212;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        color: #fff;
+        background-color: #050505ff;
         margin: 0;
         overflow: hidden;
     }
 
-    #ConfigPanel {
+    .toolbar {
         position: absolute;
-        top: 50px;
-        left: 10px;
-        background: rgba(45, 45, 45, 0.95);
-        border: 1px solid #444;
-        padding: 15px;
+        top: 20px;
+        left: 20px;
+        z-index: 100;
+        display: flex;
+        gap: 10px;
+    }
+
+    .icon-btn {
+        background: rgba(45, 45, 45, 0.9);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white;
+        padding: 10px 18px;
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .icon-btn:hover { background: #448aff; transform: translateY(-2px); }
+
+    /* Popup Overlay */
+    .config-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .config-popup {
+        background: #1e1e1e;
+        border: 1px solid #333;
+        border-radius: 16px;
+        width: 420px;
+        max-width: 90vw;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        overflow: hidden;
+        animation: popup-fade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popup-fade { from { opacity: 0; transform: scale(0.95) translateY(10px); } }
+
+    .popup-header {
+        padding: 20px;
+        background: #252525;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .popup-header h3 { margin: 0; font-size: 18px; color: #448aff; }
+    .close-btn { background: none; border: none; color: #666; font-size: 28px; cursor: pointer; }
+    .close-btn:hover { color: white; }
+
+    .popup-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
+    .config-section { margin-bottom: 25px; }
+    .config-section > label { display: block; font-size: 11px; text-transform: uppercase; color: #888; margin-bottom: 12px; letter-spacing: 1px; }
+
+    .config-field { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .config-field.flex-col { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .config-field span { font-size: 14px; color: #ddd; }
+    
+    .design-selector {
+        display: flex;
+        width: 100%;
+        gap: 2px;
+        background: #ffffffff;
+        padding: 4px;
         border-radius: 8px;
-        z-index: 2000;
-        width: 280px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        max-height: 80vh;
-        overflow-y: auto;
+        border: 1px solid #333;
     }
 
-    #ConfigPanel h3 {
-        margin-top: 0;
-        font-size: 16px;
-        border-bottom: 1px solid #555;
-        padding-bottom: 5px;
-        color: #448aff;
+    .design-selector button {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #888;
+        padding: 8px 5px;
+        font-size: 11px;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s;
     }
 
-    .config-group { margin-bottom: 15px; }
-    .config-label { display: block; font-size: 12px; margin-bottom: 5px; color: #bbb; }
-    .config-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-
-    input[type="range"] { width: 100%; cursor: pointer; }
-    input[type="number"] { width: 50px; background: #333; color: white; border: 1px solid #555; border-radius: 3px; }
-    select { width: 100%; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 3px; }
-
-    .toggle-btn {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        padding: 8px 15px;
+    .design-selector button.active {
         background: #448aff;
         color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        z-index: 2001;
-        font-weight: bold;
+        box-shadow: 0 4px 10px rgba(68, 138, 255, 0.3);
     }
-    .toggle-btn:hover { background: #2979ff; }
 
-    #FamilyChart {
-        width: 100%;
-        height: 100%;
-        background-color: rgb(33, 33, 33);
+    .range-group { display: flex; align-items: center; gap: 10px; width: 60%; }
+    input[type="range"] { flex: 1; accent-color: #448aff; }
+    .val { font-size: 12px; color: #448aff; min-width: 40px; text-align: right; }
+
+    .popup-footer { padding: 15px 20px; background: #252525; border-top: 1px solid #333; text-align: right; }
+    .btn-primary { background: #448aff; color: white; border: none; padding: 8px 25px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+    /* Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 44px; height: 22px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; }
+    .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; }
+    input:checked + .slider { background-color: #448aff; }
+    input:checked + .slider:before { transform: translateX(22px); }
+    .slider.round { border-radius: 34px; }
+    .slider.round:before { border-radius: 50%; }
+
+    /* CSS for HTML Cards (family-chart uses these) */
+    .f3-html-card {
+        border-radius: 8px;
+        border: 2px solid #333;
+        background: #1e1e1e;
+        color: white;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        transition: transform 0.2s;
     }
-    
-    /* Ensure no global transitions interfere with D3 */
-    .f3 *, .f3 {
-      transition: none !important;
+      .f3 div.card-image-circle div.card-label {
+      color: #ffffffff;
+  }
+    /* Gender colors from /persons */
+    .f3-html-card.gender-F { border-color: #f472b6; }
+    .f3-html-card.gender-M { border-color: #60a5fa; }
+
+    /* Default Avatar Styling */
+    .f3 div.card-image-rect[style*="assets/avatars/"],
+    .f3 div.card-image-circle[style*="assets/avatars/"] {
+        background-size: 32px !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
     }
-  `]
+
+    .f3-html-card.gender-M div.card-image-rect[style*="assets/avatars/"],
+    .f3-html-card.gender-M div.card-image-circle[style*="assets/avatars/"] {
+        background-color: rgba(59, 130, 246, 0.15) !important;
+    }
+
+    .f3-html-card.gender-F div.card-image-rect[style*="assets/avatars/"],
+    .f3-html-card.gender-F div.card-image-circle[style*="assets/avatars/"] {
+        background-color: rgba(236, 72, 153, 0.15) !important;
+    }
+
+    .f3-html-card.gender-U div.card-image-rect[style*="assets/avatars/"],
+    .f3-html-card.gender-U div.card-image-circle[style*="assets/avatars/"],
+    .f3-html-card.gender-X div.card-image-rect[style*="assets/avatars/"],
+    .f3-html-card.gender-X div.card-image-circle[style*="assets/avatars/"] {
+        background-color: rgba(148, 163, 184, 0.15) !important;
+    }
+
+    .f3 * { transition: none !important; }
+    #FamilyChart { width: 100%; height: 100%; background-color: rgb(15, 15, 15); }
+    `]
 })
 export class FamilyChartComponent implements OnInit, AfterViewInit {
   @ViewChild('familyChart') chartElement!: ElementRef;
@@ -157,15 +311,15 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
     progeny_depth: 2,
     node_separation: 250,
     level_separation: 150,
-    card_style: 'rect' as 'rect' | 'circle',
-    single_parent_empty_card: true
+    single_parent_empty_card: true,
+    show_siblings: true,
+    card_design: 'imageRect' as 'imageRect' | 'imageCircle' | 'rect'
   };
 
-  private readonly STORAGE_KEY_CONFIG = 'heritago_tree_config';
+  private readonly STORAGE_KEY_CONFIG = 'heritago_tree_config_v6';
   private readonly FOCUS_PERSON_KEY = 'heritago_last_focus_person';
 
-  private store: any;
-  private svg: any;
+  private f3Chart: any;
 
   ngOnInit() {
     this.loadSavedConfig();
@@ -190,6 +344,11 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
     this.configOpen.set(!this.configOpen());
   }
 
+  public setCardDesign(design: 'imageRect' | 'imageCircle' | 'rect') {
+    this.config.card_design = design;
+    this.updateTree();
+  }
+
   private loadSavedConfig() {
     const saved = localStorage.getItem(this.STORAGE_KEY_CONFIG);
     if (saved) {
@@ -210,12 +369,9 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
   }
 
   private renderChart() {
-    const data = JSON.parse(JSON.stringify(this.treeData())); // Clone to avoid in-place mutations by the library
+    const data = JSON.parse(JSON.stringify(this.treeData()));
     const cont = this.chartElement.nativeElement;
     cont.innerHTML = '';
-
-    const svgCont = f3.createSvg(cont);
-    this.svg = svgCont;
 
     const storedMainId = localStorage.getItem(this.FOCUS_PERSON_KEY);
     const mainId = (storedMainId && data.find((d: any) => d.id === storedMainId))
@@ -226,88 +382,78 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
       localStorage.setItem(this.FOCUS_PERSON_KEY, mainId);
     }
 
-    this.store = f3.createStore({
-      data,
-      main_id: mainId,
-      node_separation: this.config.node_separation,
-      level_separation: this.config.level_separation,
-      is_horizontal: this.config.is_horizontal,
-      ancestry_depth: this.config.ancestry_depth,
-      progeny_depth: this.config.progeny_depth,
-      single_parent_empty_card: this.config.single_parent_empty_card
-    } as any);
+    // Initialize the chart
+    this.f3Chart = f3.createChart(cont, data)
+      .setTransitionTime(800)
+      .setCardXSpacing(this.config.node_separation)
+      .setCardYSpacing(this.config.level_separation)
+      .setAncestryDepth(this.config.ancestry_depth)
+      .setProgenyDepth(this.config.progeny_depth)
+      .setShowSiblingsOfMain(this.config.show_siblings)
+      .setSingleParentEmptyCard(this.config.single_parent_empty_card, { label: 'ADD' });
 
-    const isCircle = this.config.card_style === 'circle';
-    const cardDim = isCircle
-      ? { w: 80, h: 80, text_x: 40, text_y: 85, img_w: 70, img_h: 70, img_x: 5, img_y: 5 }
-      : { w: 220, h: 70, text_x: 75, text_y: 15, img_w: 60, img_h: 60, img_x: 5, img_y: 5 };
+    if (this.config.is_horizontal) this.f3Chart.setOrientationHorizontal();
+    else this.f3Chart.setOrientationVertical();
 
-    let lastClickTime = 0;
-    const Card = f3.elements.CardSvg({
-      store: this.store,
-      svg: this.svg,
-      card_dim: cardDim,
-      card_display: (isCircle
-        ? [((d: any) => d.data["first name"])]
-        : [((d: any) => `${d.data["first name"]} ${d.data["last name"]}`), ((d: any) => d.data["birthday"] || "")]) as any,
-      mini_tree: true,
-      link_break: false,
-      onCardClick: (e: any, d: any) => {
-        const currentTime = new Date().getTime();
-        const clickGap = currentTime - lastClickTime;
-        lastClickTime = currentTime;
+    // Setup HTML Cards
+    const f3Card = this.f3Chart.setCardHtml()
+      .setCardDim({}) // Use library defaults or style via CSS
+      .setMiniTree(true)
+      .setStyle(this.config.card_design)
+      .setCardDisplay([["first name"], ["last name"]])
+      .setOnCardClick((e: any, d: any) => {
+        // Debounce / Check for double click manually if needed, 
+        // but often updateMainId is enough for visual focus
+        localStorage.setItem(this.FOCUS_PERSON_KEY, d.data.id);
+        this.f3Chart.updateMainId(d.data.id).updateTree({});
+      });
 
-        if (clickGap < 400) {
-          this.router.navigate(['/person', d.data.id]);
-        } else {
-          localStorage.setItem(this.FOCUS_PERSON_KEY, d.data.id);
-          this.store.updateMainId(d.data.id);
-          this.store.updateTree({});
-        }
+    // Handle single click navigation vs double click focus via a custom timer if desired
+    // For now, we prefer the library's built-in focus behavior and add a small navigation hook
+    d3.select(cont).on('dblclick', (e: any) => {
+      const targetElement = (e.target as Element).closest('.f3-html-card');
+      if (targetElement) {
+        const d = d3.select(targetElement).datum() as any;
+        this.router.navigate(['/person', d.data.id]);
       }
     });
 
-    this.store.setOnUpdate((props: any) => f3.view(this.store.getTree(), this.svg, Card, props || {}));
-    this.store.updateMainId(mainId);
-    this.store.updateTree({ initial: true });
-
+    this.f3Chart.editTree();
+    this.f3Chart.updateMainId(mainId).updateTree({ initial: true });
     this.setupSearch(data);
   }
 
   private setupSearch(data: any[]) {
-    const all_select_options: any[] = [];
-    data.forEach(d => {
-      if (all_select_options.find(d0 => d0.value === d["id"])) return;
-      all_select_options.push({ label: `${d.data["first name"]} ${d.data["last name"]}`, value: d["id"] });
-    });
+    const all_select_options = data.map(d => ({
+      label: `${d.data["first name"]} ${d.data["last name"]}`,
+      value: d.id
+    })).filter((v, i, a) => a.findIndex(t => t.value === v.value) === i);
 
     const search_cont = d3.select(this.chartElement.nativeElement).append("div")
-      .attr("style", "position: absolute; top: 10px; right: 20px; width: 200px; z-index: 1000;");
+      .attr("style", "position: absolute; top: 20px; right: 20px; width: 220px; z-index: 1000;");
 
     const search_input = search_cont.append("input")
-      .attr("style", "width: 100%; padding: 10px; background: rgba(30,30,30,0.9); border: 1px solid #444; border-radius: 4px; color: white;")
+      .attr("style", "width: 100%; padding: 10px 15px; background: rgba(45,45,45,0.9); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; color: white; outline: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3);")
       .attr("type", "text")
-      .attr("placeholder", "Search...")
+      .attr("placeholder", "Person suchen...")
       .on("input", (event: any) => {
         const val = event.target.value.toLowerCase();
-        const options = all_select_options.filter(o => o.label.toLowerCase().includes(val));
+        const options = val ? all_select_options.filter(o => o.label.toLowerCase().includes(val)) : [];
         updateSearchDropdown(options);
       });
 
     const dropdown = search_cont.append("div")
-      .attr("style", "background: #1e1e1e; max-height: 300px; overflow-y: auto; border: 1px solid #444; border-top: none; shadow: 0 4px 10px rgba(0,0,0,0.5);");
+      .attr("style", "background: #1e1e1e; max-height: 300px; overflow-y: auto; border-radius: 12px; margin-top: 8px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);");
 
-    const self = this;
     const updateSearchDropdown = (options: any[]) => {
       dropdown.selectAll("div").data(options).join("div")
-        .attr("style", "padding: 10px; cursor: pointer; border-bottom: 1px solid #333; font-size: 14px; color: white;")
+        .attr("style", "padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #222; font-size: 13px; color: #ddd;")
         .text(d => d.label)
-        .on("mouseover", (event) => { d3.select(event.currentTarget).style("background", "#448aff"); })
-        .on("mouseout", (event) => { d3.select(event.currentTarget).style("background", "transparent"); })
+        .on("mouseover", (event: any) => { d3.select(event.currentTarget).style("background", "#448aff").style("color", "white"); })
+        .on("mouseout", (event: any) => { d3.select(event.currentTarget).style("background", "transparent").style("color", "#ddd"); })
         .on("click", (e, d) => {
           localStorage.setItem(this.FOCUS_PERSON_KEY, d.value);
-          self.store.updateMainId(d.value);
-          self.store.updateTree({ initial: true });
+          this.f3Chart.updateMainId(d.value).updateTree({ initial: true });
           dropdown.selectAll("div").remove();
           search_input.property("value", "");
         });
