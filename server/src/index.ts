@@ -89,23 +89,99 @@ app.post('/api/auth/login', async (req, res) => {
 });
 // This will eventually handle the validation logic from the /rules folder
 export class GedcomManager {
+    private static fixMojibake(value?: string | null): string {
+        if (!value) return '';
+        const input = String(value);
+        const badScore = (s: string) => (s.match(/[ÃÂÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßï¿½]/g) || []).length;
+
+        const manualFixes: Array<[RegExp, string]> = [
+            [/Ã¤/g, 'ä'], [/Ã¶/g, 'ö'], [/Ã¼/g, 'ü'],
+            [/Ã„/g, 'Ä'], [/Ã–/g, 'Ö'], [/Ãœ/g, 'Ü'],
+            [/ÃŸ/g, 'ß'], [/Ã¡/g, 'á'], [/Ãà/g, 'à'],
+            [/Ã©/g, 'é'], [/Ã¨/g, 'è'], [/Ãê/g, 'ê'],
+            [/Ãí/g, 'í'], [/Ãó/g, 'ó'], [/Ãº/g, 'ú'],
+            [/Ä›/g, 'ě'], [/Å¾/g, 'ž'], [/Å¡/g, 'š'],
+            [/Ä/g, 'č'], [/Å™/g, 'ř'], [/Å„/g, 'ń'],
+            [/ï¿½/g, 'ß']
+        ];
+
+        let best = input;
+        try {
+            const latinToUtf8 = Buffer.from(input, 'latin1').toString('utf8');
+            if (badScore(latinToUtf8) < badScore(best)) best = latinToUtf8;
+        } catch { }
+
+        let manuallyRepaired = best;
+        for (const [pattern, repl] of manualFixes) {
+            manuallyRepaired = manuallyRepaired.replace(pattern, repl);
+        }
+        if (badScore(manuallyRepaired) < badScore(best)) best = manuallyRepaired;
+
+        // One additional pass can fix doubly-garbled strings in some datasets
+        try {
+            const secondPass = Buffer.from(best, 'latin1').toString('utf8');
+            if (badScore(secondPass) < badScore(best)) best = secondPass;
+        } catch { }
+
+        for (const [pattern, repl] of manualFixes) {
+            best = best.replace(pattern, repl);
+        }
+
+        return best.normalize('NFC');
+    }
+
+    private static cleanGedText(value?: string | null): string {
+        return this.fixMojibake(value).replace(/\r?\n/g, ' ').trim();
+    }
+
+    private static personEventOrder(tag: string): number {
+        const t = tag.toUpperCase();
+        const order: Record<string, number> = {
+            BIRT: 10,
+            CHR: 20,
+            ADOP: 30,
+            MARR: 40,
+            EVEN: 50,
+            DEAT: 60,
+            BURI: 70
+        };
+        return order[t] ?? 999;
+    }
+
+    private static familyEventOrder(tag: string): number {
+        const t = tag.toUpperCase();
+        const order: Record<string, number> = {
+            MARR: 10,
+            DIV: 20,
+            EVEN: 30
+        };
+        return order[t] ?? 999;
+    }
+
     static async ensureMediaObject(prisma: PrismaClient, treeId: string, med: any) {
         if (med.id) {
             const existing = await prisma.media.findUnique({ where: { id: med.id } });
             if (existing) return existing;
         }
 
-        if (med.url) {
-            let cleanUrl = med.url;
-            if (cleanUrl.includes('/uploads/')) {
+        if (med.url || med.remoteUrl || med.filePath) {
+            let cleanUrl = med.remoteUrl || med.url || null;
+            const filePath = med.filePath || (cleanUrl && cleanUrl.includes('/uploads/') ? cleanUrl.split('/uploads/')[1] : null);
+            if (cleanUrl && cleanUrl.includes('/uploads/')) {
                 cleanUrl = '/uploads/' + cleanUrl.split('/uploads/')[1];
             }
             let mediaObj = await prisma.media.findFirst({
-                where: { treeId, url: cleanUrl }
+                where: {
+                    treeId,
+                    OR: [
+                        cleanUrl ? { remoteUrl: cleanUrl } : undefined,
+                        filePath ? { filePath } : undefined
+                    ].filter(Boolean) as any
+                }
             });
             if (!mediaObj) {
                 mediaObj = await prisma.media.create({
-                    data: { treeId, url: cleanUrl, title: med.title }
+                    data: { treeId, remoteUrl: cleanUrl, filePath, title: med.title, mimeType: med.mimeType }
                 });
             }
             return mediaObj;
@@ -133,8 +209,20 @@ export class GedcomManager {
 
         const person = await prisma.person.upsert({
             where: { treeId_gedcomId: { treeId, gedcomId: xref } },
-            update: { sex: data.gender || 'U' },
-            create: { treeId, gedcomId: xref, sex: data.gender || 'U' }
+            update: {
+                sex: data.gender || 'U',
+                isLiving: typeof data.isLiving === 'boolean' ? data.isLiving : undefined,
+                privacyLevel: data.privacyLevel || undefined,
+                exid: data.exid || null
+            },
+            create: {
+                treeId,
+                gedcomId: xref,
+                sex: data.gender || 'U',
+                isLiving: !!data.isLiving,
+                privacyLevel: data.privacyLevel || 'PRIVATE',
+                exid: data.exid || null
+            }
         });
 
         await prisma.name.deleteMany({ where: { personId: person.id } });
@@ -142,22 +230,27 @@ export class GedcomManager {
             for (const n of data.names) {
                 await prisma.name.create({
                     data: {
+                        treeId,
                         personId: person.id,
                         isPrimary: !!n.isPrimary,
                         type: n.type || 'BIRTH',
-                        value: `${n.given || ''} /${n.surname || ''}/`.trim(),
+                        full: n.full || `${n.given || ''} /${n.surname || ''}/`.trim(),
                         given: n.given || '',
                         surname: n.surname || '',
+                        prefix: n.prefix || null,
+                        suffix: n.suffix || null,
+                        sortOrder: typeof n.sortOrder === 'number' ? n.sortOrder : 0
                     }
                 });
             }
         } else {
             await prisma.name.create({
                 data: {
+                    treeId,
                     personId: person.id,
                     isPrimary: true,
                     type: 'BIRTH',
-                    value: `${data.firstName || ''} /${data.lastName || ''}/`.trim(),
+                    full: `${data.firstName || ''} /${data.lastName || ''}/`.trim(),
                     given: data.firstName || '',
                     surname: data.lastName || '',
                 }
@@ -170,15 +263,15 @@ export class GedcomManager {
             for (const e of data.events) {
                 let placeId: string | undefined = undefined;
                 if (e.place) {
-                    const place = await prisma.place.upsert({
-                        where: { treeId_name: { treeId, name: e.place } },
-                        update: {},
-                        create: { treeId, name: e.place }
-                    });
+                    let place = await prisma.place.findFirst({ where: { treeId, name: e.place, parentId: null } });
+                    if (!place) {
+                        place = await prisma.place.create({ data: { treeId, name: e.place, historicNames: [] } });
+                    }
                     placeId = place.id;
                 }
                 const createdEvent = await prisma.event.create({
                     data: {
+                        treeId,
                         personId: person.id,
                         type: e.type || 'EVEN',
                         dateText: e.dateText || e.date || null,
@@ -192,7 +285,7 @@ export class GedcomManager {
                         const mediaObj = await this.ensureMediaObject(prisma, treeId, med);
                         if (mediaObj) {
                             await prisma.mediaLink.create({
-                                data: { eventId: createdEvent.id, mediaId: mediaObj.id }
+                                data: { treeId, eventId: createdEvent.id, mediaId: mediaObj.id }
                             });
                         }
                     }
@@ -204,13 +297,96 @@ export class GedcomManager {
         await prisma.fact.deleteMany({ where: { personId: person.id } });
         if (data.facts && Array.isArray(data.facts)) {
             for (const f of data.facts) {
+                let placeId: string | undefined = undefined;
+                if (f.place) {
+                    let place = await prisma.place.findFirst({ where: { treeId, name: f.place, parentId: null } });
+                    if (!place) {
+                        place = await prisma.place.create({ data: { treeId, name: f.place, historicNames: [] } });
+                    }
+                    placeId = place.id;
+                }
                 await prisma.fact.create({
                     data: {
+                        treeId,
                         personId: person.id,
                         type: f.type || 'FACT',
                         value: f.value || '',
+                        dateText: f.dateText || f.date || null,
+                        placeId
                     }
                 });
+            }
+        }
+
+        // 4b. Associations
+        await prisma.association.deleteMany({ where: { treeId, personId: person.id } });
+        if (data.associations && Array.isArray(data.associations)) {
+            for (const assoc of data.associations) {
+                if (!assoc?.associatedPersonId) continue;
+                const associated = await prisma.person.findUnique({
+                    where: { treeId_gedcomId: { treeId, gedcomId: assoc.associatedPersonId } }
+                });
+                if (!associated) continue;
+                await prisma.association.create({
+                    data: {
+                        treeId,
+                        personId: person.id,
+                        associatedPersonId: associated.id,
+                        role: assoc.role || 'OTHER',
+                        relationText: assoc.relationText || null,
+                        dateText: assoc.dateText || null,
+                        confidence: assoc.confidence || null,
+                        notes: assoc.notes || null
+                    }
+                });
+            }
+        }
+
+        // 4c. DNA matches + segments (owned by person)
+        await prisma.dnaSegment.deleteMany({ where: { treeId, personId: person.id } });
+        await prisma.dnaMatch.deleteMany({ where: { treeId, personId: person.id } });
+        if (data.dnaMatches && Array.isArray(data.dnaMatches)) {
+            for (const m of data.dnaMatches) {
+                const matchPerson = m.matchPersonId
+                    ? await prisma.person.findUnique({ where: { treeId_gedcomId: { treeId, gedcomId: m.matchPersonId } } })
+                    : null;
+
+                const created = await prisma.dnaMatch.create({
+                    data: {
+                        treeId,
+                        personId: person.id,
+                        matchPersonId: matchPerson?.id || null,
+                        provider: m.provider || null,
+                        totalCm: typeof m.totalCm === 'number' ? m.totalCm : null,
+                        largestSegmentCm: typeof m.largestSegmentCm === 'number' ? m.largestSegmentCm : null,
+                        segmentCount: typeof m.segmentCount === 'number' ? m.segmentCount : null,
+                        predictedRelationship: m.predictedRelationship || null,
+                        confidence: m.confidence || null,
+                        testDate: m.testDate || null,
+                        kitId: m.kitId || null
+                    }
+                });
+
+                if (m.segments && Array.isArray(m.segments)) {
+                    for (const s of m.segments) {
+                        if (!s?.chromosome || typeof s.startPosition !== 'number' || typeof s.endPosition !== 'number' || typeof s.cm !== 'number') continue;
+                        await prisma.dnaSegment.create({
+                            data: {
+                                treeId,
+                                personId: person.id,
+                                matchId: created.id,
+                                chromosome: String(s.chromosome),
+                                startPosition: s.startPosition,
+                                endPosition: s.endPosition,
+                                cm: s.cm,
+                                snpCount: typeof s.snpCount === 'number' ? s.snpCount : null,
+                                provider: s.provider || null,
+                                build: s.build || null,
+                                isTriangulated: !!s.isTriangulated
+                            }
+                        });
+                    }
+                }
             }
         }
 
@@ -229,10 +405,11 @@ export class GedcomManager {
                 if (source) {
                     await prisma.citation.create({
                         data: {
+                            treeId,
                             personId: person.id,
                             sourceId: source.id,
                             page: cit.page || null,
-                            text: cit.text || null,
+                            dateText: cit.dateText || null,
                         }
                     });
                 }
@@ -247,6 +424,7 @@ export class GedcomManager {
                 if (mediaObj) {
                     await prisma.mediaLink.create({
                         data: {
+                            treeId,
                             personId: person.id,
                             mediaId: mediaObj.id,
                             isPrimary: !!med.isPrimary
@@ -261,13 +439,14 @@ export class GedcomManager {
         if (data.notes && Array.isArray(data.notes)) {
             for (const noteText of data.notes) {
                 if (noteText && noteText.trim()) {
-                    const note = await prisma.note.findFirst({
+                    const note = await prisma.sharedNote.findFirst({
                         where: { treeId, text: noteText }
-                    }) || await prisma.note.create({
+                    }) || await prisma.sharedNote.create({
                         data: { treeId, text: noteText }
                     });
                     await prisma.noteLink.create({
                         data: {
+                            treeId,
                             personId: person.id,
                             noteId: note.id
                         }
@@ -276,151 +455,81 @@ export class GedcomManager {
             }
         }
 
-        // 8. Relationships
-        if (data.relations && Array.isArray(data.relations)) {
-            // Remove old relationships for this person
-            await prisma.relationship.deleteMany({
-                where: {
-                    OR: [
-                        { childId: person.id },
-                        { parentId: person.id }
-                    ]
+        // 8. Family memberships (new schema)
+        if (data.families && Array.isArray(data.families)) {
+            for (const fam of data.families) {
+                let dbFamily = fam.familyId ? await prisma.family.findUnique({ where: { id: fam.familyId } }) : null;
+                if (!dbFamily && fam.spouseId) {
+                    const spouse = await prisma.person.findUnique({
+                        where: { treeId_gedcomId: { treeId, gedcomId: fam.spouseId } }
+                    });
+                    if (spouse) {
+                        dbFamily = await prisma.family.findFirst({
+                            where: {
+                                treeId,
+                                AND: [
+                                    { familyMembers: { some: { personId: person.id, role: 'SPOUSE' } } },
+                                    { familyMembers: { some: { personId: spouse.id, role: 'SPOUSE' } } }
+                                ]
+                            }
+                        });
+                    }
                 }
-            });
+                if (!dbFamily) dbFamily = await prisma.family.create({ data: { treeId } });
 
-            for (const rel of data.relations) {
-                const target = await prisma.person.findUnique({
-                    where: { treeId_gedcomId: { treeId, gedcomId: rel.personId } }
+                await prisma.familyMember.upsert({
+                    where: { familyId_personId: { familyId: dbFamily.id, personId: person.id } },
+                    update: { role: 'SPOUSE' },
+                    create: { familyId: dbFamily.id, personId: person.id, role: 'SPOUSE' }
                 });
-                if (!target) continue;
 
-                if (rel.type === 'FATHER' || rel.type === 'MOTHER' || rel.type === 'PARENT') {
-                    // This person is the child, target is the parent.
-                    // We need a family where target is parent and person is child.
-                    // Find or create a family
-                    let family = await prisma.family.findFirst({
-                        where: {
-                            treeId,
-                            relationships: {
-                                some: { parentId: target.id, type: 'spouse' }
-                            }
-                        }
+                if (fam.spouseId) {
+                    const spouse = await prisma.person.findUnique({
+                        where: { treeId_gedcomId: { treeId, gedcomId: fam.spouseId } }
                     });
-
-                    if (!family) {
-                        family = await prisma.family.create({ data: { treeId } });
-                        // Link target to this family as parent
-                        await prisma.relationship.create({
-                            data: {
-                                parentId: target.id,
-                                familyId: family.id,
-                                type: 'spouse',
-                                role: rel.type === 'FATHER' ? 'husband' : (rel.type === 'MOTHER' ? 'wife' : 'parent')
-                            }
+                    if (spouse) {
+                        await prisma.familyMember.upsert({
+                            where: { familyId_personId: { familyId: dbFamily.id, personId: spouse.id } },
+                            update: { role: 'SPOUSE' },
+                            create: { familyId: dbFamily.id, personId: spouse.id, role: 'SPOUSE' }
                         });
                     }
+                }
 
-                    // Link person to family as child
-                    await prisma.relationship.create({
-                        data: {
-                            childId: person.id,
-                            familyId: family.id,
-                            type: 'parent',
-                            role: 'child'
-                        }
-                    });
-
-                    // Direct link for easier traversal
-                    await prisma.relationship.upsert({
-                        where: { childId_parentId_type: { childId: person.id, parentId: target.id, type: 'parent' } },
-                        update: {},
-                        create: { childId: person.id, parentId: target.id, type: 'parent' }
-                    });
-
-                } else if (rel.type === 'CHILD') {
-                    // This person is the parent, target is the child.
-                    // Find or create a family where person is parent
-                    let family = await prisma.family.findFirst({
-                        where: {
-                            treeId,
-                            relationships: {
-                                some: { parentId: person.id, type: 'spouse' }
-                            }
-                        }
-                    });
-
-                    if (!family) {
-                        family = await prisma.family.create({ data: { treeId } });
-                        await prisma.relationship.create({
-                            data: {
-                                parentId: person.id,
-                                familyId: family.id,
-                                type: 'spouse',
-                                role: person.sex === 'F' ? 'wife' : 'husband'
-                            }
+                if (fam.children && Array.isArray(fam.children)) {
+                    for (const child of fam.children) {
+                        const targetChild = await prisma.person.findUnique({
+                            where: { treeId_gedcomId: { treeId, gedcomId: child.id } }
+                        });
+                        if (!targetChild) continue;
+                        await prisma.familyMember.upsert({
+                            where: { familyId_personId: { familyId: dbFamily.id, personId: targetChild.id } },
+                            update: { role: 'CHILD' },
+                            create: { familyId: dbFamily.id, personId: targetChild.id, role: 'CHILD' }
                         });
                     }
-
-                    // Link target to family as child
-                    await prisma.relationship.create({
-                        data: {
-                            childId: target.id,
-                            familyId: family.id,
-                            type: 'parent',
-                            role: 'child'
-                        }
-                    });
-
-                    // Direct link
-                    await prisma.relationship.upsert({
-                        where: { childId_parentId_type: { childId: target.id, parentId: person.id, type: 'parent' } },
-                        update: {},
-                        create: { childId: target.id, parentId: person.id, type: 'parent' }
-                    });
-
-                } else if (rel.type === 'SPOUSE' || rel.type === 'PARTNER') {
-                    // Find or create family where both are spouses
-                    let family = await prisma.family.findFirst({
-                        where: {
-                            treeId,
-                            AND: [
-                                { relationships: { some: { parentId: person.id, type: 'spouse' } } },
-                                { relationships: { some: { parentId: target.id, type: 'spouse' } } }
-                            ]
-                        }
-                    });
-
-                    if (!family) {
-                        family = await prisma.family.create({ data: { treeId } });
-                        await prisma.relationship.create({
-                            data: {
-                                parentId: person.id,
-                                familyId: family.id,
-                                type: 'spouse',
-                                role: person.sex === 'F' ? 'wife' : 'husband'
-                            }
-                        });
-                        await prisma.relationship.create({
-                            data: {
-                                parentId: target.id,
-                                familyId: family.id,
-                                type: 'spouse',
-                                role: target.sex === 'F' ? 'wife' : 'husband'
-                            }
-                        });
-                    }
-
-                    // Direct link
-                    await prisma.relationship.upsert({
-                        where: { childId_parentId_type: { childId: person.id, parentId: target.id, type: 'spouse' } },
-                        update: {},
-                        create: { childId: person.id, parentId: target.id, type: 'spouse' }
-                    });
                 }
             }
         }
 
-        return person;
+        // Return fully formatted person for frontend
+        const finalPerson = await prisma.person.findUnique({
+            where: { id: person.id },
+            include: {
+                names: true,
+                events: { include: { place: true } },
+                facts: { include: { place: true } },
+                mediaLinks: { include: { media: true } },
+                noteLinks: { include: { note: true } },
+                citations: { include: { source: true } },
+                familyMembers: { include: { family: true } },
+                associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } },
+                dnaMatches: { include: { matchPerson: true, segments: true } },
+                dnaSegments: true
+            }
+        });
+
+        return finalPerson ? this.formatGedcom(finalPerson) : person;
     }
 
     static formatGedcom(person: any): any {
@@ -428,19 +537,14 @@ export class GedcomManager {
         const birthEvent = person.events.find((e: any) => e.type === 'BIRT' || e.type === 'BIRTH');
         const deathEvent = person.events.find((e: any) => e.type === 'DEAT' || e.type === 'DEATH');
 
-        // Robust relationship extraction
-        const parentFamilyIds = [
-            ...(person.parentRelationships || []),
-            ...(person.childRelationships || [])
-        ].filter(r => r.type === 'parent' && r.role === 'child' && r.familyId)
-            .map(r => r.family?.gedcomId)
+        const parentFamilyIds = (person.familyMembers || [])
+            .filter((fm: any) => fm.role === 'CHILD' && fm.family)
+            .map((fm: any) => fm.family?.gedcomId || fm.family?.id)
             .filter(Boolean);
 
-        const spouseFamilyIds = [
-            ...(person.parentRelationships || []),
-            ...(person.childRelationships || [])
-        ].filter(r => r.type === 'spouse' && (r.role === 'husband' || r.role === 'wife' || !r.role) && r.familyId)
-            .map(r => r.family?.gedcomId)
+        const spouseFamilyIds = (person.familyMembers || [])
+            .filter((fm: any) => fm.role === 'SPOUSE' && fm.family)
+            .map((fm: any) => fm.family?.gedcomId || fm.family?.id)
             .filter(Boolean);
 
         return {
@@ -449,14 +553,21 @@ export class GedcomManager {
             firstName: primaryName.given || '',
             lastName: primaryName.surname || '',
             gender: person.sex || 'U',
+            isLiving: person.isLiving ?? !deathEvent,
+            privacyLevel: person.privacyLevel || 'PRIVATE',
+            exid: person.exid || '',
             isAlive: !deathEvent,
             parents: Array.from(new Set(parentFamilyIds)),
             spouses: Array.from(new Set(spouseFamilyIds)),
             names: person.names.map((n: any) => ({
+                full: n.full,
                 given: n.given,
                 surname: n.surname,
+                prefix: n.prefix,
+                suffix: n.suffix,
                 isPrimary: n.isPrimary,
-                type: n.type
+                type: n.type,
+                sortOrder: n.sortOrder
             })),
             events: person.events.map((e: any) => ({
                 type: e.type,
@@ -466,16 +577,49 @@ export class GedcomManager {
             })),
             facts: person.facts?.map((f: any) => ({
                 type: f.type,
-                value: f.value
+                value: f.value,
+                date: f.dateText || '',
+                dateText: f.dateText || '',
+                place: f.place?.name || ''
             })) || [],
             media: person.mediaLinks?.map((ml: any) => ({
                 id: ml.media?.id,
-                url: ml.media?.url,
-                title: ml.media?.title || ml.media?.originalFileName,
+                url: ml.media?.remoteUrl || ml.media?.filePath,
+                title: ml.media?.title || ml.media?.filePath,
                 isPrimary: ml.isPrimary,
-                mimeType: ml.media?.format
+                mimeType: ml.media?.mimeType
             })) || [],
             notes: person.noteLinks?.map((nl: any) => nl.note?.text).filter(Boolean) || [],
+            associations: (person.associations || []).map((a: any) => ({
+                role: a.role,
+                associatedPersonId: a.associated?.gedcomId || '',
+                associatedPersonName: `${a.associated?.names?.[0]?.given || ''} ${a.associated?.names?.[0]?.surname || ''}`.trim(),
+                relationText: a.relationText || '',
+                dateText: a.dateText || '',
+                confidence: a.confidence || null,
+                notes: a.notes || ''
+            })),
+            dnaMatches: (person.dnaMatches || []).map((m: any) => ({
+                provider: m.provider,
+                matchPersonId: m.matchPerson?.gedcomId || '',
+                totalCm: m.totalCm,
+                largestSegmentCm: m.largestSegmentCm,
+                segmentCount: m.segmentCount,
+                predictedRelationship: m.predictedRelationship,
+                confidence: m.confidence,
+                testDate: m.testDate,
+                kitId: m.kitId,
+                segments: (m.segments || []).map((s: any) => ({
+                    chromosome: s.chromosome,
+                    startPosition: s.startPosition,
+                    endPosition: s.endPosition,
+                    cm: s.cm,
+                    snpCount: s.snpCount,
+                    provider: s.provider,
+                    build: s.build,
+                    isTriangulated: s.isTriangulated
+                }))
+            })),
             birthDate: birthEvent?.dateText || '',
             birthPlace: birthEvent?.place?.name || '',
             deathDate: deathEvent?.dateText || '',
@@ -484,20 +628,20 @@ export class GedcomManager {
     }
 
     static formatFamily(fam: any): any {
+        const spouses = (fam.familyMembers || []).filter((fm: any) => fm.role === 'SPOUSE').map((fm: any) => fm.person).filter(Boolean);
+        const children = (fam.familyMembers || []).filter((fm: any) => fm.role === 'CHILD').map((fm: any) => fm.person).filter(Boolean);
         return {
             id: fam.gedcomId || fam.id,
-            type: fam.type,
+            type: 'FAMILY',
             events: (fam.events || []).map((e: any) => ({
                 type: e.type,
                 date: e.dateText,
                 place: e.place?.name,
                 description: e.description
             })),
-            husband: fam.relationships?.find((r: any) => r.role === 'husband' && r.parent?.gedcomId)?.parent?.gedcomId,
-            wife: fam.relationships?.find((r: any) => r.role === 'wife' && r.parent?.gedcomId)?.parent?.gedcomId,
-            children: fam.relationships
-                ?.filter((r: any) => r.role === 'child' && r.child?.gedcomId)
-                .map((r: any) => r.child.gedcomId) || []
+            husband: spouses[0]?.gedcomId,
+            wife: spouses[1]?.gedcomId,
+            children: children.map((p: any) => p.gedcomId).filter(Boolean)
         };
     }
 
@@ -515,14 +659,15 @@ export class GedcomManager {
             where: { treeId },
             include: {
                 events: { include: { place: true } },
-                relationships: { include: { parent: true, child: true } }
+                familyMembers: { include: { person: true } }
             }
         });
 
         const lines: string[] = [
             '0 HEAD',
             '1 GEDC',
-            '2 VERS 7.0',
+            '2 VERS 7.0.0',
+            '2 FORM LINEAGE-LINKED',
             '1 SOUR Heritago',
             '1 CHAR UTF-8',
             '1 SUBM @U1@'
@@ -533,33 +678,67 @@ export class GedcomManager {
             lines.push(`0 ${person.gedcomId} INDI`);
             if (person.sex && person.sex !== 'U') lines.push(`1 SEX ${person.sex}`);
 
-            for (const name of person.names) {
-                lines.push(`1 NAME ${name.value}`);
-                if (name.given) lines.push(`2 GIVN ${name.given}`);
-                if (name.surname) lines.push(`2 SURN ${name.surname}`);
+            const personNames = [...person.names].sort((a: any, b: any) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+            for (let i = 0; i < personNames.length; i++) {
+                const name = personNames[i];
+                const full = this.cleanGedText(name.full);
+                const given = this.cleanGedText(name.given);
+                const surname = this.cleanGedText(name.surname);
+                lines.push(`1 NAME ${full}`);
+                if (given) lines.push(`2 GIVN ${given}`);
+                if (surname) lines.push(`2 SURN ${surname}`);
+                const normalizedType = this.cleanGedText(name.type).toLowerCase();
+                if (normalizedType) {
+                    lines.push(`2 TYPE ${normalizedType}`);
+                } else if (personNames.length > 1) {
+                    lines.push(`2 TYPE ${i === 0 ? 'birth' : 'married'}`);
+                }
             }
 
-            for (const event of person.events) {
-                lines.push(`1 ${event.type}`);
-                if (event.dateText) lines.push(`2 DATE ${event.dateText}`);
-                if (event.place) lines.push(`2 PLAC ${event.place.name}`);
-                if (event.description) lines.push(`2 NOTE ${event.description}`);
+            const seenPersonEventKeys = new Set<string>();
+            const sortedPersonEvents = [...person.events].sort((a: any, b: any) => {
+                const oa = this.personEventOrder(this.cleanGedText(a.type));
+                const ob = this.personEventOrder(this.cleanGedText(b.type));
+                if (oa !== ob) return oa - ob;
+                return (this.cleanGedText(a.dateText)).localeCompare(this.cleanGedText(b.dateText));
+            });
+            for (const event of sortedPersonEvents) {
+                const tag = this.cleanGedText(event.type).toUpperCase();
+                const dateText = this.cleanGedText(event.dateText);
+                const placeName = this.cleanGedText(event.place?.name);
+                const description = this.cleanGedText(event.description);
+                const evKey = `${tag}|${dateText}|${placeName}|${description}`;
+                if (seenPersonEventKeys.has(evKey)) continue;
+                seenPersonEventKeys.add(evKey);
+
+                if ((tag === 'DEAT' || tag === 'DEATH') && !dateText && !placeName && description.toUpperCase() === 'Y') {
+                    lines.push('1 DEAT Y');
+                    continue;
+                }
+
+                lines.push(`1 ${tag}`);
+                if (dateText) lines.push(`2 DATE ${dateText}`);
+                if (placeName) lines.push(`2 PLAC ${placeName}`);
+                if (description && description.toUpperCase() !== 'Y') lines.push(`2 NOTE ${description}`);
             }
 
             // FAMC (Family as child)
             const birthFams = families.filter(f =>
-                f.relationships.some(r => r.childId === person.id && r.role === 'child')
+                f.familyMembers.some((fm: any) => fm.personId === person.id && fm.role === 'CHILD')
             );
-            for (const bf of birthFams) {
-                lines.push(`1 FAMC ${bf.gedcomId}`);
-            }
+            const famcUnique = Array.from(new Set(birthFams.map((bf) => bf.gedcomId).filter(Boolean)));
+            famcUnique.forEach((famcId, idx) => {
+                lines.push(`1 FAMC ${famcId}`);
+                if (famcUnique.length > 1 && idx > 0) lines.push('2 PEDI adopted');
+            });
 
             // FAMS (Family as spouse)
             const spouseFams = families.filter(f =>
-                f.relationships.some(r => r.parentId === person.id && (r.role === 'husband' || r.role === 'wife' || r.type === 'spouse'))
+                f.familyMembers.some((fm: any) => fm.personId === person.id && fm.role === 'SPOUSE')
             );
-            for (const sf of spouseFams) {
-                lines.push(`1 FAMS ${sf.gedcomId}`);
+            const famsUnique = Array.from(new Set(spouseFams.map((sf) => sf.gedcomId).filter(Boolean)));
+            for (const famsId of famsUnique) {
+                lines.push(`1 FAMS ${famsId}`);
             }
         }
 
@@ -567,9 +746,10 @@ export class GedcomManager {
         for (const fam of families) {
             lines.push(`0 ${fam.gedcomId} FAM`);
 
-            const husb = fam.relationships.find(r => r.role === 'husband')?.parent;
-            const wife = fam.relationships.find(r => r.role === 'wife')?.parent;
-            const children = fam.relationships.filter(r => r.role === 'child').map(r => r.child);
+            const spouses = fam.familyMembers.filter((fm: any) => fm.role === 'SPOUSE').map((fm: any) => fm.person);
+            const husb = spouses[0];
+            const wife = spouses[1];
+            const children = fam.familyMembers.filter((fm: any) => fm.role === 'CHILD').map((fm: any) => fm.person);
 
             if (husb) lines.push(`1 HUSB ${husb.gedcomId}`);
             if (wife) lines.push(`1 WIFE ${wife.gedcomId}`);
@@ -577,11 +757,34 @@ export class GedcomManager {
                 if (child) lines.push(`1 CHIL ${child.gedcomId}`);
             }
 
-            for (const event of fam.events) {
-                lines.push(`1 ${event.type}`);
-                if (event.dateText) lines.push(`2 DATE ${event.dateText}`);
-                if (event.place) lines.push(`2 PLAC ${event.place.name}`);
-                if (event.description) lines.push(`2 NOTE ${event.description}`);
+            const seenFamilyEventKeys = new Set<string>();
+            const normalizedFamilyEvents = [...fam.events].sort((a: any, b: any) => {
+                const oa = this.familyEventOrder(this.cleanGedText(a.type));
+                const ob = this.familyEventOrder(this.cleanGedText(b.type));
+                if (oa !== ob) return oa - ob;
+                return (this.cleanGedText(a.dateText)).localeCompare(this.cleanGedText(b.dateText));
+            });
+            let marrCount = 0;
+            for (const event of normalizedFamilyEvents) {
+                const tag = this.cleanGedText(event.type).toUpperCase();
+                const dateText = this.cleanGedText(event.dateText);
+                const placeName = this.cleanGedText(event.place?.name);
+                const description = this.cleanGedText(event.description);
+                const evKey = `${tag}|${dateText}|${placeName}|${description}`;
+                if (seenFamilyEventKeys.has(evKey)) continue;
+                seenFamilyEventKeys.add(evKey);
+
+                let outTag = tag;
+                if (tag === 'MARR') {
+                    marrCount += 1;
+                    if (marrCount > 1) outTag = 'EVEN';
+                }
+
+                lines.push(`1 ${outTag}`);
+                if (tag === 'MARR' && marrCount > 1) lines.push('2 TYPE Church Marriage');
+                if (dateText) lines.push(`2 DATE ${dateText}`);
+                if (placeName) lines.push(`2 PLAC ${placeName}`);
+                if (description && description.toUpperCase() !== 'Y') lines.push(`2 NOTE ${description}`);
             }
         }
 
@@ -651,13 +854,24 @@ export class GedcomManager {
         const findChildren = (node: GedcomNode, tag: string) => node.children.filter(c => c.tag === tag);
 
         const treeRecords = parseToTree(content);
+        const report = {
+            recordsParsed: treeRecords.length,
+            personsCreated: 0,
+            familiesCreated: 0,
+            personEventsCreated: 0,
+            familyEventsCreated: 0,
+            familyEventsDeduplicated: 0,
+            unresolvedHusbandRefs: [] as string[],
+            unresolvedWifeRefs: [] as string[],
+            unresolvedChildRefs: [] as string[],
+        };
 
         // --- Pass 1: Clean Data ---
         await prisma.person.deleteMany({ where: { treeId } });
         await prisma.family.deleteMany({ where: { treeId } });
         await prisma.place.deleteMany({ where: { treeId } });
         await prisma.source.deleteMany({ where: { treeId } });
-        await prisma.note.deleteMany({ where: { treeId } });
+        await prisma.sharedNote.deleteMany({ where: { treeId } });
         await prisma.media.deleteMany({ where: { treeId } });
 
         // --- Pass 2: Create Identity Records (INDI & FAM) ---
@@ -670,11 +884,13 @@ export class GedcomManager {
                     data: { treeId, gedcomId: rec.xref, sex: 'U' }
                 });
                 gedIdToDbId[rec.xref] = p.id;
+                report.personsCreated += 1;
             } else if (rec.tag === 'FAM' && rec.xref) {
                 const f = await prisma.family.create({
                     data: { treeId, gedcomId: rec.xref }
                 });
                 gedIdToDbId[rec.xref] = f.id;
+                report.familiesCreated += 1;
             }
         }
 
@@ -711,8 +927,9 @@ export class GedcomManager {
 
                     await prisma.name.create({
                         data: {
+                            treeId,
                             personId: dbId,
-                            value: full.replace(/\//g, '').trim(),
+                            full: full.replace(/\//g, '').trim(),
                             given,
                             surname,
                             isPrimary: nameNode === findChildren(rec, 'NAME')[0]
@@ -728,16 +945,16 @@ export class GedcomManager {
 
                         let dbPlaceId = null;
                         if (placeNode?.value) {
-                            const p = await prisma.place.upsert({
-                                where: { treeId_name: { treeId, name: placeNode.value } },
-                                update: {},
-                                create: { treeId, name: placeNode.value }
-                            });
+                            let p = await prisma.place.findFirst({ where: { treeId, name: placeNode.value, parentId: null } });
+                            if (!p) {
+                                p = await prisma.place.create({ data: { treeId, name: placeNode.value, historicNames: [] } });
+                            }
                             dbPlaceId = p.id;
                         }
 
                         await prisma.event.create({
                             data: {
+                                treeId,
                                 personId: dbId,
                                 type: child.tag,
                                 dateText: dateNode?.value || null,
@@ -745,27 +962,35 @@ export class GedcomManager {
                                 description: child.value || null
                             }
                         });
+                        report.personEventsCreated += 1;
                     }
                 }
             } else if (rec.tag === 'FAM' && dbId) {
                 // Family Events (MARR etc)
+                const seenFamilyEventKeys = new Set<string>();
                 for (const child of rec.children) {
                     if (gedEvents.includes(child.tag)) {
                         const dateNode = findChild(child, 'DATE');
                         const placeNode = findChild(child, 'PLAC');
+                        const evKey = `${child.tag}|${dateNode?.value || ''}|${placeNode?.value || ''}|${child.value || ''}`;
+                        if (seenFamilyEventKeys.has(evKey)) {
+                            report.familyEventsDeduplicated += 1;
+                            continue;
+                        }
+                        seenFamilyEventKeys.add(evKey);
 
                         let dbPlaceId = null;
                         if (placeNode?.value) {
-                            const p = await prisma.place.upsert({
-                                where: { treeId_name: { treeId, name: placeNode.value } },
-                                update: {},
-                                create: { treeId, name: placeNode.value }
-                            });
+                            let p = await prisma.place.findFirst({ where: { treeId, name: placeNode.value, parentId: null } });
+                            if (!p) {
+                                p = await prisma.place.create({ data: { treeId, name: placeNode.value, historicNames: [] } });
+                            }
                             dbPlaceId = p.id;
                         }
 
                         await prisma.event.create({
                             data: {
+                                treeId,
                                 familyId: dbId,
                                 type: child.tag,
                                 dateText: dateNode?.value || null,
@@ -773,6 +998,7 @@ export class GedcomManager {
                                 description: child.value || null
                             }
                         });
+                        report.familyEventsCreated += 1;
                     }
                 }
 
@@ -783,53 +1009,37 @@ export class GedcomManager {
 
                 const hId = husb?.value && gedIdToDbId[husb.value];
                 const wId = wife?.value && gedIdToDbId[wife.value];
+                if (husb?.value && !hId) report.unresolvedHusbandRefs.push(husb.value);
+                if (wife?.value && !wId) report.unresolvedWifeRefs.push(wife.value);
 
                 if (hId) {
-                    await prisma.relationship.create({
-                        data: { parentId: hId, familyId: dbId, type: 'spouse', role: 'husband' }
+                    await prisma.familyMember.upsert({
+                        where: { familyId_personId: { familyId: dbId, personId: hId } },
+                        update: { role: 'SPOUSE' },
+                        create: { familyId: dbId, personId: hId, role: 'SPOUSE' }
                     });
                     console.log(`[GedcomManager]: Linked husband ${husb.value} to family ${rec.xref}`);
                 }
                 if (wId) {
-                    await prisma.relationship.create({
-                        data: { parentId: wId, familyId: dbId, type: 'spouse', role: 'wife' }
+                    await prisma.familyMember.upsert({
+                        where: { familyId_personId: { familyId: dbId, personId: wId } },
+                        update: { role: 'SPOUSE' },
+                        create: { familyId: dbId, personId: wId, role: 'SPOUSE' }
                     });
                     console.log(`[GedcomManager]: Linked wife ${wife.value} to family ${rec.xref}`);
-                }
-
-                // Spouse-spouse direct link (no familyId) for some tree layouts
-                if (hId && wId) {
-                    await prisma.relationship.upsert({
-                        where: { childId_parentId_type: { childId: wId, parentId: hId, type: 'spouse' } },
-                        update: {},
-                        create: { childId: wId, parentId: hId, type: 'spouse' }
-                    });
                 }
 
                 for (const childRec of children) {
                     const cId = childRec.value && gedIdToDbId[childRec.value];
                     if (cId) {
-                        // Link child to family record
-                        await prisma.relationship.create({
-                            data: { childId: cId, familyId: dbId, type: 'parent', role: 'child' }
+                        await prisma.familyMember.upsert({
+                            where: { familyId_personId: { familyId: dbId, personId: cId } },
+                            update: { role: 'CHILD' },
+                            create: { familyId: dbId, personId: cId, role: 'CHILD' }
                         });
                         console.log(`[GedcomManager]: Linked child ${childRec.value} to family ${rec.xref}`);
-
-                        // Direct parent-child links for easier traversal/rendering
-                        if (hId) {
-                            await prisma.relationship.upsert({
-                                where: { childId_parentId_type: { childId: cId, parentId: hId, type: 'parent' } },
-                                update: {},
-                                create: { childId: cId, parentId: hId, type: 'parent' }
-                            });
-                        }
-                        if (wId) {
-                            await prisma.relationship.upsert({
-                                where: { childId_parentId_type: { childId: cId, parentId: wId, type: 'parent' } },
-                                update: {},
-                                create: { childId: cId, parentId: wId, type: 'parent' }
-                            });
-                        }
+                    } else if (childRec.value) {
+                        report.unresolvedChildRefs.push(childRec.value);
                     }
                 }
             }
@@ -837,6 +1047,10 @@ export class GedcomManager {
 
 
         console.log(`[GedcomManager]: Import completed. Records parsed: ${treeRecords.length}`);
+        report.unresolvedHusbandRefs = Array.from(new Set(report.unresolvedHusbandRefs));
+        report.unresolvedWifeRefs = Array.from(new Set(report.unresolvedWifeRefs));
+        report.unresolvedChildRefs = Array.from(new Set(report.unresolvedChildRefs));
+        return report;
     }
 }
 
@@ -893,7 +1107,7 @@ app.delete('/api/tree/:id', async (req, res) => {
         // Find media to delete files
         const media = await prisma.media.findMany({ where: { treeId: id } });
         for (const m of media) {
-            const fname = (m.url?.includes('/uploads/') ? m.url.split('/uploads/').pop() : null);
+            const fname = m.filePath;
             if (fname) {
                 const fullPath = path.join(UPLOADS_DIR, fname);
                 if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
@@ -918,30 +1132,27 @@ app.get('/api/tree/:tree', async (req, res) => {
                     events: {
                         include: {
                             place: true,
-                            media: { include: { media: true } }
+                            mediaLinks: { include: { media: true } }
                         }
                     },
                     facts: {
                         include: {
-                            media: { include: { media: true } }
+                            place: true
                         }
                     },
-                    sources: { include: { source: true } },
+                    citations: { include: { source: true } },
                     mediaLinks: { include: { media: true } },
                     noteLinks: { include: { note: true } },
-                    parentRelationships: { include: { family: true } },
-                    childRelationships: { include: { family: true } }
+                    familyMembers: { include: { family: true } },
+                    associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } },
+                    dnaMatches: { include: { matchPerson: true, segments: true } },
+                    dnaSegments: true
                 }
             },
             families: {
                 include: {
                     events: { include: { place: true } },
-                    relationships: {
-                        include: {
-                            parent: true,
-                            child: true
-                        }
-                    },
+                    familyMembers: { include: { person: true } },
                     mediaLinks: { include: { media: true } }
                 }
             }
@@ -1010,7 +1221,7 @@ app.get('/api/tree/:tree/search', async (req, res) => {
                     OR: [
                         { given: { contains: q as string, mode: 'insensitive' } },
                         { surname: { contains: q as string, mode: 'insensitive' } },
-                        { value: { contains: q as string, mode: 'insensitive' } }
+                        { full: { contains: q as string, mode: 'insensitive' } }
                     ]
                 }
             }
@@ -1037,15 +1248,17 @@ app.post('/api/tree/:tree/family', async (req, res) => {
     const tree = await prisma.tree.findUnique({ where: { name: treeName } });
     if (!tree) return res.status(404).json({ success: false });
 
-    // Legacy support: if we receive husbands/wifes/children, we create relationships
+    // Legacy support: if we receive husbands/wifes/children, we create family memberships
     if (data.husband && data.wife) {
         const h = await prisma.person.findUnique({ where: { treeId_gedcomId: { treeId: tree.id, gedcomId: data.husband } } });
         const w = await prisma.person.findUnique({ where: { treeId_gedcomId: { treeId: tree.id, gedcomId: data.wife } } });
         if (h && w) {
-            await prisma.relationship.upsert({
-                where: { childId_parentId_type: { childId: h.id, parentId: w.id, type: 'spouse' } },
-                update: {},
-                create: { childId: h.id, parentId: w.id, type: 'spouse' }
+            const family = await prisma.family.create({ data: { treeId: tree.id } });
+            await prisma.familyMember.createMany({
+                data: [
+                    { familyId: family.id, personId: h.id, role: 'SPOUSE' },
+                    { familyId: family.id, personId: w.id, role: 'SPOUSE' },
+                ]
             });
         }
     }
@@ -1081,8 +1294,8 @@ app.post('/api/tree/:tree/place', async (req, res) => {
 
     try {
         if (mode === 'delete' && name) {
-            const placeToDelete = await prisma.place.findUnique({
-                where: { treeId_name: { treeId: tree.id, name: name } }
+            const placeToDelete = await prisma.place.findFirst({
+                where: { treeId: tree.id, name: name, parentId: null }
             });
             if (placeToDelete) {
                 await prisma.place.delete({ where: { id: placeToDelete.id } });
@@ -1094,28 +1307,39 @@ app.post('/api/tree/:tree/place', async (req, res) => {
         const lng = (longitude !== undefined && longitude !== '') ? parseFloat(longitude) : null;
 
         if (old_name && old_name !== name) {
-            await prisma.place.update({
-                where: { treeId_name: { treeId: tree.id, name: old_name } },
-                data: {
-                    name: name,
-                    latitude: lat,
-                    longitude: lng
-                }
+            const existingPlace = await prisma.place.findFirst({
+                where: { treeId: tree.id, name: old_name, parentId: null }
             });
+            if (existingPlace) {
+                await prisma.place.update({
+                    where: { id: existingPlace.id },
+                    data: {
+                        name: name,
+                        latitude: lat,
+                        longitude: lng
+                    }
+                });
+            }
         } else {
-            await prisma.place.upsert({
-                where: { treeId_name: { treeId: tree.id, name: name } },
-                update: {
-                    latitude: lat,
-                    longitude: lng
-                },
-                create: {
-                    treeId: tree.id,
-                    name: name,
-                    latitude: lat,
-                    longitude: lng
-                }
+            const existingPlace = await prisma.place.findFirst({
+                where: { treeId: tree.id, name: name, parentId: null }
             });
+            if (existingPlace) {
+                await prisma.place.update({
+                    where: { id: existingPlace.id },
+                    data: { latitude: lat, longitude: lng }
+                });
+            } else {
+                await prisma.place.create({
+                    data: {
+                        treeId: tree.id,
+                        name: name,
+                        historicNames: [],
+                        latitude: lat,
+                        longitude: lng
+                    }
+                });
+            }
         }
 
         res.json({ success: true });
@@ -1174,6 +1398,19 @@ app.get('/api/tree/:tree/export', async (req, res) => {
     res.json({ success: true, gedcom });
 });
 
+app.get('/api/tree/:tree/export.ged', async (req, res) => {
+    const treeName = req.params.tree as string;
+    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+    if (!tree) return res.status(404).send('Tree not found');
+
+    const gedcom = await GedcomManager.exportTree(prisma, tree.id);
+    const payload = Buffer.from(gedcom, 'utf8');
+
+    res.setHeader('Content-Type', 'application/gedcom; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename=\"${treeName}.ged\"`);
+    res.send(payload);
+});
+
 app.post('/api/tree/:tree/import', upload.single('file'), async (req, res) => {
     const treeName = req.params.tree as string;
     const tree = await prisma.tree.findUnique({ where: { name: treeName } });
@@ -1183,9 +1420,9 @@ app.post('/api/tree/:tree/import', upload.single('file'), async (req, res) => {
 
     try {
         const content = fs.readFileSync(req.file.path, 'utf-8');
-        await GedcomManager.importGedcom(prisma, tree.id, content);
+        const report = await GedcomManager.importGedcom(prisma, tree.id, content);
         fs.unlinkSync(req.file.path);
-        res.json({ success: true });
+        res.json({ success: true, report });
     } catch (error: any) {
         console.error('Import error:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -1314,16 +1551,31 @@ app.get('/api/media', async (req, res) => {
         const where: any = { treeId: treeId as string };
 
         if (type) {
-            if (type === 'FOTOS') where.mimeType = { startsWith: 'image/' };
-            else if (type === 'DOKUMENTE') where.mimeType = { in: ['application/pdf', 'text/plain'] };
+            if (type === 'FOTOS') {
+                where.OR = [
+                    { mediaType: 'PHOTO' },
+                    { AND: [{ mediaType: null }, { mimeType: { startsWith: 'image/' } }] }
+                ];
+            } else if (type === 'DOKUMENTE') {
+                where.OR = [
+                    { mediaType: { in: ['DOCUMENT', 'RECORD'] } },
+                    { AND: [{ mediaType: null }, { mimeType: { in: ['application/pdf', 'text/plain'] } }] }
+                ];
+            }
         }
 
         if (search) {
-            where.OR = [
+            const searchOr = [
                 { title: { contains: search as string, mode: 'insensitive' } },
-                { description: { contains: search as string, mode: 'insensitive' } },
-                { originalFileName: { contains: search as string, mode: 'insensitive' } }
+                { filePath: { contains: search as string, mode: 'insensitive' } },
+                { remoteUrl: { contains: search as string, mode: 'insensitive' } }
             ];
+            if (where.OR) {
+                where.AND = [{ OR: where.OR }, { OR: searchOr }];
+                delete where.OR;
+            } else {
+                where.OR = searchOr;
+            }
         }
 
         const media = await prisma.media.findMany({
@@ -1342,10 +1594,6 @@ app.get('/api/media', async (req, res) => {
         // --- Helper for filename extraction ---
         const getFileName = (m: any) => {
             if (m.filePath) return m.filePath;
-            if (m.url?.includes('/uploads/')) {
-                const parts = m.url.split('/uploads/');
-                return parts[parts.length - 1];
-            }
             return null;
         };
 
@@ -1378,9 +1626,119 @@ app.get('/api/media', async (req, res) => {
             });
         }
 
-        res.json({ success: true, media: validMedia });
+        let orphanFiles: any[] = [];
+        if (type === 'UNLINKED') {
+            const knownFileNames = new Set(
+                validMedia
+                    .map((m: any) => m.filePath)
+                    .filter((f: any) => typeof f === 'string' && f.length > 0)
+            );
+
+            const filesOnDisk = fs.readdirSync(UPLOADS_DIR).filter((f) => {
+                const full = path.join(UPLOADS_DIR, f);
+                return fs.statSync(full).isFile();
+            });
+
+            orphanFiles = filesOnDisk
+                .filter((f) => !knownFileNames.has(f))
+                .map((f) => {
+                    const full = path.join(UPLOADS_DIR, f);
+                    const ext = path.extname(f).toLowerCase();
+                    const stats = fs.statSync(full);
+                    const mimeType =
+                        ext === '.pdf' ? 'application/pdf'
+                            : ['.jpg', '.jpeg'].includes(ext) ? 'image/jpeg'
+                                : ext === '.png' ? 'image/png'
+                                    : ext === '.webp' ? 'image/webp'
+                                        : ext === '.gif' ? 'image/gif'
+                                            : 'application/octet-stream';
+                    const mediaType = mimeType.startsWith('image/') ? 'PHOTO' : 'DOCUMENT';
+
+                    return {
+                        id: `orphan:${f}`,
+                        treeId,
+                        title: f,
+                        filePath: f,
+                        remoteUrl: `/uploads/${f}`,
+                        mimeType,
+                        mediaType,
+                        fileSize: Math.min(Number.MAX_SAFE_INTEGER, stats.size),
+                        links: [],
+                        orphanFile: true,
+                        createdAt: stats.birthtime ?? stats.mtime
+                    };
+                });
+        }
+
+        res.json({ success: true, media: [...validMedia, ...orphanFiles] });
     } catch (error: any) {
         console.error('Fetch media error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+app.post('/api/media/adopt-orphan', async (req, res) => {
+    try {
+        const { treeId, filePath, title, mediaType } = req.body;
+        if (!treeId || !filePath) {
+            return res.status(400).json({ success: false, message: 'treeId and filePath required' });
+        }
+        if (filePath.includes('..') || path.isAbsolute(filePath)) {
+            return res.status(400).json({ success: false, message: 'Invalid filePath' });
+        }
+
+        const fullPath = path.join(UPLOADS_DIR, filePath);
+        if (!fs.existsSync(fullPath)) {
+            return res.status(404).json({ success: false, message: 'File not found on disk' });
+        }
+
+        const existing = await prisma.media.findFirst({
+            where: { treeId, filePath }
+        });
+        if (existing) return res.json({ success: true, media: existing, duplicate: true });
+
+        const ext = path.extname(filePath).toLowerCase();
+        const mimeType =
+            ext === '.pdf' ? 'application/pdf'
+                : ['.jpg', '.jpeg'].includes(ext) ? 'image/jpeg'
+                    : ext === '.png' ? 'image/png'
+                        : ext === '.webp' ? 'image/webp'
+                            : ext === '.gif' ? 'image/gif'
+                                : 'application/octet-stream';
+        const stats = fs.statSync(fullPath);
+
+        const media = await prisma.media.create({
+            data: {
+                treeId,
+                title: title || filePath,
+                mediaType: mediaType || (mimeType.startsWith('image/') ? 'PHOTO' : 'DOCUMENT'),
+                filePath,
+                remoteUrl: `/uploads/${filePath}`,
+                mimeType,
+                fileSize: Math.min(Number.MAX_SAFE_INTEGER, stats.size)
+            }
+        });
+
+        res.json({ success: true, media });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+app.delete('/api/media/orphan-file', async (req, res) => {
+    try {
+        const { filePath } = req.body;
+        if (!filePath) return res.status(400).json({ success: false, message: 'filePath required' });
+        if (filePath.includes('..') || path.isAbsolute(filePath)) {
+            return res.status(400).json({ success: false, message: 'Invalid filePath' });
+        }
+
+        const fullPath = path.join(UPLOADS_DIR, filePath);
+        if (!fs.existsSync(fullPath)) return res.status(404).json({ success: false, message: 'File not found' });
+
+        fs.unlinkSync(fullPath);
+        res.json({ success: true });
+    } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -1389,7 +1747,7 @@ app.post('/api/media/upload', upload.single('file'), async (req, res) => {
     try {
         console.log('[server]: Media upload request received');
         const file = req.file;
-        const { treeId, title, description } = req.body;
+        const { treeId, title, mediaType } = req.body;
 
         if (!file || !treeId) {
             console.error('[server]: Missing file or treeId');
@@ -1399,27 +1757,21 @@ app.post('/api/media/upload', upload.single('file'), async (req, res) => {
         const tree = await prisma.tree.findUnique({ where: { id: treeId } });
         if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
 
-        // Calculate initial hash of the uploaded file
-        const fileBuffer = fs.readFileSync(file.path);
-        const hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
-
-        // Check for duplicates based on hash
-        const existing = await prisma.media.findFirst({
-            where: { treeId, sha256: hash }
-        });
-
-        if (existing) {
-            fs.unlinkSync(file.path);
-            return res.json({ success: true, media: existing, duplicate: true });
-        }
-
-
         const isImage = file.mimetype.startsWith('image/');
         let finalFilename = file.filename;
         let finalMimeType = file.mimetype;
         let finalPath = file.path;
         let width = undefined;
         let height = undefined;
+        const fileBuffer = fs.readFileSync(file.path);
+
+        const existing = await prisma.media.findFirst({
+            where: { treeId, filePath: finalFilename }
+        });
+        if (existing) {
+            fs.unlinkSync(file.path);
+            return res.json({ success: true, media: existing, duplicate: true });
+        }
 
         if (isImage) {
             // Processing with sharp: Resize, Convert to WebP, Rename to UUID.webp
@@ -1453,11 +1805,13 @@ app.post('/api/media/upload', upload.single('file'), async (req, res) => {
         const media = await prisma.media.create({
             data: {
                 treeId,
-                sha256: hash,
                 title: title || file.originalname,
-                originalFileName: file.originalname,
-                url: `/uploads/${finalFilename}`,
-                format: finalMimeType
+                mediaType: mediaType || (isImage ? 'PHOTO' : 'DOCUMENT'),
+                filePath: finalFilename,
+                remoteUrl: `/uploads/${finalFilename}`,
+                mimeType: finalMimeType,
+                fileSize: Math.min(Number.MAX_SAFE_INTEGER, stats.size),
+                dimensions: width && height ? `${width}x${height}` : null
             }
         });
 
@@ -1485,10 +1839,10 @@ app.get('/api/media/:id', async (req, res) => {
 
 app.put('/api/media/:id', async (req, res) => {
     try {
-        const { title } = req.body;
+        const { title, mediaType } = req.body;
         const media = await prisma.media.update({
             where: { id: req.params.id },
-            data: { title }
+            data: { title, mediaType }
         });
         res.json({ success: true, media });
     } catch (error: any) {
@@ -1499,20 +1853,101 @@ app.put('/api/media/:id', async (req, res) => {
 
 app.post('/api/media/:id/link', async (req, res) => {
     try {
-        const { personId, familyId, sourceId, isPrimary } = req.body;
+        const { treeId, personId, familyId, sourceId, isPrimary } = req.body;
         const mediaId = req.params.id;
+        if (!treeId) return res.status(400).json({ success: false, message: 'treeId required' });
+
+        let resolvedPersonId: string | null = null;
+        let resolvedFamilyId: string | null = null;
+        let resolvedSourceId: string | null = null;
+
+        if (personId) {
+            const byId = await prisma.person.findUnique({ where: { id: personId } });
+            if (byId) {
+                resolvedPersonId = byId.id;
+            } else {
+                const byGedcom = await prisma.person.findFirst({
+                    where: { treeId, gedcomId: personId }
+                });
+                if (!byGedcom) {
+                    return res.status(400).json({ success: false, message: `Person not found for id ${personId}` });
+                }
+                resolvedPersonId = byGedcom.id;
+            }
+        }
+
+        if (familyId) {
+            const byId = await prisma.family.findUnique({ where: { id: familyId } });
+            if (byId) {
+                resolvedFamilyId = byId.id;
+            } else {
+                const byGedcom = await prisma.family.findFirst({
+                    where: { treeId, gedcomId: familyId }
+                });
+                if (!byGedcom) {
+                    return res.status(400).json({ success: false, message: `Family not found for id ${familyId}` });
+                }
+                resolvedFamilyId = byGedcom.id;
+            }
+        }
+
+        if (sourceId) {
+            const byId = await prisma.source.findUnique({ where: { id: sourceId } });
+            if (byId) {
+                resolvedSourceId = byId.id;
+            } else {
+                const byGedcom = await prisma.source.findFirst({
+                    where: { treeId, gedcomId: sourceId }
+                });
+                if (!byGedcom) {
+                    return res.status(400).json({ success: false, message: `Source not found for id ${sourceId}` });
+                }
+                resolvedSourceId = byGedcom.id;
+            }
+        }
+
+        if (!resolvedPersonId && !resolvedFamilyId && !resolvedSourceId) {
+            return res.status(400).json({ success: false, message: 'No valid link target provided' });
+        }
+
+        const existingLink = await prisma.mediaLink.findFirst({
+            where: {
+                treeId,
+                mediaId,
+                personId: resolvedPersonId,
+                familyId: resolvedFamilyId,
+                sourceId: resolvedSourceId
+            }
+        });
+        if (existingLink) {
+            return res.json({ success: true, duplicate: true, link: existingLink });
+        }
 
         const link = await prisma.mediaLink.create({
             data: {
+                treeId,
                 mediaId,
-                personId: personId || null,
-                familyId: familyId || null,
-                sourceId: sourceId || null,
+                personId: resolvedPersonId,
+                familyId: resolvedFamilyId,
+                sourceId: resolvedSourceId,
                 isPrimary: isPrimary || false
             }
         });
 
         res.json({ success: true, link });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+app.delete('/api/media/link/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const existing = await prisma.mediaLink.findUnique({ where: { id } });
+        if (!existing) return res.status(404).json({ success: false, message: 'Link not found' });
+
+        await prisma.mediaLink.delete({ where: { id } });
+        res.json({ success: true });
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -1524,7 +1959,7 @@ app.delete('/api/media/:id', async (req, res) => {
         if (!media) return res.status(404).json({ success: false, message: 'Media not found' });
 
         // Delete file logic (mirrors pruning)
-        const fname = (media.url?.includes('/uploads/') ? media.url.split('/uploads/').pop() : null);
+        const fname = media.filePath;
         if (fname) {
             const fullPath = path.join(UPLOADS_DIR, fname);
             if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);

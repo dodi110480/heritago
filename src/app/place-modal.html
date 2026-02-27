@@ -10,41 +10,25 @@
             </div>
 
             <div class="form-group">
-                <label>Ortsteil / Gebäude (optional)</label>
-                <input type="text" [(ngModel)]="modalData.detail" class="form-control" placeholder="z.B. Rathaus">
-            </div>
-            <div class="form-group">
-                <label>Stadt / Gemeinde (optional)</label>
-                <input type="text" [(ngModel)]="modalData.city" class="form-control" placeholder="z.B. Lichtenfels">
-            </div>
-            <div class="form-group">
-                <label>Landkreis / Bezirk (optional)</label>
-                <input type="text" [(ngModel)]="modalData.district" class="form-control" placeholder="z.B. Lichtenfels">
-            </div>
-            <div class="form-group">
-                <label>Bundesland / Region (optional)</label>
-                <input type="text" [(ngModel)]="modalData.region" class="form-control" placeholder="z.B. Bayern">
-            </div>
-            <div class="form-group">
-                <label>Staat / Land</label>
-                <input type="text" [(ngModel)]="modalData.country" class="form-control" placeholder="z.B. Deutschland">
+                <label>Beschreibung des Ortes</label>
+                <input type="text" [(ngModel)]="modalData.description" class="form-control" placeholder="z.B. Krankenhaus, Haus, Rathaus, Kirche">
             </div>
 
-            <div class="form-row" style="margin-top: 15px;">
-                <div class="form-group">
-                    <label>Breitengrad (Lat)</label>
-                    <input type="text" [(ngModel)]="modalData.latitude" class="form-control" placeholder="50.138">
-                </div>
-                <div class="form-group">
-                    <label>Längengrad (Long)</label>
-                    <input type="text" [(ngModel)]="modalData.longitude" class="form-control" placeholder="11.081">
-                </div>
+            <div class="form-group" *ngIf="locationLabel()">
+                <label>Automatisch erkannt</label>
+                <input type="text" class="form-control" [value]="locationLabel()" readonly>
             </div>
+
+            <div class="map-actions">
+                <button class="btn btn-secondary btn-sm" (click)="useMyLocation()" type="button">Aktuelle Position verwenden</button>
+                <small>Karte anklicken oder Marker ziehen.</small>
+            </div>
+            <div class="osm-map" #mapContainer></div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" (click)="closeModal()">Abbrechen</button>
             <button class="btn btn-primary" (click)="save()"
-                [disabled]="isSaving() || (!modalData.detail && !modalData.city && !modalData.district && !modalData.region && !modalData.country)">
+                [disabled]="isSaving() || !modalData.latitude || !modalData.longitude">
                 {{ isSaving() ? 'Speichere...' : 'Speichern' }}
             </button>
         </div>

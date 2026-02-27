@@ -1,14 +1,14 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
-import { ImageCropper } from './image-cropper';
+import { MediaAddModal } from './media-add-modal';
 
 @Component({
     selector: 'app-media-gallery',
     standalone: true,
-    imports: [CommonModule, FormsModule, ImageCropper],
+    imports: [CommonModule, FormsModule, MediaAddModal],
     templateUrl: './media-gallery.html',
     styleUrl: './media-gallery.css'
 })
@@ -16,161 +16,238 @@ export class MediaGallery implements OnInit {
     private gedcomService = inject(GedcomService);
     private authService = inject(AuthService);
 
+    loading = signal(false);
     mediaItems = signal<any[]>([]);
-    loading = signal(true);
-    viewMode = signal<'grid' | 'list'>('grid');
-    selectedImage = signal<any | null>(null);
-    isEditing = signal(false);
+    selected = signal<any | null>(null);
 
-    // Cropper state
-    showCropper = signal(false);
-    cropImageUrl = signal<string | null>(null);
-    currentUploadFile = signal<File | null>(null);
-
-    // Filters
     searchQuery = signal('');
-    filterType = signal<string>('ALLE');
+    filterType = signal<'ALLE' | 'FOTOS' | 'DOKUMENTE' | 'UNLINKED'>('ALLE');
+    showAddModal = signal(false);
 
-    // Statistics
+    personOptions = signal<{ id: string; name: string; birthYear?: string }[]>([]);
+    familyOptions = signal<{ id: string; label: string }[]>([]);
+
+    linkMode = signal<'person' | 'family' | 'source'>('person');
+    linkPersonId = signal('');
+    linkPersonQuery = signal('');
+    linkFamilyId = signal('');
+    linkSourceId = signal('');
+    mediaTypeOptions: Array<'PHOTO' | 'DOCUMENT' | 'RECORD' | 'OTHER'> = ['PHOTO', 'DOCUMENT', 'RECORD', 'OTHER'];
+
     stats = computed(() => {
         const items = this.mediaItems();
         return {
             total: items.length,
-            fotos: items.filter(i => i.mimeType?.startsWith('image/')).length,
-            docs: items.filter(i => i.mimeType === 'application/pdf').length,
-            unlinked: items.filter(i => !i.links || i.links.length === 0).length
+            fotos: items.filter(i => i.mediaType === 'PHOTO' || (!i.mediaType && i.mimeType?.startsWith('image/'))).length,
+            docs: items.filter(i => ['DOCUMENT', 'RECORD'].includes(i.mediaType) || (!i.mediaType && ['application/pdf', 'text/plain'].includes(i.mimeType))).length,
+            unlinked: items.filter(i => !i.links?.length).length
         };
+    });
+
+    filteredItems = computed(() => {
+        const filter = this.filterType();
+        const items = this.mediaItems();
+        if (filter === 'UNLINKED') return items.filter(i => !i.links?.length);
+        return items;
+    });
+
+    filteredPersonOptions = computed(() => {
+        const q = this.linkPersonQuery().trim().toLowerCase();
+        if (!q) return this.personOptions().slice(0, 12);
+        return this.personOptions()
+            .filter(p => `${p.name} ${p.birthYear || ''} ${p.id}`.toLowerCase().includes(q))
+            .slice(0, 12);
     });
 
     ngOnInit() {
         this.loadMedia();
+        this.loadLinkTargets();
+    }
+
+    get tree() {
+        return this.authService.currentTree();
     }
 
     loadMedia() {
+        const tree = this.tree;
+        if (!tree) return;
+
         this.loading.set(true);
-        const tree = this.authService.currentTree();
-        if (!tree) {
-            this.loading.set(false);
-            return;
+        const backendType = this.filterType();
 
-        }
-
-        this.gedcomService.getMedia(tree.id, this.filterType(), this.searchQuery()).subscribe({
+        this.gedcomService.getMedia(tree.id, backendType, this.searchQuery()).subscribe({
             next: (res: any) => {
-                console.log("MEDIA RAW RESPONSE:", res);
                 const items = (res.media || []).map((m: any) => ({
                     ...m,
-                    url: this.gedcomService.getMediaUrl(m.url),
-                    mimeType: m.mimeType || 'application/octet-stream' // Fallback
+                    previewUrl: this.gedcomService.getMediaUrl(m.remoteUrl || (m.filePath ? `/uploads/${m.filePath}` : ''))
                 }));
                 this.mediaItems.set(items);
                 this.loading.set(false);
             },
-            error: () => {
-                this.loading.set(false);
+            error: () => this.loading.set(false)
+        });
+    }
+
+    loadLinkTargets() {
+        const tree = this.tree;
+        if (!tree) return;
+
+        this.gedcomService.getTreeData(tree.name).subscribe((data: any) => {
+            if (!data) return;
+
+            this.personOptions.set((data.individuals || []).map((p: any) => ({
+                id: p.id,
+                name: p.name || p.id,
+                birthYear: this.extractYear(p.birthDate || p.birth || p.dateOfBirth || '')
+            })));
+            this.familyOptions.set((data.families || []).map((f: any) => ({
+                id: f.id,
+                label: `${f.id} (${f.husband || '-'} + ${f.wife || '-'})`
+            })));
+        });
+    }
+
+    openDetails(item: any) {
+        this.selected.set({ ...item });
+    }
+
+    closeDetails() {
+        this.selected.set(null);
+        this.linkPersonId.set('');
+        this.linkPersonQuery.set('');
+        this.linkFamilyId.set('');
+        this.linkSourceId.set('');
+    }
+
+    saveTitle() {
+        const current = this.selected();
+        if (!current) return;
+
+        this.gedcomService.updateMedia(current.id, { title: current.title, mediaType: current.mediaType }).subscribe({
+            next: () => this.loadMedia()
+        });
+    }
+
+    addLink() {
+        const media = this.selected();
+        const tree = this.tree;
+        if (!media || !tree) return;
+
+        const payload: any = { treeId: tree.id, isPrimary: false };
+        if (this.linkMode() === 'person' && this.linkPersonId()) payload.personId = this.linkPersonId();
+        if (this.linkMode() === 'family' && this.linkFamilyId()) payload.familyId = this.linkFamilyId();
+        if (this.linkMode() === 'source' && this.linkSourceId()) payload.sourceId = this.linkSourceId();
+
+        this.gedcomService.linkMedia(media.id, payload).subscribe({
+            next: () => {
+                this.loadMedia();
+                const selectedId = media.id;
+                const refreshed = this.mediaItems().find(i => i.id === selectedId);
+                if (refreshed) this.selected.set({ ...refreshed });
             }
         });
     }
 
-    onSearch() {
-        this.loadMedia();
+    choosePerson(person: { id: string; name: string; birthYear?: string }) {
+        this.linkPersonId.set(person.id);
+        const suffix = person.birthYear ? `* ${person.birthYear}` : person.id;
+        this.linkPersonQuery.set(`${person.name} (${suffix})`);
     }
 
-    setFilter(type: string) {
-        this.filterType.set(type);
-        this.loadMedia();
-    }
-
-    onFileUpload(event: any) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        if (file.type.startsWith('image/')) {
-            this.currentUploadFile.set(file);
-            const reader = new FileReader();
-            reader.onload = (e: any) => {
-                this.cropImageUrl.set(e.target.result);
-                this.showCropper.set(true);
-            };
-            reader.readAsDataURL(file);
-        } else {
-            this.proceedWithUpload(file);
-        }
-    }
-
-    onCropped(blob: Blob) {
-        this.showCropper.set(false);
-        const originalFile = this.currentUploadFile()!;
-        const croppedFile = new File([blob], originalFile.name.replace(/\.[^/.]+$/, "") + ".webp", { type: 'image/webp' });
-        this.proceedWithUpload(croppedFile);
-    }
-
-    proceedWithUpload(file: File) {
-        const tree = this.authService.currentTree();
-        if (!tree) return;
-
-        this.loading.set(true);
-        this.gedcomService.uploadMedia(tree.id, file).subscribe({
-            next: (res: any) => {
-                if (res.duplicate) {
-                    alert('Dieses Medium existiert bereits im System.');
-                }
+    unlinkMedia(linkId: string) {
+        if (!linkId) return;
+        this.gedcomService.unlinkMedia(linkId).subscribe({
+            next: () => {
+                const selectedId = this.selected()?.id;
                 this.loadMedia();
-            },
-            error: (err) => {
-                console.error('Upload failed', err);
-                this.loading.set(false);
+                if (selectedId) {
+                    setTimeout(() => {
+                        const refreshed = this.mediaItems().find(i => i.id === selectedId);
+                        if (refreshed) this.selected.set({ ...refreshed });
+                    }, 0);
+                }
             }
         });
     }
 
     deleteMedia(item: any) {
-        if (!confirm(`Möchten Sie "${item.title || item.originalFileName}" wirklich löschen?`)) return;
+        if (!confirm(`Medium "${item.title || item.filePath || item.id}" wirklich löschen?`)) return;
 
-        this.gedcomService.deleteMedia(item.id).subscribe(() => {
-            this.loadMedia();
-            if (this.selectedImage()?.id === item.id) {
-                this.selectedImage.set(null);
+        this.gedcomService.deleteMedia(item.id).subscribe({
+            next: () => {
+                this.loadMedia();
+                if (this.selected()?.id === item.id) this.closeDetails();
             }
         });
     }
 
-    openLightbox(item: any) {
-        this.selectedImage.set({ ...item }); // create a copy for editing
-        this.isEditing.set(false);
-    }
+    adoptOrphan(item: any) {
+        const tree = this.tree;
+        if (!tree || !item?.filePath) return;
 
-    closeLightbox() {
-        this.selectedImage.set(null);
-        this.isEditing.set(false);
-    }
-
-    saveMedia() {
-        const item = this.selectedImage();
-        if (!item) return;
-
-        this.gedcomService.updateMedia(item.id, { title: item.title, description: item.description }).subscribe({
-            next: (res) => {
-                if (res.success) {
-                    this.isEditing.set(false);
-                    this.loadMedia(); // refresh list
-                }
-            },
-            error: (err) => console.error('Failed to update media', err)
+        this.gedcomService.adoptOrphanMedia(tree.id, item.filePath, item.title || item.filePath, item.mediaType).subscribe({
+            next: () => {
+                this.loadMedia();
+                this.closeDetails();
+            }
         });
     }
 
-    getMimeIcon(mime: string): string {
-        if (mime?.startsWith('image/')) return 'image';
-        if (mime === 'application/pdf') return 'description';
-        return 'attachment';
+    deleteOrphan(item: any) {
+        if (!item?.filePath) return;
+        if (!confirm(`Datei "${item.filePath}" wirklich von der Platte löschen?`)) return;
+
+        this.gedcomService.deleteOrphanFile(item.filePath).subscribe({
+            next: () => {
+                this.loadMedia();
+                this.closeDetails();
+            }
+        });
     }
 
-    formatSize(bytes: number): string {
+    formatSize(bytes?: number) {
         if (!bytes) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let value = bytes;
+        let idx = 0;
+        while (value >= 1024 && idx < units.length - 1) {
+            value /= 1024;
+            idx++;
+        }
+        return `${value.toFixed(value >= 10 || idx === 0 ? 0 : 1)} ${units[idx]}`;
+    }
+
+    isImage(item: any): boolean {
+        const mime = String(item?.mimeType || '').toLowerCase();
+        return mime.startsWith('image/');
+    }
+
+    isPdf(item: any): boolean {
+        const mime = String(item?.mimeType || '').toLowerCase();
+        const filePath = String(item?.filePath || '').toLowerCase();
+        const title = String(item?.title || '').toLowerCase();
+        return mime.includes('pdf') || filePath.endsWith('.pdf') || title.endsWith('.pdf');
+    }
+
+    pdfUrl(item: any): string {
+        const base = item?.previewUrl || '';
+        if (!base) return '';
+        return `${base}#toolbar=1&navpanes=0&scrollbar=1`;
+    }
+
+    linkLabel(link: any): string {
+        if (link.person) {
+            const name = link.person.names?.[0];
+            return name?.full || link.person.id;
+        }
+        if (link.familyId) return `Familie ${link.familyId}`;
+        if (link.sourceId) return `Quelle ${link.sourceId}`;
+        return 'Verknüpfung';
+    }
+
+    private extractYear(value: string): string | undefined {
+        if (!value) return undefined;
+        const m = String(value).match(/\b(15|16|17|18|19|20)\d{2}\b/);
+        return m ? m[0] : undefined;
     }
 }

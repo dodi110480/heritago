@@ -1,8 +1,10 @@
-import { Component, inject, signal, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, inject, signal, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
+
+declare const L: any;
 
 @Component({
     selector: 'app-place-modal',
@@ -14,6 +16,8 @@ import { AuthService } from './auth.service';
 export class PlaceModal implements OnInit {
     private gedcomService = inject(GedcomService);
     private authService = inject(AuthService);
+
+    @ViewChild('mapContainer') mapContainer?: ElementRef<HTMLDivElement>;
 
     @Input() visible = false;
     @Input() mode: 'add' | 'edit' = 'add';
@@ -27,7 +31,7 @@ export class PlaceModal implements OnInit {
     currentTree = signal<string | null>(null);
 
     modalData = {
-        detail: '',
+        description: '',
         city: '',
         district: '',
         region: '',
@@ -36,6 +40,8 @@ export class PlaceModal implements OnInit {
         latitude: '',
         longitude: ''
     };
+
+    locationLabel = signal('');
 
     ngOnInit() {
         const tree = this.authService.currentTree();
@@ -57,27 +63,26 @@ export class PlaceModal implements OnInit {
                     this.modalData.old_name = this.initialData.name || '';
                 }
             }
+            setTimeout(() => this.initMap(), 50);
         }
     }
 
     private parsePlaceName(name: string) {
         const parts = (name || '').split(',').map((p: string) => p.trim());
-        const fullParts = new Array(5).fill('');
-        const offset = Math.max(0, 5 - parts.length);
-        for (let i = 0; i < parts.length; i++) {
-            if (i + offset < 5) fullParts[i + offset] = parts[i];
-        }
-        this.modalData.detail = fullParts[0];
-        this.modalData.city = fullParts[1];
-        this.modalData.district = fullParts[2];
-        this.modalData.region = fullParts[3];
-        this.modalData.country = fullParts[4];
+        // GEDCOM style: country, region, district, city, locality
+        this.modalData.country = parts[0] || '';
+        this.modalData.region = parts[1] || '';
+        this.modalData.district = parts[2] || '';
+        this.modalData.city = parts[3] || '';
+
+        this.modalData.description = parts.slice(4).join(', ').trim();
         this.modalData.old_name = name;
+        this.locationLabel.set([this.modalData.city, this.modalData.district, this.modalData.region, this.modalData.country].filter(Boolean).join(', '));
     }
 
     resetForm() {
         this.modalData = {
-            detail: '',
+            description: '',
             city: '',
             district: '',
             region: '',
@@ -87,6 +92,7 @@ export class PlaceModal implements OnInit {
             longitude: ''
         };
         this.errorMessage.set(null);
+        this.locationLabel.set('');
     }
 
     closeModal() {
@@ -100,13 +106,14 @@ export class PlaceModal implements OnInit {
             return;
         }
 
+        // Build canonical GEDCOM-style place string: country, region, district, city, locality
         const name = [
-            this.modalData.detail.trim(),
-            this.modalData.city.trim(),
-            this.modalData.district.trim(),
+            this.modalData.country.trim(),
             this.modalData.region.trim(),
-            this.modalData.country.trim()
-        ].join(', ');
+            this.modalData.district.trim(),
+            this.modalData.city.trim(),
+            this.modalData.description.trim()
+        ].filter(Boolean).join(', ');
 
         const payload = {
             name: name,
@@ -132,5 +139,90 @@ export class PlaceModal implements OnInit {
                 this.errorMessage.set(err.error?.message || 'Fehler beim Speichern.');
             }
         });
+    }
+
+    map: any;
+    marker: any;
+
+    initMap() {
+        if (!this.mapContainer?.nativeElement) return;
+        const lat = parseFloat(this.modalData.latitude || '');
+        const lng = parseFloat(this.modalData.longitude || '');
+        const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
+
+        if (this.map) {
+            this.map.invalidateSize();
+            if (hasCoords) this.setMarker(lat, lng);
+            else if (this.marker) {
+                this.map.removeLayer(this.marker);
+                this.marker = null;
+            }
+            return;
+        }
+
+        this.map = L.map(this.mapContainer.nativeElement, { zoomControl: true })
+            .setView(hasCoords ? [lat, lng] : [51.1657, 10.4515], hasCoords ? 14 : 6);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap-Mitwirkende',
+            maxZoom: 19
+        }).addTo(this.map);
+
+        if (hasCoords) this.setMarker(lat, lng);
+
+        this.map.on('click', (e: any) => {
+            const { lat, lng } = e.latlng;
+            this.setMarker(lat, lng);
+        });
+    }
+
+    setMarker(lat: number, lng: number) {
+        if (!this.map) return;
+        if (!this.marker) {
+            this.marker = L.marker([lat, lng], { draggable: true }).addTo(this.map);
+            this.marker.on('dragend', (e: any) => {
+                const p = e.target.getLatLng();
+                this.updateCoords(p.lat, p.lng);
+            });
+        } else {
+            this.marker.setLatLng([lat, lng]);
+        }
+        this.updateCoords(lat, lng);
+        this.map.flyTo([lat, lng], Math.max(this.map.getZoom(), 14), { duration: 0.4 });
+        this.reverseGeocode(lat, lng);
+    }
+
+    useMyLocation() {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(
+            (pos) => this.setMarker(pos.coords.latitude, pos.coords.longitude),
+            () => this.errorMessage.set('Standort konnte nicht bestimmt werden.')
+        );
+    }
+
+    private updateCoords(lat: number, lng: number) {
+        this.modalData.latitude = lat.toFixed(6);
+        this.modalData.longitude = lng.toFixed(6);
+    }
+
+    private async reverseGeocode(lat: number, lng: number) {
+        try {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`;
+            const res = await fetch(url, {
+                headers: { 'Accept': 'application/json' }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const a = data?.address || {};
+
+            this.modalData.country = a.country || this.modalData.country;
+            this.modalData.region = a.state || a.region || this.modalData.region;
+            this.modalData.district = a.county || a.state_district || this.modalData.district;
+            this.modalData.city = a.city || a.town || a.village || a.municipality || this.modalData.city;
+
+            this.locationLabel.set([this.modalData.city, this.modalData.district, this.modalData.region, this.modalData.country].filter(Boolean).join(', '));
+        } catch {
+            // ignore reverse geocode failures, manual description still possible
+        }
     }
 }

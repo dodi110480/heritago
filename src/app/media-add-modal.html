@@ -1,0 +1,63 @@
+<div class="modal-backdrop" *ngIf="visible" (click)="close()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Medium hinzufügen</h3>
+      <button type="button" class="close-btn" (click)="close()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <label class="upload-zone">
+        <input type="file" accept="image/*,application/pdf" (change)="onFilePicked($event)" hidden>
+        <span>Datei wählen (Bild oder PDF)</span>
+      </label>
+
+      <div class="form-row" *ngIf="selectedFile() as file">
+        <div>
+          <label>Typ</label>
+          <input [value]="kind()" readonly>
+        </div>
+        <div>
+          <label>Datei</label>
+          <input [value]="file.name" readonly>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label>Namens-Hinweis (optional)</label>
+          <input [ngModel]="hint()" (ngModelChange)="hint.set($event)" (blur)="refreshTitle()" placeholder="Lebenslauf, Hochzeit, Grabstein ...">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label>Titel</label>
+          <input [ngModel]="title()" (ngModelChange)="title.set($event)" placeholder="Picture_Dominik_Sperlich">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label>Medientyp</label>
+          <select [ngModel]="mediaType()" (ngModelChange)="mediaType.set($event)">
+            <option *ngFor="let type of mediaTypeOptions" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn ghost" (click)="close()">Abbrechen</button>
+      <button type="button" class="btn primary" [disabled]="!selectedFile() || uploading()" (click)="submit()">
+        {{ uploading() ? 'Wird hochgeladen...' : 'Speichern' }}
+      </button>
+    </div>
+  </div>
+
+  <app-image-cropper
+    *ngIf="showCropper()"
+    [imageUrl]="cropImageUrl()!"
+    (cropped)="onCropped($event)"
+    (cancel)="showCropper.set(false)">
+  </app-image-cropper>
+</div>

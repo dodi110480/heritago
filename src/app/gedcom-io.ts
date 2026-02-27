@@ -70,20 +70,16 @@ export class GedcomIo {
         this.showMsg('Export läuft...', false);
 
         try {
-            const res: any = await firstValueFrom(this.http.get(`${environment.apiUrl}/tree/${treeName}/export`));
-
-            if (res.success && res.gedcom) {
-                const blob = new Blob([res.gedcom], { type: 'text/plain' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${treeName}.ged`;
-                a.click();
-                window.URL.revokeObjectURL(url);
-                this.showMsg('Export erfolgreich!', false);
-            } else {
-                this.showMsg('Export fehlgeschlagen.', true);
-            }
+            const blob = await firstValueFrom(this.http.get(`${environment.apiUrl}/tree/${treeName}/export.ged`, {
+                responseType: 'blob'
+            }));
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${treeName}.ged`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            this.showMsg('Export erfolgreich!', false);
         } catch (err: any) {
             this.showMsg('Fehler beim Export: ' + (err.error?.message || err.message), true);
         } finally {

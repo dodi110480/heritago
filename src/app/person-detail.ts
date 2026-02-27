@@ -9,6 +9,7 @@ import { CleanDatePipe } from './clean-date.pipe';
 import { MediaSelector } from './media-selector';
 import { PlaceModal } from './place-modal';
 import { ImageViewer } from './image-viewer';
+import { PersonCreateModal } from './person-create-modal';
 import { CanComponentDeactivate } from './unsaved-changes.guard';
 import { firstValueFrom } from 'rxjs';
 
@@ -31,11 +32,12 @@ interface TimelineItem {
 @Component({
     selector: 'app-person-detail',
     standalone: true,
-    imports: [CommonModule, FormsModule, CleanDatePipe, MediaSelector, PlaceModal, ImageViewer],
+    imports: [CommonModule, FormsModule, CleanDatePipe, MediaSelector, PlaceModal, ImageViewer, PersonCreateModal],
     templateUrl: './person-detail.html',
     styleUrl: './person-detail.css'
 })
 export class PersonDetail implements OnInit, CanComponentDeactivate {
+    private readonly FOCUS_PERSON_KEY = 'heritago_last_focus_person';
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private gedcomService = inject(GedcomService);
@@ -47,9 +49,15 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     loading = signal(true);
     isSaving = false;
 
-    activeTab: 'basics' | 'timeline' | 'relations' | 'media' | 'notes' | 'citations' = 'basics';
+    activeTab: 'basics' | 'timeline' | 'relations' | 'media' | 'notes' | 'citations' | 'names' | 'associations' | 'dna' = 'basics';
     isExpertMode = signal<boolean>(localStorage.getItem('heritago_expert_mode') === 'true');
-    openSections = new Set<string>(['notes', 'gallery']); // Default open sections
+    openSections = new Set<string>(); // Only timeline open by default
+
+    // --- Relation Modal State ---
+    showRelationModal = signal(false);
+    relationModalType: 'child' | 'partner' | 'father' | 'mother' = 'child';
+    relationModalFamilyIndex: number | null = null;
+    newPersonData = signal({ firstName: '', lastName: '', gender: 'U' as 'M' | 'F' | 'X' | 'U' });
 
     toggleSection(section: string) {
         if (this.openSections.has(section)) {
@@ -57,6 +65,10 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         } else {
             this.openSections.add(section);
         }
+    }
+
+    updateNewPersonField(field: string, value: any) {
+        this.newPersonData.update(prev => ({ ...prev, [field]: value }));
     }
 
     isSectionOpen(section: string): boolean {
@@ -147,63 +159,14 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             const id = params.get('id');
             if (id) {
                 this.personId = id;
+                localStorage.setItem(this.FOCUS_PERSON_KEY, id);
                 this.loadPersonData();
             }
         });
     }
 
     canDeactivate(): boolean | Promise<boolean> {
-        if (!this.isDirty || this.hasSaved) {
-            return true;
-        }
-        // Show modal and wait for user decision
-        this.showLeaveModal.set(true);
-        return new Promise<boolean>((resolve) => {
-            this.leaveResolver = resolve;
-        });
-    }
-
-    async confirmSaveAndLeave() {
-        this.savePerson();
-        this.hasSaved = true;
-        this.showLeaveModal.set(false);
-        if (this.leaveResolver) {
-            this.leaveResolver(true);
-            this.leaveResolver = null;
-        }
-    }
-
-    async confirmDiscardAndLeave() {
-        const p = this.person();
-        const data = this.treeData();
-        const treeName = data?.meta?.tree || '';
-
-        // Check if person is "empty" (no name, no events) → delete from DB
-        const hasName = !!(p?.firstName?.trim() || p?.lastName?.trim());
-        const hasEvents = !!(p?.events && p.events.length > 0);
-
-        if (!hasName && !hasEvents && treeName && this.personId) {
-            try {
-                await firstValueFrom(this.gedcomService.deletePersonById(treeName, this.personId));
-            } catch (e) {
-                console.error('Failed to delete empty person:', e);
-            }
-        }
-
-        this.hasSaved = true; // Prevent re-triggering
-        this.showLeaveModal.set(false);
-        if (this.leaveResolver) {
-            this.leaveResolver(true);
-            this.leaveResolver = null;
-        }
-    }
-
-    cancelLeave() {
-        this.showLeaveModal.set(false);
-        if (this.leaveResolver) {
-            this.leaveResolver(false);
-            this.leaveResolver = null;
-        }
+        return true;
     }
 
     loadPersonData() {
@@ -219,6 +182,12 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                         if (!copy.media) copy.media = [];
                         if (!copy.notes) copy.notes = [];
                         if (!copy.citations) copy.citations = [];
+                        if (!copy.names || copy.names.length === 0) {
+                            copy.names = [{ isPrimary: true, type: 'BIRTH', given: copy.firstName || '', surname: copy.lastName || '', full: copy.name || '' }];
+                        }
+                        if (!copy.associations) copy.associations = [];
+                        if (!copy.dnaMatches) copy.dnaMatches = [];
+                        if (!copy.privacyLevel) copy.privacyLevel = 'PRIVATE';
                         this.person.set(copy);
                         this.buildTimeline();
                         this.buildRelations();
@@ -308,8 +277,48 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             });
         }
 
-        // TODO: Könnte nach Datum sortiert werden, wenn Datums-Parse-Logik da ist.
+        // Sort timeline by date
+        merged.sort((a, b) => {
+            const dateA = this.parseToComparableDate(a.date);
+            const dateB = this.parseToComparableDate(b.date);
+            return dateA.getTime() - dateB.getTime();
+        });
+
         this.timeline.set(merged);
+    }
+
+    private parseToComparableDate(dateStr: string | undefined): Date {
+        if (!dateStr) return new Date(9999, 11, 31); // No date -> last
+
+        const months: { [key: string]: number } = {
+            'JAN': 0, 'FEB': 1, 'MAR': 2, 'APR': 3, 'MAY': 4, 'JUN': 5,
+            'JUL': 6, 'AUG': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DEC': 11
+        };
+
+        // Try "DD MMM YYYY"
+        const dmy = dateStr.match(/(\d{1,2})\s+([A-Z]{3})\s+(\d{4})/i);
+        if (dmy) {
+            const day = parseInt(dmy[1]);
+            const month = months[dmy[2].toUpperCase()] || 0;
+            const year = parseInt(dmy[3]);
+            return new Date(year, month, day);
+        }
+
+        // Try "MMM YYYY"
+        const my = dateStr.match(/([A-Z]{3})\s+(\d{4})/i);
+        if (my) {
+            const month = months[my[1].toUpperCase()] || 0;
+            const year = parseInt(my[2]);
+            return new Date(year, month, 1);
+        }
+
+        // Try "YYYY"
+        const y = dateStr.match(/(\d{4})/);
+        if (y) {
+            return new Date(parseInt(y[1]), 0, 1);
+        }
+
+        return new Date(9999, 11, 31);
     }
 
     buildRelations() {
@@ -318,21 +327,45 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         if (!p || !data) return;
 
         const rels: { type: string; personId: string; personName?: string }[] = [];
+        const relSeen = new Set<string>();
 
         data.families.forEach(fam => {
             if (fam.children.includes(p.id)) {
-                if (fam.husband) rels.push({ type: 'FATHER', personId: fam.husband });
-                if (fam.wife) rels.push({ type: 'MOTHER', personId: fam.wife });
+                if (fam.husband) {
+                    const key = `FATHER:${fam.husband}`;
+                    if (!relSeen.has(key)) {
+                        relSeen.add(key);
+                        rels.push({ type: 'FATHER', personId: fam.husband });
+                    }
+                }
+                if (fam.wife) {
+                    const key = `MOTHER:${fam.wife}`;
+                    if (!relSeen.has(key)) {
+                        relSeen.add(key);
+                        rels.push({ type: 'MOTHER', personId: fam.wife });
+                    }
+                }
             }
             if (fam.husband === p.id || fam.wife === p.id) {
                 const partner = fam.husband === p.id ? fam.wife : fam.husband;
-                if (partner) rels.push({ type: 'SPOUSE', personId: partner });
+                if (partner) {
+                    const key = `SPOUSE:${partner}`;
+                    if (!relSeen.has(key)) {
+                        relSeen.add(key);
+                        rels.push({ type: 'SPOUSE', personId: partner });
+                    }
+                }
                 fam.children.forEach(child => {
-                    rels.push({ type: 'CHILD', personId: child });
+                    const key = `CHILD:${child}`;
+                    if (!relSeen.has(key)) {
+                        relSeen.add(key);
+                        rels.push({ type: 'CHILD', personId: child });
+                    }
                 });
             }
         });
 
+        // Resolve names and set initial search query
         // Resolve names and set initial search query
         rels.forEach(r => r.personName = this.getPersonName(r.personId));
         this.relations.set(rels);
@@ -343,8 +376,12 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             const updatedPerson = { ...pVal };
             updatedPerson.familiesAsSpouse = [];
 
+            // A map to keep track of unique families to avoid duplicates
+            // Especially when a person is husband/wife in multiple families
+            const seenFamilyKeys = new Set<string>();
+
             data.families.forEach(fam => {
-                // Parents
+                // Parents (Child in this family)
                 if (fam.children.includes(pVal.id)) {
                     if (fam.husband) {
                         updatedPerson.fatherId = fam.husband;
@@ -355,14 +392,22 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                         updatedPerson.motherName = this.getPersonName(fam.wife);
                     }
                 }
-                // Partners & Children
+
+                // Partners & Children (Spouse in this family)
                 if (fam.husband === pVal.id || fam.wife === pVal.id) {
+                    const familyKey = [fam.husband || '', fam.wife || '', ...(fam.children || []).slice().sort()].join('|');
+                    if (seenFamilyKeys.has(familyKey)) return;
+                    seenFamilyKeys.add(familyKey);
+
                     const spouseId = fam.husband === pVal.id ? fam.wife : fam.husband;
+
                     if (!updatedPerson.familiesAsSpouse) updatedPerson.familiesAsSpouse = [];
+
                     updatedPerson.familiesAsSpouse.push({
+                        familyId: fam.id, // Storing familyId for deletion
                         spouseId: spouseId,
                         spouseName: spouseId ? this.getPersonName(spouseId) : 'Unbekannt',
-                        children: fam.children.map(childId => ({
+                        children: Array.from(new Set(fam.children || [])).map(childId => ({
                             id: childId,
                             name: this.getPersonName(childId)
                         }))
@@ -374,9 +419,102 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         }
     }
 
-    addRelation() {
-        const current = this.relations();
-        this.relations.set([...current, { type: 'CHILD', personId: '', personName: '' }]);
+    goToPerson(id: string | undefined) {
+        if (id) {
+            this.router.navigate(['/person', id]);
+        }
+    }
+
+
+    addRelationSimple(type: 'child' | 'partner' | 'father' | 'mother', familyIdx: number | null = null) {
+        this.relationModalType = type;
+        this.relationModalFamilyIndex = familyIdx;
+        this.newPersonData.set({
+            firstName: '',
+            lastName: type === 'child' ? (this.person()?.lastName || '') : '',
+            gender: type === 'father' ? 'M' : (type === 'mother' ? 'F' : 'U')
+        });
+        this.showRelationModal.set(true);
+    }
+
+    closeRelationModal() {
+        this.showRelationModal.set(false);
+    }
+
+    saveNewRelation() {
+        // Redundant as logic moved to component, but we keep the method name if linked in HTML
+        // Actually we will link the component output directly to linkPersonToRelation
+    }
+
+    onPersonCreated(event: any) {
+        if (event && event.person) {
+            const id = event.person.gedcomId || event.person.id;
+            let name = event.person.name;
+            if (!name) {
+                const first = event.person.firstName || '';
+                const last = event.person.lastName || '';
+                name = `${first} ${last}`.trim() || 'Unbekannt';
+            }
+            this.linkPersonToRelation(id, name);
+        } else if (event && event.mode === 'existing') {
+            const first = event.person.firstName || '';
+            const last = event.person.lastName || '';
+            const name = `${first} ${last}`.trim() || 'Unbekannt';
+            this.linkPersonToRelation(event.person.id, name);
+        }
+    }
+
+    linkPersonToRelation(id: string, name: string) {
+        const type = this.relationModalType;
+        const p = this.person();
+        if (!p) return;
+
+        if (type === 'father') {
+            p.fatherId = id;
+            p.fatherName = name;
+        } else if (type === 'mother') {
+            p.motherId = id;
+            p.motherName = name;
+        } else if (type === 'partner') {
+            p.familiesAsSpouse = p.familiesAsSpouse || [];
+            p.familiesAsSpouse.push({ spouseId: id, spouseName: name, children: [] });
+        } else if (type === 'child' && this.relationModalFamilyIndex !== null) {
+            const fam = p.familiesAsSpouse![this.relationModalFamilyIndex];
+            fam.children.push({ id, name });
+        }
+
+        this.person.set({ ...p });
+        this.markDirty();
+        this.showRelationModal.set(false);
+    }
+
+    removeParent(type: 'father' | 'mother') {
+        const p = this.person();
+        if (!p) return;
+        if (type === 'father') {
+            p.fatherId = undefined;
+            p.fatherName = undefined;
+        } else {
+            p.motherId = undefined;
+            p.motherName = undefined;
+        }
+        this.person.set({ ...p });
+        this.markDirty();
+    }
+
+    removeFamily(index: number) {
+        const p = this.person();
+        if (!p) return;
+        p.familiesAsSpouse!.splice(index, 1);
+        this.person.set({ ...p });
+        this.markDirty();
+    }
+
+    removeChildFromFamily(familyIdx: number, childIdx: number) {
+        const p = this.person();
+        if (!p) return;
+        p.familiesAsSpouse![familyIdx].children.splice(childIdx, 1);
+        this.person.set({ ...p });
         this.markDirty();
     }
 
@@ -422,8 +560,8 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                         p.media = p.media || [];
                         p.media.push({
                             id: res.media.id,
-                            url: res.media.url,
-                            title: res.media.title || res.media.originalFileName || '',
+                            url: res.media.remoteUrl || (res.media.filePath ? `/uploads/${res.media.filePath}` : ''),
+                            title: res.media.title || res.media.filePath || '',
                             isPrimary: p.media.length === 0,
                             mimeType: res.media.mimeType
                         });
@@ -455,8 +593,8 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                     current[itemIndex].media = current[itemIndex].media || [];
                     current[itemIndex].media!.push({
                         id: res.media.id,
-                        url: res.media.url,
-                        title: res.media.title || res.media.originalFileName || '',
+                        url: res.media.remoteUrl || (res.media.filePath ? `/uploads/${res.media.filePath}` : ''),
+                        title: res.media.title || res.media.filePath || '',
                         isPrimary: false,
                         mimeType: res.media.mimeType
                     });
@@ -482,11 +620,11 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             current[idx].media = current[idx].media || [];
             current[idx].media!.push({
                 id: mediaObj.id,
-                url: mediaObj.url,
-                title: mediaObj.title || mediaObj.originalFileName || '',
-                isPrimary: false,
-                mimeType: mediaObj.mimeType
-            });
+                    url: mediaObj.remoteUrl || (mediaObj.filePath ? `/uploads/${mediaObj.filePath}` : mediaObj.url),
+                    title: mediaObj.title || mediaObj.filePath || '',
+                    isPrimary: false,
+                    mimeType: mediaObj.mimeType
+                });
             this.timeline.set([...current]);
         } else {
             // Person media
@@ -495,8 +633,8 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                 p.media = p.media || [];
                 p.media.push({
                     id: mediaObj.id,
-                    url: mediaObj.url,
-                    title: mediaObj.title || mediaObj.originalFileName || '',
+                    url: mediaObj.remoteUrl || (mediaObj.filePath ? `/uploads/${mediaObj.filePath}` : mediaObj.url),
+                    title: mediaObj.title || mediaObj.filePath || '',
                     isPrimary: p.media.length === 0,
                     mimeType: mediaObj.mimeType
                 });
@@ -569,6 +707,79 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             p.citations!.splice(index, 1);
             this.person.set({ ...p });
         }
+    }
+
+    addName() {
+        const p = this.person();
+        if (!p) return;
+        p.names = p.names || [];
+        p.names.push({ isPrimary: p.names.length === 0, type: 'AKA', given: '', surname: '', full: '' });
+        this.person.set({ ...p });
+    }
+
+    removeName(index: number) {
+        const p = this.person();
+        if (!p) return;
+        p.names.splice(index, 1);
+        if (p.names.length > 0 && !p.names.some(n => n.isPrimary)) p.names[0].isPrimary = true;
+        this.person.set({ ...p });
+    }
+
+    setPrimaryName(index: number) {
+        const p = this.person();
+        if (!p) return;
+        p.names.forEach((n, i) => n.isPrimary = i === index);
+        const primary = p.names[index];
+        p.firstName = primary.given || '';
+        p.lastName = primary.surname || '';
+        p.name = `${p.firstName} ${p.lastName}`.trim();
+        this.person.set({ ...p });
+    }
+
+    addAssociation() {
+        const p = this.person();
+        if (!p) return;
+        p.associations = p.associations || [];
+        p.associations.push({ role: 'OTHER', associatedPersonId: '', associatedPersonName: '', relationText: '', dateText: '', notes: '' });
+        this.person.set({ ...p });
+    }
+
+    removeAssociation(index: number) {
+        const p = this.person();
+        if (!p || !p.associations) return;
+        p.associations.splice(index, 1);
+        this.person.set({ ...p });
+    }
+
+    addDnaMatch() {
+        const p = this.person();
+        if (!p) return;
+        p.dnaMatches = p.dnaMatches || [];
+        p.dnaMatches.push({ provider: '', matchPersonId: '', segments: [] });
+        this.person.set({ ...p });
+    }
+
+    removeDnaMatch(index: number) {
+        const p = this.person();
+        if (!p || !p.dnaMatches) return;
+        p.dnaMatches.splice(index, 1);
+        this.person.set({ ...p });
+    }
+
+    addDnaSegment(matchIndex: number) {
+        const p = this.person();
+        if (!p || !p.dnaMatches) return;
+        const match = p.dnaMatches[matchIndex];
+        match.segments = match.segments || [];
+        match.segments.push({ chromosome: '1', startPosition: 0, endPosition: 0, cm: 0 });
+        this.person.set({ ...p });
+    }
+
+    removeDnaSegment(matchIndex: number, segmentIndex: number) {
+        const p = this.person();
+        if (!p || !p.dnaMatches) return;
+        p.dnaMatches[matchIndex].segments?.splice(segmentIndex, 1);
+        this.person.set({ ...p });
     }
 
     addTimelineItem() {
@@ -758,15 +969,47 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
         const currentPerson = this.person()!;
 
-        // Timeline wieder in Events und Facts aufsplitten
+        // 1. Zuerst alle Roh-Relationen sammeln
+        let rawRelations = [...this.relations()];
+
+        // Vater aus Simple-Mode hinzufügen
+        if (currentPerson.fatherId) {
+            rawRelations.push({ type: 'FATHER', personId: currentPerson.fatherId });
+        }
+        // Mutter aus Simple-Mode hinzufügen
+        if (currentPerson.motherId) {
+            rawRelations.push({ type: 'MOTHER', personId: currentPerson.motherId });
+        }
+
+        // Partner und Kinder aus familiesAsSpouse hinzufügen
+        if (currentPerson.familiesAsSpouse) {
+            currentPerson.familiesAsSpouse.forEach(fam => {
+                if (fam.spouseId) {
+                    rawRelations.push({ type: 'SPOUSE', personId: fam.spouseId });
+                }
+                if (fam.children) {
+                    fam.children.forEach(child => {
+                        rawRelations.push({ type: 'CHILD', personId: child.id });
+                    });
+                }
+            });
+        }
+
+        // 2. DUPLIKATE ENTFERNEN (Entscheidender Fix für den Prisma-Fehler)
+        // Wir filtern die Liste so, dass jede Kombination aus personId und type nur einmal vorkommt.
+        const relationsPayload = rawRelations.filter((rel, index, self) =>
+            index === self.findIndex((t) => (
+                t.personId === rel.personId && t.type === rel.type
+            ))
+        );
+
+        // 3. Timeline wie bisher verarbeiten
         const newEvents: any[] = [];
         const newFacts: any[] = [];
 
         this.timeline().forEach(t => {
             const isEventTag = ['BIRT', 'CHR', 'DEAT', 'BURI', 'CREM', 'EMIG', 'IMMI', 'BAPM'].includes(t.tag);
-
-            // Wir könnten die Logik auch an t.originalType hängen, aber wenn der Nutzer den Typ ändert, wechseln wir
-            if (isEventTag || t.originalType === 'event' && !['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(t.tag)) {
+            if (isEventTag || (t.originalType === 'event' && !['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(t.tag))) {
                 newEvents.push({
                     type: t.tag,
                     date: t.date,
@@ -789,22 +1032,68 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             }
         });
 
-        currentPerson.events = newEvents;
-        currentPerson.facts = newFacts;
-
+        // 4. Den Payload final zusammenbauen
         const payload: any = {
             id: currentPerson.id,
-            names: currentPerson.names, // Ensure backend logic still applies name properly or uses names array
-            name: currentPerson.name,
             firstName: currentPerson.firstName,
             lastName: currentPerson.lastName,
             gender: currentPerson.gender,
+            isLiving: currentPerson.isLiving,
+            privacyLevel: currentPerson.privacyLevel,
+            exid: currentPerson.exid,
+            name: currentPerson.name,
+            names: (currentPerson.names || []).map(n => ({
+                type: n.type || 'BIRTH',
+                full: n.full || `${n.given || ''} /${n.surname || ''}/`.trim(),
+                given: n.given || '',
+                surname: n.surname || '',
+                prefix: n.prefix || '',
+                suffix: n.suffix || '',
+                isPrimary: !!n.isPrimary,
+                sortOrder: n.sortOrder || 0
+            })),
             events: newEvents,
             facts: newFacts,
-            relations: this.relations(),
+            relations: relationsPayload, // Die gefilterte Liste
+            families: currentPerson.familiesAsSpouse || [],
             media: currentPerson.media,
             notes: currentPerson.notes,
-            citations: currentPerson.citations
+            citations: (currentPerson.citations || []).map((c: any) => ({
+                source: c.source || c.sourceTitle || '',
+                page: c.page || c.whereInSource || '',
+                dateText: c.dateText || c.date || '',
+                quality: c.quality ?? null,
+                text: c.text || ''
+            })),
+            associations: (currentPerson.associations || []).map((a: any) => ({
+                role: a.role || 'OTHER',
+                associatedPersonId: a.associatedPersonId || '',
+                relationText: a.relationText || '',
+                dateText: a.dateText || '',
+                confidence: a.confidence || null,
+                notes: a.notes || ''
+            })),
+            dnaMatches: (currentPerson.dnaMatches || []).map((m: any) => ({
+                provider: m.provider || null,
+                matchPersonId: m.matchPersonId || null,
+                totalCm: m.totalCm === '' ? null : m.totalCm,
+                largestSegmentCm: m.largestSegmentCm === '' ? null : m.largestSegmentCm,
+                segmentCount: m.segmentCount === '' ? null : m.segmentCount,
+                predictedRelationship: m.predictedRelationship || null,
+                confidence: m.confidence || null,
+                testDate: m.testDate || null,
+                kitId: m.kitId || null,
+                segments: (m.segments || []).map((s: any) => ({
+                    chromosome: s.chromosome,
+                    startPosition: Number(s.startPosition),
+                    endPosition: Number(s.endPosition),
+                    cm: Number(s.cm),
+                    snpCount: s.snpCount === '' ? null : s.snpCount,
+                    provider: s.provider || null,
+                    build: s.build || null,
+                    isTriangulated: !!s.isTriangulated
+                }))
+            }))
         };
 
         const data = this.treeData()!;
@@ -815,12 +1104,12 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                 this.isSaving = false;
                 this.hasSaved = true;
                 this.isDirty = false;
-                // Toast oder ähnliches anzeigen
-                this.loadPersonData(); // Reload
+                this.loadPersonData(); // Daten neu laden, um IDs zu synchronisieren
             },
-            error: () => {
+            error: (err) => {
                 this.isSaving = false;
-                alert('Fehler beim Speichern');
+                console.error('Speicherfehler Details:', err);
+                alert('Fehler beim Speichern: ' + (err.error?.message || 'Unbekannter Fehler'));
             }
         });
     }

@@ -97,12 +97,12 @@ export class GedcomService {
         });
     }
 
-    uploadMedia(treeId: string, file: File, title?: string, description?: string): Observable<any> {
+    uploadMedia(treeId: string, file: File, title?: string, mediaType?: string): Observable<any> {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('treeId', treeId);
         if (title) formData.append('title', title);
-        if (description) formData.append('description', description);
+        if (mediaType) formData.append('mediaType', mediaType);
 
         return this.http.post<any>(`${environment.apiUrl}/media/upload`, formData, { withCredentials: true });
     }
@@ -111,12 +111,32 @@ export class GedcomService {
         return this.http.delete<any>(`${environment.apiUrl}/media/${id}`, { withCredentials: true });
     }
 
-    updateMedia(id: string, data: { title?: string, description?: string }): Observable<any> {
+    updateMedia(id: string, data: { title?: string, mediaType?: string }): Observable<any> {
         return this.http.put<any>(`${environment.apiUrl}/media/${id}`, data, { withCredentials: true });
     }
 
-    linkMedia(mediaId: string, linkData: { individualId?: string, familyId?: string, isPrimary?: boolean }): Observable<any> {
+    linkMedia(mediaId: string, linkData: { treeId: string, personId?: string, familyId?: string, sourceId?: string, isPrimary?: boolean }): Observable<any> {
         return this.http.post<any>(`${environment.apiUrl}/media/${mediaId}/link`, linkData, { withCredentials: true });
+    }
+
+    unlinkMedia(linkId: string): Observable<any> {
+        return this.http.delete<any>(`${environment.apiUrl}/media/link/${linkId}`, { withCredentials: true });
+    }
+
+    adoptOrphanMedia(treeId: string, filePath: string, title?: string, mediaType?: string): Observable<any> {
+        return this.http.post<any>(`${environment.apiUrl}/media/adopt-orphan`, {
+            treeId,
+            filePath,
+            title,
+            mediaType
+        }, { withCredentials: true });
+    }
+
+    deleteOrphanFile(filePath: string): Observable<any> {
+        return this.http.request<any>('delete', `${environment.apiUrl}/media/orphan-file`, {
+            body: { filePath },
+            withCredentials: true
+        });
     }
 
     getStatistics(treeName: string): Observable<any> {

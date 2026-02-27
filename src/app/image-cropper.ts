@@ -23,6 +23,7 @@ import { CommonModule } from '@angular/common';
           <div class="actions">
             <button class="btn secondary" (click)="setAspect('free')">Frei</button>
             <button class="btn secondary" (click)="setAspect(1)">1:1</button>
+            <button class="btn secondary" (click)="useFullImage()">Ganzes Bild</button>
           </div>
         </div>
 
@@ -195,6 +196,15 @@ export class ImageCropper implements AfterViewInit {
     if (a !== 'free') {
       this.rect.h = this.rect.w / a;
     }
+    this.draw();
+  }
+
+  useFullImage() {
+    const canvas = this.canvasRef?.nativeElement;
+    if (!canvas) return;
+    const w = canvas.width / (window.devicePixelRatio || 1);
+    const h = canvas.height / (window.devicePixelRatio || 1);
+    this.rect = { x: 0, y: 0, w, h };
     this.draw();
   }
 
