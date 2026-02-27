@@ -349,7 +349,7 @@
 .simple-family-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 32px;
+    gap: 10px;
 }
 
 .section-label {
@@ -478,11 +478,12 @@
 .simple-accordion-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .accordion-item {
     background: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 20px;
     overflow: hidden;
@@ -490,7 +491,7 @@
 }
 
 .accordion-header {
-    padding: 20px 24px;
+    padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -527,6 +528,22 @@
 .accordion-item.open .accordion-content {
     display: block;
     animation: slideDown 0.3s ease-out;
+}
+
+.icon-emoji {
+    /* Entferne die starre Schriftarten-Liste und nutze die modernen System-Defaults */
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    margin-right: 8px;
+    display: inline-block;
+    vertical-align: middle;
+
+    /* Sicherstellen, dass keine Farbüberschreibungen das Emoji "ausgrauen" */
+    color: initial;
+
+    /* Falls die Emojis zu klein wirken, kannst du sie hier skalieren */
+    font-size: 1.2rem;
 }
 
 /* Gallery inside Accordion */
@@ -733,13 +750,19 @@ input:checked+.slider:before {
     margin: 0 auto;
 }
 
+.simple-mode-content,
+.expert-mode-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .panel {
     background: rgba(30, 41, 59, 0.4);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 20px;
     padding: 32px;
-    margin-bottom: 32px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
@@ -1323,4 +1346,417 @@ select.form-control option {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* New Styles for Relation Management */
+.card-actions-overlay {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.family-card:hover .card-actions-overlay {
+    opacity: 1;
+}
+
+.btn-action-sm {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+
+.btn-action-sm.remove {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.btn-action-sm.remove:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-action-sm.add {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.btn-action-sm.add:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+/* Ensure Accordion looks and feels premium */
+.simple-accordion-container .accordion-item {
+    background: rgba(39, 58, 88, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 0px;
+    box-shadow: 0 5px 10px rgba(157, 162, 192, 0.2);
+}
+
+.simple-accordion-container .accordion-header {
+    padding: 12px 24px;
+    /* Unified with general style */
+}
+
+.simple-accordion-container .accordion-content {
+    padding: 8px 32px 32px 32px;
+}
+
+.simple-accordion-container .header-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+    .content-body {
+        padding: 16px;
+    }
+
+    .container-inner {
+        max-width: 100%;
+    }
+
+    .simple-profile-layout {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .simple-photo-upload {
+        width: 140px;
+        height: 140px;
+    }
+
+    .gender-selector-large {
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .gender-btn {
+        padding: 8px;
+        border-radius: 12px;
+        min-width: 50px;
+    }
+
+    .gender-btn span {
+        display: none;
+        /* Hide text on mobile */
+    }
+
+    .gender-btn {
+        font-size: 1.2rem;
+    }
+
+    .form-control,
+    .large-input {
+        padding: 8px 12px !important;
+        font-size: 1rem !important;
+        border-radius: 10px;
+    }
+
+    .header-info h1 {
+        font-size: 1.6rem;
+    }
+
+    .header-glass {
+        padding: 16px 20px 0 20px;
+    }
+
+    .nav-tabs li {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+    }
+
+    .panel {
+        padding: 20px;
+        border-radius: 16px;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .simple-family-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .simple-accordion-container .accordion-header {
+        padding: 16px 20px;
+    }
+
+    .simple-accordion-container .accordion-content {
+        padding: 4px 20px 20px 20px;
+    }
+}
+
+/* Mobile Header Optimizations */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .header-info {
+        text-align: left;
+        width: 100%;
+    }
+
+    .header-actions {
+        margin-left: 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+        /* Ensure it is visible */
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .mode-toggle {
+        justify-content: center;
+        width: 100%;
+        padding: 8px;
+    }
+
+    .header-actions .btn-primary {
+        width: 100%;
+        padding: 12px;
+        font-size: 1rem;
+        display: flex;
+        justify-content: center;
+        order: 2;
+        /* Save button at the very bottom */
+    }
+
+    .header-actions .mode-toggle {
+        order: 1;
+        /* Toggle between name and save button */
+    }
+}
+
+/* Mobile: Always show action buttons since there is no hover */
+@media (max-width: 768px) {
+    .card-actions-overlay {
+        opacity: 1 !important;
+        transform: translateY(-50%) !important;
+        pointer-events: auto !important;
+        background: rgba(15, 23, 42, 0.4);
+        padding: 4px;
+        border-radius: 8px;
+    }
+
+    .family-card:hover .card-actions-overlay {
+        transform: translateY(-50%) !important;
+    }
+}
+
+/* Relation Modal Styles */
+.relation-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.relation-modal {
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #f1f5f9;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.search-section {
+    margin-bottom: 24px;
+}
+
+.search-section label {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+}
+
+.divider-text {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin: 24px 0;
+}
+
+.divider-text::before,
+.divider-text::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.divider-text span {
+    padding: 0 12px;
+}
+
+.creation-section label {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+}
+
+.gender-toggle-small {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-gender {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 8px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-gender.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #60a5fa;
+}
+
+.modal-footer {
+    padding: 20px 24px;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.search-input-wrapper {
+    position: relative;
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    margin-top: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10;
+}
+
+.result-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    color: #f1f5f9;
+}
+
+.result-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* GENERIC TIMELINE IMPROVEMENTS (Simple Mode) */
+.generic-event {
+    margin-top: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    padding: 20px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.header-with-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.btn-icon-xs {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 1.2rem;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.btn-icon-xs:hover {
+    opacity: 1;
+}
+
+.sm-input {
+    font-size: 0.85rem !important;
+    padding: 8px 12px !important;
+}
+
+.mt-1 {
+    margin-top: 8px;
 }

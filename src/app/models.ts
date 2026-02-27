@@ -1,12 +1,14 @@
 export interface Name {
     id?: string;
     type?: string; // BIRTH, MARRIED, AKA, etc.
+    full?: string;
     given?: string;
     surname?: string;
     prefix?: string;
     suffix?: string;
     nickname?: string;
     isPrimary: boolean;
+    sortOrder?: number;
 }
 
 export interface Citation {
@@ -55,6 +57,39 @@ export interface Individual {
     notes: string[];
     extensions: { key: string; value: string }[];
     updatedAt?: string;
+    isLiving?: boolean;
+    privacyLevel?: 'PUBLIC' | 'FAMILY' | 'PRIVATE';
+    exid?: string;
+    associations?: {
+        role?: string;
+        associatedPersonId?: string;
+        associatedPersonName?: string;
+        relationText?: string;
+        dateText?: string;
+        confidence?: string;
+        notes?: string;
+    }[];
+    dnaMatches?: {
+        provider?: string;
+        matchPersonId?: string;
+        totalCm?: number;
+        largestSegmentCm?: number;
+        segmentCount?: number;
+        predictedRelationship?: string;
+        confidence?: string;
+        testDate?: string;
+        kitId?: string;
+        segments?: {
+            chromosome: string;
+            startPosition: number;
+            endPosition: number;
+            cm: number;
+            snpCount?: number;
+            provider?: string;
+            build?: string;
+            isTriangulated?: boolean;
+        }[];
+    }[];
 
     // Legacy/Derived fields for easier access in tree
     firstName?: string;
@@ -71,6 +106,7 @@ export interface Individual {
     motherId?: string;
     motherName?: string;
     familiesAsSpouse?: {
+        familyId?: string; // Correctly added for deletion/reference
         spouseId?: string;
         spouseName?: string;
         children: { id: string; name: string }[];

@@ -52,3 +52,14 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+server.log
+
+# Backup-Dateien
+*.OLD
+*.backup
+
+# Prisma migrations shadow files (optional)
+prisma/migrations/dev.db*
