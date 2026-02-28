@@ -1760,3 +1760,100 @@ select.form-control option {
 .mt-1 {
     margin-top: 8px;
 }
+/* Family Edit Mode & Link Styling */
+.name.link {
+    color: #60a5fa;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.family-card.clickable:hover .name.link {
+    text-decoration: underline;
+    color: #93c5fd;
+}
+
+.header-actions-inline {
+    margin-left: auto;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.btn-icon-sm {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-icon-sm:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+}
+
+.btn-icon-sm.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+.name-edit-group {
+    position: relative;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.autocomplete-dropdown.small {
+    font-size: 0.85rem;
+    max-height: 150px;
+}
+
+.sm-input {
+    padding: 6px 10px !important;
+    font-size: 0.9rem !important;
+}
+
+.family-card.clickable {
+    cursor: pointer;
+}
+
+.partner-add-group {
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+}
+
+.wedding-info {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.wedding-text {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.wedding-text::before {
+    content: '💍';
+}
+
+.wedding-edit-row {
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    margin-top: -4px;
+    padding-bottom: 8px;
+    border: 1px solid var(--border-color);
+    border-top: none;
+}

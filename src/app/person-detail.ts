@@ -10,12 +10,14 @@ import { MediaSelector } from './media-selector';
 import { PlaceModal } from './place-modal';
 import { ImageViewer } from './image-viewer';
 import { PersonCreateModal } from './person-create-modal';
+import { MediaAddModal } from './media-add-modal';
 import { CanComponentDeactivate } from './unsaved-changes.guard';
 import { firstValueFrom } from 'rxjs';
 
 interface TimelineItem {
-    originalType: 'event' | 'fact';
+    originalType: 'event' | 'fact' | 'family-event';
     originalIndex: number;
+    familyId?: string;
     tag: string;
     date?: string;
     place?: string;
@@ -32,7 +34,7 @@ interface TimelineItem {
 @Component({
     selector: 'app-person-detail',
     standalone: true,
-    imports: [CommonModule, FormsModule, CleanDatePipe, MediaSelector, PlaceModal, ImageViewer, PersonCreateModal],
+    imports: [CommonModule, FormsModule, CleanDatePipe, MediaSelector, PlaceModal, ImageViewer, PersonCreateModal, MediaAddModal],
     templateUrl: './person-detail.html',
     styleUrl: './person-detail.css'
 })
@@ -87,9 +89,18 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     timeline = signal<TimelineItem[]>([]);
 
     // Beziehungen
-    relations = signal<{ type: string; personId: string; personName?: string }[]>([]);
+    relations = signal<{ type: string; personId: string; personName?: string; familyId?: string }[]>([]);
+
+    // Media Modal State
+    showMediaAddModal = signal(false);
+    activeTimelineIndexForMediaAdd: number | null = null;
 
     showMediaSelector = false;
+    isEditingFamily = signal(false);
+
+    // Individual Search results for families
+    familySearchResults = signal<Individual[]>([]);
+    showFamilyResults = signal<string | null>(null); // 'father', 'mother', 'partner', 'child-fIdx-cIdx'
 
     // Viewer
     viewerUrl = signal<string | null>(null);
@@ -150,6 +161,77 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         if (!person.media || person.media.length === 0) return null;
         const primary = person.media.find(m => m.isPrimary) || person.media[0];
         return primary?.url ? this.gedcomService.getMediaUrl(primary.url) : null;
+    }
+
+    getFamilyWedding(familyId: string | undefined): string {
+        if (!familyId) return '';
+        const fam = this.treeData()?.families.find(f => f.id === familyId);
+        if (!fam || !fam.events) return '';
+        const marr = fam.events.find(e => e.type === 'MARR');
+        if (!marr) return '';
+        const date = marr.date || (marr as any).dateText || '';
+        const place = marr.place || (marr as any).placeName || '';
+        return date + (place ? ` in ${place}` : '');
+    }
+
+    getFamilyWeddingDate(familyId: string | undefined): string {
+        if (!familyId) return '';
+        const fam = this.treeData()?.families.find(f => f.id === familyId);
+        const marr = fam?.events?.find(e => e.type === 'MARR');
+        return marr?.date || (marr as any)?.dateText || '';
+    }
+
+    getFamilyWeddingPlace(familyId: string | undefined): string {
+        if (!familyId) return '';
+        const fam = this.treeData()?.families.find(f => f.id === familyId);
+        const marr = fam?.events?.find(e => e.type === 'MARR');
+        return marr?.place || (marr as any)?.placeName || '';
+    }
+
+    updateFamilyWedding(fIdx: number, field: 'date' | 'place', val: string) {
+        const p = this.person();
+        if (!p || !p.familiesAsSpouse || !p.familiesAsSpouse[fIdx]) return;
+        const familyId = p.familiesAsSpouse[fIdx].familyId;
+        const tree = this.treeData();
+        if (!tree || !familyId) return;
+
+        const fam = tree.families.find(f => f.id === familyId);
+        if (!fam) return;
+
+        if (!fam.events) fam.events = [];
+        let marr = fam.events.find(e => e.type === 'MARR');
+        if (!marr) {
+            marr = { type: 'MARR', isPrimary: true };
+            fam.events.push(marr);
+        }
+
+        if (field === 'date') marr.date = val;
+        else marr.place = val;
+
+        this.markDirty();
+        this.buildTimeline();
+    }
+
+    updateFamilyWeddingByFamilyId(familyId: string | undefined, field: 'date' | 'place', val: string) {
+        if (!familyId) return;
+        const tree = this.treeData();
+        if (!tree) return;
+
+        const fam = tree.families.find(f => f.id === familyId);
+        if (!fam) return;
+
+        if (!fam.events) fam.events = [];
+        let marr = fam.events.find(e => e.type === 'MARR');
+        if (!marr) {
+            marr = { type: 'MARR', isPrimary: true };
+            fam.events.push(marr);
+        }
+
+        if (field === 'date') marr.date = val;
+        else marr.place = val;
+
+        this.markDirty();
+        this.buildTimeline();
     }
 
     markDirty() {
@@ -312,6 +394,29 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                 });
             });
         }
+        // Familien-Events (Heirat, etc.) hinzufügen
+        if (p.familiesAsSpouse) {
+            p.familiesAsSpouse.forEach((famLink) => {
+                const fullFam = this.treeData()?.families.find(f => f.id === famLink.familyId);
+                if (fullFam && fullFam.events) {
+                    fullFam.events.forEach((ef, idx) => {
+                        merged.push({
+                            originalType: 'family-event',
+                            originalIndex: idx,
+                            familyId: famLink.familyId,
+                            tag: ef.type,
+                            date: ef.date || (ef as any).dateText,
+                            place: ef.place || (ef as any).placeName,
+                            description: ef.description || (ef.type === 'MARR' ? `Heirat mit ${famLink.spouseName}` : ''),
+                            media: (ef as any).media || [],
+                            notes: (ef as any).notes || [],
+                            citations: (ef as any).citations || [],
+                            editing: false
+                        });
+                    });
+                }
+            });
+        }
 
         // Sort timeline by date
         merged.sort((a, b) => {
@@ -362,7 +467,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         const data = this.treeData();
         if (!p || !data) return;
 
-        const rels: { type: string; personId: string; personName?: string }[] = [];
+        const rels: { type: string; personId: string; personName?: string; familyId?: string }[] = [];
         const relSeen = new Set<string>();
 
         data.families.forEach(fam => {
@@ -388,14 +493,14 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                     const key = `SPOUSE:${partner}`;
                     if (!relSeen.has(key)) {
                         relSeen.add(key);
-                        rels.push({ type: 'SPOUSE', personId: partner });
+                        rels.push({ type: 'SPOUSE', personId: partner, familyId: fam.id });
                     }
                 }
                 fam.children.forEach(child => {
                     const key = `CHILD:${child}`;
                     if (!relSeen.has(key)) {
                         relSeen.add(key);
-                        rels.push({ type: 'CHILD', personId: child });
+                        rels.push({ type: 'CHILD', personId: child, familyId: fam.id });
                     }
                 });
             }
@@ -450,15 +555,13 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                     });
                 }
             });
-
             this.person.set(updatedPerson);
         }
     }
 
-    goToPerson(id: string | undefined) {
-        if (id) {
-            this.router.navigate(['/person', id]);
-        }
+    goToPerson(id?: string) {
+        if (!id || this.isEditingFamily()) return;
+        this.router.navigate(['/person', id]);
     }
 
 
@@ -473,55 +576,58 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         this.showRelationModal.set(true);
     }
 
-    closeRelationModal() {
-        this.showRelationModal.set(false);
+    toggleFamilyEdit() {
+        this.isEditingFamily.update(v => !v);
     }
 
-    saveNewRelation() {
-        // Redundant as logic moved to component, but we keep the method name if linked in HTML
-        // Actually we will link the component output directly to linkPersonToRelation
-    }
-
-    onPersonCreated(event: any) {
-        if (event && event.person) {
-            const id = event.person.gedcomId || event.person.id;
-            let name = event.person.name;
-            if (!name) {
-                const first = event.person.firstName || '';
-                const last = event.person.lastName || '';
-                name = `${first} ${last}`.trim() || 'Unbekannt';
-            }
-            this.linkPersonToRelation(id, name);
-        } else if (event && event.mode === 'existing') {
-            const first = event.person.firstName || '';
-            const last = event.person.lastName || '';
-            const name = `${first} ${last}`.trim() || 'Unbekannt';
-            this.linkPersonToRelation(event.person.id, name);
+    searchFamilyIndividual(type: string, query: string) {
+        if (!query || query.length < 2) {
+            this.familySearchResults.set([]);
+            this.showFamilyResults.set(null);
+            return;
         }
+
+        const data = this.treeData();
+        if (!data) return;
+
+        const results = data.individuals.filter(ind => {
+            if (ind.id === this.personId) return false;
+            const fullName = `${ind.firstName || ''} ${ind.lastName || ''}`.toLowerCase();
+            return fullName.includes(query.toLowerCase()) || ind.id.toLowerCase().includes(query.toLowerCase());
+        }).slice(0, 10);
+
+        this.familySearchResults.set(results);
+        this.showFamilyResults.set(type);
     }
 
-    linkPersonToRelation(id: string, name: string) {
-        const type = this.relationModalType;
+    selectFamilyIndividual(type: string, ind: Individual, fIdx?: number) {
         const p = this.person();
         if (!p) return;
 
         if (type === 'father') {
-            p.fatherId = id;
-            p.fatherName = name;
+            p.fatherId = ind.id;
+            p.fatherName = `${ind.firstName || ''} ${ind.lastName || ''}`.trim();
         } else if (type === 'mother') {
-            p.motherId = id;
-            p.motherName = name;
+            p.motherId = ind.id;
+            p.motherName = `${ind.firstName || ''} ${ind.lastName || ''}`.trim();
         } else if (type === 'partner') {
             p.familiesAsSpouse = p.familiesAsSpouse || [];
-            p.familiesAsSpouse.push({ spouseId: id, spouseName: name, children: [] });
-        } else if (type === 'child' && this.relationModalFamilyIndex !== null) {
-            const fam = p.familiesAsSpouse![this.relationModalFamilyIndex];
-            fam.children.push({ id, name });
+            p.familiesAsSpouse.push({
+                spouseId: ind.id,
+                spouseName: `${ind.firstName || ''} ${ind.lastName || ''}`.trim(),
+                children: []
+            });
+        } else if (type === 'child' && fIdx !== undefined) {
+            p.familiesAsSpouse![fIdx].children = p.familiesAsSpouse![fIdx].children || [];
+            p.familiesAsSpouse![fIdx].children!.push({
+                id: ind.id,
+                name: `${ind.firstName || ''} ${ind.lastName || ''}`.trim()
+            });
         }
 
         this.person.set({ ...p });
+        this.showFamilyResults.set(null);
         this.markDirty();
-        this.showRelationModal.set(false);
     }
 
     removeParent(type: 'father' | 'mother') {
@@ -581,69 +687,64 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         this.viewerTitle.set(media.title || 'Bild');
     }
 
-    onMediaUpload(event: any) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const tree = this.authService.currentTree();
-        if (!tree) return;
-
-        this.gedcomService.uploadMedia(tree.id, file).subscribe({
-            next: (res: any) => {
-                if (res.success && res.media) {
-                    const p = this.person();
-                    if (p) {
-                        p.media = p.media || [];
-                        p.media.push({
-                            id: res.media.id,
-                            url: res.media.remoteUrl || (res.media.filePath ? `/uploads/${res.media.filePath}` : ''),
-                            title: res.media.title || res.media.filePath || '',
-                            isPrimary: p.media.length === 0,
-                            mimeType: res.media.mimeType
-                        });
-                        this.person.set({ ...p });
-                    }
-                }
-            },
-            error: (err) => {
-                console.error('Upload failed', err);
-                alert('Fehler beim Upload!');
-            }
-        });
-
-        // Reset input so the same file could be selected again if needed
-        event.target.value = '';
+    // --- Media Add Modal Integration ---
+    openMediaAddModal(index?: number) {
+        this.activeTimelineIndexForMediaAdd = index !== undefined ? index : null;
+        this.showMediaAddModal.set(true);
     }
 
-    onEventMediaUpload(event: any, itemIndex: number) {
-        const file = event.target.files[0];
-        if (!file) return;
+    onMediaAddUploaded(media: any) {
+        if (!media) return;
 
-        const tree = this.authService.currentTree();
-        if (!tree) return;
-
-        this.gedcomService.uploadMedia(tree.id, file).subscribe({
-            next: (res: any) => {
-                if (res.success && res.media) {
-                    const current = this.timeline();
-                    current[itemIndex].media = current[itemIndex].media || [];
-                    current[itemIndex].media!.push({
-                        id: res.media.id,
-                        url: res.media.remoteUrl || (res.media.filePath ? `/uploads/${res.media.filePath}` : ''),
-                        title: res.media.title || res.media.filePath || '',
-                        isPrimary: false,
-                        mimeType: res.media.mimeType
-                    });
-                    this.timeline.set([...current]);
-                }
+        if (this.activeTimelineIndexForMediaAdd !== null) {
+            // Event media
+            const current = this.timeline();
+            const idx = this.activeTimelineIndexForMediaAdd;
+            current[idx].media = current[idx].media || [];
+            current[idx].media!.push({
+                id: media.id,
+                url: media.remoteUrl || (media.filePath ? `/uploads/${media.filePath}` : media.url),
+                title: media.title || media.filePath || '',
+                isPrimary: false,
+                mimeType: media.mimeType
+            });
+            this.timeline.set([...current]);
+        } else {
+            // Person media
+            const p = this.person();
+            if (p) {
+                p.media = p.media || [];
+                p.media.push({
+                    id: media.id,
+                    url: media.remoteUrl || (media.filePath ? `/uploads/${media.filePath}` : media.url),
+                    title: media.title || media.filePath || '',
+                    isPrimary: p.media.length === 0,
+                    mimeType: media.mimeType
+                });
+                this.person.set({ ...p });
             }
-        });
-        event.target.value = '';
+        }
+        this.markDirty();
+        this.showMediaAddModal.set(false);
     }
 
     openMediaSelector(itemIndex?: number) {
         this.activeTimelineIndexForMedia = itemIndex !== undefined ? itemIndex : null;
         this.showMediaSelector = true;
+    }
+
+    getRelationLabel(type: string): string {
+        const map: any = {
+            'SPOUSE': 'Partner/in',
+            'FATHER': 'Vater',
+            'MOTHER': 'Mutter',
+            'CHILD': 'Kind',
+            'SON': 'Sohn',
+            'DAUGHTER': 'Tochter',
+            'HUSBAND': 'Ehemann',
+            'WIFE': 'Ehefrau'
+        };
+        return map[type] || type;
     }
 
     onMediaSelected(mediaObj: any) {
@@ -656,11 +757,11 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             current[idx].media = current[idx].media || [];
             current[idx].media!.push({
                 id: mediaObj.id,
-                    url: mediaObj.remoteUrl || (mediaObj.filePath ? `/uploads/${mediaObj.filePath}` : mediaObj.url),
-                    title: mediaObj.title || mediaObj.filePath || '',
-                    isPrimary: false,
-                    mimeType: mediaObj.mimeType
-                });
+                url: mediaObj.remoteUrl || (mediaObj.filePath ? `/uploads/${mediaObj.filePath}` : mediaObj.url),
+                title: mediaObj.title || mediaObj.filePath || '',
+                isPrimary: false,
+                mimeType: mediaObj.mimeType
+            });
             this.timeline.set([...current]);
         } else {
             // Person media
@@ -873,13 +974,6 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     removeEventCitation(itemIndex: number, citIndex: number) {
         const current = this.timeline();
         current[itemIndex].citations!.splice(citIndex, 1);
-        this.timeline.set([...current]);
-    }
-
-    addEventMedia(index: number) {
-        const current = this.timeline();
-        if (!current[index].media) current[index].media = [];
-        current[index].media!.push({ url: '', title: '', isPrimary: false });
         this.timeline.set([...current]);
     }
 

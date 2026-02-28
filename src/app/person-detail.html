@@ -56,7 +56,7 @@
                 <div class="card panel simple-header-panel">
                     <div class="simple-profile-layout">
                         <!-- Photo / Upload -->
-                        <div class="simple-photo-upload" (click)="mediaUploadInput.click()">
+                        <div class="simple-photo-upload" (click)="openMediaAddModal()">
                             <img *ngIf="getProfileImage(p)" [src]="getProfileImage(p)" class="main-profile-img">
                             <div *ngIf="!getProfileImage(p)" class="photo-placeholder">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
@@ -116,565 +116,656 @@
                         <div class="accordion-content">
                             <!-- 2. LEBENSLAUF / CHRONOLOGIE (Accordion Item) -->
                             <div class="accordion-content">
-                                <div class="simple-family-grid"></div>
-                                    <div class="event-icon">👶</div>
-                                    <div class="event-fields">
-                                        <label>Geburt</label>
-                                        <div class="form-row">
-                                            <div class="form-group flex-2">
-                                                <input type="text" [ngModel]="getSimpleEvent('BIRT')?.date"
-                                                    (ngModelChange)="updateSimpleEvent('BIRT', 'date', $event)"
-                                                    placeholder="Datum (z.B. 12.05.1920)" class="form-control">
-                                            </div>
-                                            <div class="form-group flex-3">
-                                                <input type="text" [ngModel]="getSimpleEvent('BIRT')?.place"
-                                                    (ngModelChange)="updateSimpleEvent('BIRT', 'place', $event)"
-                                                    placeholder="Ort" class="form-control">
-                                            </div>
+                                <div class="event-icon">👶</div>
+                                <div class="event-fields">
+                                    <label>Geburt</label>
+                                    <div class="form-row">
+                                        <div class="form-group flex-2">
+                                            <input type="text" [ngModel]="getSimpleEvent('BIRT')?.date"
+                                                (ngModelChange)="updateSimpleEvent('BIRT', 'date', $event)"
+                                                placeholder="Datum (z.B. 12.05.1920)" class="form-control">
+                                        </div>
+                                        <div class="form-group flex-3">
+                                            <input type="text" [ngModel]="getSimpleEvent('BIRT')?.place"
+                                                (ngModelChange)="updateSimpleEvent('BIRT', 'place', $event)"
+                                                placeholder="Ort" class="form-control">
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div class="simple-divider"></div>
+                            <div class="simple-divider"></div>
 
-                                <div class="simple-event-row">
-                                    <div class="event-icon">⚰️</div>
+                            <div class="simple-event-row">
+                                <div class="event-icon">⚰️</div>
+                                <div class="event-fields">
+                                    <label>Tod</label>
+                                    <div class="form-row">
+                                        <div class="form-group flex-2">
+                                            <input type="text" [ngModel]="getSimpleEvent('DEAT')?.date"
+                                                (ngModelChange)="updateSimpleEvent('DEAT', 'date', $event)"
+                                                placeholder="Datum" class="form-control">
+                                        </div>
+                                        <div class="form-group flex-3">
+                                            <input type="text" [ngModel]="getSimpleEvent('DEAT')?.place"
+                                                (ngModelChange)="updateSimpleEvent('DEAT', 'place', $event)"
+                                                placeholder="Ort" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="simple-divider" *ngIf="timeline().length > 2"></div>
+
+                            <!-- Generic Timeline Items (Simple Mode) -->
+                            <div *ngFor="let item of timeline(); let i = index">
+                                <div *ngIf="item.tag !== 'BIRT' && item.tag !== 'DEAT'"
+                                    class="simple-event-row generic-event">
+                                    <div class="event-icon">{{ item.tag === 'OCCU' ? '💼' : '📍' }}</div>
                                     <div class="event-fields">
-                                        <label>Tod</label>
+                                        <div class="header-with-action">
+                                            <label>{{ getTagLabel(item.tag) }}</label>
+                                            <button class="btn-icon-xs" (click)="removeTimelineItem(i)">&times;</button>
+                                        </div>
                                         <div class="form-row">
                                             <div class="form-group flex-2">
-                                                <input type="text" [ngModel]="getSimpleEvent('DEAT')?.date"
-                                                    (ngModelChange)="updateSimpleEvent('DEAT', 'date', $event)"
+                                                <input type="text" [(ngModel)]="item.date" (input)="markDirty()"
                                                     placeholder="Datum" class="form-control">
                                             </div>
                                             <div class="form-group flex-3">
-                                                <input type="text" [ngModel]="getSimpleEvent('DEAT')?.place"
-                                                    (ngModelChange)="updateSimpleEvent('DEAT', 'place', $event)"
+                                                <input type="text" [(ngModel)]="item.place" (input)="markDirty()"
                                                     placeholder="Ort" class="form-control">
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div class="simple-divider" *ngIf="timeline().length > 2"></div>
-
-                                <!-- Generic Timeline Items (Simple Mode) -->
-                                <div *ngFor="let item of timeline(); let i = index">
-                                    <div *ngIf="item.tag !== 'BIRT' && item.tag !== 'DEAT'"
-                                        class="simple-event-row generic-event">
-                                        <div class="event-icon">{{ item.tag === 'OCCU' ? '💼' : '📍' }}</div>
-                                        <div class="event-fields">
-                                            <div class="header-with-action">
-                                                <label>{{ getTagLabel(item.tag) }}</label>
-                                                <button class="btn-icon-xs"
-                                                    (click)="removeTimelineItem(i)">&times;</button>
-                                            </div>
-                                            <div class="form-row">
-                                                <div class="form-group flex-2">
-                                                    <input type="text" [(ngModel)]="item.date" (input)="markDirty()"
-                                                        placeholder="Datum" class="form-control">
-                                                </div>
-                                                <div class="form-group flex-3">
-                                                    <input type="text" [(ngModel)]="item.place" (input)="markDirty()"
-                                                        placeholder="Ort" class="form-control">
-                                                </div>
-                                            </div>
-                                            <div class="form-row mt-1" *ngIf="item.tag === 'OCCU' || item.value">
-                                                <div class="form-group full-width">
-                                                    <input type="text" [(ngModel)]="item.value" (input)="markDirty()"
-                                                        placeholder="Beschreibung / Wert" class="form-control sm-input">
-                                                </div>
+                                        <div class="form-row mt-1" *ngIf="item.tag === 'OCCU' || item.value">
+                                            <div class="form-group full-width">
+                                                <input type="text" [(ngModel)]="item.value" (input)="markDirty()"
+                                                    placeholder="Beschreibung / Wert" class="form-control sm-input">
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="add-event-footer">
-                                    <button class="btn btn-secondary btn-sm" (click)="addTimelineItem()">+ Lebensstation
-                                        hinzufügen</button>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- 3. FAMILIE (Accordion Item) -->
-                        <div class="accordion-item" [class.open]="isSectionOpen('family')">
-                            <div class="accordion-header" (click)="toggleSection('family')">
-                                <span class="header-title"><span class="icon-emoji">👨‍👩‍👧‍👦</span> Familie</span>
-                                <span class="header-icon">▾</span>
-                            </div>
-                            <div class="accordion-content">
-                                <div class="simple-family-grid">
-                                    <!-- Parents -->
-                                    <div class="family-column">
-                                        <label class="section-label">Eltern</label>
-                                        <div class="family-card parent-card" (click)="goToPerson(p.fatherId)"
-                                            [class.empty]="!p.fatherId">
-                                            <div class="card-icon">👨</div>
-                                            <div class="card-info">
-                                                <span class="relation">Vater</span>
-                                                <span class="name">{{ p.fatherName || 'Unbekannt' }}</span>
-                                            </div>
-                                            <div class="card-actions-overlay">
-                                                <button *ngIf="p.fatherId" class="btn-action-sm remove"
-                                                    (click)="$event.stopPropagation(); removeParent('father')"
-                                                    title="Entfernen">×</button>
-                                                <button *ngIf="!p.fatherId" class="btn-action-sm add"
-                                                    (click)="$event.stopPropagation(); addRelationSimple('father')"
-                                                    title="Hinzufügen">+</button>
-                                            </div>
-                                        </div>
-                                        <div class="family-card parent-card" (click)="goToPerson(p.motherId)"
-                                            [class.empty]="!p.motherId">
-                                            <div class="card-icon">👩</div>
-                                            <div class="card-info">
-                                                <span class="relation">Mutter</span>
-                                                <span class="name">{{ p.motherName || 'Unbekannt' }}</span>
-                                            </div>
-                                            <div class="card-actions-overlay">
-                                                <button *ngIf="p.motherId" class="btn-action-sm remove"
-                                                    (click)="$event.stopPropagation(); removeParent('mother')"
-                                                    title="Entfernen">×</button>
-                                                <button *ngIf="!p.motherId" class="btn-action-sm add"
-                                                    (click)="$event.stopPropagation(); addRelationSimple('mother')"
-                                                    title="Hinzufügen">+</button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Partners & Children -->
-                                    <div class="family-column">
-                                        <label class="section-label">Partner & Kinder</label>
-
-                                        <!-- Partners -->
-                                        <div *ngFor="let fam of p.familiesAsSpouse; let fIdx = index"
-                                            class="family-group-box">
-                                            <div class="family-card partner-card" (click)="goToPerson(fam.spouseId)">
-                                                <div class="card-icon">💍</div>
-                                                <div class="card-info">
-                                                    <span class="relation">Partner/in</span>
-                                                    <span class="name">{{ fam.spouseName }}</span>
-                                                </div>
-                                                <div class="card-actions-overlay">
-                                                    <button class="btn-action-sm remove"
-                                                        (click)="$event.stopPropagation(); removeFamily(fIdx)"
-                                                        title="Familie entfernen">×</button>
-                                                </div>
-                                            </div>
-                                            <!-- Children for this partner -->
-                                            <div class="children-list">
-                                                <div *ngFor="let child of fam.children; let cIdx = index"
-                                                    class="family-card child-card" (click)="goToPerson(child.id)">
-                                                    <div class="card-icon">👶</div>
-                                                    <div class="card-info">
-                                                        <span class="name">{{ child.name }}</span>
-                                                    </div>
-                                                    <div class="card-actions-overlay">
-                                                        <button class="btn-action-sm remove"
-                                                            (click)="$event.stopPropagation(); removeChildFromFamily(fIdx, cIdx)"
-                                                            title="Kind entfernen">×</button>
-                                                    </div>
-                                                </div>
-                                                <button class="btn btn-text btn-sm"
-                                                    (click)="addRelationSimple('child', fIdx)">+
-                                                    Kind hinzufügen</button>
-                                            </div>
-                                        </div>
-
-                                        <button class="btn btn-secondary btn-sm full-width-btn"
-                                            (click)="addRelationSimple('partner')">+
-                                            Partner/in hinzufügen</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Notes -->
-                        <div class="accordion-item" [class.open]="isSectionOpen('notes')">
-                            <div class="accordion-header" (click)="toggleSection('notes')">
-                                <span class="header-title"><span class="icon-emoji">📝</span> Notizen</span>
-                                <span class="header-icon">▾</span>
-                            </div>
-                            <div class="accordion-content">
-                                <div *ngFor="let note of p.notes; let i = index" class="simple-note-box">
-                                    <textarea [(ngModel)]="note.text" class="form-control" (input)="markDirty()"
-                                        placeholder="Deine Notizen hier..."></textarea>
-                                    <button class="btn-remove-note" (click)="removePersonNote(i)">&times;</button>
-                                </div>
-                                <button class="btn btn-text" (click)="addPersonNote()">+ Notiz hinzufügen</button>
-                            </div>
-                        </div>
-
-                        <!-- Gallery -->
-                        <div class="accordion-item" [class.open]="isSectionOpen('gallery')">
-                            <div class="accordion-header" (click)="toggleSection('gallery')">
-                                <span class="header-title"><span class="icon-emoji">🖼️</span> Galerie &
-                                    Dokumente</span>
-                                <span class="header-icon">▾</span>
-                            </div>
-                            <div class="accordion-content">
-                                <div class="simple-gallery-grid">
-                                    <div *ngFor="let m of p.media" class="simple-media-card">
-                                        <img [src]="m.url"
-                                            (click)="viewerUrl.set(m.url); viewerTitle.set(m.title || 'Vorschau')">
-                                        <div class="media-actions">
-                                            <button (click)="removePersonMedia(m)">&times;</button>
-                                        </div>
-                                    </div>
-                                    <div class="add-media-card" (click)="showMediaSelector = true">
-                                        <span>+ Foto</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Sources / Citations -->
-                        <div class="accordion-item" [class.open]="isSectionOpen('sources')">
-                            <div class="accordion-header" (click)="toggleSection('sources')">
-                                <span class="header-title"><span class="icon-emoji">📚</span> Quellenbelege</span>
-                                <span class="header-icon">▾</span>
-                            </div>
-                            <div class="accordion-content">
-                                <div *ngFor="let cit of p.citations" class="simple-source-card">
-                                    <span class="source-title">{{ cit.sourceTitle }}</span>
-                                    <span class="source-meta">{{ cit.whereInSource }}</span>
-                                </div>
-                                <button class="btn btn-text"
-                                    (click)="activeTab = 'citations'; isExpertMode.set(true)">Im
-                                    Experten-Modus bearbeiten</button>
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div> <!-- End Simple Mode Content -->
-
-                <!-- EXPERT MODE (Legacy Tabs) -->
-                <div *ngIf="isExpertMode()" class="expert-mode-content">
-                    <div *ngIf="activeTab === 'basics'" class="tab-pane">
-                        <div class="card panel">
-                            <h2>Basisdaten</h2>
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label>Geschlecht</label>
-                                    <select [(ngModel)]="p.gender" class="form-control">
-                                        <option value="M">Männlich</option>
-                                        <option value="F">Weiblich</option>
-                                        <option value="X">Divers</option>
-                                        <option value="U">Unbekannt</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Lebend</label>
-                                    <select [(ngModel)]="p.isLiving" class="form-control">
-                                        <option [ngValue]="true">Ja</option>
-                                        <option [ngValue]="false">Nein</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Datenschutz</label>
-                                    <select [(ngModel)]="p.privacyLevel" class="form-control">
-                                        <option value="PUBLIC">Öffentlich</option>
-                                        <option value="FAMILY">Familie</option>
-                                        <option value="PRIVATE">Privat</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label>Externe ID (EXID)</label>
-                                    <input type="text" [(ngModel)]="p.exid" class="form-control">
-                                </div>
                             </div>
 
-                            <h3>Name</h3>
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label>Vorname</label>
-                                    <input type="text" [(ngModel)]="p.firstName" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label>Nachname</label>
-                                    <input type="text" [(ngModel)]="p.lastName" class="form-control">
-                                </div>
-                                <div class="form-group full-width">
-                                    <label>Voller Name (GEDCOM Format)</label>
-                                    <input type="text" [(ngModel)]="p.name" class="form-control">
-                                    <small>Z.B. John /Doe/</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- TIMELINE TAB (Merged Events + Facts) -->
-                    <div *ngIf="activeTab === 'timeline'" class="tab-pane">
-                        <div class="panel card timeline-panel">
-                            <div class="panel-header">
-                                <h2>Lebenslauf</h2>
-                                <button class="btn btn-secondary btn-sm" (click)="addTimelineItem()">+ Ereignis/Fakt
+                            <div class="add-event-footer">
+                                <button class="btn btn-secondary btn-sm" (click)="addTimelineItem()">+ Lebensstation
                                     hinzufügen</button>
                             </div>
-
-                            <div class="timeline-list">
-                                <div *ngFor="let item of timeline(); let i = index" class="timeline-item">
-                                    <div class="timeline-dot"></div>
-
-                                    <div class="timeline-content card-inner" [class.editing]="item.editing">
-                                        <!-- READ ONLY VIEW -->
-                                        <div *ngIf="!item.editing" class="timeline-read-only">
-                                            <div class="read-header">
-                                                <div class="read-type">{{ getTagLabel(item.tag) }}</div>
-                                                <div class="read-date">{{ item.date }}</div>
-                                                <button class="btn-icon btn-sm edit-trigger"
-                                                    (click)="editTimelineItem(i)" title="Ereignis bearbeiten">✎</button>
-                                                <button class="btn-icon text-danger delete-item"
-                                                    (click)="removeTimelineItem(i)">&times;</button>
-                                            </div>
-                                            <div class="read-place" *ngIf="item.place">📍 {{ item.place }}</div>
-                                            <div class="read-value" *ngIf="item.value || item.description">{{ item.value
-                                                ||
-                                                item.description }}</div>
-
-                                            <div class="read-media-previews" *ngIf="item.media?.length">
-                                                <div *ngFor="let med of item.media" class="mini-thumb"
-                                                    (click)="openViewer(med)">
-                                                    <img [src]="getMediaUrl(med.url)" [alt]="med.title">
+                        </div>
+                    </div>
+                    <!-- 3. FAMILIE (Accordion Item) -->
+                    <div class="accordion-item" [class.open]="isSectionOpen('family')">
+                        <div class="accordion-header" (click)="toggleSection('family')">
+                            <span class="header-title"><span class="icon-emoji">👨‍👩‍👧‍👦</span> Familie</span>
+                            <div class="header-actions-inline" (click)="$event.stopPropagation()">
+                                <button class="btn-icon-sm" [class.active]="isEditingFamily()"
+                                    (click)="toggleFamilyEdit()" title="Bearbeiten">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="header-icon">▾</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="simple-family-grid">
+                                <!-- Parents -->
+                                <div class="family-column">
+                                    <label class="section-label">Eltern</label>
+                                    <div class="family-card parent-card" (click)="goToPerson(p.fatherId)"
+                                        [class.empty]="!p.fatherId"
+                                        [class.clickable]="p.fatherId && !isEditingFamily()">
+                                        <div class="card-icon">👨</div>
+                                        <div class="card-info">
+                                            <span class="relation">Vater</span>
+                                            <div class="name-edit-group" *ngIf="isEditingFamily(); else fatherRead">
+                                                <input type="text" class="form-control sm-input"
+                                                    [ngModel]="p.fatherName"
+                                                    (ngModelChange)="searchFamilyIndividual('father', $event)"
+                                                    placeholder="Vater suchen...">
+                                                <div class="autocomplete-dropdown small"
+                                                    *ngIf="showFamilyResults() === 'father'">
+                                                    <div class="dropdown-item" *ngFor="let res of familySearchResults()"
+                                                        (click)="selectFamilyIndividual('father', res)">
+                                                        {{ res.firstName }} {{ res.lastName }} ({{ res.id }})
+                                                    </div>
                                                 </div>
                                             </div>
-
-                                            <div class="read-meta-badges">
-                                                <span *ngIf="item.media?.length" class="badge">🖼 {{ item.media?.length
-                                                    }}</span>
-                                                <span *ngIf="item.citations?.length" class="badge">📖 {{
-                                                    item.citations?.length
-                                                    }}</span>
-                                                <span *ngIf="item.notes?.length" class="badge">📝 {{ item.notes?.length
-                                                    }}</span>
-                                            </div>
+                                            <ng-template #fatherRead>
+                                                <span class="name" [class.link]="p.fatherId">{{ p.fatherName ||
+                                                    'Unbekannt' }}</span>
+                                            </ng-template>
                                         </div>
-
-                                        <!-- EDITING VIEW -->
-                                        <div *ngIf="item.editing" class="timeline-edit-form">
-                                            <div class="timeline-header-row">
-                                                <div class="type-selector">
-                                                    <select [(ngModel)]="item.tag" class="form-control tag-select">
-                                                        <!-- Events -->
-                                                        <optgroup label="Lebensereignisse">
-                                                            <option value="BIRT">Geburt</option>
-                                                            <option value="CHR">Taufe</option>
-                                                            <option value="DEAT">Tod</option>
-                                                            <option value="BURI">Begräbnis</option>
-                                                            <option value="CREM">Einäscherung</option>
-                                                            <option value="EMIG">Auswanderung</option>
-                                                            <option value="IMMI">Einwanderung</option>
-                                                        </optgroup>
-                                                        <!-- Facts -->
-                                                        <optgroup label="Eigenschaften & Fakten">
-                                                            <option value="OCCU">Beruf</option>
-                                                            <option value="RELI">Religion</option>
-                                                            <option value="EDUC">Bildung</option>
-                                                            <option value="RESI">Wohnsitz</option>
-                                                            <option value="TITL">Titel</option>
-                                                            <option value="NATI">Nationalität/Herkunft</option>
-                                                            <option value="DSCR">Körperl. Merkmale</option>
-                                                            <option value="FACT">Anderer Fakt</option>
-                                                        </optgroup>
-                                                    </select>
-                                                </div>
-                                                <button class="btn-icon text-danger delete-item"
-                                                    (click)="removeTimelineItem(i)">&times;</button>
-                                            </div>
-
-                                            <div class="timeline-data-grid">
-                                                <div class="form-group">
-                                                    <label>Datum / Zeitraum</label>
-                                                    <input type="text" [(ngModel)]="item.date"
-                                                        placeholder="z.B. 1980-04-11 oder ABT 1900"
-                                                        class="form-control">
-                                                </div>
-                                                <div class="form-group place-autocomplete-group">
-                                                    <label>Ort</label>
-                                                    <div class="input-with-action">
-                                                        <input type="text" [(ngModel)]="item.place"
-                                                            (input)="searchPlaces(i, item.place!)"
-                                                            (focus)="searchPlaces(i, item.place!)"
-                                                            placeholder="z.B. Lichtenfels" class="form-control">
-                                                        <button class="btn-secondary btn-sm" (click)="openPlaceModal(i)"
-                                                            title="Ort anlegen / bearbeiten">Neu</button>
+                                        <div class="card-actions-overlay" *ngIf="isEditingFamily()">
+                                            <button *ngIf="p.fatherId" class="btn-action-sm remove"
+                                                (click)="$event.stopPropagation(); removeParent('father')"
+                                                title="Entfernen">×</button>
+                                            <button *ngIf="!p.fatherId" class="btn-action-sm add"
+                                                (click)="$event.stopPropagation(); addRelationSimple('father')"
+                                                title="Neu anlegen">+</button>
+                                        </div>
+                                    </div>
+                                    <div class="family-card parent-card" (click)="goToPerson(p.motherId)"
+                                        [class.empty]="!p.motherId"
+                                        [class.clickable]="p.motherId && !isEditingFamily()">
+                                        <div class="card-icon">👩</div>
+                                        <div class="card-info">
+                                            <span class="relation">Mutter</span>
+                                            <div class="name-edit-group" *ngIf="isEditingFamily(); else motherRead">
+                                                <input type="text" class="form-control sm-input"
+                                                    [ngModel]="p.motherName"
+                                                    (ngModelChange)="searchFamilyIndividual('mother', $event)"
+                                                    placeholder="Mutter suchen...">
+                                                <div class="autocomplete-dropdown small"
+                                                    *ngIf="showFamilyResults() === 'mother'">
+                                                    <div class="dropdown-item" *ngFor="let res of familySearchResults()"
+                                                        (click)="selectFamilyIndividual('mother', res)">
+                                                        {{ res.firstName }} {{ res.lastName }} ({{ res.id }})
                                                     </div>
-
-                                                    <div class="autocomplete-dropdown"
-                                                        *ngIf="showPlaceResults() === i && placeSearchResults().length > 0">
-                                                        <div *ngFor="let res of placeSearchResults()"
-                                                            class="dropdown-item" (click)="selectPlace(i, res)">
-                                                            📍 {{ res }}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="form-group full-width">
-                                                    <label>Beschreibung / Wert</label>
-                                                    <input
-                                                        *ngIf="['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(item.tag)"
-                                                        type="text" [(ngModel)]="item.value"
-                                                        placeholder="z.B. Energieanlagenelektroniker"
-                                                        class="form-control">
-
-                                                    <input
-                                                        *ngIf="!['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(item.tag)"
-                                                        type="text" [(ngModel)]="item.description"
-                                                        placeholder="Zusätzliche Notiz" class="form-control">
                                                 </div>
                                             </div>
-                                            <!-- In future: expandable area for Media/Citations attached to this specific item -->
-                                            <div class="item-footer">
-                                                <button class="btn-text btn-sm" (click)="toggleExpand(i)">
-                                                    {{ item.expanded ? '▼ Weniger anzeigen' : '▶ Erweitert (Quellen,
-                                                    Medien,
-                                                    Notizen)...' }}
-                                                </button>
-                                            </div>
-
-                                            <div *ngIf="item.expanded" class="expanded-section mt-4"
-                                                style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1);">
-
-                                                <!-- Medien -->
-                                                <div class="mb-4" style="margin-bottom: 20px;">
-                                                    <div
-                                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                                        <h4 style="margin: 0; color: #e2e8f0; font-size: 1rem;">Medien
-                                                            zum
-                                                            Ereignis</h4>
-                                                        <div class="btn-group">
-                                                            <input type="file" #eventMediaInput
-                                                                (change)="onEventMediaUpload($event, i)"
-                                                                style="display: none;" accept="image/*,application/pdf">
-                                                            <button class="btn btn-secondary btn-sm"
-                                                                (click)="eventMediaInput.click()">+ Hochladen</button>
-                                                            <button class="btn btn-secondary btn-sm"
-                                                                (click)="openMediaSelector(i)">+ Aus Galerie
-                                                                wählen</button>
-                                                        </div>
-                                                    </div>
-                                                    <div *ngIf="item.media && item.media.length > 0"
-                                                        class="event-media-grid">
-                                                        <div *ngFor="let med of item.media; let mIndex = index"
-                                                            class="media-card">
-                                                            <div class="media-thumb" (click)="openViewer(med)">
-                                                                <img [src]="getMediaUrl(med.url)" [alt]="med.title">
-                                                            </div>
-                                                            <div class="media-info">
-                                                                <input type="text" [(ngModel)]="med.title"
-                                                                    placeholder="Titel / Beschreibung"
-                                                                    class="form-control form-control-sm">
-                                                                <button class="btn-icon text-danger"
-                                                                    (click)="removeEventMedia(i, mIndex)">&times;</button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Quellen / Citations -->
-                                                <div class="mb-4" style="margin-bottom: 20px;">
-                                                    <div
-                                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                                        <h4 style="margin: 0; color: #e2e8f0; font-size: 1rem;">Quellen
-                                                            (Citations)
-                                                        </h4>
-                                                        <button class="btn-secondary btn-sm"
-                                                            (click)="addEventCitation(i)">+
-                                                            Quelle</button>
-                                                    </div>
-                                                    <div *ngIf="item.citations && item.citations.length > 0"
-                                                        style="display: flex; flex-direction: column; gap: 10px;">
-                                                        <div *ngFor="let cit of item.citations; let cIndex = index"
-                                                            style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 16px; border: 1px solid rgba(255,255,255,0.05);">
-                                                            <div class="form-grid"
-                                                                style="grid-template-columns: 1fr 120px 40px; gap: 10px; margin-bottom: 10px;">
-                                                                <input type="text" [(ngModel)]="cit.source"
-                                                                    placeholder="Quelle (Kirchenbuch, Urkunde...)"
-                                                                    class="form-control form-control-sm">
-                                                                <select [(ngModel)]="cit.quality"
-                                                                    class="form-control form-control-sm">
-                                                                    <option value="0">Unzuverlässig</option>
-                                                                    <option value="1">Fragwürdig</option>
-                                                                    <option value="2" selected>Sekundär</option>
-                                                                    <option value="3">Primär / Sicher</option>
-                                                                </select>
-                                                                <button class="btn-icon text-danger"
-                                                                    (click)="removeEventCitation(i, cIndex)">&times;</button>
-                                                            </div>
-                                                            <div class="form-grid"
-                                                                style="grid-template-columns: 120px 1fr; gap: 10px;">
-                                                                <input type="text" [(ngModel)]="cit.page"
-                                                                    placeholder="Seite(n)"
-                                                                    class="form-control form-control-sm">
-                                                                <input type="text" [(ngModel)]="cit.text"
-                                                                    placeholder="Zitierter Text / Bemerkung zur Quelle"
-                                                                    class="form-control form-control-sm">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Notizen -->
-                                                <div>
-                                                    <div
-                                                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                                        <h4 style="margin: 0; color: #e2e8f0; font-size: 1rem;">Notizen
-                                                        </h4>
-                                                        <button class="btn-secondary btn-sm" (click)="addEventNote(i)">+
-                                                            Notiz</button>
-                                                    </div>
-                                                    <div *ngIf="item.notes && item.notes.length > 0"
-                                                        style="display: flex; flex-direction: column; gap: 10px;">
-                                                        <div *ngFor="let note of item.notes; let nIndex = index; trackBy: trackByIndex"
-                                                            style="display: flex; gap: 10px; align-items: flex-start;">
-                                                            <textarea [ngModel]="note"
-                                                                (ngModelChange)="updateEventNote(i, nIndex, $event)"
-                                                                placeholder="Zusätzliche Anmerkungen zum Ereignis..."
-                                                                class="form-control"
-                                                                style="min-height: 80px; resize: vertical;"></textarea>
-                                                            <button class="btn-icon text-danger"
-                                                                (click)="removeEventNote(i, nIndex)">&times;</button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                            </div>
-
-                                            <div class="edit-form-footer">
-                                                <button class="btn btn-primary btn-sm"
-                                                    (click)="saveTimelineItem(i)">Speichern</button>
-                                            </div>
+                                            <ng-template #motherRead>
+                                                <span class="name" [class.link]="p.motherId">{{ p.motherName ||
+                                                    'Unbekannt' }}</span>
+                                            </ng-template>
+                                        </div>
+                                        <div class="card-actions-overlay" *ngIf="isEditingFamily()">
+                                            <button *ngIf="p.motherId" class="btn-action-sm remove"
+                                                (click)="$event.stopPropagation(); removeParent('mother')"
+                                                title="Entfernen">×</button>
+                                            <button *ngIf="!p.motherId" class="btn-action-sm add"
+                                                (click)="$event.stopPropagation(); addRelationSimple('mother')"
+                                                title="Neu anlegen">+</button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div *ngIf="timeline().length === 0" class="empty-state">
-                                    Keine Einträge im Lebenslauf vorhanden.
+                                <!-- Partners & Children -->
+                                <div class="family-column">
+                                    <label class="section-label">Partner & Kinder</label>
+
+                                    <!-- Partners -->
+                                    <div *ngFor="let fam of p.familiesAsSpouse; let fIdx = index"
+                                        class="family-group-box">
+                                        <div class="family-card partner-card" (click)="goToPerson(fam.spouseId)"
+                                            [class.clickable]="fam.spouseId && !isEditingFamily()">
+                                            <div class="card-icon">💍</div>
+                                            <div class="card-info">
+                                                <span class="relation">Partner/in</span>
+                                                <span class="name" [class.link]="!isEditingFamily()">{{ fam.spouseName
+                                                    }}</span>
+                                                <div class="wedding-info"
+                                                    *ngIf="!isEditingFamily() && getFamilyWedding(fam.familyId)">
+                                                    <span class="wedding-text">{{ getFamilyWedding(fam.familyId)
+                                                        }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="card-actions-overlay" *ngIf="isEditingFamily()">
+                                                <button class="btn-action-sm remove"
+                                                    (click)="$event.stopPropagation(); removeFamily(fIdx)"
+                                                    title="Familie entfernen">×</button>
+                                            </div>
+                                        </div>
+
+                                        <div class="wedding-edit-row" *ngIf="isEditingFamily()">
+                                            <div class="form-row mt-1 px-2">
+                                                <div class="form-group flex-2">
+                                                    <input type="text" class="form-control sm-input"
+                                                        [ngModel]="getFamilyWeddingDate(fam.familyId)"
+                                                        (ngModelChange)="updateFamilyWedding(fIdx, 'date', $event)"
+                                                        placeholder="Hochzeitsdatum">
+                                                </div>
+                                                <div class="form-group flex-3">
+                                                    <input type="text" class="form-control sm-input"
+                                                        [ngModel]="getFamilyWeddingPlace(fam.familyId)"
+                                                        (ngModelChange)="updateFamilyWedding(fIdx, 'place', $event)"
+                                                        placeholder="Hochzeitsort">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Children for this partner -->
+                                        <div class="children-list">
+                                            <div *ngFor="let child of fam.children; let cIdx = index"
+                                                class="family-card child-card" (click)="goToPerson(child.id)"
+                                                [class.clickable]="child.id && !isEditingFamily()">
+                                                <div class="card-icon">👶</div>
+                                                <div class="card-info">
+                                                    <span class="name" [class.link]="!isEditingFamily()">{{ child.name
+                                                        }}</span>
+                                                </div>
+                                                <div class="card-actions-overlay" *ngIf="isEditingFamily()">
+                                                    <button class="btn-action-sm remove"
+                                                        (click)="$event.stopPropagation(); removeChildFromFamily(fIdx, cIdx)"
+                                                        title="Kind entfernen">×</button>
+                                                </div>
+                                            </div>
+                                            <div class="name-edit-group mt-1" *ngIf="isEditingFamily()">
+                                                <input type="text" class="form-control sm-input"
+                                                    (input)="searchFamilyIndividual('child-' + fIdx, $any($event.target).value)"
+                                                    placeholder="Kind verknüpfen...">
+                                                <div class="autocomplete-dropdown small"
+                                                    *ngIf="showFamilyResults() === 'child-' + fIdx">
+                                                    <div class="dropdown-item" *ngFor="let res of familySearchResults()"
+                                                        (click)="selectFamilyIndividual('child', res, fIdx)">
+                                                        {{ res.firstName }} {{ res.lastName }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-text btn-sm" *ngIf="isEditingFamily()"
+                                                (click)="addRelationSimple('child', fIdx)">+ Neu anlegen</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="partner-add-group" *ngIf="isEditingFamily()">
+                                        <div class="name-edit-group mb-1">
+                                            <input type="text" class="form-control"
+                                                (input)="searchFamilyIndividual('partner', $any($event.target).value)"
+                                                placeholder="Partner/in verknüpfen...">
+                                            <div class="autocomplete-dropdown"
+                                                *ngIf="showFamilyResults() === 'partner'">
+                                                <div class="dropdown-item" *ngFor="let res of familySearchResults()"
+                                                    (click)="selectFamilyIndividual('partner', res)">
+                                                    {{ res.firstName }} {{ res.lastName }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-secondary btn-sm full-width-btn"
+                                            (click)="addRelationSimple('partner')">+ Neue/n Partner/in anlegen</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- RELATIONS TAB -->
-                    <div *ngIf="activeTab === 'relations'" class="tab-pane">
-                        <div class="panel card">
-                            <div class="panel-header"
-                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <div>
-                                    <h2 style="margin: 0;">Familie & Beziehungen</h2>
-                                    <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 0.9rem;">Verwalte
-                                        Ehepartner,
-                                        Eltern
-                                        und Kinder.</p>
+                    <!-- Notes -->
+                    <div class="accordion-item" [class.open]="isSectionOpen('notes')">
+                        <div class="accordion-header" (click)="toggleSection('notes')">
+                            <span class="header-title"><span class="icon-emoji">📝</span> Notizen</span>
+                            <span class="header-icon">▾</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div *ngFor="let note of p.notes; let i = index" class="simple-note-box">
+                                <textarea [(ngModel)]="note.text" class="form-control" (input)="markDirty()"
+                                    placeholder="Deine Notizen hier..."></textarea>
+                                <button class="btn-remove-note" (click)="removePersonNote(i)">&times;</button>
+                            </div>
+                            <button class="btn btn-text" (click)="addPersonNote()">+ Notiz hinzufügen</button>
+                        </div>
+                    </div>
+
+                    <!-- Gallery -->
+                    <div class="accordion-item" [class.open]="isSectionOpen('gallery')">
+                        <div class="accordion-header" (click)="toggleSection('gallery')">
+                            <span class="header-title"><span class="icon-emoji">🖼️</span> Galerie &
+                                Dokumente</span>
+                            <span class="header-icon">▾</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="simple-gallery-grid">
+                                <div *ngFor="let m of p.media" class="simple-media-card">
+                                    <img [src]="m.url"
+                                        (click)="viewerUrl.set(m.url); viewerTitle.set(m.title || 'Vorschau')">
+                                    <div class="media-actions">
+                                        <button (click)="removePersonMedia(m)">&times;</button>
+                                    </div>
                                 </div>
+                                <div class="add-media-card" (click)="openMediaAddModal()">
+                                    <span>+ Foto</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sources / Citations -->
+                    <div class="accordion-item" [class.open]="isSectionOpen('sources')">
+                        <div class="accordion-header" (click)="toggleSection('sources')">
+                            <span class="header-title"><span class="icon-emoji">📚</span> Quellenbelege</span>
+                            <span class="header-icon">▾</span>
+                        </div>
+                        <div class="accordion-content">
+                            <div *ngFor="let cit of p.citations" class="simple-source-card">
+                                <span class="source-title">{{ cit.sourceTitle }}</span>
+                                <span class="source-meta">{{ cit.whereInSource }}</span>
+                            </div>
+                            <button class="btn btn-text" (click)="activeTab = 'citations'; isExpertMode.set(true)">Im
+                                Experten-Modus bearbeiten</button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div> <!-- End Simple Mode Content -->
+
+            <!-- EXPERT MODE (Legacy Tabs) -->
+            <div *ngIf="isExpertMode()" class="expert-mode-content">
+                <div *ngIf="activeTab === 'basics'" class="tab-pane">
+                    <div class="card panel">
+                        <h2>Basisdaten</h2>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Geschlecht</label>
+                                <select [(ngModel)]="p.gender" class="form-control">
+                                    <option value="M">Männlich</option>
+                                    <option value="F">Weiblich</option>
+                                    <option value="X">Divers</option>
+                                    <option value="U">Unbekannt</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Lebend</label>
+                                <select [(ngModel)]="p.isLiving" class="form-control">
+                                    <option [ngValue]="true">Ja</option>
+                                    <option [ngValue]="false">Nein</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Datenschutz</label>
+                                <select [(ngModel)]="p.privacyLevel" class="form-control">
+                                    <option value="PUBLIC">Öffentlich</option>
+                                    <option value="FAMILY">Familie</option>
+                                    <option value="PRIVATE">Privat</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <h3>Name</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Vorname</label>
+                                <input type="text" [(ngModel)]="p.firstName" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label>Nachname</label>
+                                <input type="text" [(ngModel)]="p.lastName" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIMELINE TAB (Merged Events + Facts) -->
+                <div *ngIf="activeTab === 'timeline'" class="tab-pane">
+                    <div class="panel card timeline-panel">
+                        <div class="panel-header">
+                            <h2>Lebenslauf</h2>
+                            <button class="btn btn-secondary btn-sm" (click)="addTimelineItem()">+ Ereignis/Fakt
+                                hinzufügen</button>
+                        </div>
+
+                        <div class="timeline-list">
+                            <div *ngFor="let item of timeline(); let i = index" class="timeline-item">
+                                <div class="timeline-dot"></div>
+
+                                <div class="timeline-content card-inner" [class.editing]="item.editing">
+                                    <!-- READ ONLY VIEW -->
+                                    <div *ngIf="!item.editing" class="timeline-read-only">
+                                        <div class="read-header">
+                                            <div class="read-type">{{ getTagLabel(item.tag) }}</div>
+                                            <div class="read-date">{{ item.date }}</div>
+                                            <button class="btn-icon btn-sm edit-trigger" (click)="editTimelineItem(i)"
+                                                title="Ereignis bearbeiten">✎</button>
+                                            <button class="btn-icon text-danger delete-item"
+                                                (click)="removeTimelineItem(i)">&times;</button>
+                                        </div>
+                                        <div class="read-place" *ngIf="item.place">📍 {{ item.place }}</div>
+                                        <div class="read-value" *ngIf="item.value || item.description">{{ item.value
+                                            ||
+                                            item.description }}</div>
+
+                                        <div class="read-media-previews" *ngIf="item.media?.length">
+                                            <div *ngFor="let med of item.media" class="mini-thumb"
+                                                (click)="openViewer(med)">
+                                                <img [src]="getMediaUrl(med.url)" [alt]="med.title">
+                                            </div>
+                                        </div>
+
+                                        <div class="read-meta-badges">
+                                            <span *ngIf="item.media?.length" class="badge">🖼 {{ item.media?.length
+                                                }}</span>
+                                            <span *ngIf="item.citations?.length" class="badge">📖 {{
+                                                item.citations?.length
+                                                }}</span>
+                                            <span *ngIf="item.notes?.length" class="badge">📝 {{ item.notes?.length
+                                                }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- EDITING VIEW -->
+                                    <div *ngIf="item.editing" class="timeline-edit-form">
+                                        <div class="timeline-header-row">
+                                            <div class="type-selector">
+                                                <select [(ngModel)]="item.tag" class="form-control tag-select">
+                                                    <!-- Events -->
+                                                    <optgroup label="Lebensereignisse">
+                                                        <option value="BIRT">Geburt</option>
+                                                        <option value="CHR">Taufe</option>
+                                                        <option value="DEAT">Tod</option>
+                                                        <option value="BURI">Begräbnis</option>
+                                                        <option value="CREM">Einäscherung</option>
+                                                        <option value="EMIG">Auswanderung</option>
+                                                        <option value="IMMI">Einwanderung</option>
+                                                    </optgroup>
+                                                    <!-- Facts -->
+                                                    <optgroup label="Eigenschaften & Fakten">
+                                                        <option value="OCCU">Beruf</option>
+                                                        <option value="RELI">Religion</option>
+                                                        <option value="EDUC">Bildung</option>
+                                                        <option value="RESI">Wohnsitz</option>
+                                                        <option value="TITL">Titel</option>
+                                                        <option value="NATI">Nationalität/Herkunft</option>
+                                                        <option value="DSCR">Körperl. Merkmale</option>
+                                                        <option value="FACT">Anderer Fakt</option>
+                                                    </optgroup>
+                                                </select>
+                                            </div>
+                                            <button class="btn-icon text-danger delete-item"
+                                                (click)="removeTimelineItem(i)">&times;</button>
+                                        </div>
+
+                                        <div class="timeline-data-grid">
+                                            <div class="form-group">
+                                                <label>Datum / Zeitraum</label>
+                                                <input type="text" [(ngModel)]="item.date"
+                                                    placeholder="z.B. 1980-04-11 oder ABT 1900" class="form-control">
+                                            </div>
+                                            <div class="form-group place-autocomplete-group">
+                                                <label>Ort</label>
+                                                <div class="input-with-action">
+                                                    <input type="text" [(ngModel)]="item.place"
+                                                        (input)="searchPlaces(i, item.place!)"
+                                                        (focus)="searchPlaces(i, item.place!)"
+                                                        placeholder="z.B. Lichtenfels" class="form-control">
+                                                    <button class="btn-secondary btn-sm" (click)="openPlaceModal(i)"
+                                                        title="Ort anlegen / bearbeiten">Neu</button>
+                                                </div>
+
+                                                <div class="autocomplete-dropdown"
+                                                    *ngIf="showPlaceResults() === i && placeSearchResults().length > 0">
+                                                    <div *ngFor="let res of placeSearchResults()" class="dropdown-item"
+                                                        (click)="selectPlace(i, res)">
+                                                        📍 {{ res }}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group full-width">
+                                                <label>Beschreibung / Wert</label>
+                                                <input
+                                                    *ngIf="['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(item.tag)"
+                                                    type="text" [(ngModel)]="item.value"
+                                                    placeholder="z.B. Energieanlagenelektroniker" class="form-control">
+
+                                                <input
+                                                    *ngIf="!['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(item.tag)"
+                                                    type="text" [(ngModel)]="item.description"
+                                                    placeholder="Zusätzliche Notiz" class="form-control">
+                                            </div>
+                                        </div>
+                                        <!-- In future: expandable area for Media/Citations attached to this specific item -->
+                                        <div class="item-footer">
+                                            <button class="btn-text btn-sm" (click)="toggleExpand(i)">
+                                                {{ item.expanded ? '▼ Weniger anzeigen' : '▶ Erweitert (Quellen,
+                                                Medien,
+                                                Notizen)...' }}
+                                            </button>
+                                        </div>
+
+                                        <div *ngIf="item.expanded" class="expanded-section mt-4"
+                                            style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,0.1);">
+
+                                            <!-- Medien -->
+                                            <div class="mb-4" style="margin-bottom: 20px;">
+                                                <div
+                                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                                    <h4 style="margin: 0; color: #e2e8f0; font-size: 1rem;">Medien
+                                                        zum
+                                                        Ereignis</h4>
+                                                    <div class="btn-group">
+                                                        <button class="btn btn-secondary btn-sm"
+                                                            (click)="openMediaAddModal(i)">+ Hochladen</button>
+                                                        <button class="btn btn-secondary btn-sm"
+                                                            (click)="openMediaSelector(i)">+ Aus Galerie
+                                                            wählen</button>
+                                                    </div>
+                                                </div>
+                                                <div *ngIf="item.media && item.media.length > 0"
+                                                    class="event-media-grid">
+                                                    <div *ngFor="let med of item.media; let mIndex = index"
+                                                        class="media-card">
+                                                        <div class="media-thumb" (click)="openViewer(med)">
+                                                            <img [src]="getMediaUrl(med.url)" [alt]="med.title">
+                                                        </div>
+                                                        <div class="media-info">
+                                                            <input type="text" [(ngModel)]="med.title"
+                                                                placeholder="Titel / Beschreibung"
+                                                                class="form-control form-control-sm">
+                                                            <button class="btn-icon text-danger"
+                                                                (click)="removeEventMedia(i, mIndex)">&times;</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Quellen / Citations -->
+                                            <div class="mb-4" style="margin-bottom: 20px;">
+                                                <div
+                                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                                    <h4 style="margin: 0; color: #e2e8f0; font-size: 1rem;">Quellen
+                                                        (Citations)
+                                                    </h4>
+                                                    <button class="btn-secondary btn-sm" (click)="addEventCitation(i)">+
+                                                        Quelle</button>
+                                                </div>
+                                                <div *ngIf="item.citations && item.citations.length > 0"
+                                                    style="display: flex; flex-direction: column; gap: 10px;">
+                                                    <div *ngFor="let cit of item.citations; let cIndex = index"
+                                                        style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                                                        <div class="form-grid"
+                                                            style="grid-template-columns: 1fr 120px 40px; gap: 10px; margin-bottom: 10px;">
+                                                            <input type="text" [(ngModel)]="cit.source"
+                                                                placeholder="Quelle (Kirchenbuch, Urkunde...)"
+                                                                class="form-control form-control-sm">
+                                                            <select [(ngModel)]="cit.quality"
+                                                                class="form-control form-control-sm">
+                                                                <option value="0">Unzuverlässig</option>
+                                                                <option value="1">Fragwürdig</option>
+                                                                <option value="2" selected>Sekundär</option>
+                                                                <option value="3">Primär / Sicher</option>
+                                                            </select>
+                                                            <button class="btn-icon text-danger"
+                                                                (click)="removeEventCitation(i, cIndex)">&times;</button>
+                                                        </div>
+                                                        <div class="form-grid"
+                                                            style="grid-template-columns: 120px 1fr; gap: 10px;">
+                                                            <input type="text" [(ngModel)]="cit.page"
+                                                                placeholder="Seite(n)"
+                                                                class="form-control form-control-sm">
+                                                            <input type="text" [(ngModel)]="cit.text"
+                                                                placeholder="Zitierter Text / Bemerkung zur Quelle"
+                                                                class="form-control form-control-sm">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Notizen -->
+                                            <div>
+                                                <div
+                                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                                    <h4 style="margin: 0; color: #e2e8f0; font-size: 1rem;">Notizen
+                                                    </h4>
+                                                    <button class="btn-secondary btn-sm" (click)="addEventNote(i)">+
+                                                        Notiz</button>
+                                                </div>
+                                                <div *ngIf="item.notes && item.notes.length > 0"
+                                                    style="display: flex; flex-direction: column; gap: 10px;">
+                                                    <div *ngFor="let note of item.notes; let nIndex = index; trackBy: trackByIndex"
+                                                        style="display: flex; gap: 10px; align-items: flex-start;">
+                                                        <textarea [ngModel]="note"
+                                                            (ngModelChange)="updateEventNote(i, nIndex, $event)"
+                                                            placeholder="Zusätzliche Anmerkungen zum Ereignis..."
+                                                            class="form-control"
+                                                            style="min-height: 80px; resize: vertical;"></textarea>
+                                                        <button class="btn-icon text-danger"
+                                                            (click)="removeEventNote(i, nIndex)">&times;</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="edit-form-footer">
+                                            <button class="btn btn-primary btn-sm"
+                                                (click)="saveTimelineItem(i)">Speichern</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div *ngIf="timeline().length === 0" class="empty-state">
+                                Keine Einträge im Lebenslauf vorhanden.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RELATIONS TAB -->
+                <div *ngIf="activeTab === 'relations'" class="tab-pane">
+                    <div class="panel card">
+                        <div class="panel-header"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div>
+                                <h2 style="margin: 0;">Familie & Beziehungen</h2>
+                                <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 0.9rem;">Verwalte
+                                    Ehepartner,
+                                    Eltern
+                                    und Kinder.</p>
+                            </div>
+                            <div class="header-actions-inline">
+                                <button class="btn-icon-sm" [class.active]="isEditingFamily()"
+                                    (click)="toggleFamilyEdit()" title="Bearbeiten" style="margin-right: 12px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </button>
                                 <button class="btn btn-secondary btn-sm" (click)="addRelation()">+ Beziehung
                                     hinzufügen</button>
                             </div>
+                        </div>
 
-                            <div *ngIf="relations().length > 0"
-                                style="display: flex; flex-direction: column; gap: 10px;">
-                                <div *ngFor="let rel of relations(); let i = index"
-                                    style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 15px;">
+                        <div *ngIf="relations().length > 0" style="display: flex; flex-direction: column; gap: 10px;">
+                            <div *ngFor="let rel of relations(); let i = index" class="family-card"
+                                (click)="goToPerson(rel.personId)"
+                                [class.clickable]="rel.personId && !isEditingFamily()"
+                                style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 15px; position: relative; min-height: 64px;">
 
+                                <div *ngIf="isEditingFamily(); else relRead"
+                                    style="display: flex; align-items: center; gap: 15px; flex: 1;">
                                     <select [(ngModel)]="rel.type" class="form-control" style="width: 150px;">
                                         <option value="SPOUSE">Ehepartner</option>
                                         <option value="FATHER">Vater</option>
@@ -698,276 +789,343 @@
                                         </div>
                                     </div>
 
-                                    <button class="btn-icon text-danger" (click)="removeRelation(i)">&times;</button>
-                                </div>
-                            </div>
-
-                            <div *ngIf="relations().length === 0" class="empty-state" style="margin-top: 20px;">
-                                Keine familiären Beziehungen hinterlegt.
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- MEDIA TAB -->
-                    <div *ngIf="activeTab === 'media'" class="tab-pane">
-                        <div class="panel card">
-                            <div class="panel-header"
-                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <div>
-                                    <h2 style="margin: 0;">Medien & Galerie</h2>
-                                    <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 0.9rem;">Bilder und
-                                        Dokumente
-                                        der
-                                        Person.</p>
-                                </div>
-                                <div style="display: flex; gap: 10px;">
-                                    <input type="file" #mediaUploadInput (change)="onMediaUpload($event)"
-                                        style="display: none;" accept="image/*,application/pdf">
-                                    <button class="btn btn-secondary btn-sm" (click)="mediaUploadInput.click()">+
-                                        Hochladen</button>
-                                    <button class="btn btn-secondary btn-sm" (click)="openMediaSelector()">+ Aus Galerie
-                                        wählen</button>
-                                    <button class="btn btn-text btn-sm" (click)="addPersonMedia()"
-                                        title="Manuell über URL verlinken">+ URL</button>
-                                </div>
-                            </div>
-
-                            <div *ngIf="p.media && p.media.length > 0"
-                                style="display: flex; flex-direction: column; gap: 10px;">
-                                <div *ngFor="let m of p.media; let i = index" class="media-list-item"
-                                    style="background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); display: flex; overflow: hidden; height: 100px;">
-
-                                    <!-- Thumbnail / Icon (Left) -->
-                                    <div
-                                        style="width: 100px; min-width: 100px; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; border-right: 1px solid rgba(255,255,255,0.05);">
-                                        <img *ngIf="isImage(m) && getMediaUrlExt(m.url)" [src]="getMediaUrlExt(m.url)"
-                                            style="width: 100%; height: 100%; object-fit: cover;" alt="Vorschau" />
-                                        <svg *ngIf="!isImage(m) || !getMediaUrlExt(m.url)"
-                                            xmlns="http://www.w3.org/2000/svg" width="32" height="32"
-                                            viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
-                                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                                            <polyline points="13 2 13 9 20 9"></polyline>
-                                        </svg>
+                                    <div *ngIf="rel.type === 'SPOUSE'"
+                                        style="display: flex; gap: 10px; width: 100%; margin-top: 10px; padding-left: 165px;">
+                                        <input type="text" class="form-control sm-input" style="flex: 1;"
+                                            [ngModel]="getFamilyWeddingDate(rel.familyId)"
+                                            (ngModelChange)="updateFamilyWeddingByFamilyId(rel.familyId, 'date', $event)"
+                                            placeholder="Hochzeitsdatum">
+                                        <input type="text" class="form-control sm-input" style="flex: 1;"
+                                            [ngModel]="getFamilyWeddingPlace(rel.familyId)"
+                                            (ngModelChange)="updateFamilyWeddingByFamilyId(rel.familyId, 'place', $event)"
+                                            placeholder="Hochzeitsort">
                                     </div>
 
-                                    <!-- Details & Edit Form (Middle) -->
-                                    <div
-                                        style="flex: 1; padding: 10px 15px; display: flex; flex-direction: column; justify-content: center; gap: 8px;">
-                                        <div style="display: flex; gap: 10px; align-items: center;">
-                                            <input type="text" [(ngModel)]="m.title" placeholder="Titel / Bezeichnung"
-                                                class="form-control" style="flex: 1; font-weight: 500;">
-                                            <label class="badge-label" [class.badge-active]="m.isPrimary"
-                                                style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem; padding: 5px 10px; border-radius: 12px; cursor: pointer; transition: 0.2s;">
-                                                <input type="radio" name="primaryMedia" [checked]="m.isPrimary"
-                                                    (change)="setPrimaryMedia(i)" style="margin: 0; display: none;">
-                                                ★ Profilbild
-                                            </label>
-                                        </div>
-                                        <div style="display: flex; gap: 10px; align-items: center;">
-                                            <input type="text" [(ngModel)]="m.url" placeholder="URL / Dateipfad"
-                                                class="form-control"
-                                                style="flex: 1; font-size: 0.85rem; color: #94a3b8; font-family: monospace;">
+                                    <button class="btn-icon text-danger" (click)="removeRelation(i)"
+                                        style="margin-left: auto;">&times;</button>
+                                </div>
+                                <ng-template #relRead>
+                                    <div style="width: 150px; color: #94a3b8; font-weight: 600; font-size: 0.9rem;">
+                                        {{ getRelationLabel(rel.type) }}
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <span class="name link">{{ rel.personName }}</span>
+                                        <div *ngIf="rel.type === 'SPOUSE' && getFamilyWedding(rel.familyId)"
+                                            style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">
+                                            💍 {{ getFamilyWedding(rel.familyId) }}
                                         </div>
                                     </div>
-
-                                    <!-- Delete Button (Right) -->
-                                    <div
-                                        style="width: 50px; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(255,255,255,0.05);">
-                                        <button class="btn-icon text-danger" (click)="removePersonMedia(i)"
-                                            title="Löschen"
-                                            style="width: 100%; height: 100%; border-radius: 0;">&times;</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div *ngIf="!p.media || p.media.length === 0" class="empty-state" style="margin-top: 20px;">
-                                Keine Medien vorhanden.
+                                </ng-template>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- NOTES TAB -->
-                    <div *ngIf="activeTab === 'notes'" class="tab-pane">
-                        <div class="panel card">
-                            <div class="panel-header"
-                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <h2 style="margin: 0;">Persönliche Notizen</h2>
-                                <button class="btn btn-secondary btn-sm" (click)="addPersonNote()">+ Notiz
-                                    hinzufügen</button>
-                            </div>
-
-                            <div *ngIf="p.notes && p.notes.length > 0"
-                                style="display: flex; flex-direction: column; gap: 15px;">
-                                <div *ngFor="let note of p.notes; let i = index; trackBy: trackByIndex"
-                                    style="display: flex; gap: 15px; align-items: flex-start;">
-                                    <textarea [ngModel]="note" (ngModelChange)="updatePersonNote(i, $event)"
-                                        class="form-control" style="min-height: 100px; resize: vertical;"></textarea>
-                                    <button class="btn-icon text-danger" (click)="removePersonNote(i)">&times;</button>
-                                </div>
-                            </div>
-
-                            <div *ngIf="!p.notes || p.notes.length === 0" class="empty-state" style="margin-top: 20px;">
-                                Keine Notizen vorhanden.
-                            </div>
+                        <div *ngIf="relations().length === 0" class="empty-state" style="margin-top: 20px;">
+                            Keine familiären Beziehungen hinterlegt.
                         </div>
                     </div>
+                </div>
 
-                    <!-- CITATIONS TAB -->
-                    <div *ngIf="activeTab === 'citations'" class="tab-pane">
-                        <div class="panel card">
-                            <div class="panel-header"
-                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                                <h2 style="margin: 0;">Referenzen & Quellen</h2>
-                                <button class="btn btn-secondary btn-sm" (click)="addPersonCitation()">+ Quelle
-                                    hinzufügen</button>
+                <!-- MEDIA TAB -->
+                <div *ngIf="activeTab === 'media'" class="tab-pane">
+                    <div class="panel card">
+                        <div class="panel-header"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div>
+                                <h2 style="margin: 0;">Medien & Galerie</h2>
+                                <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 0.9rem;">Bilder und
+                                    Dokumente
+                                    der
+                                    Person.</p>
                             </div>
-
-                            <div *ngIf="p.citations && p.citations.length > 0"
-                                style="display: flex; flex-direction: column; gap: 15px;">
-                                <div *ngFor="let cit of p.citations; let i = index"
-                                    style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
-                                    <div class="form-grid"
-                                        style="grid-template-columns: 1fr 150px 40px; margin-bottom: 10px; align-items: center;">
-                                        <input type="text" [(ngModel)]="cit.sourceTitle"
-                                            placeholder="Quelle (Titel / ID)" class="form-control">
-                                        <select [(ngModel)]="cit.quality" class="form-control">
-                                            <option value="0">Unzuverlässig</option>
-                                            <option value="1">Fragwürdig</option>
-                                            <option value="2">Sekundär</option>
-                                            <option value="3">Primär / Sicher</option>
-                                        </select>
-                                        <button class="btn-icon text-danger"
-                                            (click)="removePersonCitation(i)">&times;</button>
-                                    </div>
-                                    <div class="form-grid" style="grid-template-columns: 150px 1fr;">
-                                        <input type="text" [(ngModel)]="cit.whereInSource"
-                                            placeholder="Seite(n) / Position" class="form-control">
-                                        <input type="text" [(ngModel)]="cit.text"
-                                            placeholder="Zitierter Text / Bemerkungen" class="form-control">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div *ngIf="!p.citations || p.citations.length === 0" class="empty-state"
-                                style="margin-top: 20px;">
-                                Keine allgemeinen Quellen vorhanden.
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-secondary btn-sm" (click)="openMediaAddModal()">+
+                                    Hochladen</button>
+                                <button class="btn btn-secondary btn-sm" (click)="openMediaSelector()">+ Aus Galerie
+                                    wählen</button>
+                                <button class="btn btn-text btn-sm" (click)="addPersonMedia()"
+                                    title="Manuell über URL verlinken">+ URL</button>
                             </div>
                         </div>
-                    </div>
 
-                    <div *ngIf="activeTab === 'names'" class="tab-pane">
-                        <div class="panel card">
-                            <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center;">
-                                <h2 style="margin:0;">Namen</h2>
-                                <button class="btn btn-secondary btn-sm" (click)="addName()">+ Name hinzufügen</button>
+                        <div *ngIf="p.media && p.media.length > 0"
+                            style="display: flex; flex-direction: column; gap: 10px;">
+                            <div *ngFor="let m of p.media; let i = index" class="media-list-item"
+                                style="background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); display: flex; overflow: hidden; height: 100px;">
+
+                                <!-- Thumbnail / Icon (Left) -->
+                                <div
+                                    style="width: 100px; min-width: 100px; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; border-right: 1px solid rgba(255,255,255,0.05);">
+                                    <img *ngIf="isImage(m) && getMediaUrlExt(m.url)" [src]="getMediaUrlExt(m.url)"
+                                        style="width: 100%; height: 100%; object-fit: cover;" alt="Vorschau" />
+                                    <svg *ngIf="!isImage(m) || !getMediaUrlExt(m.url)"
+                                        xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                        fill="none" stroke="#64748b" stroke-width="2">
+                                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                        <polyline points="13 2 13 9 20 9"></polyline>
+                                    </svg>
+                                </div>
+
+                                <!-- Details & Edit Form (Middle) -->
+                                <div
+                                    style="flex: 1; padding: 10px 15px; display: flex; flex-direction: column; justify-content: center; gap: 8px;">
+                                    <div style="display: flex; gap: 10px; align-items: center;">
+                                        <input type="text" [(ngModel)]="m.title" placeholder="Titel / Bezeichnung"
+                                            class="form-control" style="flex: 1; font-weight: 500;">
+                                        <label class="badge-label" [class.badge-active]="m.isPrimary"
+                                            style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem; padding: 5px 10px; border-radius: 12px; cursor: pointer; transition: 0.2s;">
+                                            <input type="radio" name="primaryMedia" [checked]="m.isPrimary"
+                                                (change)="setPrimaryMedia(i)" style="margin: 0; display: none;">
+                                            ★ Profilbild
+                                        </label>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; align-items: center;">
+                                        <input type="text" [(ngModel)]="m.url" placeholder="URL / Dateipfad"
+                                            class="form-control"
+                                            style="flex: 1; font-size: 0.85rem; color: #94a3b8; font-family: monospace;">
+                                    </div>
+                                </div>
+
+                                <!-- Delete Button (Right) -->
+                                <div
+                                    style="width: 50px; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(255,255,255,0.05);">
+                                    <button class="btn-icon text-danger" (click)="removePersonMedia(i)" title="Löschen"
+                                        style="width: 100%; height: 100%; border-radius: 0;">&times;</button>
+                                </div>
                             </div>
-                            <div *ngFor="let n of p.names; let i = index" style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;">
-                                <div class="form-grid" style="grid-template-columns:1fr 1fr 140px 40px;align-items:center;">
-                                    <input type="text" [(ngModel)]="n.given" placeholder="Vorname" class="form-control">
-                                    <input type="text" [(ngModel)]="n.surname" placeholder="Nachname" class="form-control">
-                                    <select [(ngModel)]="n.type" class="form-control">
-                                        <option value="BIRTH">BIRTH</option>
-                                        <option value="MARRIED">MARRIED</option>
-                                        <option value="AKA">AKA</option>
+                        </div>
+
+                        <div *ngIf="!p.media || p.media.length === 0" class="empty-state" style="margin-top: 20px;">
+                            Keine Medien vorhanden.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOTES TAB -->
+                <div *ngIf="activeTab === 'notes'" class="tab-pane">
+                    <div class="panel card">
+                        <div class="panel-header"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h2 style="margin: 0;">Persönliche Notizen</h2>
+                            <button class="btn btn-secondary btn-sm" (click)="addPersonNote()">+ Notiz
+                                hinzufügen</button>
+                        </div>
+
+                        <div *ngIf="p.notes && p.notes.length > 0"
+                            style="display: flex; flex-direction: column; gap: 15px;">
+                            <div *ngFor="let note of p.notes; let i = index; trackBy: trackByIndex"
+                                style="display: flex; gap: 15px; align-items: flex-start;">
+                                <textarea [ngModel]="note" (ngModelChange)="updatePersonNote(i, $event)"
+                                    class="form-control" style="min-height: 100px; resize: vertical;"></textarea>
+                                <button class="btn-icon text-danger" (click)="removePersonNote(i)">&times;</button>
+                            </div>
+                        </div>
+
+                        <div *ngIf="!p.notes || p.notes.length === 0" class="empty-state" style="margin-top: 20px;">
+                            Keine Notizen vorhanden.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CITATIONS TAB -->
+                <div *ngIf="activeTab === 'citations'" class="tab-pane">
+                    <div class="panel card">
+                        <div class="panel-header"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h2 style="margin: 0;">Referenzen & Quellen</h2>
+                            <button class="btn btn-secondary btn-sm" (click)="addPersonCitation()">+ Quelle
+                                hinzufügen</button>
+                        </div>
+
+                        <div *ngIf="p.citations && p.citations.length > 0"
+                            style="display: flex; flex-direction: column; gap: 15px;">
+                            <div *ngFor="let cit of p.citations; let i = index"
+                                style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
+                                <div class="form-grid"
+                                    style="grid-template-columns: 1fr 150px 40px; margin-bottom: 10px; align-items: center;">
+                                    <input type="text" [(ngModel)]="cit.sourceTitle" placeholder="Quelle (Titel / ID)"
+                                        class="form-control">
+                                    <select [(ngModel)]="cit.quality" class="form-control">
+                                        <option value="0">Unzuverlässig</option>
+                                        <option value="1">Fragwürdig</option>
+                                        <option value="2">Sekundär</option>
+                                        <option value="3">Primär / Sicher</option>
                                     </select>
-                                    <button class="btn-icon text-danger" (click)="removeName(i)">&times;</button>
+                                    <button class="btn-icon text-danger"
+                                        (click)="removePersonCitation(i)">&times;</button>
                                 </div>
-                                <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
-                                    <label><input type="radio" name="primaryName" [checked]="n.isPrimary" (change)="setPrimaryName(i)"> Primär</label>
+                                <div class="form-grid" style="grid-template-columns: 150px 1fr;">
+                                    <input type="text" [(ngModel)]="cit.whereInSource" placeholder="Seite(n) / Position"
+                                        class="form-control">
+                                    <input type="text" [(ngModel)]="cit.text" placeholder="Zitierter Text / Bemerkungen"
+                                        class="form-control">
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div *ngIf="activeTab === 'associations'" class="tab-pane">
-                        <div class="panel card">
-                            <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center;">
-                                <h2 style="margin:0;">Assoziationen</h2>
-                                <button class="btn btn-secondary btn-sm" (click)="addAssociation()">+ Assoziation</button>
+                        <div *ngIf="!p.citations || p.citations.length === 0" class="empty-state"
+                            style="margin-top: 20px;">
+                            Keine allgemeinen Quellen vorhanden.
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="activeTab === 'names'" class="tab-pane">
+                    <div class="panel card">
+                        <div class="panel-header"
+                            style="display:flex;justify-content:space-between;align-items:center;">
+                            <h2 style="margin:0;">Namen</h2>
+                            <button class="btn btn-secondary btn-sm" (click)="addName()">+ Name hinzufügen</button>
+                        </div>
+                        <div *ngFor="let n of p.names; let i = index"
+                            style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;">
+                            <div class="form-grid" style="grid-template-columns:1fr 1fr 140px 40px;align-items:center;">
+                                <input type="text" [(ngModel)]="n.given" placeholder="Vorname" class="form-control">
+                                <input type="text" [(ngModel)]="n.surname" placeholder="Nachname" class="form-control">
+                                <select [(ngModel)]="n.type" class="form-control">
+                                    <option value="BIRTH">BIRTH</option>
+                                    <option value="MARRIED">MARRIED</option>
+                                    <option value="AKA">AKA</option>
+                                </select>
+                                <button class="btn-icon text-danger" (click)="removeName(i)">&times;</button>
                             </div>
-                            <div *ngFor="let a of p.associations; let i = index" style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;">
-                                <div class="form-grid" style="grid-template-columns:180px 1fr 40px;align-items:center;">
-                                    <select [(ngModel)]="a.role" class="form-control">
-                                        <option value="OTHER">OTHER</option>
-                                        <option value="FRIEND">FRIEND</option>
-                                        <option value="WITNESS">WITNESS</option>
-                                        <option value="GODPARENT">GODPARENT</option>
-                                    </select>
-                                    <input type="text" [(ngModel)]="a.associatedPersonId" placeholder="Person GEDCOM-ID (z.B. @I2@)" class="form-control">
+                            <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+                                <label><input type="radio" name="primaryName" [checked]="n.isPrimary"
+                                        (change)="setPrimaryName(i)"> Primär</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="activeTab === 'associations'" class="tab-pane">
+                    <div class="panel card">
+                        <div class="panel-header"
+                            style="display:flex;justify-content:space-between;align-items:center;">
+                            <h2 style="margin:0;">Assoziationen</h2>
+                            <button class="btn btn-secondary btn-sm" (click)="addAssociation()">+ Assoziation</button>
+                        </div>
+                        <div *ngFor="let a of p.associations; let i = index"
+                            style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;">
+                            <div class="form-grid" style="grid-template-columns:180px 1fr 40px;align-items:center;">
+                                <select [(ngModel)]="a.role" class="form-control">
+                                    <option value="OTHER">OTHER</option>
+                                    <option value="FRIEND">FRIEND</option>
+                                    <option value="WITNESS">WITNESS</option>
+                                    <option value="GODPARENT">GODPARENT</option>
+                                </select>
+                                <div *ngIf="isEditingFamily(); else assocRead" style="display: contents;">
+                                    <input type="text" [(ngModel)]="a.associatedPersonId"
+                                        placeholder="Person GEDCOM-ID (z.B. @I2@)" class="form-control">
                                     <button class="btn-icon text-danger" (click)="removeAssociation(i)">&times;</button>
                                 </div>
-                                <input type="text" [(ngModel)]="a.relationText" placeholder="Beschreibung" class="form-control" style="margin-top:8px;">
+                                <ng-template #assocRead>
+                                    <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                                        <span class="name link" (click)="goToPerson(a.associatedPersonId)">{{
+                                            a.associatedPersonId }}</span>
+                                        <span style="color: #94a3b8; font-size: 0.8rem;"
+                                            *ngIf="!a.associatedPersonId">(Keine ID)</span>
+                                    </div>
+                                    <button *ngIf="false"></button> <!-- Spacer/Placeholder -->
+                                </ng-template>
                             </div>
+                            <input type="text" [(ngModel)]="a.relationText" placeholder="Beschreibung"
+                                class="form-control" style="margin-top:8px;" [disabled]="!isEditingFamily()">
                         </div>
                     </div>
+                </div>
 
-                    <div *ngIf="activeTab === 'dna'" class="tab-pane">
-                        <div class="panel card">
-                            <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center;">
-                                <h2 style="margin:0;">DNA-Matches</h2>
-                                <button class="btn btn-secondary btn-sm" (click)="addDnaMatch()">+ Match</button>
-                            </div>
-                            <div *ngFor="let m of p.dnaMatches; let i = index" style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;">
-                                <div class="form-grid" style="grid-template-columns:220px 1fr 120px 40px;align-items:center;">
-                                    <select [(ngModel)]="m.provider" class="form-control">
-                                        <option value="">-</option>
-                                        <option value="ANCESTRY">ANCESTRY</option>
-                                        <option value="MYHERITAGE">MYHERITAGE</option>
-                                        <option value="GEDMATCH">GEDMATCH</option>
-                                        <option value="FAMILY_TREE_DNA">FAMILY_TREE_DNA</option>
-                                    </select>
-                                    <input type="text" [(ngModel)]="m.matchPersonId" placeholder="Match GEDCOM-ID" class="form-control">
-                                    <input type="number" [(ngModel)]="m.totalCm" placeholder="Total cM" class="form-control">
+                <div *ngIf="activeTab === 'dna'" class="tab-pane">
+                    <div class="panel card">
+                        <div class="panel-header"
+                            style="display:flex;justify-content:space-between;align-items:center;">
+                            <h2 style="margin:0;">DNA-Matches</h2>
+                            <button class="btn btn-secondary btn-sm" (click)="addDnaMatch()">+ Match</button>
+                        </div>
+                        <div *ngFor="let m of p.dnaMatches; let i = index"
+                            style="margin-top:12px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:8px;">
+                            <div class="form-grid"
+                                style="grid-template-columns:220px 1fr 120px 40px;align-items:center;">
+                                <select [(ngModel)]="m.provider" class="form-control">
+                                    <option value="">-</option>
+                                    <option value="ANCESTRY">ANCESTRY</option>
+                                    <option value="MYHERITAGE">MYHERITAGE</option>
+                                    <option value="GEDMATCH">GEDMATCH</option>
+                                    <option value="FAMILY_TREE_DNA">FAMILY_TREE_DNA</option>
+                                </select>
+                                <div *ngIf="isEditingFamily(); else dnaRead" style="display: contents;">
+                                    <input type="text" [(ngModel)]="m.matchPersonId" placeholder="Match GEDCOM-ID"
+                                        class="form-control">
+                                    <input type="number" [(ngModel)]="m.totalCm" placeholder="Total cM"
+                                        class="form-control">
                                     <button class="btn-icon text-danger" (click)="removeDnaMatch(i)">&times;</button>
                                 </div>
-                                <div style="margin-top:8px;">
-                                    <button class="btn btn-text btn-sm" (click)="addDnaSegment(i)">+ Segment</button>
-                                    <div *ngFor="let s of m.segments; let si = index" class="form-grid" style="grid-template-columns:80px 1fr 1fr 100px 40px;margin-top:6px;align-items:center;">
-                                        <input type="text" [(ngModel)]="s.chromosome" placeholder="Chr" class="form-control">
-                                        <input type="number" [(ngModel)]="s.startPosition" placeholder="Start" class="form-control">
-                                        <input type="number" [(ngModel)]="s.endPosition" placeholder="Ende" class="form-control">
-                                        <input type="number" [(ngModel)]="s.cm" placeholder="cM" class="form-control">
-                                        <button class="btn-icon text-danger" (click)="removeDnaSegment(i, si)">&times;</button>
+                                <ng-template #dnaRead>
+                                    <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                                        <span class="name link" (click)="goToPerson(m.matchPersonId)">{{ m.matchPersonId
+                                            || 'Unverknüpft' }}</span>
                                     </div>
+                                    <div style="color: #f1f5f9; font-weight: 600;">{{ m.totalCm }} cM</div>
+                                    <button *ngIf="false"></button>
+                                </ng-template>
+                            </div>
+                            <div style="margin-top:8px;">
+                                <button class="btn btn-text btn-sm" (click)="addDnaSegment(i)">+ Segment</button>
+                                <div *ngFor="let s of m.segments; let si = index" class="form-grid"
+                                    style="grid-template-columns:80px 1fr 1fr 100px 40px;margin-top:6px;align-items:center;">
+                                    <input type="text" [(ngModel)]="s.chromosome" placeholder="Chr"
+                                        class="form-control">
+                                    <input type="number" [(ngModel)]="s.startPosition" placeholder="Start"
+                                        class="form-control">
+                                    <input type="number" [(ngModel)]="s.endPosition" placeholder="Ende"
+                                        class="form-control">
+                                    <input type="number" [(ngModel)]="s.cm" placeholder="cM" class="form-control">
+                                    <button class="btn-icon text-danger"
+                                        (click)="removeDnaSegment(i, si)">&times;</button>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                </div> <!-- End Expert Mode Content -->
-            </div> <!-- End container-inner -->
-        </div> <!-- End content-body -->
-
-        <app-media-selector [visible]="showMediaSelector" (selected)="onMediaSelected($event)"
-            (closed)="showMediaSelector = false">
-        </app-media-selector>
-
-        <app-place-modal [visible]="showPlaceModal" [mode]="placeModalMode" [initialData]="selectedPlaceForModal"
-            (saved)="onPlaceModalSaved($event)" (closed)="showPlaceModal = false">
-        </app-place-modal>
-
-        <app-image-viewer [url]="viewerUrl()" [title]="viewerTitle()" (closed)="viewerUrl.set(null)">
-        </app-image-viewer>
-        <app-person-create-modal [visible]="showRelationModal()"
-            [title]="(relationModalType === 'child' ? 'Kind' : relationModalType === 'partner' ? 'Partner/in' : relationModalType === 'father' ? 'Vater' : 'Mutter') + ' hinzufügen'"
-            [initialLastName]="newPersonData().lastName" (created)="onPersonCreated($event)"
-            (closed)="closeRelationModal()">
-        </app-person-create-modal>
-
-        <div class="relation-modal-overlay" *ngIf="showDeleteModal()" (click)="closeDeleteModal()">
-            <div class="relation-modal" (click)="$event.stopPropagation()">
-                <div class="modal-header">
-                    <h3>Person löschen</h3>
-                    <button class="btn-close" (click)="closeDeleteModal()">&times;</button>
                 </div>
-                <div class="modal-body">
-                    Möchten Sie diese Person wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" (click)="closeDeleteModal()" [disabled]="isDeleting">Abbrechen</button>
-                    <button class="btn btn-primary" (click)="confirmDeletePerson()" [disabled]="isDeleting">
-                        {{ isDeleting ? 'Lösche...' : 'Ja, löschen' }}
-                    </button>
-                </div>
+
+            </div> <!-- End Expert Mode Content -->
+        </div> <!-- End container-inner -->
+    </div> <!-- End content-body -->
+
+    <app-media-selector [visible]="showMediaSelector" (selected)="onMediaSelected($event)"
+        (closed)="showMediaSelector = false">
+    </app-media-selector>
+
+    <app-place-modal [visible]="showPlaceModal" [mode]="placeModalMode" [initialData]="selectedPlaceForModal"
+        (saved)="onPlaceModalSaved($event)" (closed)="showPlaceModal = false">
+    </app-place-modal>
+
+    <app-image-viewer [url]="viewerUrl()" [title]="viewerTitle()" (closed)="viewerUrl.set(null)">
+    </app-image-viewer>
+    <app-person-create-modal [visible]="showRelationModal()"
+        [title]="(relationModalType === 'child' ? 'Kind' : relationModalType === 'partner' ? 'Partner/in' : relationModalType === 'father' ? 'Vater' : 'Mutter') + ' hinzufügen'"
+        [initialLastName]="newPersonData().lastName" (created)="onPersonCreated($event)"
+        (closed)="closeRelationModal()">
+    </app-person-create-modal>
+
+    <div class="relation-modal-overlay" *ngIf="showDeleteModal()" (click)="closeDeleteModal()">
+        <div class="relation-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3>Person löschen</h3>
+                <button class="btn-close" (click)="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                Möchten Sie diese Person wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" (click)="closeDeleteModal()"
+                    [disabled]="isDeleting">Abbrechen</button>
+                <button class="btn btn-primary" (click)="confirmDeletePerson()" [disabled]="isDeleting">
+                    {{ isDeleting ? 'Lösche...' : 'Ja, löschen' }}
+                </button>
             </div>
         </div>
+    </div>
+    <app-media-add-modal [visible]="showMediaAddModal()" [treeId]="treeData()?.meta?.treeId || ''"
+        [defaultFirstName]="person()?.firstName || ''" [defaultLastName]="person()?.lastName || ''"
+        (closed)="showMediaAddModal.set(false)" (uploaded)="onMediaAddUploaded($event)">
+    </app-media-add-modal>
+</div>

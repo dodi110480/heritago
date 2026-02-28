@@ -318,6 +318,7 @@ model Event {
   tree   Tree   @relation(fields: [treeId], references: [id], onDelete: Cascade)
 
   type String
+  eventSubtype String?
 
   dateText  String?
   dateStart DateTime?

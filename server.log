@@ -1254,3 +1254,395 @@ chunk-CXRYXKCF.js   | person-detail | 274.28 kB |
 Application bundle generation complete. [0.331 seconds] - 2026-02-27T07:42:20.194Z
 
 Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Application bundle generation failed. [0.556 seconds] - 2026-02-27T10:02:28.415Z
+
+✘ [ERROR] TS2353: Object literal may only specify known properties, and 'familyId' does not exist in type '{ spouseId?: string | undefined; spouseName?: string | undefined; children: { id: string; name: string; }[]; }'. [plugin angular-compiler]
+
+    src/app/person-detail.ts:372:24:
+      372 │                         familyId: fam.id, // Storing familyId for...
+          ╵                         ~~~~~~~~
+
+
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Application bundle generation failed. [0.473 seconds] - 2026-02-27T10:02:47.595Z
+
+✘ [ERROR] TS2353: Object literal may only specify known properties, and 'familyId' does not exist in type '{ spouseId?: string | undefined; spouseName?: string | undefined; children: { id: string; name: string; }[]; }'. [plugin angular-compiler]
+
+    src/app/person-detail.ts:372:24:
+      372 │                         familyId: fam.id, // Storing familyId for...
+          ╵                         ~~~~~~~~
+
+
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names                  |  Raw size
+main.js             | main                   |  36.67 kB | 
+chunk-MHV3QLSU.js   | -                      |   5.77 kB | 
+chunk-IHAPNL5R.js   | -                      |   3.33 kB | 
+chunk-VUJOFXKG.js   | -                      | 938 bytes | 
+styles.css          | styles                 | 824 bytes | 
+chunk-RQYGVHBW.js   | -                      | 272 bytes | 
+
+                    | Initial total          |  47.81 kB
+
+Lazy chunk files    | Names                  |  Raw size
+chunk-5HB7WRVK.js   | person-detail          | 283.38 kB | 
+chunk-PNRTXV5R.js   | media-gallery          |  90.46 kB | 
+chunk-OS7ZH45Z.js   | dashboard              |  67.05 kB | 
+chunk-QB7GP6AT.js   | family-chart-component |  44.65 kB | 
+chunk-NFIIEEID.js   | update-settings        |  43.95 kB | 
+chunk-EBG5VNFQ.js   | diagnostics            |  40.47 kB | 
+chunk-2FSYJPXW.js   | tree-management        |  36.56 kB | 
+chunk-2THGF2E2.js   | person-list            |  30.06 kB | 
+chunk-ZBM4KHRD.js   | place-list             |  25.22 kB | 
+chunk-6MVITY5N.js   | gedcom-io              |  24.89 kB | 
+chunk-SZNIWFG2.js   | -                      |  24.73 kB | 
+chunk-6AKDD24N.js   | map-view               |  21.75 kB | 
+chunk-7AWPKUS7.js   | settings               |  17.91 kB | 
+chunk-EC5Y5SGD.js   | login                  |  16.78 kB | 
+chunk-QK525GX7.js   | statistics             |  16.45 kB | 
+...and 3 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [0.226 seconds] - 2026-02-27T10:03:00.337Z
+
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-YTD3M7UU.js   | person-detail | 286.61 kB | 
+
+Application bundle generation complete. [0.458 seconds] - 2026-02-27T10:03:35.668Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-JI3WA4G3.js   | person-detail | 286.63 kB | 
+
+Application bundle generation complete. [0.425 seconds] - 2026-02-27T10:08:45.464Z
+
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-NW4SYYBA.js   | person-detail | 289.44 kB | 
+
+Application bundle generation complete. [0.487 seconds] - 2026-02-27T10:12:28.490Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-OPLVGDVF.js   | person-detail | 288.15 kB | 
+
+Application bundle generation complete. [0.386 seconds] - 2026-02-27T10:18:06.940Z
+
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-RXRIF6VO.js   | person-detail | 282.72 kB | 
+
+Application bundle generation complete. [0.524 seconds] - 2026-02-27T10:18:09.895Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-5PI5ZGVH.js   | person-detail | 284.26 kB | 
+
+Application bundle generation complete. [0.445 seconds] - 2026-02-27T10:18:22.718Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-T747BMSO.js   | person-detail | 285.00 kB | 
+
+Application bundle generation complete. [0.397 seconds] - 2026-02-27T10:49:41.144Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Application bundle generation failed. [0.353 seconds] - 2026-02-27T10:49:43.546Z
+
+▲ [WARNING] Duplicate member "addRelationSimple" in class body [duplicate-class-member]
+
+    src/app/person-detail.ts:1697:4:
+      1697 │     addRelationSimple(type, familyIdx = null) {
+           ╵     ~~~~~~~~~~~~~~~~~
+
+  The original member "addRelationSimple" is here:
+
+    src/app/person-detail.ts:1672:4:
+      1672 │     addRelationSimple(type, familyIndex) {
+           ╵     ~~~~~~~~~~~~~~~~~
+
+
+▲ [WARNING] Duplicate member "removeParent" in class body [duplicate-class-member]
+
+    src/app/person-detail.ts:1757:4:
+      1757 │     removeParent(type) {
+           ╵     ~~~~~~~~~~~~
+
+  The original member "removeParent" is here:
+
+    src/app/person-detail.ts:1638:10:
+      1638 │     async removeParent(type) {
+           ╵           ~~~~~~~~~~~~
+
+
+▲ [WARNING] Duplicate member "removeFamily" in class body [duplicate-class-member]
+
+    src/app/person-detail.ts:1772:4:
+      1772 │     removeFamily(index) {
+           ╵     ~~~~~~~~~~~~
+
+  The original member "removeFamily" is here:
+
+    src/app/person-detail.ts:1656:10:
+      1656 │     async removeFamily(famIndex) {
+           ╵           ~~~~~~~~~~~~
+
+
+▲ [WARNING] Duplicate member "removeChildFromFamily" in class body [duplicate-class-member]
+
+    src/app/person-detail.ts:1780:4:
+      1780 │     removeChildFromFamily(familyIdx, childIdx) {
+           ╵     ~~~~~~~~~~~~~~~~~~~~~
+
+  The original member "removeChildFromFamily" is here:
+
+    src/app/person-detail.ts:1664:10:
+      1664 │     async removeChildFromFamily(famIndex, childIndex) {
+           ╵           ~~~~~~~~~~~~~~~~~~~~~
+
+
+✘ [ERROR] TS2393: Duplicate function implementation. [plugin angular-compiler]
+
+    src/app/person-detail.ts:350:10:
+      350 │     async removeParent(type: 'father' | 'mother') {
+          ╵           ~~~~~~~~~~~~
+
+
+✘ [ERROR] TS2393: Duplicate function implementation. [plugin angular-compiler]
+
+    src/app/person-detail.ts:368:10:
+      368 │     async removeFamily(famIndex: number) {
+          ╵           ~~~~~~~~~~~~
+
+
+✘ [ERROR] TS2393: Duplicate function implementation. [plugin angular-compiler]
+
+    src/app/person-detail.ts:377:10:
+      377 │     async removeChildFromFamily(famIndex: number, childIndex: num...
+          ╵           ~~~~~~~~~~~~~~~~~~~~~
+
+
+✘ [ERROR] TS2393: Duplicate function implementation. [plugin angular-compiler]
+
+    src/app/person-detail.ts:386:4:
+      386 │     addRelationSimple(type: 'partner' | 'child' | 'father' | 'mot...
+          ╵     ~~~~~~~~~~~~~~~~~
+
+
+✘ [ERROR] TS2393: Duplicate function implementation. [plugin angular-compiler]
+
+    src/app/person-detail.ts:410:4:
+      410 │     addRelationSimple(type: 'child' | 'partner' | 'father' | 'mot...
+          ╵     ~~~~~~~~~~~~~~~~~
+
+
+✘ [ERROR] TS2393: Duplicate function implementation. [plugin angular-compiler]
+
+    src/app/person-detail.ts:473:4:
+      473 │     removeParent(type: 'father' | 'mother') {
+          ╵     ~~~~~~~~~~~~
+
+
+✘ [ERROR] TS2393: Duplicate function implementation. [plugin angular-compiler]
+
+    src/app/person-detail.ts:487:4:
+      487 │     removeFamily(index: number) {
+          ╵     ~~~~~~~~~~~~
+
+
+✘ [ERROR] TS2393: Duplicate function implementation. [plugin angular-compiler]
+
+    src/app/person-detail.ts:495:4:
+      495 │     removeChildFromFamily(familyIdx: number, childIdx: number) {
+          ╵     ~~~~~~~~~~~~~~~~~~~~~
+
+
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names                  |  Raw size
+main.js             | main                   |  36.67 kB | 
+chunk-MHV3QLSU.js   | -                      |   5.77 kB | 
+chunk-IHAPNL5R.js   | -                      |   3.33 kB | 
+chunk-VUJOFXKG.js   | -                      | 938 bytes | 
+styles.css          | styles                 | 824 bytes | 
+chunk-RQYGVHBW.js   | -                      | 272 bytes | 
+
+                    | Initial total          |  47.81 kB
+
+Lazy chunk files    | Names                  |  Raw size
+chunk-XWUHFMZ7.js   | person-detail          | 286.04 kB | 
+chunk-PNRTXV5R.js   | media-gallery          |  90.46 kB | 
+chunk-OS7ZH45Z.js   | dashboard              |  67.05 kB | 
+chunk-QB7GP6AT.js   | family-chart-component |  44.65 kB | 
+chunk-NFIIEEID.js   | update-settings        |  43.95 kB | 
+chunk-EBG5VNFQ.js   | diagnostics            |  40.47 kB | 
+chunk-2FSYJPXW.js   | tree-management        |  36.56 kB | 
+chunk-2THGF2E2.js   | person-list            |  30.06 kB | 
+chunk-ZBM4KHRD.js   | place-list             |  25.22 kB | 
+chunk-6MVITY5N.js   | gedcom-io              |  24.89 kB | 
+chunk-SZNIWFG2.js   | -                      |  24.73 kB | 
+chunk-6AKDD24N.js   | map-view               |  21.75 kB | 
+chunk-7AWPKUS7.js   | settings               |  17.91 kB | 
+chunk-EC5Y5SGD.js   | login                  |  16.78 kB | 
+chunk-QK525GX7.js   | statistics             |  16.45 kB | 
+...and 3 more lazy chunks files. Use "--verbose" to show all the files.
+
+Application bundle generation complete. [0.302 seconds] - 2026-02-27T10:50:01.523Z
+
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-OTUZCUS7.js   | person-detail | 297.77 kB | 
+
+Application bundle generation complete. [0.433 seconds] - 2026-02-27T10:50:09.897Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-CBNA7Y4M.js   | person-detail | 303.03 kB | 
+
+Application bundle generation complete. [0.397 seconds] - 2026-02-27T10:50:11.114Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-2JBMGCS4.js   | person-detail | 303.42 kB | 
+
+Application bundle generation complete. [0.392 seconds] - 2026-02-27T10:58:26.189Z
+
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-Y36S3UNX.js   | person-detail | 303.63 kB | 
+
+Application bundle generation complete. [0.394 seconds] - 2026-02-27T10:58:35.142Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-6QEWFM54.js   | person-detail | 329.81 kB | 
+
+Application bundle generation complete. [0.420 seconds] - 2026-02-27T10:59:27.570Z
+
+▲ [WARNING] NG8113: PersonCreateModal is not used within the template of PersonDetail [plugin angular-compiler]
+
+    src/app/person-detail.ts:35:96:
+      35 │ ...ePipe, MediaSelector, PlaceModal, ImageViewer, PersonCreateModal],
+         ╵                                                   ~~~~~~~~~~~~~~~~~
+
+
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-HDSAFIXM.js   | person-detail | 319.35 kB | 
+
+Application bundle generation complete. [0.407 seconds] - 2026-02-27T10:59:43.007Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-6HDD54FJ.js   | person-detail | 292.91 kB | 
+chunk-ZMS4C4VJ.js   | person-list   |  29.71 kB | 
+chunk-5H6SFE6H.js   | -             |  27.30 kB | 
+
+Application bundle generation complete. [0.197 seconds] - 2026-02-27T10:59:53.290Z
+
+▲ [WARNING] NG8113: PersonCreateModal is not used within the template of PersonList [plugin angular-compiler]
+
+    src/app/person-list.ts:13:68:
+      13 │ ...odule, RouterLink, FormsModule, CleanDatePipe, PersonCreateModal],
+         ╵                                                   ~~~~~~~~~~~~~~~~~
+
+
+Page reload sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names       | Raw size
+main.js             | main        | 36.67 kB | 
+
+Lazy chunk files    | Names       | Raw size
+chunk-MUTFEJEK.js   | person-list | 30.58 kB | 
+
+Application bundle generation complete. [0.170 seconds] - 2026-02-27T11:00:01.533Z
+
+Component update sent to client(s).
+❯ Changes detected. Rebuilding...
+✔ Changes detected. Rebuilding...
+Initial chunk files | Names         |  Raw size
+main.js             | main          |  36.67 kB | 
+
+Lazy chunk files    | Names         |  Raw size
+chunk-VTMYCLXN.js   | person-detail | 293.10 kB | 
+
+Application bundle generation complete. [0.570 seconds] - 2026-02-27T11:04:49.752Z
+
+Component update sent to client(s).

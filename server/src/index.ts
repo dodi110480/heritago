@@ -89,6 +89,11 @@ app.post('/api/auth/login', async (req, res) => {
 });
 // This will eventually handle the validation logic from the /rules folder
 export class GedcomManager {
+    static isGedcomXref(id?: string | null): boolean {
+        if (!id) return false;
+        return /^@[^@\s]+@$/.test(id.trim());
+    }
+
     private static fixMojibake(value?: string | null): string {
         if (!value) return '';
         const input = String(value);
@@ -240,6 +245,40 @@ export class GedcomManager {
             }
         }
         return dateStr.toUpperCase().trim();
+    }
+
+    private static parseDateStart(value: any): Date | null {
+        if (!value || typeof value !== 'string') return null;
+        const raw = value.trim();
+        if (!raw) return null;
+
+        // Accept only ISO-like formats for DateTime fields.
+        const isoLike = /^\d{4}-\d{2}-\d{2}(T.*)?$/;
+        if (!isoLike.test(raw)) return null;
+
+        const parsed = new Date(raw);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    private static normalizeMarriageSubtype(value?: string | null): 'CIVIL' | 'RELIGIOUS' | null {
+        if (!value) return null;
+        const v = String(value).trim().toUpperCase();
+        if (!v) return null;
+        if (v === 'CIVIL' || v === 'STANDESAMTLICH') return 'CIVIL';
+        if (v === 'RELIGIOUS' || v === 'KIRCHLICH' || v === 'CHURCH MARRIAGE') return 'RELIGIOUS';
+        if (v.includes('CIVIL')) return 'CIVIL';
+        if (v.includes('RELIG')) return 'RELIGIOUS';
+        if (v.includes('CHURCH')) return 'RELIGIOUS';
+        return null;
+    }
+
+    private static normalizeImportedEventSubtype(tag: string, value?: string | null): string | null {
+        const clean = (value || '').trim();
+        if (!clean) return null;
+        if (tag.toUpperCase() === 'MARR') {
+            return this.normalizeMarriageSubtype(clean);
+        }
+        return clean;
     }
 
     static async createPerson(prisma: PrismaClient, treeId: string, data: any) {
@@ -665,9 +704,225 @@ export class GedcomManager {
         };
     }
 
+    static async saveFamily(prisma: PrismaClient, treeId: string, data: any) {
+        const xref = (data?.id || '').trim();
+        if (!xref) throw new Error("Family ID is required for save");
+        if (!this.isGedcomXref(xref)) {
+            throw new Error("Family ID must use GEDCOM format (e.g. @F123@)");
+        }
+
+        const husbandGedcomId = (data?.husband || '').trim();
+        const wifeGedcomId = (data?.wife || '').trim();
+        if (husbandGedcomId && wifeGedcomId && husbandGedcomId === wifeGedcomId) {
+            throw new Error('Husband and wife cannot be the same person');
+        }
+
+        const childGedcomIds: string[] = Array.isArray(data?.children)
+            ? Array.from(new Set(data.children.map((c: any) => (c || '').trim()).filter(Boolean)))
+            : [];
+        if (husbandGedcomId && childGedcomIds.includes(husbandGedcomId)) {
+            throw new Error('A spouse cannot be added as child in the same family');
+        }
+        if (wifeGedcomId && childGedcomIds.includes(wifeGedcomId)) {
+            throw new Error('A spouse cannot be added as child in the same family');
+        }
+
+        const referencedGedcomIds = Array.from(
+            new Set([husbandGedcomId, wifeGedcomId, ...childGedcomIds].filter(Boolean))
+        );
+        const referencedPeople = referencedGedcomIds.length > 0
+            ? await prisma.person.findMany({
+                where: { treeId, gedcomId: { in: referencedGedcomIds } },
+                select: { id: true, gedcomId: true, sex: true }
+            })
+            : [];
+        const personByGedcomId = new Map(referencedPeople.map(p => [p.gedcomId, p]));
+        const missingIds = referencedGedcomIds.filter(id => !personByGedcomId.has(id));
+        if (missingIds.length > 0) {
+            throw new Error(`Referenced person(s) not found: ${missingIds.join(', ')}`);
+        }
+
+        return prisma.$transaction(async (tx) => {
+            const family = await tx.family.upsert({
+                where: { treeId_gedcomId: { treeId, gedcomId: xref } },
+                update: {},
+                create: { treeId, gedcomId: xref }
+            });
+
+            await tx.familyMember.deleteMany({ where: { familyId: family.id } });
+
+            const memberCreates: any[] = [];
+            if (husbandGedcomId) {
+                const husband = personByGedcomId.get(husbandGedcomId)!;
+                memberCreates.push({
+                    familyId: family.id,
+                    personId: husband.id,
+                    role: 'SPOUSE',
+                    sortOrder: 0
+                });
+            }
+            if (wifeGedcomId) {
+                const wife = personByGedcomId.get(wifeGedcomId)!;
+                memberCreates.push({
+                    familyId: family.id,
+                    personId: wife.id,
+                    role: 'SPOUSE',
+                    sortOrder: 1
+                });
+            }
+
+            childGedcomIds.forEach((childGedcomId, idx) => {
+                const child = personByGedcomId.get(childGedcomId)!;
+                memberCreates.push({
+                    familyId: family.id,
+                    personId: child.id,
+                    role: 'CHILD',
+                    sortOrder: 100 + idx
+                });
+            });
+
+            if (memberCreates.length > 0) {
+                await tx.familyMember.createMany({ data: memberCreates });
+            }
+
+            const existingEventIds = (await tx.event.findMany({
+                where: { familyId: family.id },
+                select: { id: true }
+            })).map(e => e.id);
+            if (existingEventIds.length > 0) {
+                await tx.citation.deleteMany({ where: { eventId: { in: existingEventIds } } });
+                await tx.mediaLink.deleteMany({ where: { eventId: { in: existingEventIds } } });
+                await tx.noteLink.deleteMany({ where: { eventId: { in: existingEventIds } } });
+            }
+            await tx.event.deleteMany({ where: { familyId: family.id } });
+            if (Array.isArray(data?.events)) {
+                for (const e of data.events) {
+                    const placeName = (e?.place || '').trim();
+                    const type = (e?.type || 'EVEN').trim() || 'EVEN';
+                    const dateText = (e?.dateText || e?.date || '').trim();
+                    const rawSubtype = (e?.subType || e?.eventSubtype || '').trim();
+                    const eventSubtype = type === 'MARR'
+                        ? this.normalizeMarriageSubtype(rawSubtype)
+                        : null;
+                    const description = (e?.description || '').trim();
+
+                    if (!type && !dateText && !placeName && !description) continue;
+
+                    let placeId: string | undefined = undefined;
+                    if (placeName) {
+                        let place = await tx.place.findFirst({ where: { treeId, name: placeName, parentId: null } });
+                        if (!place) {
+                            place = await tx.place.create({ data: { treeId, name: placeName, historicNames: [] } });
+                        }
+                        placeId = place.id;
+                    }
+
+                    const createdEvent = await tx.event.create({
+                        data: {
+                            treeId,
+                            familyId: family.id,
+                            type,
+                            dateStart: this.parseDateStart(e?.date ?? e?.dateStart),
+                            dateText: dateText || null,
+                            eventSubtype: eventSubtype,
+                            placeId,
+                            description: description || null
+                        }
+                    });
+
+                    if (Array.isArray(e?.media)) {
+                        for (const med of e.media) {
+                            const mediaObj = await this.ensureMediaObject(tx as any, treeId, med);
+                            if (mediaObj) {
+                                await tx.mediaLink.create({
+                                    data: {
+                                        treeId,
+                                        eventId: createdEvent.id,
+                                        mediaId: mediaObj.id,
+                                        isPrimary: !!med?.isPrimary
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                    if (Array.isArray(e?.notes)) {
+                        for (const noteText of e.notes) {
+                            if (!noteText || !String(noteText).trim()) continue;
+                            const note = await tx.sharedNote.findFirst({
+                                where: { treeId, text: String(noteText).trim() }
+                            }) || await tx.sharedNote.create({
+                                data: { treeId, text: String(noteText).trim() }
+                            });
+                            await tx.noteLink.create({
+                                data: {
+                                    treeId,
+                                    eventId: createdEvent.id,
+                                    noteId: note.id
+                                }
+                            });
+                        }
+                    }
+
+                    if (Array.isArray(e?.citations)) {
+                        for (const cit of e.citations) {
+                            const sourceTitle = (cit?.sourceTitle || cit?.source || '').trim();
+                            if (!sourceTitle) continue;
+                            let source = await tx.source.findFirst({ where: { treeId, title: sourceTitle } });
+                            if (!source) {
+                                source = await tx.source.create({ data: { treeId, title: sourceTitle } });
+                            }
+                            await tx.citation.create({
+                                data: {
+                                    treeId,
+                                    eventId: createdEvent.id,
+                                    sourceId: source.id,
+                                    page: cit?.whereInSource || cit?.page || null,
+                                    dateText: cit?.date || cit?.dateText || null
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            const childCount = await tx.familyMember.count({ where: { familyId: family.id, role: 'CHILD' } });
+            const eventCount = await tx.event.count({ where: { familyId: family.id } });
+
+            if (childCount === 0 && eventCount === 0) {
+                const spouseCount = await tx.familyMember.count({ where: { familyId: family.id, role: 'SPOUSE' } });
+                if (spouseCount < 2) {
+                    await tx.family.delete({ where: { id: family.id } });
+                    return { deleted: true };
+                }
+            }
+
+            return family;
+        });
+    }
+
     static formatFamily(fam: any): any {
-        const spouses = (fam.familyMembers || []).filter((fm: any) => fm.role === 'SPOUSE').map((fm: any) => fm.person).filter(Boolean);
-        const children = (fam.familyMembers || []).filter((fm: any) => fm.role === 'CHILD').map((fm: any) => fm.person).filter(Boolean);
+        const spouseMembers = (fam.familyMembers || [])
+            .filter((fm: any) => fm.role === 'SPOUSE' && fm.person)
+            .sort((a: any, b: any) => {
+                const byOrder = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+                if (byOrder !== 0) return byOrder;
+                return (a.person?.gedcomId || '').localeCompare(b.person?.gedcomId || '');
+            });
+        const spouses = spouseMembers.map((fm: any) => fm.person);
+        const maleSpouse = spouses.find((p: any) => p?.sex === 'M');
+        const femaleSpouse = spouses.find((p: any) => p?.sex === 'F');
+        const husband = maleSpouse || spouses[0] || undefined;
+        const wife = femaleSpouse || spouses.find((p: any) => p?.gedcomId !== husband?.gedcomId) || undefined;
+
+        const children = (fam.familyMembers || [])
+            .filter((fm: any) => fm.role === 'CHILD' && fm.person)
+            .sort((a: any, b: any) => {
+                const byOrder = (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+                if (byOrder !== 0) return byOrder;
+                return (a.person?.gedcomId || '').localeCompare(b.person?.gedcomId || '');
+            })
+            .map((fm: any) => fm.person);
         return {
             id: fam.gedcomId || fam.id,
             type: 'FAMILY',
@@ -675,10 +930,27 @@ export class GedcomManager {
                 type: e.type,
                 date: e.dateText,
                 place: e.place?.name,
-                description: e.description
+                description: e.description,
+                subType: e.eventSubtype,
+                media: (e.mediaLinks || []).map((ml: any) => ({
+                    id: ml.media?.id,
+                    url: ml.media?.remoteUrl || ml.media?.filePath,
+                    title: ml.media?.title || ml.media?.filePath,
+                    isPrimary: !!ml.isPrimary,
+                    mimeType: ml.media?.mimeType
+                })),
+                notes: (e.noteLinks || []).map((nl: any) => nl.note?.text).filter(Boolean),
+                citations: (e.citations || []).map((c: any) => ({
+                    sourceId: c.source?.id,
+                    sourceTitle: c.source?.title || '',
+                    whereInSource: c.page || '',
+                    date: c.dateText || '',
+                    text: c.text || '',
+                    quality: c.quality || 2
+                }))
             })),
-            husband: spouses[0]?.gedcomId,
-            wife: spouses[1]?.gedcomId,
+            husband: husband?.gedcomId,
+            wife: wife?.gedcomId,
             children: children.map((p: any) => p.gedcomId).filter(Boolean)
         };
     }
@@ -809,24 +1081,23 @@ export class GedcomManager {
                 if (oa !== ob) return oa - ob;
                 return (this.cleanGedText(a.dateText)).localeCompare(this.cleanGedText(b.dateText));
             });
-            let marrCount = 0;
             for (const event of normalizedFamilyEvents) {
                 const tag = this.cleanGedText(event.type).toUpperCase();
                 const dateText = this.cleanGedText(event.dateText);
                 const placeName = this.cleanGedText(event.place?.name);
                 const description = this.cleanGedText(event.description);
-                const evKey = `${tag}|${dateText}|${placeName}|${description}`;
+                const eventSubtype = this.cleanGedText(event.eventSubtype);
+                const evKey = `${tag}|${dateText}|${placeName}|${eventSubtype}|${description}`;
                 if (seenFamilyEventKeys.has(evKey)) continue;
                 seenFamilyEventKeys.add(evKey);
 
-                let outTag = tag;
+                lines.push(`1 ${tag}`);
                 if (tag === 'MARR') {
-                    marrCount += 1;
-                    if (marrCount > 1) outTag = 'EVEN';
+                    const normalized = this.normalizeMarriageSubtype(eventSubtype);
+                    if (normalized) lines.push(`2 TYPE ${normalized.toLowerCase()}`);
+                } else if (eventSubtype) {
+                    lines.push(`2 TYPE ${eventSubtype}`);
                 }
-
-                lines.push(`1 ${outTag}`);
-                if (tag === 'MARR' && marrCount > 1) lines.push('2 TYPE Church Marriage');
                 if (dateText) lines.push(`2 DATE ${dateText}`);
                 if (placeName) lines.push(`2 PLAC ${placeName}`);
                 const lat = this.formatGedcomLatitude(event.place?.latitude);
@@ -993,6 +1264,7 @@ export class GedcomManager {
                 for (const child of rec.children) {
                     if (gedEvents.includes(child.tag)) {
                         const dateNode = findChild(child, 'DATE');
+                        const typeNode = findChild(child, 'TYPE');
                         const placeNode = findChild(child, 'PLAC');
                         const mapNode = findChild(child, 'MAP');
                         const latNode = (mapNode && findChild(mapNode, 'LATI')) || findChild(child, 'LATI');
@@ -1026,7 +1298,8 @@ export class GedcomManager {
                                 type: child.tag,
                                 dateText: dateNode?.value || null,
                                 placeId: dbPlaceId,
-                                description: child.value || null
+                                description: child.value || null,
+                                eventSubtype: this.normalizeImportedEventSubtype(child.tag, typeNode?.value)
                             }
                         });
                         report.personEventsCreated += 1;
@@ -1038,13 +1311,14 @@ export class GedcomManager {
                 for (const child of rec.children) {
                     if (gedEvents.includes(child.tag)) {
                         const dateNode = findChild(child, 'DATE');
+                        const typeNode = findChild(child, 'TYPE');
                         const placeNode = findChild(child, 'PLAC');
                         const mapNode = findChild(child, 'MAP');
                         const latNode = (mapNode && findChild(mapNode, 'LATI')) || findChild(child, 'LATI');
                         const lonNode = (mapNode && findChild(mapNode, 'LONG')) || findChild(child, 'LONG');
                         const lat = this.parseGedcomCoordinate(latNode?.value);
                         const lon = this.parseGedcomCoordinate(lonNode?.value);
-                        const evKey = `${child.tag}|${dateNode?.value || ''}|${placeNode?.value || ''}|${child.value || ''}`;
+                        const evKey = `${child.tag}|${dateNode?.value || ''}|${placeNode?.value || ''}|${typeNode?.value || ''}|${child.value || ''}`;
                         if (seenFamilyEventKeys.has(evKey)) {
                             report.familyEventsDeduplicated += 1;
                             continue;
@@ -1077,7 +1351,8 @@ export class GedcomManager {
                                 type: child.tag,
                                 dateText: dateNode?.value || null,
                                 placeId: dbPlaceId,
-                                description: child.value || null
+                                description: child.value || null,
+                                eventSubtype: this.normalizeImportedEventSubtype(child.tag, typeNode?.value)
                             }
                         });
                         report.familyEventsCreated += 1;
@@ -1233,7 +1508,14 @@ app.get('/api/tree/:tree', async (req, res) => {
             },
             families: {
                 include: {
-                    events: { include: { place: true } },
+                    events: {
+                        include: {
+                            place: true,
+                            mediaLinks: { include: { media: true } },
+                            noteLinks: { include: { note: true } },
+                            citations: { include: { source: true } }
+                        }
+                    },
                     familyMembers: { include: { person: true } },
                     mediaLinks: { include: { media: true } }
                 }
@@ -1320,32 +1602,26 @@ app.get('/api/tree/:tree/search', async (req, res) => {
 });
 
 app.post('/api/tree/:tree/family', async (req, res) => {
-    // Note: In the new relational model, "Family" is more of a grouping.
-    // Relationships are stored in the Relationship model.
-    // This route might need a significant rethink if we want to keep it.
-    // For now, let's keep it minimal and just handle the legacy spouse/children logic.
     const { tree: treeName } = req.params;
     const data = req.body;
 
-    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-    if (!tree) return res.status(404).json({ success: false });
+    try {
+        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+        if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
 
-    // Legacy support: if we receive husbands/wifes/children, we create family memberships
-    if (data.husband && data.wife) {
-        const h = await prisma.person.findUnique({ where: { treeId_gedcomId: { treeId: tree.id, gedcomId: data.husband } } });
-        const w = await prisma.person.findUnique({ where: { treeId_gedcomId: { treeId: tree.id, gedcomId: data.wife } } });
-        if (h && w) {
-            const family = await prisma.family.create({ data: { treeId: tree.id } });
-            await prisma.familyMember.createMany({
-                data: [
-                    { familyId: family.id, personId: h.id, role: 'SPOUSE' },
-                    { familyId: family.id, personId: w.id, role: 'SPOUSE' },
-                ]
-            });
-        }
+        const result = await GedcomManager.saveFamily(prisma, tree.id, data);
+        res.json({ success: true, family: result });
+    } catch (error: any) {
+        console.error('Save family error:', error);
+        const message = error?.message || 'Failed to save family';
+        const isValidationError =
+            message.includes('cannot be the same person') ||
+            message.includes('cannot be added as child') ||
+            message.includes('Referenced person(s) not found') ||
+            message.includes('Family ID is required') ||
+            message.includes('Family ID must use GEDCOM format');
+        res.status(isValidationError ? 400 : 500).json({ success: false, message });
     }
-
-    res.json({ success: true });
 });
 
 app.get('/api/tree/:tree/place', async (req, res) => {
@@ -2268,10 +2544,171 @@ app.delete('/api/media/:id', async (req, res) => {
     }
 });
 
+async function analyzeInvalidFamilyIds(treeId: string) {
+    const families = await prisma.family.findMany({
+        where: { treeId },
+        include: {
+            familyMembers: {
+                include: { person: true }
+            }
+        }
+    });
+
+    const signatureToFamilies = new Map<string, typeof families>();
+    for (const family of families) {
+        const spouseIds = family.familyMembers
+            .filter(fm => fm.role === 'SPOUSE')
+            .map(fm => fm.person?.gedcomId || '')
+            .filter(Boolean)
+            .sort();
+        const childIds = family.familyMembers
+            .filter(fm => fm.role === 'CHILD')
+            .map(fm => fm.person?.gedcomId || '')
+            .filter(Boolean)
+            .sort();
+        const signature = `S:${spouseIds.join('|')}|C:${childIds.join('|')}`;
+        if (!signatureToFamilies.has(signature)) signatureToFamilies.set(signature, []);
+        signatureToFamilies.get(signature)!.push(family);
+    }
+
+    const invalidFamilies = families.filter(f => !GedcomManager.isGedcomXref(f.gedcomId || ''));
+    const invalidIds = invalidFamilies.map(f => f.id);
+    const duplicateCleanupCandidates: Array<{ canonicalId: string; deleteIds: string[]; signature: string }> = [];
+
+    for (const [signature, grouped] of signatureToFamilies.entries()) {
+        if (grouped.length < 2) continue;
+        const canonical = grouped.find(f => GedcomManager.isGedcomXref(f.gedcomId || ''));
+        if (!canonical) continue;
+        const deleteIds = grouped
+            .filter(f => f.id !== canonical.id && !GedcomManager.isGedcomXref(f.gedcomId || ''))
+            .map(f => f.id);
+        if (deleteIds.length > 0) {
+            duplicateCleanupCandidates.push({
+                canonicalId: canonical.id,
+                deleteIds,
+                signature
+            });
+        }
+    }
+
+    return { invalidIds, duplicateCleanupCandidates };
+}
+
 app.get('/api/tree/:tree/diagnostics', async (req, res) => {
-    // For now, return empty errors to satisfy the frontend and avoid 404
-    // Later this can integrate with a more deep syntactic check
-    res.json({ success: true, errors: [] });
+    try {
+        const { tree: treeName } = req.params;
+        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+        if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
+
+        const { invalidIds, duplicateCleanupCandidates } = await analyzeInvalidFamilyIds(tree.id);
+
+        const errors = [
+            ...invalidIds.map((id) => ({
+                id: `family-id-${id}`,
+                type: 'FAMILY',
+                line: 0,
+                code: 'FAMILY_ID_INVALID',
+                message: `Family with invalid ID format detected: ${id}`,
+                explanation: 'Family IDs should use GEDCOM-like xref format such as @F123@.',
+                content: id
+            })),
+            ...duplicateCleanupCandidates.map((c) => ({
+                id: `family-dup-${c.canonicalId}`,
+                type: 'FAMILY',
+                line: 0,
+                code: 'FAMILY_DUPLICATE_INVALID_ID',
+                message: `Duplicate family candidates for canonical ${c.canonicalId}`,
+                explanation: `Invalid-id duplicates: ${c.deleteIds.join(', ')}`,
+                content: c.signature
+            }))
+        ];
+
+        res.json({
+            success: true,
+            errors,
+            meta: {
+                invalidFamilyIds: invalidIds,
+                duplicateCleanupCandidates
+            }
+        });
+    } catch (error: any) {
+        console.error('Diagnostics error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+app.post('/api/tree/:tree/family/cleanup-invalid-ids', async (req, res) => {
+    try {
+        const { tree: treeName } = req.params;
+        const { dryRun = true } = req.body || {};
+        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+        if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
+
+        const { invalidIds, duplicateCleanupCandidates } = await analyzeInvalidFamilyIds(tree.id);
+        const deleteIds = Array.from(new Set(duplicateCleanupCandidates.flatMap(c => c.deleteIds)));
+
+        if (!dryRun && deleteIds.length > 0) {
+            await prisma.family.deleteMany({
+                where: { treeId: tree.id, id: { in: deleteIds } }
+            });
+        }
+
+        res.json({
+            success: true,
+            dryRun: !!dryRun,
+            invalidFamilyIds: invalidIds,
+            duplicateCleanupCandidates,
+            deleteIds,
+            deletedCount: dryRun ? 0 : deleteIds.length
+        });
+    } catch (error: any) {
+        console.error('Cleanup invalid family IDs error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+app.post('/api/tree/:tree/family/delete-invalid-ids', async (req, res) => {
+    try {
+        const { tree: treeName } = req.params;
+        const { ids } = req.body || {};
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ success: false, message: 'ids array is required' });
+        }
+
+        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+        if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
+
+        const requestedIds = ids.map((x: any) => String(x || '').trim()).filter(Boolean);
+        const existing = await prisma.family.findMany({
+            where: { treeId: tree.id, id: { in: requestedIds } },
+            select: { id: true, gedcomId: true }
+        });
+
+        const deletable = existing
+            .filter(f => !GedcomManager.isGedcomXref(f.gedcomId || ''))
+            .map(f => f.id);
+
+        let deletedCount = 0;
+        if (deletable.length > 0) {
+            const del = await prisma.family.deleteMany({
+                where: { treeId: tree.id, id: { in: deletable } }
+            });
+            deletedCount = del.count;
+        }
+
+        const skipped = requestedIds.filter(id => !deletable.includes(id));
+
+        res.json({
+            success: true,
+            requestedIds,
+            deletedIds: deletable,
+            deletedCount,
+            skippedIds: skipped
+        });
+    } catch (error: any) {
+        console.error('Delete invalid family IDs error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
 });
 
 app.get('/api/tree/:tree/calendar', async (req, res) => {

@@ -121,6 +121,10 @@ export interface LifeEvent {
     placeId?: string;
     place?: string;
     description?: string;
+    subType?: string;
+    media?: Media[];
+    notes?: string[];
+    citations?: Citation[];
     age?: string;
     isPrimary: boolean;
 }

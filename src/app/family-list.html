@@ -1,0 +1,78 @@
+<div class="list-container">
+    <header class="list-header">
+        <div class="header-main">
+            <h1>Familien-Übersicht</h1>
+            <p class="tree-info" *ngIf="treeName()">Stammbaum: {{ treeName() }}</p>
+        </div>
+
+        <div class="header-actions">
+            <div class="search-box">
+                <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
+                    placeholder="Nach Namen suchen..." class="form-control">
+                <span class="search-icon">🔍</span>
+            </div>
+
+            <select [ngModel]="sortMode()" (ngModelChange)="sortMode.set($event)" class="form-control sort-select">
+                <option value="date_desc">Neueste Hochzeiten</option>
+                <option value="children_desc">Meiste Kinder</option>
+                <option value="names_asc">Name Partner (A-Z)</option>
+            </select>
+        </div>
+    </header>
+
+    <div *ngIf="loading()" class="loading-state">
+        <div class="spinner"></div>
+        <p>Lade Familien...</p>
+    </div>
+
+    <div *ngIf="!loading() && filteredFamilies().length === 0" class="empty-state">
+        <p>Keine Familien gefunden.</p>
+    </div>
+
+    <div class="family-grid" *ngIf="!loading()">
+        <a *ngFor="let fam of filteredFamilies()" class="family-card" [routerLink]="['/familie', fam.id]">
+            <div class="partners-row">
+                <!-- Husband -->
+                <div class="partner-side">
+                    <div class="avatar-box" [class]="'gender-' + getPersonGender(fam.husband)"
+                        [style.background-image]="'url(' + getPersonImage(fam.husband) + ')'">
+                    </div>
+                    <span class="partner-name">{{ getPersonName(fam.husband) }}</span>
+                </div>
+
+                <!-- Wedding Link -->
+                <div class="wedding-center">
+                    <div class="wedding-ring" [title]="getFamilyStatusLabel(fam)">
+                        {{ getFamilyStatusIcon(fam) }}
+                    </div>
+                    <div class="wedding-line"></div>
+                </div>
+
+                <!-- Wife -->
+                <div class="partner-side">
+                    <div class="avatar-box" [class]="'gender-' + getPersonGender(fam.wife)"
+                        [style.background-image]="'url(' + getPersonImage(fam.wife) + ')'">
+                    </div>
+                    <span class="partner-name">{{ getPersonName(fam.wife) }}</span>
+                </div>
+            </div>
+
+            <div class="family-details">
+                <div class="marriage-info" *ngIf="getMarriageInfo(fam)">
+                    {{ getMarriageInfo(fam) }}
+                    <span class="marriage-subtype-badge" *ngFor="let label of getMarriageSubtypeLabels(fam)">
+                        {{ label }}
+                    </span>
+                </div>
+                <div class="children-badge" *ngIf="fam.children?.length">
+                    <span class="icon">👶</span> {{ fam.children.length }} {{ fam.children.length === 1 ? 'Kind' :
+                    'Kinder' }}
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <span class="family-id">#{{ fam.id }}</span>
+            </div>
+        </a>
+    </div>
+</div>

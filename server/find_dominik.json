@@ -1,0 +1,4664 @@
+[dotenv@17.3.1] injecting env (7) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[
+  {
+    "id": "cc41b697-70b5-4279-bbee-8ebefa372203",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "M",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152177660478@",
+    "createdAt": "2026-02-24T18:58:08.464Z",
+    "updatedAt": "2026-02-24T18:58:08.850Z",
+    "names": [
+      {
+        "id": "890b3f40-d37c-4365-83bf-04ccbae8bd9c",
+        "personId": "cc41b697-70b5-4279-bbee-8ebefa372203",
+        "value": "Franz Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Franz",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "04c68ad8-0ce3-4ee1-9ca4-7d623c34609b",
+        "personId": "cc41b697-70b5-4279-bbee-8ebefa372203",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "20 MAR 1851",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      },
+      {
+        "id": "7aa2f82f-8bf4-4dd3-ba31-c3f7ccffcdff",
+        "personId": "cc41b697-70b5-4279-bbee-8ebefa372203",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": null,
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": "Y",
+        "place": null
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "97752b74-fb5b-4291-b82e-e9d8b40214c9",
+        "childId": "cc41b697-70b5-4279-bbee-8ebefa372203",
+        "parentId": null,
+        "familyId": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0015@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "a58809e0-bf00-49c4-a614-4cfe280953f1",
+        "childId": "cc41b697-70b5-4279-bbee-8ebefa372203",
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176985272@",
+          "createdAt": "2026-02-24T18:58:08.462Z",
+          "updatedAt": "2026-02-24T18:58:08.839Z",
+          "names": [
+            {
+              "id": "8cfa13a5-3342-40ab-ba82-076399242247",
+              "personId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "e8fea58e-4eae-4c2a-a5d7-541841455577",
+        "childId": "cc41b697-70b5-4279-bbee-8ebefa372203",
+        "parentId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176984076@",
+          "createdAt": "2026-02-24T18:58:08.461Z",
+          "updatedAt": "2026-02-24T18:58:08.835Z",
+          "names": [
+            {
+              "id": "05710dad-0379-481f-8abb-8f2fb9359bd3",
+              "personId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+              "value": "Johanna Rosina Engel",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Johanna Rosina",
+              "surname": "Engel",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": []
+  },
+  {
+    "id": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "F",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152177662660@",
+    "createdAt": "2026-02-24T18:58:08.464Z",
+    "updatedAt": "2026-02-24T18:58:08.853Z",
+    "names": [
+      {
+        "id": "9e1cebed-aee2-442e-b18d-a4f68c6fb169",
+        "personId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+        "value": "Theresia Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Theresia",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "3ee616e6-ccd9-410b-8b4d-bc26ad6275a5",
+        "personId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "4 AUG 1852",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      },
+      {
+        "id": "0e2787c8-649d-4c66-8ded-56b53406a8b5",
+        "personId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": null,
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": "Y",
+        "place": null
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "e45ddfc2-84a1-45a6-b56b-48454d4a281f",
+        "childId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+        "parentId": null,
+        "familyId": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0015@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "90cd26b3-d716-41fd-a16c-9d569cf27869",
+        "childId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176985272@",
+          "createdAt": "2026-02-24T18:58:08.462Z",
+          "updatedAt": "2026-02-24T18:58:08.839Z",
+          "names": [
+            {
+              "id": "8cfa13a5-3342-40ab-ba82-076399242247",
+              "personId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "14c60092-2704-4379-97a5-44228d8a26be",
+        "childId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+        "parentId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176984076@",
+          "createdAt": "2026-02-24T18:58:08.461Z",
+          "updatedAt": "2026-02-24T18:58:08.835Z",
+          "names": [
+            {
+              "id": "05710dad-0379-481f-8abb-8f2fb9359bd3",
+              "personId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+              "value": "Johanna Rosina Engel",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Johanna Rosina",
+              "surname": "Engel",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": [
+      {
+        "id": "9b89dc3b-a820-4801-bfcf-240909ebf66f",
+        "childId": null,
+        "parentId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+        "familyId": "4a044475-774f-483b-89c2-7df67db75de0",
+        "type": "spouse",
+        "role": "wife",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "4a044475-774f-483b-89c2-7df67db75de0",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0056@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "cec89682-310d-42c5-bb0b-fff9aaeec115",
+        "childId": "d98132ac-1b60-41cd-b695-a4ca81fd08e6",
+        "parentId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "d98132ac-1b60-41cd-b695-a4ca81fd08e6",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152177677119@",
+          "createdAt": "2026-02-24T18:58:08.466Z",
+          "updatedAt": "2026-02-24T18:58:08.861Z",
+          "names": [
+            {
+              "id": "2d72f981-c9a4-43a0-b084-10c118e55742",
+              "personId": "d98132ac-1b60-41cd-b695-a4ca81fd08e6",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ]
+  },
+  {
+    "id": "32012bd3-4a0f-4331-baab-20571d1c194c",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "F",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152177665435@",
+    "createdAt": "2026-02-24T18:58:08.465Z",
+    "updatedAt": "2026-02-24T18:58:08.856Z",
+    "names": [
+      {
+        "id": "53bc97a7-1280-4b98-9892-084e407f33ec",
+        "personId": "32012bd3-4a0f-4331-baab-20571d1c194c",
+        "value": "Anna Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Anna",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "820ecf0f-c1c8-4ac7-b515-044b8da49a01",
+        "personId": "32012bd3-4a0f-4331-baab-20571d1c194c",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "22 JAN 1855",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      },
+      {
+        "id": "42d5f9e4-91c1-4308-9adc-18745231640e",
+        "personId": "32012bd3-4a0f-4331-baab-20571d1c194c",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": null,
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": "Y",
+        "place": null
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "52c33019-810f-42b3-9c3a-720922f0ebc3",
+        "childId": "32012bd3-4a0f-4331-baab-20571d1c194c",
+        "parentId": null,
+        "familyId": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0015@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "28d0c094-807e-4521-8e44-8b9f5f7e4d4b",
+        "childId": "32012bd3-4a0f-4331-baab-20571d1c194c",
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176985272@",
+          "createdAt": "2026-02-24T18:58:08.462Z",
+          "updatedAt": "2026-02-24T18:58:08.839Z",
+          "names": [
+            {
+              "id": "8cfa13a5-3342-40ab-ba82-076399242247",
+              "personId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "7569784a-3b8f-4033-b66b-760c75702e23",
+        "childId": "32012bd3-4a0f-4331-baab-20571d1c194c",
+        "parentId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176984076@",
+          "createdAt": "2026-02-24T18:58:08.461Z",
+          "updatedAt": "2026-02-24T18:58:08.835Z",
+          "names": [
+            {
+              "id": "05710dad-0379-481f-8abb-8f2fb9359bd3",
+              "personId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+              "value": "Johanna Rosina Engel",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Johanna Rosina",
+              "surname": "Engel",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": []
+  },
+  {
+    "id": "8e63f978-a30f-45d2-8cf5-4591a51749ae",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "F",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152177672435@",
+    "createdAt": "2026-02-24T18:58:08.466Z",
+    "updatedAt": "2026-02-24T18:58:08.859Z",
+    "names": [
+      {
+        "id": "1e9256ff-f51f-4502-935b-ca8261ee4440",
+        "personId": "8e63f978-a30f-45d2-8cf5-4591a51749ae",
+        "value": "Josepha Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Josepha",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "25a2a388-5e74-4242-bc55-fb7421bd58ad",
+        "personId": "8e63f978-a30f-45d2-8cf5-4591a51749ae",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "14 MAR 1859",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      },
+      {
+        "id": "b7a514e6-b9d2-46e6-88f8-7336313076ec",
+        "personId": "8e63f978-a30f-45d2-8cf5-4591a51749ae",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": null,
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": "Y",
+        "place": null
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "713d6c74-228b-47d2-b538-b17e7c38c440",
+        "childId": "8e63f978-a30f-45d2-8cf5-4591a51749ae",
+        "parentId": null,
+        "familyId": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0015@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "78704ea3-1022-49a2-a074-faa766c146d5",
+        "childId": "8e63f978-a30f-45d2-8cf5-4591a51749ae",
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176985272@",
+          "createdAt": "2026-02-24T18:58:08.462Z",
+          "updatedAt": "2026-02-24T18:58:08.839Z",
+          "names": [
+            {
+              "id": "8cfa13a5-3342-40ab-ba82-076399242247",
+              "personId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "511266b8-4df7-48da-862b-8a039aa2f405",
+        "childId": "8e63f978-a30f-45d2-8cf5-4591a51749ae",
+        "parentId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176984076@",
+          "createdAt": "2026-02-24T18:58:08.461Z",
+          "updatedAt": "2026-02-24T18:58:08.835Z",
+          "names": [
+            {
+              "id": "05710dad-0379-481f-8abb-8f2fb9359bd3",
+              "personId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+              "value": "Johanna Rosina Engel",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Johanna Rosina",
+              "surname": "Engel",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": []
+  },
+  {
+    "id": "d98132ac-1b60-41cd-b695-a4ca81fd08e6",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "M",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152177677119@",
+    "createdAt": "2026-02-24T18:58:08.466Z",
+    "updatedAt": "2026-02-24T18:58:08.861Z",
+    "names": [
+      {
+        "id": "2d72f981-c9a4-43a0-b084-10c118e55742",
+        "personId": "d98132ac-1b60-41cd-b695-a4ca81fd08e6",
+        "value": "Franz Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Franz",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "e6b58f23-a7aa-4db2-b061-39eb27970875",
+        "personId": "d98132ac-1b60-41cd-b695-a4ca81fd08e6",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "6 OCT 1870",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      },
+      {
+        "id": "3096353e-6df6-467c-aaf1-22ab8726e066",
+        "personId": "d98132ac-1b60-41cd-b695-a4ca81fd08e6",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": null,
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": "Y",
+        "place": null
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "33123841-69b8-4ce7-8970-361bcc7c4140",
+        "childId": "d98132ac-1b60-41cd-b695-a4ca81fd08e6",
+        "parentId": null,
+        "familyId": "4a044475-774f-483b-89c2-7df67db75de0",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "4a044475-774f-483b-89c2-7df67db75de0",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0056@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "cec89682-310d-42c5-bb0b-fff9aaeec115",
+        "childId": "d98132ac-1b60-41cd-b695-a4ca81fd08e6",
+        "parentId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152177662660@",
+          "createdAt": "2026-02-24T18:58:08.464Z",
+          "updatedAt": "2026-02-24T18:58:08.853Z",
+          "names": [
+            {
+              "id": "9e1cebed-aee2-442e-b18d-a4f68c6fb169",
+              "personId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+              "value": "Theresia Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Theresia",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": []
+  },
+  {
+    "id": "ff541454-4b05-48de-a824-063f926ecb81",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "M",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176468113@",
+    "createdAt": "2026-02-24T18:58:08.396Z",
+    "updatedAt": "2026-02-27T05:46:19.374Z",
+    "names": [
+      {
+        "id": "af657499-a08d-44e7-b594-3826501ed619",
+        "personId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "value": "Franz /Sperlich/",
+        "type": "BIRTH",
+        "lang": null,
+        "prefix": null,
+        "given": "Franz",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "a4a4ed4f-5463-45b3-b051-51b10a5b5562",
+        "personId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "28 OCT 1893",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      },
+      {
+        "id": "602a33de-4e10-468e-bf12-b8f8caedd01b",
+        "personId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": null,
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": "Y",
+        "place": null
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "6553b799-8ba4-4625-8a78-56e344e16cb0",
+        "childId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "parentId": null,
+        "familyId": "4081bf05-bac8-44b7-af96-b06aec90007b",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "4081bf05-bac8-44b7-af96-b06aec90007b",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0025@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "a71c6e79-8cdf-4d99-b2ce-a95ecb3809c1",
+        "childId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "parentId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176981402@",
+          "createdAt": "2026-02-24T18:58:08.461Z",
+          "updatedAt": "2026-02-24T18:58:08.832Z",
+          "names": [
+            {
+              "id": "4b1dcea5-0339-4d4b-8abb-d58f5db7e8db",
+              "personId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "1098215d-7459-4e4c-8701-6fef64f06db5",
+        "childId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "parentId": null,
+        "familyId": "4081bf05-bac8-44b7-af96-b06aec90007b",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "4081bf05-bac8-44b7-af96-b06aec90007b",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0025@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "f5daa5d1-260d-4890-a9e8-3a247528081f",
+        "childId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "parentId": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152177167808@",
+          "createdAt": "2026-02-24T18:58:08.463Z",
+          "updatedAt": "2026-02-24T18:58:08.845Z",
+          "names": [
+            {
+              "id": "91b27dac-be2e-41a2-a6fb-a86ddd1266c5",
+              "personId": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+              "value": "Rosina Blasche",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Rosina",
+              "surname": "Blasche",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "8295834f-1ad6-4c51-a51c-a8bc29914366",
+        "childId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "parentId": "15cbbaf3-551b-4d45-95a6-4e289422bb88",
+        "familyId": null,
+        "type": "spouse",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "15cbbaf3-551b-4d45-95a6-4e289422bb88",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468112@",
+          "createdAt": "2026-02-24T18:58:08.395Z",
+          "updatedAt": "2026-02-24T18:58:08.594Z",
+          "names": [
+            {
+              "id": "4ab9027c-69cd-476f-97e8-567cf081aafe",
+              "personId": "15cbbaf3-551b-4d45-95a6-4e289422bb88",
+              "value": "Anna Stöbrich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Anna",
+              "surname": "Stöbrich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": [
+      {
+        "id": "4914e081-7dc3-4a0e-843d-c59f3d940654",
+        "childId": null,
+        "parentId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "familyId": "dcf35ee6-a245-4f73-a176-20724fce7dd0",
+        "type": "spouse",
+        "role": "husband",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "dcf35ee6-a245-4f73-a176-20724fce7dd0",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "e721a5f3-c674-44c1-b98e-7a6901f99e78",
+        "childId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "parentId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468156@",
+          "createdAt": "2026-02-24T18:58:08.419Z",
+          "updatedAt": "2026-02-24T18:58:08.692Z",
+          "names": [
+            {
+              "id": "0141970b-c0e9-4c20-8c3e-dbed3ee9af40",
+              "personId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+              "value": "Anna Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Anna",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "0bd09715-2545-437f-9575-de3629cb81f5",
+        "childId": "a4012de6-63e5-402d-97a3-941569728267",
+        "parentId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "a4012de6-63e5-402d-97a3-941569728267",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468102@",
+          "createdAt": "2026-02-24T18:58:08.390Z",
+          "updatedAt": "2026-02-27T07:21:56.526Z",
+          "names": [
+            {
+              "id": "37e83ed8-9f87-4073-a1b7-c0475641e315",
+              "personId": "a4012de6-63e5-402d-97a3-941569728267",
+              "value": "Franz /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ]
+  },
+  {
+    "id": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "F",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176468087@",
+    "createdAt": "2026-02-24T18:58:08.381Z",
+    "updatedAt": "2026-02-26T19:34:38.707Z",
+    "names": [
+      {
+        "id": "64556240-8877-487d-adb0-94fb23dc0721",
+        "personId": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+        "value": "Annelie /Sperlich/",
+        "type": "BIRTH",
+        "lang": null,
+        "prefix": null,
+        "given": "Annelie",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "ac0c1300-ad07-46fd-a0ad-9cc7732e748d",
+        "personId": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "14 OCT 2016",
+        "placeId": "3c562218-3f1b-41ab-94a0-ccdfe81e4ad3",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "3c562218-3f1b-41ab-94a0-ccdfe81e4ad3",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Coburg",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "16840887-d6df-4be8-a077-a2ce079d3c95",
+        "childId": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+        "parentId": null,
+        "familyId": "42f657bb-f565-4e89-ac66-8bd4a6dea352",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "42f657bb-f565-4e89-ac66-8bd4a6dea352",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "2671c16c-b336-4c6c-9fea-376fc4e62799",
+        "childId": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+        "parentId": "ba6b66af-dfb7-4cc4-825e-1fc527919b17",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "ba6b66af-dfb7-4cc4-825e-1fc527919b17",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468089@",
+          "createdAt": "2026-02-24T18:58:08.382Z",
+          "updatedAt": "2026-02-26T19:28:00.495Z",
+          "names": [
+            {
+              "id": "ba2b4c3f-ed5f-4da3-b47f-1092e109d647",
+              "personId": "ba6b66af-dfb7-4cc4-825e-1fc527919b17",
+              "value": "Vanessa /Jahn/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Vanessa",
+              "surname": "Jahn",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "6918701a-d876-44dc-87da-66e54f1c21fe",
+        "childId": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+        "parentId": null,
+        "familyId": "e5112020-4a07-4ff0-8c9f-5be034ef5b87",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "e5112020-4a07-4ff0-8c9f-5be034ef5b87",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "36e44d29-4b55-4043-b2bb-32681d5c2b37",
+        "childId": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+        "parentId": null,
+        "familyId": "86fc263f-51f0-4c75-b35b-75f27f549049",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "86fc263f-51f0-4c75-b35b-75f27f549049",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "458043d4-01a1-4e87-9756-dea01785c400",
+        "childId": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+        "parentId": null,
+        "familyId": "6a5095a6-0917-404c-96a4-40addfb79f2d",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "6a5095a6-0917-404c-96a4-40addfb79f2d",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "ddc8e3b3-281d-41a8-9e33-80560367641b",
+        "childId": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+        "parentId": null,
+        "familyId": "33bd78c0-cfeb-420c-b2cf-df068b8e53bb",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "33bd78c0-cfeb-420c-b2cf-df068b8e53bb",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "1a03723b-d994-4353-b084-9376c3b39628",
+        "childId": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+        "parentId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468088@",
+          "createdAt": "2026-02-24T18:58:08.381Z",
+          "updatedAt": "2026-02-27T07:49:54.040Z",
+          "names": [
+            {
+              "id": "a45cb5af-b26f-48d0-8a90-9decb13eef01",
+              "personId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+              "value": "Dominik /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Dominik",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": []
+  },
+  {
+    "id": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "F",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176468091@",
+    "createdAt": "2026-02-24T18:58:08.383Z",
+    "updatedAt": "2026-02-26T19:33:42.034Z",
+    "names": [
+      {
+        "id": "07505ed6-36f7-49b8-9f5c-79d5b78b40cc",
+        "personId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "value": "Katharina /Sperlich/",
+        "type": "BIRTH",
+        "lang": null,
+        "prefix": null,
+        "given": "Katharina",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "948d380e-e2ef-4596-bd13-73a809617e04",
+        "personId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "6 SEP 1986",
+        "placeId": "3c562218-3f1b-41ab-94a0-ccdfe81e4ad3",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "3c562218-3f1b-41ab-94a0-ccdfe81e4ad3",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Coburg",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "716668a3-ddfa-4387-a3a3-3747f486bffd",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": "12720795-408b-48f4-8a27-6969728372b4",
+        "familyId": null,
+        "type": "spouse",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "12720795-408b-48f4-8a27-6969728372b4",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468114@",
+          "createdAt": "2026-02-24T18:58:08.396Z",
+          "updatedAt": "2026-02-26T19:33:03.455Z",
+          "names": [
+            {
+              "id": "5fc24a22-ad5e-47a9-a925-0993b7f1ba5b",
+              "personId": "12720795-408b-48f4-8a27-6969728372b4",
+              "value": "Daniel /Schmitt/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Daniel",
+              "surname": "Schmitt",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "d4748a61-7d5c-4b1a-abd4-d4a005ec65e4",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": null,
+        "familyId": "08da9815-1611-4e72-99e0-5f9470815d0a",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "08da9815-1611-4e72-99e0-5f9470815d0a",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0005@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "a5529379-d9a2-4f73-9fde-d18615d79798",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": null,
+        "familyId": "08da9815-1611-4e72-99e0-5f9470815d0a",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "08da9815-1611-4e72-99e0-5f9470815d0a",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0005@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "1f557029-f9f9-466f-ade1-2edf0620f47f",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": null,
+        "familyId": "57875701-5457-4848-a84c-36ad44e8bdcf",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "57875701-5457-4848-a84c-36ad44e8bdcf",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "ab06b247-d8a1-4b2c-a2d6-dbe8db7b7f35",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": "b0495995-2790-4d2c-9c4e-d77bdaee9d46",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "b0495995-2790-4d2c-9c4e-d77bdaee9d46",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468095@",
+          "createdAt": "2026-02-24T18:58:08.386Z",
+          "updatedAt": "2026-02-27T07:22:10.766Z",
+          "names": [
+            {
+              "id": "5c3d8f90-8202-47ec-a936-d898f7ed2ea1",
+              "personId": "b0495995-2790-4d2c-9c4e-d77bdaee9d46",
+              "value": "Ursula /Herold/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Ursula",
+              "surname": "Herold",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "a216512a-f40c-4c61-a663-f626333c4fbe",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": null,
+        "familyId": "57875701-5457-4848-a84c-36ad44e8bdcf",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "57875701-5457-4848-a84c-36ad44e8bdcf",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "f045e38b-7918-437d-bf67-bedee4361c80",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": null,
+        "familyId": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "c111a93b-861e-481f-8a9d-284f18516f4e",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468094@",
+          "createdAt": "2026-02-24T18:58:08.385Z",
+          "updatedAt": "2026-02-27T07:22:25.140Z",
+          "names": [
+            {
+              "id": "3e93675d-fc14-4f4d-b6c1-6dc1ac2196ff",
+              "personId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+              "value": "Wolfgang /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Wolfgang",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "5a98dcae-4cf6-4bfa-9c9d-79d4f1a5893f",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": null,
+        "familyId": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "a7c61984-f1a3-4653-8ce7-30c379e0a341",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": null,
+        "familyId": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "692da3b5-ee62-4b73-a641-c53d3862c273",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": null,
+        "familyId": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      }
+    ],
+    "childRelationships": [
+      {
+        "id": "2b80c38e-d56f-4e23-9c96-d6db3df68a01",
+        "childId": null,
+        "parentId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "familyId": "405a0582-0f6d-472b-87ab-ff9910854aa5",
+        "type": "spouse",
+        "role": "wife",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "405a0582-0f6d-472b-87ab-ff9910854aa5",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "f8b79c0c-b212-4540-ba52-6eeb529c203f",
+        "childId": "a713eef6-6c57-4e8e-a035-70a6684f4baa",
+        "parentId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "a713eef6-6c57-4e8e-a035-70a6684f4baa",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468115@",
+          "createdAt": "2026-02-24T18:58:08.397Z",
+          "updatedAt": "2026-02-24T18:58:08.603Z",
+          "names": [
+            {
+              "id": "79c1424f-1c72-40d0-8ef9-d13479850e68",
+              "personId": "a713eef6-6c57-4e8e-a035-70a6684f4baa",
+              "value": "Luis Schmitt",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Luis",
+              "surname": "Schmitt",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "7d8cedcf-f172-4dd6-8344-9943e8c14e91",
+        "childId": "abae46c0-09da-4917-bd04-daf97abd0690",
+        "parentId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "abae46c0-09da-4917-bd04-daf97abd0690",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468116@",
+          "createdAt": "2026-02-24T18:58:08.397Z",
+          "updatedAt": "2026-02-24T18:58:08.605Z",
+          "names": [
+            {
+              "id": "b3386e89-c663-4896-bee7-b3e2ece068bd",
+              "personId": "abae46c0-09da-4917-bd04-daf97abd0690",
+              "value": "Anna Schmitt",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Anna",
+              "surname": "Schmitt",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ]
+  },
+  {
+    "id": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "M",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176468090@",
+    "createdAt": "2026-02-24T18:58:08.383Z",
+    "updatedAt": "2026-02-26T19:34:24.537Z",
+    "names": [
+      {
+        "id": "f73e4ef7-a6b7-411c-ae35-783bc5b470af",
+        "personId": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+        "value": "Franz /Sperlich/",
+        "type": "BIRTH",
+        "lang": null,
+        "prefix": null,
+        "given": "Franz",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "fa9db3bf-6b7a-469c-937c-5e84c938bb02",
+        "personId": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "8 MAR 2020",
+        "placeId": "3c562218-3f1b-41ab-94a0-ccdfe81e4ad3",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "3c562218-3f1b-41ab-94a0-ccdfe81e4ad3",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Coburg",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "573e6c87-1d52-47ad-ab41-df3dc9626f12",
+        "childId": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+        "parentId": null,
+        "familyId": "42f657bb-f565-4e89-ac66-8bd4a6dea352",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "42f657bb-f565-4e89-ac66-8bd4a6dea352",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "fec0b783-3bed-453c-9b87-9ff02c6c1d61",
+        "childId": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+        "parentId": "ba6b66af-dfb7-4cc4-825e-1fc527919b17",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "ba6b66af-dfb7-4cc4-825e-1fc527919b17",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468089@",
+          "createdAt": "2026-02-24T18:58:08.382Z",
+          "updatedAt": "2026-02-26T19:28:00.495Z",
+          "names": [
+            {
+              "id": "ba2b4c3f-ed5f-4da3-b47f-1092e109d647",
+              "personId": "ba6b66af-dfb7-4cc4-825e-1fc527919b17",
+              "value": "Vanessa /Jahn/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Vanessa",
+              "surname": "Jahn",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "5cdad8ea-5eaf-44ca-9590-f16fec420ba7",
+        "childId": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+        "parentId": null,
+        "familyId": "e5112020-4a07-4ff0-8c9f-5be034ef5b87",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "e5112020-4a07-4ff0-8c9f-5be034ef5b87",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "f3603990-c266-4d2e-8ded-b5e1158d2715",
+        "childId": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+        "parentId": null,
+        "familyId": "86fc263f-51f0-4c75-b35b-75f27f549049",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "86fc263f-51f0-4c75-b35b-75f27f549049",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "a9e3d9a5-2ef1-4db3-a6be-c49d909df00c",
+        "childId": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+        "parentId": null,
+        "familyId": "6a5095a6-0917-404c-96a4-40addfb79f2d",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "6a5095a6-0917-404c-96a4-40addfb79f2d",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "92ef69c2-eee1-431a-96a5-4b9c94d7563e",
+        "childId": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+        "parentId": null,
+        "familyId": "33bd78c0-cfeb-420c-b2cf-df068b8e53bb",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "33bd78c0-cfeb-420c-b2cf-df068b8e53bb",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "c8c757eb-e5f6-4309-8624-8cb9ecffcedb",
+        "childId": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+        "parentId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468088@",
+          "createdAt": "2026-02-24T18:58:08.381Z",
+          "updatedAt": "2026-02-27T07:49:54.040Z",
+          "names": [
+            {
+              "id": "a45cb5af-b26f-48d0-8a90-9decb13eef01",
+              "personId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+              "value": "Dominik /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Dominik",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": []
+  },
+  {
+    "id": "a4012de6-63e5-402d-97a3-941569728267",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "M",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176468102@",
+    "createdAt": "2026-02-24T18:58:08.390Z",
+    "updatedAt": "2026-02-27T07:21:56.526Z",
+    "names": [
+      {
+        "id": "37e83ed8-9f87-4073-a1b7-c0475641e315",
+        "personId": "a4012de6-63e5-402d-97a3-941569728267",
+        "value": "Franz /Sperlich/",
+        "type": "BIRTH",
+        "lang": null,
+        "prefix": null,
+        "given": "Franz",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "178964ec-5f33-4611-bac5-269bcb7735c7",
+        "personId": "a4012de6-63e5-402d-97a3-941569728267",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "10 JAN 1924",
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": null
+      },
+      {
+        "id": "c0bfb82c-0327-45eb-83cb-07d05a822398",
+        "personId": "a4012de6-63e5-402d-97a3-941569728267",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": "24 AUG 2007",
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": null
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "7230d9bd-7ee0-4335-ad5f-e61593dfc08c",
+        "childId": "a4012de6-63e5-402d-97a3-941569728267",
+        "parentId": null,
+        "familyId": "dcf35ee6-a245-4f73-a176-20724fce7dd0",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "dcf35ee6-a245-4f73-a176-20724fce7dd0",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "0bd09715-2545-437f-9575-de3629cb81f5",
+        "childId": "a4012de6-63e5-402d-97a3-941569728267",
+        "parentId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "ff541454-4b05-48de-a824-063f926ecb81",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468113@",
+          "createdAt": "2026-02-24T18:58:08.396Z",
+          "updatedAt": "2026-02-27T05:46:19.374Z",
+          "names": [
+            {
+              "id": "af657499-a08d-44e7-b594-3826501ed619",
+              "personId": "ff541454-4b05-48de-a824-063f926ecb81",
+              "value": "Franz /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "a33bbda5-2458-4c22-bd8d-886dc722552a",
+        "childId": "a4012de6-63e5-402d-97a3-941569728267",
+        "parentId": null,
+        "familyId": "dcf35ee6-a245-4f73-a176-20724fce7dd0",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "dcf35ee6-a245-4f73-a176-20724fce7dd0",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "86a31088-9095-47f1-9285-18286f623d0c",
+        "childId": "a4012de6-63e5-402d-97a3-941569728267",
+        "parentId": "15cbbaf3-551b-4d45-95a6-4e289422bb88",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "15cbbaf3-551b-4d45-95a6-4e289422bb88",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468112@",
+          "createdAt": "2026-02-24T18:58:08.395Z",
+          "updatedAt": "2026-02-24T18:58:08.594Z",
+          "names": [
+            {
+              "id": "4ab9027c-69cd-476f-97e8-567cf081aafe",
+              "personId": "15cbbaf3-551b-4d45-95a6-4e289422bb88",
+              "value": "Anna Stöbrich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Anna",
+              "surname": "Stöbrich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "01be96a2-5cd8-4fea-94b5-e107086e8b88",
+        "childId": "a4012de6-63e5-402d-97a3-941569728267",
+        "parentId": null,
+        "familyId": "dcf35ee6-a245-4f73-a176-20724fce7dd0",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "dcf35ee6-a245-4f73-a176-20724fce7dd0",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      }
+    ],
+    "childRelationships": [
+      {
+        "id": "a288c202-cb09-4bdd-94c3-d4e836f1abef",
+        "childId": null,
+        "parentId": "a4012de6-63e5-402d-97a3-941569728267",
+        "familyId": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+        "type": "spouse",
+        "role": "husband",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "b12b8718-2c0c-4143-985e-25c04b2df99b",
+        "childId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "parentId": "a4012de6-63e5-402d-97a3-941569728267",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "7a32f523-e680-42c1-a1a3-b43447268f89",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468143@",
+          "createdAt": "2026-02-24T18:58:08.412Z",
+          "updatedAt": "2026-02-24T18:58:08.665Z",
+          "names": [
+            {
+              "id": "bdb009c1-5590-41c1-9264-7453280ea28c",
+              "personId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+              "value": "Adelheid Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Adelheid",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "3e28802a-acb4-496a-850d-edd0bbb15051",
+        "childId": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+        "parentId": "a4012de6-63e5-402d-97a3-941569728267",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468144@",
+          "createdAt": "2026-02-24T18:58:08.413Z",
+          "updatedAt": "2026-02-24T18:58:08.668Z",
+          "names": [
+            {
+              "id": "41d31c24-6718-4828-831a-3321b7b7bc46",
+              "personId": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+              "value": "Isolde Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Isolde",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "37d48c08-af5c-4a18-80dc-6b9b8b00243c",
+        "childId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "parentId": "a4012de6-63e5-402d-97a3-941569728267",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468094@",
+          "createdAt": "2026-02-24T18:58:08.385Z",
+          "updatedAt": "2026-02-27T07:22:25.140Z",
+          "names": [
+            {
+              "id": "3e93675d-fc14-4f4d-b6c1-6dc1ac2196ff",
+              "personId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+              "value": "Wolfgang /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Wolfgang",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "f2bf3114-b882-4fc6-8685-15ca6da2ba60",
+        "childId": null,
+        "parentId": "a4012de6-63e5-402d-97a3-941569728267",
+        "familyId": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+        "type": "spouse",
+        "role": "husband",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "dd71335e-2870-4a3d-9876-882d4f65ad0a",
+        "childId": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+        "parentId": "a4012de6-63e5-402d-97a3-941569728267",
+        "familyId": null,
+        "type": "spouse",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468103@",
+          "createdAt": "2026-02-24T18:58:08.391Z",
+          "updatedAt": "2026-02-27T07:22:42.160Z",
+          "names": [
+            {
+              "id": "dbb78230-d88c-4e2d-a7cb-f57cc8ed8e00",
+              "personId": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+              "value": "Eleonore /Klüglein/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Eleonore",
+              "surname": "Klüglein",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ]
+  },
+  {
+    "id": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "M",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176468094@",
+    "createdAt": "2026-02-24T18:58:08.385Z",
+    "updatedAt": "2026-02-27T07:22:25.140Z",
+    "names": [
+      {
+        "id": "3e93675d-fc14-4f4d-b6c1-6dc1ac2196ff",
+        "personId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "value": "Wolfgang /Sperlich/",
+        "type": "BIRTH",
+        "lang": null,
+        "prefix": null,
+        "given": "Wolfgang",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "e5a5df08-1818-4d5b-9dd1-37ba64094f92",
+        "personId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "20 OCT 1950",
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": null
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "aa7b5cba-2f62-4e4f-a148-ea71f6df713f",
+        "childId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "parentId": null,
+        "familyId": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "37d48c08-af5c-4a18-80dc-6b9b8b00243c",
+        "childId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "parentId": "a4012de6-63e5-402d-97a3-941569728267",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "a4012de6-63e5-402d-97a3-941569728267",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468102@",
+          "createdAt": "2026-02-24T18:58:08.390Z",
+          "updatedAt": "2026-02-27T07:21:56.526Z",
+          "names": [
+            {
+              "id": "37e83ed8-9f87-4073-a1b7-c0475641e315",
+              "personId": "a4012de6-63e5-402d-97a3-941569728267",
+              "value": "Franz /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "c9c31c82-f890-49e7-9fa3-a42a703e0642",
+        "childId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "parentId": null,
+        "familyId": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "2148f55e-8a30-4c33-9985-00c1996af052",
+        "childId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "parentId": "b0495995-2790-4d2c-9c4e-d77bdaee9d46",
+        "familyId": null,
+        "type": "spouse",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "b0495995-2790-4d2c-9c4e-d77bdaee9d46",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468095@",
+          "createdAt": "2026-02-24T18:58:08.386Z",
+          "updatedAt": "2026-02-27T07:22:10.766Z",
+          "names": [
+            {
+              "id": "5c3d8f90-8202-47ec-a936-d898f7ed2ea1",
+              "personId": "b0495995-2790-4d2c-9c4e-d77bdaee9d46",
+              "value": "Ursula /Herold/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Ursula",
+              "surname": "Herold",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "7c7645fa-d85e-4d6a-9c75-0afe2b1c6741",
+        "childId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "parentId": null,
+        "familyId": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "662c7d50-825b-4163-a316-89f7c619f91a",
+        "childId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "parentId": null,
+        "familyId": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "47bd225b-03af-45ba-aece-b0f67a2fa0a9",
+        "childId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "parentId": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468103@",
+          "createdAt": "2026-02-24T18:58:08.391Z",
+          "updatedAt": "2026-02-27T07:22:42.160Z",
+          "names": [
+            {
+              "id": "dbb78230-d88c-4e2d-a7cb-f57cc8ed8e00",
+              "personId": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+              "value": "Eleonore /Klüglein/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Eleonore",
+              "surname": "Klüglein",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "da8e3ce1-f0af-4dd8-9f8f-06643a0337f1",
+        "childId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "parentId": null,
+        "familyId": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "6d998565-5423-48d6-a2f3-ad45f9633997",
+        "childId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "parentId": null,
+        "familyId": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      }
+    ],
+    "childRelationships": [
+      {
+        "id": "d36c21d4-4c01-462a-bbf0-ad705a5caa88",
+        "childId": null,
+        "parentId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "familyId": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+        "type": "spouse",
+        "role": "husband",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "c111a93b-861e-481f-8a9d-284f18516f4e",
+        "childId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+        "parentId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468091@",
+          "createdAt": "2026-02-24T18:58:08.383Z",
+          "updatedAt": "2026-02-26T19:33:42.034Z",
+          "names": [
+            {
+              "id": "07505ed6-36f7-49b8-9f5c-79d5b78b40cc",
+              "personId": "9510ff04-e2cf-4782-9a45-cd1cc8e71d23",
+              "value": "Katharina /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Katharina",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "b58c829c-fc2c-4748-8178-81bd79743ce1",
+        "childId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "parentId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468088@",
+          "createdAt": "2026-02-24T18:58:08.381Z",
+          "updatedAt": "2026-02-27T07:49:54.040Z",
+          "names": [
+            {
+              "id": "a45cb5af-b26f-48d0-8a90-9decb13eef01",
+              "personId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+              "value": "Dominik /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Dominik",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ]
+  },
+  {
+    "id": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "M",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176468088@",
+    "createdAt": "2026-02-24T18:58:08.381Z",
+    "updatedAt": "2026-02-27T07:49:54.040Z",
+    "names": [
+      {
+        "id": "a45cb5af-b26f-48d0-8a90-9decb13eef01",
+        "personId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "value": "Dominik /Sperlich/",
+        "type": "BIRTH",
+        "lang": null,
+        "prefix": null,
+        "given": "Dominik",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "856bf2f1-c6ec-413c-9d1e-83dc185ca8ee",
+        "personId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "11 APR 1980",
+        "placeId": "8e4e5a3e-e9cd-42bf-ac34-90442b9faedd",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "8e4e5a3e-e9cd-42bf-ac34-90442b9faedd",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Lichtenfels",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "838d81ce-c699-48d3-8a2d-5a58fe611bcd",
+        "childId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "parentId": null,
+        "familyId": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "48e19e43-4d1a-4e34-bc68-d91ff59d9f59",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "b58c829c-fc2c-4748-8178-81bd79743ce1",
+        "childId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "parentId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468094@",
+          "createdAt": "2026-02-24T18:58:08.385Z",
+          "updatedAt": "2026-02-27T07:22:25.140Z",
+          "names": [
+            {
+              "id": "3e93675d-fc14-4f4d-b6c1-6dc1ac2196ff",
+              "personId": "2e82895b-f367-40a1-8d82-9dd3dc2bebd2",
+              "value": "Wolfgang /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Wolfgang",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "02bea1d6-11a7-486b-be95-2429c7caca89",
+        "childId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "parentId": null,
+        "familyId": "57875701-5457-4848-a84c-36ad44e8bdcf",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "57875701-5457-4848-a84c-36ad44e8bdcf",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "3afde526-bff5-4e60-9ff7-acae5532d1c7",
+        "childId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "parentId": "b0495995-2790-4d2c-9c4e-d77bdaee9d46",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "b0495995-2790-4d2c-9c4e-d77bdaee9d46",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468095@",
+          "createdAt": "2026-02-24T18:58:08.386Z",
+          "updatedAt": "2026-02-27T07:22:10.766Z",
+          "names": [
+            {
+              "id": "5c3d8f90-8202-47ec-a936-d898f7ed2ea1",
+              "personId": "b0495995-2790-4d2c-9c4e-d77bdaee9d46",
+              "value": "Ursula /Herold/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Ursula",
+              "surname": "Herold",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "b458f995-37f6-4a77-a2d6-9d05b9914098",
+        "childId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "parentId": "ba6b66af-dfb7-4cc4-825e-1fc527919b17",
+        "familyId": null,
+        "type": "spouse",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "ba6b66af-dfb7-4cc4-825e-1fc527919b17",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468089@",
+          "createdAt": "2026-02-24T18:58:08.382Z",
+          "updatedAt": "2026-02-26T19:28:00.495Z",
+          "names": [
+            {
+              "id": "ba2b4c3f-ed5f-4da3-b47f-1092e109d647",
+              "personId": "ba6b66af-dfb7-4cc4-825e-1fc527919b17",
+              "value": "Vanessa /Jahn/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Vanessa",
+              "surname": "Jahn",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": [
+      {
+        "id": "196d6199-f4a3-4629-8e2e-4e2a2055a590",
+        "childId": null,
+        "parentId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "familyId": "33bd78c0-cfeb-420c-b2cf-df068b8e53bb",
+        "type": "spouse",
+        "role": "husband",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "33bd78c0-cfeb-420c-b2cf-df068b8e53bb",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "c8c757eb-e5f6-4309-8624-8cb9ecffcedb",
+        "childId": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+        "parentId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468090@",
+          "createdAt": "2026-02-24T18:58:08.383Z",
+          "updatedAt": "2026-02-26T19:34:24.537Z",
+          "names": [
+            {
+              "id": "f73e4ef7-a6b7-411c-ae35-783bc5b470af",
+              "personId": "d84aa205-6801-48a4-9892-e7923bd5d50c",
+              "value": "Franz /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "1a03723b-d994-4353-b084-9376c3b39628",
+        "childId": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+        "parentId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468087@",
+          "createdAt": "2026-02-24T18:58:08.381Z",
+          "updatedAt": "2026-02-26T19:34:38.707Z",
+          "names": [
+            {
+              "id": "64556240-8877-487d-adb0-94fb23dc0721",
+              "personId": "7c82c314-2f17-4879-995d-b94d36f1f11d",
+              "value": "Annelie /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Annelie",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "3540f5ee-fce0-444e-9f7a-970f9e6e4ecc",
+        "childId": null,
+        "parentId": "e79b0f41-d77e-4c0f-a806-86de8a7ccf50",
+        "familyId": "106a4de9-a6ef-44cd-a619-3cfd0dc9fd78",
+        "type": "spouse",
+        "role": "husband",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "106a4de9-a6ef-44cd-a619-3cfd0dc9fd78",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      }
+    ]
+  },
+  {
+    "id": "7a32f523-e680-42c1-a1a3-b43447268f89",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "F",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176468143@",
+    "createdAt": "2026-02-24T18:58:08.412Z",
+    "updatedAt": "2026-02-24T18:58:08.665Z",
+    "names": [
+      {
+        "id": "bdb009c1-5590-41c1-9264-7453280ea28c",
+        "personId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "value": "Adelheid Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Adelheid",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "01af6b7f-754d-4e17-8362-026c30844517",
+        "personId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "15 JAN 1953",
+        "placeId": "a722affd-9e5f-449f-96e4-70e8fc7878e4",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "a722affd-9e5f-449f-96e4-70e8fc7878e4",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Oberelldorf",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "80fec197-5b97-4611-96c5-a505597f2c06",
+        "childId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "parentId": "b643b66b-29da-43ce-bf03-d3046c945531",
+        "familyId": null,
+        "type": "spouse",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "b643b66b-29da-43ce-bf03-d3046c945531",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468149@",
+          "createdAt": "2026-02-24T18:58:08.416Z",
+          "updatedAt": "2026-02-24T18:58:08.678Z",
+          "names": [
+            {
+              "id": "fa9d16ec-a4a9-42cf-968a-f6731fd92fe5",
+              "personId": "b643b66b-29da-43ce-bf03-d3046c945531",
+              "value": "Wolfram Huse",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Wolfram",
+              "surname": "Huse",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "ae19465b-2c71-4efb-9b0d-77e1e67edad6",
+        "childId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "parentId": null,
+        "familyId": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "b12b8718-2c0c-4143-985e-25c04b2df99b",
+        "childId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "parentId": "a4012de6-63e5-402d-97a3-941569728267",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "a4012de6-63e5-402d-97a3-941569728267",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468102@",
+          "createdAt": "2026-02-24T18:58:08.390Z",
+          "updatedAt": "2026-02-27T07:21:56.526Z",
+          "names": [
+            {
+              "id": "37e83ed8-9f87-4073-a1b7-c0475641e315",
+              "personId": "a4012de6-63e5-402d-97a3-941569728267",
+              "value": "Franz /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "12933709-a883-4f7b-8f26-192f73ae805a",
+        "childId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "parentId": null,
+        "familyId": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "2c45703c-0448-4a19-8760-afd5221d44ec",
+        "childId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "parentId": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468103@",
+          "createdAt": "2026-02-24T18:58:08.391Z",
+          "updatedAt": "2026-02-27T07:22:42.160Z",
+          "names": [
+            {
+              "id": "dbb78230-d88c-4e2d-a7cb-f57cc8ed8e00",
+              "personId": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+              "value": "Eleonore /Klüglein/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Eleonore",
+              "surname": "Klüglein",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "181ceb2f-cb6e-4617-81e1-eeb7f1a1530e",
+        "childId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "parentId": null,
+        "familyId": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "68da9468-d163-445f-bd74-9dc615af7855",
+        "childId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "parentId": null,
+        "familyId": "8eff9b4c-cc76-4688-8c55-bca03a41e7d3",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "8eff9b4c-cc76-4688-8c55-bca03a41e7d3",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0035@",
+          "type": null,
+          "rin": null
+        }
+      }
+    ],
+    "childRelationships": [
+      {
+        "id": "4940ca36-972b-4dcd-920f-356d05d318a2",
+        "childId": null,
+        "parentId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "familyId": "02c17d99-d76a-406a-b7c3-e91bf46bd639",
+        "type": "spouse",
+        "role": "wife",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "02c17d99-d76a-406a-b7c3-e91bf46bd639",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0046@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "26618501-c609-4aaf-a523-e931af7766f2",
+        "childId": "2b9b03a9-7039-477f-b648-38445be364fa",
+        "parentId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "2b9b03a9-7039-477f-b648-38445be364fa",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468148@",
+          "createdAt": "2026-02-24T18:58:08.415Z",
+          "updatedAt": "2026-02-24T18:58:08.675Z",
+          "names": [
+            {
+              "id": "17539b4e-bddd-4333-b899-43b2fd1de29c",
+              "personId": "2b9b03a9-7039-477f-b648-38445be364fa",
+              "value": "Elisabeth Huse",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Elisabeth",
+              "surname": "Huse",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "76fbb595-3bef-4440-ba4f-dbe6f1ff9281",
+        "childId": "1513e95f-60c3-4002-92e9-dd4c99b5d260",
+        "parentId": "7a32f523-e680-42c1-a1a3-b43447268f89",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "1513e95f-60c3-4002-92e9-dd4c99b5d260",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468147@",
+          "createdAt": "2026-02-24T18:58:08.414Z",
+          "updatedAt": "2026-02-24T18:58:08.674Z",
+          "names": [
+            {
+              "id": "177ed570-a7cb-4cf7-8229-f330066cb84d",
+              "personId": "1513e95f-60c3-4002-92e9-dd4c99b5d260",
+              "value": "Tanja Huse",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Tanja",
+              "surname": "Huse",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ]
+  },
+  {
+    "id": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "F",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176468144@",
+    "createdAt": "2026-02-24T18:58:08.413Z",
+    "updatedAt": "2026-02-24T18:58:08.668Z",
+    "names": [
+      {
+        "id": "41d31c24-6718-4828-831a-3321b7b7bc46",
+        "personId": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+        "value": "Isolde Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Isolde",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "beb44403-0c26-4044-bea9-00d451e8b36d",
+        "personId": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "6 DEC 1958",
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": null
+      },
+      {
+        "id": "2bf01a61-6944-4d6c-9382-2a3b39f0c5cf",
+        "personId": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": "31 AUG 1965",
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": null
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "80cf79bd-9833-46cd-ab15-69c4275aa17d",
+        "childId": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+        "parentId": null,
+        "familyId": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "4ea30b98-de8d-4454-bcdb-d2def31a1d20",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "3e28802a-acb4-496a-850d-edd0bbb15051",
+        "childId": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+        "parentId": "a4012de6-63e5-402d-97a3-941569728267",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "a4012de6-63e5-402d-97a3-941569728267",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468102@",
+          "createdAt": "2026-02-24T18:58:08.390Z",
+          "updatedAt": "2026-02-27T07:21:56.526Z",
+          "names": [
+            {
+              "id": "37e83ed8-9f87-4073-a1b7-c0475641e315",
+              "personId": "a4012de6-63e5-402d-97a3-941569728267",
+              "value": "Franz /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "4b140579-67f5-40f6-aa7c-10804b590f2d",
+        "childId": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+        "parentId": null,
+        "familyId": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "d2979770-14f1-4d23-aa78-180003f741da",
+        "childId": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+        "parentId": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468103@",
+          "createdAt": "2026-02-24T18:58:08.391Z",
+          "updatedAt": "2026-02-27T07:22:42.160Z",
+          "names": [
+            {
+              "id": "dbb78230-d88c-4e2d-a7cb-f57cc8ed8e00",
+              "personId": "1d10375b-06d9-477d-ac3f-ceb36a54fa39",
+              "value": "Eleonore /Klüglein/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Eleonore",
+              "surname": "Klüglein",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "230f00ba-f696-4596-8800-8ee30cfc83e5",
+        "childId": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+        "parentId": null,
+        "familyId": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "2ff54de4-7b2e-432b-a68e-91a2b9fa48c1",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "63810c2f-8a08-4791-849e-48705d671aa5",
+        "childId": "8278e7ff-71d3-458e-8215-cb69239f6f15",
+        "parentId": null,
+        "familyId": "8eff9b4c-cc76-4688-8c55-bca03a41e7d3",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "8eff9b4c-cc76-4688-8c55-bca03a41e7d3",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0035@",
+          "type": null,
+          "rin": null
+        }
+      }
+    ],
+    "childRelationships": []
+  },
+  {
+    "id": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "F",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176468156@",
+    "createdAt": "2026-02-24T18:58:08.419Z",
+    "updatedAt": "2026-02-24T18:58:08.692Z",
+    "names": [
+      {
+        "id": "0141970b-c0e9-4c20-8c3e-dbed3ee9af40",
+        "personId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "value": "Anna Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Anna",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "a5ea478c-136a-47f4-b3e7-3e78389e0813",
+        "personId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "9 MAR 1921",
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": null
+      },
+      {
+        "id": "a756094b-335b-4815-addd-18760fd50b15",
+        "personId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": "18 DEC 2003",
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": null
+      },
+      {
+        "id": "641f4e79-c98a-4d78-aebb-b521ebbaad44",
+        "personId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "familyId": null,
+        "type": "EMIG",
+        "date": null,
+        "dateText": "1 JAN 1946",
+        "placeId": "50c22078-fed6-46b9-bcbc-19f523c8eab0",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "50c22078-fed6-46b9-bcbc-19f523c8eab0",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Naumburg",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "57ae4692-a6c9-4d6f-b3bb-811fdf733dda",
+        "childId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "parentId": null,
+        "familyId": "d274c9b2-ba2e-4020-bc23-3e9bb58e7ba7",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "d274c9b2-ba2e-4020-bc23-3e9bb58e7ba7",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0045@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "18488b30-c833-4946-ac80-16e8c2bd5771",
+        "childId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "parentId": "15cbbaf3-551b-4d45-95a6-4e289422bb88",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "15cbbaf3-551b-4d45-95a6-4e289422bb88",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468112@",
+          "createdAt": "2026-02-24T18:58:08.395Z",
+          "updatedAt": "2026-02-24T18:58:08.594Z",
+          "names": [
+            {
+              "id": "4ab9027c-69cd-476f-97e8-567cf081aafe",
+              "personId": "15cbbaf3-551b-4d45-95a6-4e289422bb88",
+              "value": "Anna Stöbrich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Anna",
+              "surname": "Stöbrich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "3db318ce-a887-49ed-b945-c1b52715d5b4",
+        "childId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "parentId": null,
+        "familyId": "dcf35ee6-a245-4f73-a176-20724fce7dd0",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "dcf35ee6-a245-4f73-a176-20724fce7dd0",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": null,
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "e721a5f3-c674-44c1-b98e-7a6901f99e78",
+        "childId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "parentId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "ff541454-4b05-48de-a824-063f926ecb81",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468113@",
+          "createdAt": "2026-02-24T18:58:08.396Z",
+          "updatedAt": "2026-02-27T05:46:19.374Z",
+          "names": [
+            {
+              "id": "af657499-a08d-44e7-b594-3826501ed619",
+              "personId": "ff541454-4b05-48de-a824-063f926ecb81",
+              "value": "Franz /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "66ba5037-90ee-42bf-9378-60243e5a5ced",
+        "childId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "parentId": "42ccd30c-3965-424d-9ae6-4826c9e3c617",
+        "familyId": null,
+        "type": "spouse",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "42ccd30c-3965-424d-9ae6-4826c9e3c617",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468157@",
+          "createdAt": "2026-02-24T18:58:08.420Z",
+          "updatedAt": "2026-02-24T18:58:08.695Z",
+          "names": [
+            {
+              "id": "5d2f34dc-f217-49fa-93ec-8bd83a6f8af3",
+              "personId": "42ccd30c-3965-424d-9ae6-4826c9e3c617",
+              "value": "Otto Alfred Schulze",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Otto Alfred",
+              "surname": "Schulze",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": [
+      {
+        "id": "ea805f46-210e-4a15-8e5b-e98c883dd474",
+        "childId": null,
+        "parentId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "familyId": "9226c512-b92b-448b-916a-10702a3b20a0",
+        "type": "spouse",
+        "role": "wife",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "9226c512-b92b-448b-916a-10702a3b20a0",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0051@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "0676a312-289b-4bdb-be1a-3767638379e5",
+        "childId": "3d8d40e4-6e98-42dc-a598-ac913e3931a0",
+        "parentId": "b0d8dd83-9e01-4d4f-a1c5-68374095575a",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "3d8d40e4-6e98-42dc-a598-ac913e3931a0",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468158@",
+          "createdAt": "2026-02-24T18:58:08.420Z",
+          "updatedAt": "2026-02-24T18:58:08.699Z",
+          "names": [
+            {
+              "id": "7d4acbd2-49e0-4673-aa03-b3f0b5dea546",
+              "personId": "3d8d40e4-6e98-42dc-a598-ac913e3931a0",
+              "value": "Wolfgang Schulze",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Wolfgang",
+              "surname": "Schulze",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ]
+  },
+  {
+    "id": "e3df883b-eab0-479c-857f-95ef91d7b332",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "M",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176981336@",
+    "createdAt": "2026-02-24T18:58:08.460Z",
+    "updatedAt": "2026-02-24T18:58:08.829Z",
+    "names": [
+      {
+        "id": "46ce153b-b929-416b-b375-de7f0c40b4d7",
+        "personId": "e3df883b-eab0-479c-857f-95ef91d7b332",
+        "value": "Franz Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Franz",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "baec444f-63ac-4f59-a5c3-29f88d0a4ffd",
+        "personId": "e3df883b-eab0-479c-857f-95ef91d7b332",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "18 MAY 1888",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      },
+      {
+        "id": "660c81b0-8d0d-438a-83f2-033ab243dbfd",
+        "personId": "e3df883b-eab0-479c-857f-95ef91d7b332",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": "28 JAN 1890",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "3f5d0eff-733f-4567-b2f7-108645a8712a",
+        "childId": "e3df883b-eab0-479c-857f-95ef91d7b332",
+        "parentId": null,
+        "familyId": "4081bf05-bac8-44b7-af96-b06aec90007b",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "4081bf05-bac8-44b7-af96-b06aec90007b",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0025@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "df596843-761f-4d4a-9d3b-6af1bc8e154e",
+        "childId": "e3df883b-eab0-479c-857f-95ef91d7b332",
+        "parentId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176981402@",
+          "createdAt": "2026-02-24T18:58:08.461Z",
+          "updatedAt": "2026-02-24T18:58:08.832Z",
+          "names": [
+            {
+              "id": "4b1dcea5-0339-4d4b-8abb-d58f5db7e8db",
+              "personId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "489980bd-37ce-4049-bd89-1ca9302a20f5",
+        "childId": "e3df883b-eab0-479c-857f-95ef91d7b332",
+        "parentId": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152177167808@",
+          "createdAt": "2026-02-24T18:58:08.463Z",
+          "updatedAt": "2026-02-24T18:58:08.845Z",
+          "names": [
+            {
+              "id": "91b27dac-be2e-41a2-a6fb-a86ddd1266c5",
+              "personId": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+              "value": "Rosina Blasche",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Rosina",
+              "surname": "Blasche",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": []
+  },
+  {
+    "id": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "M",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176981402@",
+    "createdAt": "2026-02-24T18:58:08.461Z",
+    "updatedAt": "2026-02-24T18:58:08.832Z",
+    "names": [
+      {
+        "id": "4b1dcea5-0339-4d4b-8abb-d58f5db7e8db",
+        "personId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "value": "Franz Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Franz",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "fe153e4b-f741-4a91-9818-a34fca8d9996",
+        "personId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "24 APR 1857",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      },
+      {
+        "id": "5514e155-8a35-4906-aaf8-efcc4fc2197f",
+        "personId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": "14 SEP 1934",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "5d80af63-37b4-4fc2-9c62-f86ffcd2c8ae",
+        "childId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "parentId": null,
+        "familyId": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0015@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "0cfd2f37-e67e-4050-a3ba-2aa386394956",
+        "childId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176985272@",
+          "createdAt": "2026-02-24T18:58:08.462Z",
+          "updatedAt": "2026-02-24T18:58:08.839Z",
+          "names": [
+            {
+              "id": "8cfa13a5-3342-40ab-ba82-076399242247",
+              "personId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "669f0d7a-ab06-4f21-9f7e-054029d1191c",
+        "childId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "parentId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176984076@",
+          "createdAt": "2026-02-24T18:58:08.461Z",
+          "updatedAt": "2026-02-24T18:58:08.835Z",
+          "names": [
+            {
+              "id": "05710dad-0379-481f-8abb-8f2fb9359bd3",
+              "personId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+              "value": "Johanna Rosina Engel",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Johanna Rosina",
+              "surname": "Engel",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": [
+      {
+        "id": "7d26b7ef-932b-4d65-bc83-2b724f92d07f",
+        "childId": null,
+        "parentId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "familyId": "4081bf05-bac8-44b7-af96-b06aec90007b",
+        "type": "spouse",
+        "role": "husband",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "4081bf05-bac8-44b7-af96-b06aec90007b",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0025@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "cab85dc2-0908-4998-8289-c8ca90e6f788",
+        "childId": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+        "parentId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "familyId": null,
+        "type": "spouse",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152177167808@",
+          "createdAt": "2026-02-24T18:58:08.463Z",
+          "updatedAt": "2026-02-24T18:58:08.845Z",
+          "names": [
+            {
+              "id": "91b27dac-be2e-41a2-a6fb-a86ddd1266c5",
+              "personId": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+              "value": "Rosina Blasche",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Rosina",
+              "surname": "Blasche",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "df596843-761f-4d4a-9d3b-6af1bc8e154e",
+        "childId": "e3df883b-eab0-479c-857f-95ef91d7b332",
+        "parentId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "e3df883b-eab0-479c-857f-95ef91d7b332",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176981336@",
+          "createdAt": "2026-02-24T18:58:08.460Z",
+          "updatedAt": "2026-02-24T18:58:08.829Z",
+          "names": [
+            {
+              "id": "46ce153b-b929-416b-b375-de7f0c40b4d7",
+              "personId": "e3df883b-eab0-479c-857f-95ef91d7b332",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "ca2bbeaf-01e0-48d2-9398-0cb27b85390c",
+        "childId": "26e8daba-e05f-4448-8650-415561ea45c1",
+        "parentId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "26e8daba-e05f-4448-8650-415561ea45c1",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176999100@",
+          "createdAt": "2026-02-24T18:58:08.462Z",
+          "updatedAt": "2026-02-24T18:58:08.842Z",
+          "names": [
+            {
+              "id": "1702970e-1d5c-44fe-8bb7-a9195539f0be",
+              "personId": "26e8daba-e05f-4448-8650-415561ea45c1",
+              "value": "Maria Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Maria",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "a71c6e79-8cdf-4d99-b2ce-a95ecb3809c1",
+        "childId": "ff541454-4b05-48de-a824-063f926ecb81",
+        "parentId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "ff541454-4b05-48de-a824-063f926ecb81",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176468113@",
+          "createdAt": "2026-02-24T18:58:08.396Z",
+          "updatedAt": "2026-02-27T05:46:19.374Z",
+          "names": [
+            {
+              "id": "af657499-a08d-44e7-b594-3826501ed619",
+              "personId": "ff541454-4b05-48de-a824-063f926ecb81",
+              "value": "Franz /Sperlich/",
+              "type": "BIRTH",
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ]
+  },
+  {
+    "id": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "M",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176985272@",
+    "createdAt": "2026-02-24T18:58:08.462Z",
+    "updatedAt": "2026-02-24T18:58:08.839Z",
+    "names": [
+      {
+        "id": "8cfa13a5-3342-40ab-ba82-076399242247",
+        "personId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "value": "Franz Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Franz",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "e0d70261-d80c-4868-9b1c-e4dc7107521a",
+        "personId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "10 NOV 1817",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      },
+      {
+        "id": "9f0f0e22-8859-4988-bc58-0fd119de0023",
+        "personId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": null,
+        "placeId": null,
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": "Y",
+        "place": null
+      }
+    ],
+    "parentRelationships": [],
+    "childRelationships": [
+      {
+        "id": "42190b17-04ae-46dc-8904-c1e12e264e52",
+        "childId": null,
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+        "type": "spouse",
+        "role": "husband",
+        "status": null,
+        "child": null,
+        "family": {
+          "id": "3ff03556-b0a2-4fd3-abb4-51759f76e59c",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0015@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "6d9efcd9-b8c8-42c6-b064-0f453ffd2a5c",
+        "childId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "spouse",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176984076@",
+          "createdAt": "2026-02-24T18:58:08.461Z",
+          "updatedAt": "2026-02-24T18:58:08.835Z",
+          "names": [
+            {
+              "id": "05710dad-0379-481f-8abb-8f2fb9359bd3",
+              "personId": "878e5c9e-62fb-4417-baaa-2f0cc352e99b",
+              "value": "Johanna Rosina Engel",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Johanna Rosina",
+              "surname": "Engel",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "a58809e0-bf00-49c4-a614-4cfe280953f1",
+        "childId": "cc41b697-70b5-4279-bbee-8ebefa372203",
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "cc41b697-70b5-4279-bbee-8ebefa372203",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152177660478@",
+          "createdAt": "2026-02-24T18:58:08.464Z",
+          "updatedAt": "2026-02-24T18:58:08.850Z",
+          "names": [
+            {
+              "id": "890b3f40-d37c-4365-83bf-04ccbae8bd9c",
+              "personId": "cc41b697-70b5-4279-bbee-8ebefa372203",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "90cd26b3-d716-41fd-a16c-9d569cf27869",
+        "childId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152177662660@",
+          "createdAt": "2026-02-24T18:58:08.464Z",
+          "updatedAt": "2026-02-24T18:58:08.853Z",
+          "names": [
+            {
+              "id": "9e1cebed-aee2-442e-b18d-a4f68c6fb169",
+              "personId": "c560d2f9-6235-43d6-b97e-6f480959fef3",
+              "value": "Theresia Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Theresia",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "28d0c094-807e-4521-8e44-8b9f5f7e4d4b",
+        "childId": "32012bd3-4a0f-4331-baab-20571d1c194c",
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "32012bd3-4a0f-4331-baab-20571d1c194c",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152177665435@",
+          "createdAt": "2026-02-24T18:58:08.465Z",
+          "updatedAt": "2026-02-24T18:58:08.856Z",
+          "names": [
+            {
+              "id": "53bc97a7-1280-4b98-9892-084e407f33ec",
+              "personId": "32012bd3-4a0f-4331-baab-20571d1c194c",
+              "value": "Anna Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Anna",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "0cfd2f37-e67e-4050-a3ba-2aa386394956",
+        "childId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176981402@",
+          "createdAt": "2026-02-24T18:58:08.461Z",
+          "updatedAt": "2026-02-24T18:58:08.832Z",
+          "names": [
+            {
+              "id": "4b1dcea5-0339-4d4b-8abb-d58f5db7e8db",
+              "personId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "78704ea3-1022-49a2-a074-faa766c146d5",
+        "childId": "8e63f978-a30f-45d2-8cf5-4591a51749ae",
+        "parentId": "29cb11fc-6081-483d-8fdf-55212b50fd43",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "child": {
+          "id": "8e63f978-a30f-45d2-8cf5-4591a51749ae",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152177672435@",
+          "createdAt": "2026-02-24T18:58:08.466Z",
+          "updatedAt": "2026-02-24T18:58:08.859Z",
+          "names": [
+            {
+              "id": "1e9256ff-f51f-4502-935b-ca8261ee4440",
+              "personId": "8e63f978-a30f-45d2-8cf5-4591a51749ae",
+              "value": "Josepha Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Josepha",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ]
+  },
+  {
+    "id": "26e8daba-e05f-4448-8650-415561ea45c1",
+    "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+    "sex": "F",
+    "restriction": null,
+    "rin": null,
+    "gedcomId": "@I152176999100@",
+    "createdAt": "2026-02-24T18:58:08.462Z",
+    "updatedAt": "2026-02-24T18:58:08.842Z",
+    "names": [
+      {
+        "id": "1702970e-1d5c-44fe-8bb7-a9195539f0be",
+        "personId": "26e8daba-e05f-4448-8650-415561ea45c1",
+        "value": "Maria Sperlich",
+        "type": null,
+        "lang": null,
+        "prefix": null,
+        "given": "Maria",
+        "surname": "Sperlich",
+        "surPrefix": null,
+        "suffix": null,
+        "nick": null,
+        "isPrimary": true
+      }
+    ],
+    "events": [
+      {
+        "id": "6c58c446-3ec6-42d5-ace7-df8d60d365e1",
+        "personId": "26e8daba-e05f-4448-8650-415561ea45c1",
+        "familyId": null,
+        "type": "BIRT",
+        "date": null,
+        "dateText": "5 MAY 1890",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      },
+      {
+        "id": "6b0e97d7-5895-4717-be70-0c7a77e9498e",
+        "personId": "26e8daba-e05f-4448-8650-415561ea45c1",
+        "familyId": null,
+        "type": "DEAT",
+        "date": null,
+        "dateText": "5 JUN 1906",
+        "placeId": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+        "address": null,
+        "cause": null,
+        "age": null,
+        "description": null,
+        "place": {
+          "id": "91f242b1-fbe0-4c05-beef-96caca8f5251",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "name": "Doksy",
+          "hierarchy": null,
+          "latitude": null,
+          "longitude": null,
+          "jurisdiction": null
+        }
+      }
+    ],
+    "parentRelationships": [
+      {
+        "id": "74fdbe31-8874-422a-ada0-c453b9a1272c",
+        "childId": "26e8daba-e05f-4448-8650-415561ea45c1",
+        "parentId": null,
+        "familyId": "4081bf05-bac8-44b7-af96-b06aec90007b",
+        "type": "parent",
+        "role": "child",
+        "status": null,
+        "parent": null,
+        "family": {
+          "id": "4081bf05-bac8-44b7-af96-b06aec90007b",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "gedcomId": "@F0025@",
+          "type": null,
+          "rin": null
+        }
+      },
+      {
+        "id": "ca2bbeaf-01e0-48d2-9398-0cb27b85390c",
+        "childId": "26e8daba-e05f-4448-8650-415561ea45c1",
+        "parentId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "M",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152176981402@",
+          "createdAt": "2026-02-24T18:58:08.461Z",
+          "updatedAt": "2026-02-24T18:58:08.832Z",
+          "names": [
+            {
+              "id": "4b1dcea5-0339-4d4b-8abb-d58f5db7e8db",
+              "personId": "189e43d2-89fb-4e0f-9aae-0659bdd27c4f",
+              "value": "Franz Sperlich",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Franz",
+              "surname": "Sperlich",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      },
+      {
+        "id": "acd5a26a-ea59-4bf6-aecf-9224bcccd589",
+        "childId": "26e8daba-e05f-4448-8650-415561ea45c1",
+        "parentId": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+        "familyId": null,
+        "type": "parent",
+        "role": null,
+        "status": null,
+        "parent": {
+          "id": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+          "treeId": "be812dce-ff57-46be-ac81-d3eeb864a8b0",
+          "sex": "F",
+          "restriction": null,
+          "rin": null,
+          "gedcomId": "@I152177167808@",
+          "createdAt": "2026-02-24T18:58:08.463Z",
+          "updatedAt": "2026-02-24T18:58:08.845Z",
+          "names": [
+            {
+              "id": "91b27dac-be2e-41a2-a6fb-a86ddd1266c5",
+              "personId": "e65902e1-e4a9-40e8-96d3-f233d6bfecd2",
+              "value": "Rosina Blasche",
+              "type": null,
+              "lang": null,
+              "prefix": null,
+              "given": "Rosina",
+              "surname": "Blasche",
+              "surPrefix": null,
+              "suffix": null,
+              "nick": null,
+              "isPrimary": true
+            }
+          ]
+        },
+        "family": null
+      }
+    ],
+    "childRelationships": []
+  }
+]

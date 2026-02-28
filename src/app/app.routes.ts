@@ -45,6 +45,21 @@ export const routes: Routes = [
         canActivate: [authGuard]
     },
     {
+        path: 'families',
+        loadComponent: () => import('./family-list').then(m => m.FamilyList),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'family/:id',
+        loadComponent: () => import('./family-detail').then(m => m.FamilyDetail),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'familie/:id',
+        loadComponent: () => import('./family-detail').then(m => m.FamilyDetail),
+        canActivate: [authGuard]
+    },
+    {
         path: 'person/:id',
         loadComponent: () => import('./person-detail').then(m => m.PersonDetail),
         canActivate: [authGuard],
