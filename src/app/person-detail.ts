@@ -48,6 +48,8 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     treeData = signal<TreeData | null>(null);
     loading = signal(true);
     isSaving = false;
+    isDeleting = false;
+    showDeleteModal = signal(false);
 
     activeTab: 'basics' | 'timeline' | 'relations' | 'media' | 'notes' | 'citations' | 'names' | 'associations' | 'dna' = 'basics';
     isExpertMode = signal<boolean>(localStorage.getItem('heritago_expert_mode') === 'true');
@@ -167,6 +169,40 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
     canDeactivate(): boolean | Promise<boolean> {
         return true;
+    }
+
+    openDeleteModal() {
+        this.showDeleteModal.set(true);
+    }
+
+    closeDeleteModal() {
+        this.showDeleteModal.set(false);
+    }
+
+    confirmDeletePerson() {
+        if (this.isDeleting) return;
+        const tree = this.authService.currentTree();
+        if (!tree) {
+            alert('Kein aktiver Stammbaum gefunden.');
+            return;
+        }
+
+        this.isDeleting = true;
+        this.gedcomService.deletePerson(tree.name, this.personId).subscribe({
+            next: (res) => {
+                this.isDeleting = false;
+                if (res?.success) {
+                    this.showDeleteModal.set(false);
+                    this.router.navigate(['/persons']);
+                } else {
+                    alert('Löschen fehlgeschlagen.');
+                }
+            },
+            error: (err) => {
+                this.isDeleting = false;
+                alert('Fehler beim Löschen: ' + (err.error?.message || 'Unbekannter Fehler'));
+            }
+        });
     }
 
     loadPersonData() {

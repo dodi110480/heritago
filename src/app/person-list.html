@@ -19,6 +19,27 @@
                         (ngModelChange)="searchTerm.set($event)" class="search-input">
                 </div>
 
+                <div class="sort-control">
+                    <label for="sortMode">Sortieren</label>
+                    <select id="sortMode" class="sort-select" [ngModel]="sortMode()" (ngModelChange)="sortMode.set($event)">
+                        <option value="completion_desc">Vollständigkeit</option>
+                        <option value="first_asc">Vorname (A-Z)</option>
+                        <option value="last_asc">Nachname (A-Z)</option>
+                        <option value="family_desc">Familienbezug</option>
+                    </select>
+                    <button class="sort-dir-btn" (click)="toggleSortDirection()"
+                        [attr.title]="sortDirection() === 'asc' ? 'Aufsteigend' : 'Absteigend'">
+                        <svg *ngIf="sortDirection() === 'asc'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="18 15 12 9 6 15"></polyline>
+                        </svg>
+                        <svg *ngIf="sortDirection() === 'desc'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
                 <button class="btn-create" (click)="createPerson()" [disabled]="isCreating">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -78,6 +99,18 @@
                     </svg>
                     {{ person.birthPlace }}
                 </p>
+            </div>
+
+            <div class="completion-gauge"
+                [attr.title]="completionTooltip(person)">
+                <svg viewBox="0 0 36 36" class="gauge-svg">
+                    <path class="gauge-bg" d="M18 2.5a15.5 15.5 0 1 1 0 31a15.5 15.5 0 1 1 0-31"></path>
+                    <path class="gauge-progress"
+                        [attr.stroke]="completionColor(completionFor(person).score)"
+                        [attr.stroke-dasharray]="completionFor(person).score + ', 100'"
+                        d="M18 2.5a15.5 15.5 0 1 1 0 31a15.5 15.5 0 1 1 0-31"></path>
+                </svg>
+                <span class="gauge-text">{{ completionFor(person).score }}%</span>
             </div>
 
             <div class="card-action">

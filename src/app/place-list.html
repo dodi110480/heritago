@@ -24,17 +24,23 @@
                 <thead>
                     <tr>
                         <th>Ortsname</th>
+                        <th>Hierarchie</th>
+                        <th>Jurisdiktion</th>
+                        <th>Historische Namen</th>
                         <th>
                             Koordinaten
                             <span class="info-hint" title="Nur Orte mit Koordinaten erscheinen auf der Karte">ℹ️</span>
                         </th>
+                        <th>Verwendung</th>
                         <th class="actions-head">Aktionen</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let place of places()">
+                    <tr *ngFor="let place of flattenHierarchy(hierarchy())"
+                        [class.selected-row]="selectedPlace()?.id === place.id"
+                        (click)="selectPlace(place)">
                         <td>
-                            <div class="place-name-cell">
+                            <div class="place-name-cell" [style.padding-left.px]="(place.depth || 0) * 18">
                                 <span class="marker">📍</span>
                                 <div>
                                     <span class="full-name">{{ place.name }}</span>
@@ -42,21 +48,39 @@
                             </div>
                         </td>
                         <td>
-                            <div class="coords-cell" *ngIf="place.latitude">
+                            <span *ngIf="place.parentName; else noParent">{{ place.parentName }}</span>
+                            <ng-template #noParent><span class="no-coords">Root</span></ng-template>
+                        </td>
+                        <td>
+                            <span>{{ place.jurisdiction || '—' }}</span>
+                        </td>
+                        <td>
+                            <span *ngIf="place.historicNames?.length; else noHistoric">
+                                {{ place.historicNames.join(', ') }}
+                            </span>
+                            <ng-template #noHistoric><span class="no-coords">—</span></ng-template>
+                        </td>
+                        <td>
+                            <div class="coords-cell" *ngIf="place.latitude !== null && place.latitude !== undefined && place.longitude !== null && place.longitude !== undefined">
                                 <span class="lat">{{ place.latitude }}</span>
                                 <span class="lng">{{ place.longitude }}</span>
                             </div>
-                            <span class="no-coords" *ngIf="!place.latitude">Keine Koordinaten</span>
+                            <span class="no-coords" *ngIf="place.latitude === null || place.latitude === undefined || place.longitude === null || place.longitude === undefined">Keine Koordinaten</span>
+                        </td>
+                        <td>
+                            <span class="usage-pill" [title]="'Events: ' + place.usage?.eventCount + ', Fakten: ' + place.usage?.factCount + ', Assoziationen: ' + place.usage?.associationCount">
+                                {{ place.usage?.total || 0 }}
+                            </span>
                         </td>
                         <td class="actions-cell">
-                            <button class="btn-icon edit" (click)="openEditModal(place)" title="Bearbeiten">
+                            <button class="btn-icon edit" (click)="$event.stopPropagation(); openEditModal(place)" title="Bearbeiten">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
                             </button>
-                            <button class="btn-icon delete" (click)="deletePlace(place.name)" title="Löschen">
+                            <button class="btn-icon delete" (click)="$event.stopPropagation(); deletePlace(place)" title="Löschen">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="3 6 5 6 21 6"></polyline>
@@ -69,6 +93,97 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+    </div>
+
+    <div class="modal-backdrop" *ngIf="detailsOpen() && selectedPlace() as sp" (click)="closeDetailsModal()">
+        <div class="modal place-detail-modal glass-card" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Ort-Details: {{ sp.name }}</h2>
+                <button class="close-btn" (click)="closeDetailsModal()">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="detail-grid">
+                    <div>
+                        <label>Unterorte</label>
+                        <div>{{ sp.childrenCount || 0 }}</div>
+                    </div>
+                    <div>
+                        <label>Verknüpfungen</label>
+                        <div>{{ sp.usage?.total || 0 }}</div>
+                    </div>
+                    <div>
+                        <label>Merge in Zielort</label>
+                        <div class="detail-actions">
+                            <select class="form-control" [ngModel]="mergeTargetId()" (ngModelChange)="mergeTargetId.set($event)">
+                                <option value="">Zielort wählen...</option>
+                                <option *ngFor="let p of places()" [value]="p.id" [disabled]="p.id === sp.id">{{ p.name }}</option>
+                            </select>
+                            <button class="btn-primary" [disabled]="!mergeTargetId()" (click)="mergeSelected()">Merge</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label>Beim Löschen umhängen</label>
+                        <select class="form-control" [ngModel]="reassignTargetId()" (ngModelChange)="reassignTargetId.set($event)">
+                            <option value="">Kein Ziel</option>
+                            <option *ngFor="let p of places()" [value]="p.id" [disabled]="p.id === sp.id">{{ p.name }}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="usage-block">
+                    <h4>Konkrete Verwendung</h4>
+                    <div *ngIf="loadingUsage()" class="no-coords">Lade Verwendungsdaten...</div>
+                    <div *ngIf="!loadingUsage() && selectedUsage() as u">
+                        <p class="usage-title">Events ({{ u.events?.length || 0 }})</p>
+                        <ul class="usage-list">
+                            <li *ngFor="let e of u.events">
+                                {{ e.type }} {{ e.dateText ? '(' + e.dateText + ')' : '' }}
+                                <button *ngIf="e.personName" class="person-link" (click)="openPersonProfile(e.personId)">· {{ e.personName }}</button>
+                            </li>
+                        </ul>
+
+                        <p class="usage-title">Fakten ({{ u.facts?.length || 0 }})</p>
+                        <ul class="usage-list">
+                            <li *ngFor="let f of u.facts">
+                                {{ f.type }} {{ f.value ? '· ' + f.value : '' }}
+                                <button *ngIf="f.personName" class="person-link" (click)="openPersonProfile(f.personId)">· {{ f.personName }}</button>
+                            </li>
+                        </ul>
+
+                        <p class="usage-title">Assoziationen ({{ u.associations?.length || 0 }})</p>
+                        <ul class="usage-list">
+                            <li *ngFor="let a of u.associations">
+                                {{ a.role }}
+                                <button *ngIf="a.personName" class="person-link" (click)="openPersonProfile(a.personId)">· {{ a.personName }}</button>
+                                <span> ↔ </span>
+                                <button *ngIf="a.associatedPersonName" class="person-link" (click)="openPersonProfile(a.associatedPersonId)">{{ a.associatedPersonName }}</button>
+                                <span *ngIf="!a.associatedPersonName">—</span>
+                            </li>
+                        </ul>
+
+                        <p class="usage-title">Unterorte ({{ u.children?.length || 0 }})</p>
+                        <ul class="usage-list">
+                            <li *ngFor="let c of u.children">{{ c.name }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" (click)="closeDetailsModal()">Schließen</button>
+                <button class="btn btn-secondary" (click)="openEditModal(sp)">Bearbeiten</button>
+                <button class="btn-icon delete" (click)="deletePlace(sp)" title="Löschen">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path
+                            d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                        </path>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 

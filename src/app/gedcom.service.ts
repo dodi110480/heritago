@@ -178,6 +178,14 @@ export class GedcomService {
         return this.http.get<any>(`${this.baseApiUrl}${treeName}/place`, { withCredentials: true });
     }
 
+    getPlaceUsage(treeName: string, placeId: string): Observable<any> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/place/${placeId}/usage`, { withCredentials: true });
+    }
+
+    mergePlaces(treeName: string, sourceId: string, targetId: string): Observable<any> {
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place/merge`, { sourceId, targetId }, { withCredentials: true });
+    }
+
     deletePlace(treeName: string, placeName: string): Observable<any> {
         return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, { mode: 'delete', name: placeName }, { withCredentials: true });
     }

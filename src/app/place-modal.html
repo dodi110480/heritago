@@ -19,6 +19,24 @@
                 <input type="text" class="form-control" [value]="locationLabel()" readonly>
             </div>
 
+            <div class="form-group">
+                <label>Übergeordneter Ort (optional)</label>
+                <select class="form-control" [(ngModel)]="modalData.parentId">
+                    <option value="">Kein übergeordneter Ort</option>
+                    <option *ngFor="let p of parentOptions()" [value]="p.id">{{ p.name }}</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Jurisdiktion (optional)</label>
+                <input type="text" [(ngModel)]="modalData.jurisdiction" class="form-control" placeholder="z.B. Standesamt Coburg">
+            </div>
+
+            <div class="form-group">
+                <label>Historische Namen (optional)</label>
+                <input type="text" [(ngModel)]="modalData.historicNames" class="form-control" placeholder="Kommagetrennt, z.B. Kronach, Crana">
+            </div>
+
             <div class="map-actions">
                 <button class="btn btn-secondary btn-sm" (click)="useMyLocation()" type="button">Aktuelle Position verwenden</button>
                 <small>Karte anklicken oder Marker ziehen.</small>
@@ -28,7 +46,7 @@
         <div class="modal-footer">
             <button class="btn btn-secondary" (click)="closeModal()">Abbrechen</button>
             <button class="btn btn-primary" (click)="save()"
-                [disabled]="isSaving() || !modalData.latitude || !modalData.longitude">
+                [disabled]="isSaving() || modalData.latitude === '' || modalData.longitude === ''">
                 {{ isSaving() ? 'Speichere...' : 'Speichern' }}
             </button>
         </div>

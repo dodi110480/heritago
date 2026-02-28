@@ -29,6 +29,7 @@ export class PlaceModal implements OnInit {
     isSaving = signal(false);
     errorMessage = signal<string | null>(null);
     currentTree = signal<string | null>(null);
+    availableParents = signal<any[]>([]);
 
     modalData = {
         description: '',
@@ -36,6 +37,9 @@ export class PlaceModal implements OnInit {
         district: '',
         region: '',
         country: '',
+        jurisdiction: '',
+        historicNames: '',
+        parentId: '',
         old_name: '',
         latitude: '',
         longitude: ''
@@ -45,11 +49,16 @@ export class PlaceModal implements OnInit {
 
     ngOnInit() {
         const tree = this.authService.currentTree();
-        if (tree) this.currentTree.set(tree.name);
+        if (tree) {
+            this.currentTree.set(tree.name);
+            this.loadParentOptions();
+        }
     }
 
     ngOnChanges() {
         if (this.visible) {
+            // Recreate map each time the modal opens to avoid stale Leaflet container references.
+            this.destroyMap();
             this.resetForm();
             if (this.initialData) {
                 if (typeof this.initialData === 'string') {
@@ -60,10 +69,17 @@ export class PlaceModal implements OnInit {
                     this.parsePlaceName(this.initialData.name || '');
                     this.modalData.latitude = this.initialData.latitude?.toString() || '';
                     this.modalData.longitude = this.initialData.longitude?.toString() || '';
+                    this.modalData.jurisdiction = this.initialData.jurisdiction || '';
+                    this.modalData.historicNames = Array.isArray(this.initialData.historicNames)
+                        ? this.initialData.historicNames.join(', ')
+                        : '';
+                    this.modalData.parentId = this.initialData.parentId || '';
                     this.modalData.old_name = this.initialData.name || '';
                 }
             }
             setTimeout(() => this.initMap(), 50);
+        } else {
+            this.destroyMap();
         }
     }
 
@@ -87,6 +103,9 @@ export class PlaceModal implements OnInit {
             district: '',
             region: '',
             country: '',
+            jurisdiction: '',
+            historicNames: '',
+            parentId: '',
             old_name: '',
             latitude: '',
             longitude: ''
@@ -96,7 +115,22 @@ export class PlaceModal implements OnInit {
     }
 
     closeModal() {
+        this.destroyMap();
         this.closed.emit();
+    }
+
+    private loadParentOptions() {
+        const tree = this.currentTree();
+        if (!tree) return;
+        this.gedcomService.getPlaces(tree).subscribe({
+            next: (res: any) => this.availableParents.set(res?.places || []),
+            error: () => this.availableParents.set([])
+        });
+    }
+
+    parentOptions() {
+        const selfId = this.initialData?.id;
+        return this.availableParents().filter((p: any) => !selfId || p.id !== selfId);
     }
 
     save() {
@@ -116,8 +150,12 @@ export class PlaceModal implements OnInit {
         ].filter(Boolean).join(', ');
 
         const payload = {
+            id: this.initialData?.id || undefined,
             name: name,
             old_name: this.mode === 'edit' ? this.modalData.old_name : undefined,
+            parentId: this.modalData.parentId || null,
+            jurisdiction: this.modalData.jurisdiction || null,
+            historicNames: this.modalData.historicNames,
             latitude: this.modalData.latitude,
             longitude: this.modalData.longitude
         };
@@ -144,21 +182,20 @@ export class PlaceModal implements OnInit {
     map: any;
     marker: any;
 
+    private destroyMap() {
+        if (this.map) {
+            this.map.off();
+            this.map.remove();
+            this.map = null;
+            this.marker = null;
+        }
+    }
+
     initMap() {
         if (!this.mapContainer?.nativeElement) return;
         const lat = parseFloat(this.modalData.latitude || '');
         const lng = parseFloat(this.modalData.longitude || '');
         const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
-
-        if (this.map) {
-            this.map.invalidateSize();
-            if (hasCoords) this.setMarker(lat, lng);
-            else if (this.marker) {
-                this.map.removeLayer(this.marker);
-                this.marker = null;
-            }
-            return;
-        }
 
         this.map = L.map(this.mapContainer.nativeElement, { zoomControl: true })
             .setView(hasCoords ? [lat, lng] : [51.1657, 10.4515], hasCoords ? 14 : 6);

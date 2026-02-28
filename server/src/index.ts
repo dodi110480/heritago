@@ -134,6 +134,44 @@ export class GedcomManager {
         return this.fixMojibake(value).replace(/\r?\n/g, ' ').trim();
     }
 
+    private static parseGedcomCoordinate(value?: string | null): number | null {
+        if (!value) return null;
+        const raw = String(value).trim().toUpperCase();
+        if (!raw) return null;
+
+        // Accept both "N52.5200" and "52.5200N" as well as signed decimals.
+        const prefix = raw.match(/^([NSEW])\s*([+-]?\d+(?:[.,]\d+)?)$/);
+        if (prefix) {
+            const n = parseFloat(prefix[2].replace(',', '.'));
+            if (!Number.isFinite(n)) return null;
+            const sign = (prefix[1] === 'S' || prefix[1] === 'W') ? -1 : 1;
+            return sign * Math.abs(n);
+        }
+
+        const suffix = raw.match(/^([+-]?\d+(?:[.,]\d+)?)\s*([NSEW])$/);
+        if (suffix) {
+            const n = parseFloat(suffix[1].replace(',', '.'));
+            if (!Number.isFinite(n)) return null;
+            const sign = (suffix[2] === 'S' || suffix[2] === 'W') ? -1 : 1;
+            return sign * Math.abs(n);
+        }
+
+        const plain = parseFloat(raw.replace(',', '.'));
+        return Number.isFinite(plain) ? plain : null;
+    }
+
+    private static formatGedcomLatitude(value?: number | null): string | null {
+        if (value === null || value === undefined || !Number.isFinite(value)) return null;
+        const dir = value < 0 ? 'S' : 'N';
+        return `${dir}${Math.abs(value).toFixed(6)}`;
+    }
+
+    private static formatGedcomLongitude(value?: number | null): string | null {
+        if (value === null || value === undefined || !Number.isFinite(value)) return null;
+        const dir = value < 0 ? 'W' : 'E';
+        return `${dir}${Math.abs(value).toFixed(6)}`;
+    }
+
     private static personEventOrder(tag: string): number {
         const t = tag.toUpperCase();
         const order: Record<string, number> = {
@@ -719,6 +757,13 @@ export class GedcomManager {
                 lines.push(`1 ${tag}`);
                 if (dateText) lines.push(`2 DATE ${dateText}`);
                 if (placeName) lines.push(`2 PLAC ${placeName}`);
+                const lat = this.formatGedcomLatitude(event.place?.latitude);
+                const lon = this.formatGedcomLongitude(event.place?.longitude);
+                if (lat && lon) {
+                    lines.push('3 MAP');
+                    lines.push(`4 LATI ${lat}`);
+                    lines.push(`4 LONG ${lon}`);
+                }
                 if (description && description.toUpperCase() !== 'Y') lines.push(`2 NOTE ${description}`);
             }
 
@@ -784,6 +829,13 @@ export class GedcomManager {
                 if (tag === 'MARR' && marrCount > 1) lines.push('2 TYPE Church Marriage');
                 if (dateText) lines.push(`2 DATE ${dateText}`);
                 if (placeName) lines.push(`2 PLAC ${placeName}`);
+                const lat = this.formatGedcomLatitude(event.place?.latitude);
+                const lon = this.formatGedcomLongitude(event.place?.longitude);
+                if (lat && lon) {
+                    lines.push('3 MAP');
+                    lines.push(`4 LATI ${lat}`);
+                    lines.push(`4 LONG ${lon}`);
+                }
                 if (description && description.toUpperCase() !== 'Y') lines.push(`2 NOTE ${description}`);
             }
         }
@@ -942,12 +994,27 @@ export class GedcomManager {
                     if (gedEvents.includes(child.tag)) {
                         const dateNode = findChild(child, 'DATE');
                         const placeNode = findChild(child, 'PLAC');
+                        const mapNode = findChild(child, 'MAP');
+                        const latNode = (mapNode && findChild(mapNode, 'LATI')) || findChild(child, 'LATI');
+                        const lonNode = (mapNode && findChild(mapNode, 'LONG')) || findChild(child, 'LONG');
+                        const lat = this.parseGedcomCoordinate(latNode?.value);
+                        const lon = this.parseGedcomCoordinate(lonNode?.value);
 
                         let dbPlaceId = null;
                         if (placeNode?.value) {
                             let p = await prisma.place.findFirst({ where: { treeId, name: placeNode.value, parentId: null } });
                             if (!p) {
-                                p = await prisma.place.create({ data: { treeId, name: placeNode.value, historicNames: [] } });
+                                p = await prisma.place.create({
+                                    data: { treeId, name: placeNode.value, historicNames: [], latitude: lat, longitude: lon }
+                                });
+                            } else if ((lat !== null || lon !== null) && (p.latitude === null || p.longitude === null)) {
+                                p = await prisma.place.update({
+                                    where: { id: p.id },
+                                    data: {
+                                        latitude: p.latitude ?? lat,
+                                        longitude: p.longitude ?? lon
+                                    }
+                                });
                             }
                             dbPlaceId = p.id;
                         }
@@ -972,6 +1039,11 @@ export class GedcomManager {
                     if (gedEvents.includes(child.tag)) {
                         const dateNode = findChild(child, 'DATE');
                         const placeNode = findChild(child, 'PLAC');
+                        const mapNode = findChild(child, 'MAP');
+                        const latNode = (mapNode && findChild(mapNode, 'LATI')) || findChild(child, 'LATI');
+                        const lonNode = (mapNode && findChild(mapNode, 'LONG')) || findChild(child, 'LONG');
+                        const lat = this.parseGedcomCoordinate(latNode?.value);
+                        const lon = this.parseGedcomCoordinate(lonNode?.value);
                         const evKey = `${child.tag}|${dateNode?.value || ''}|${placeNode?.value || ''}|${child.value || ''}`;
                         if (seenFamilyEventKeys.has(evKey)) {
                             report.familyEventsDeduplicated += 1;
@@ -983,7 +1055,17 @@ export class GedcomManager {
                         if (placeNode?.value) {
                             let p = await prisma.place.findFirst({ where: { treeId, name: placeNode.value, parentId: null } });
                             if (!p) {
-                                p = await prisma.place.create({ data: { treeId, name: placeNode.value, historicNames: [] } });
+                                p = await prisma.place.create({
+                                    data: { treeId, name: placeNode.value, historicNames: [], latitude: lat, longitude: lon }
+                                });
+                            } else if ((lat !== null || lon !== null) && (p.latitude === null || p.longitude === null)) {
+                                p = await prisma.place.update({
+                                    where: { id: p.id },
+                                    data: {
+                                        latitude: p.latitude ?? lat,
+                                        longitude: p.longitude ?? lon
+                                    }
+                                });
                             }
                             dbPlaceId = p.id;
                         }
@@ -1273,40 +1355,245 @@ app.get('/api/tree/:tree/place', async (req, res) => {
 
     const places = await prisma.place.findMany({
         where: { treeId: tree.id },
+        include: {
+            parent: { select: { id: true, name: true } },
+            _count: { select: { children: true } }
+        },
         orderBy: { name: 'asc' }
     });
 
+    const usage = await Promise.all(places.map(async (p) => {
+        const [eventCount, factCount, associationCount] = await Promise.all([
+            prisma.event.count({ where: { placeId: p.id } }),
+            prisma.fact.count({ where: { placeId: p.id } }),
+            prisma.association.count({ where: { placeId: p.id } })
+        ]);
+        return { id: p.id, eventCount, factCount, associationCount, total: eventCount + factCount + associationCount };
+    }));
+    const usageById = new Map(usage.map((u) => [u.id, u]));
+
     res.json({
         success: true, places: places.map(p => ({
+            id: p.id,
             name: p.name,
+            historicNames: p.historicNames || [],
+            jurisdiction: p.jurisdiction,
+            parentId: p.parentId,
+            parentName: p.parent?.name || null,
+            childrenCount: p._count?.children || 0,
             latitude: p.latitude,
-            longitude: p.longitude
+            longitude: p.longitude,
+            usage: usageById.get(p.id) || { eventCount: 0, factCount: 0, associationCount: 0, total: 0 }
         }))
     });
 });
 
+app.get('/api/tree/:tree/place/:id/usage', async (req, res) => {
+    const { tree: treeName, id } = req.params;
+    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+    if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
+
+    const place = await prisma.place.findFirst({ where: { id, treeId: tree.id } });
+    if (!place) return res.status(404).json({ success: false, message: 'Place not found' });
+
+    const [events, facts, associations, children] = await Promise.all([
+        prisma.event.findMany({
+            where: { placeId: id },
+            include: {
+                person: { include: { names: { where: { isPrimary: true }, take: 1 } } },
+                family: true
+            },
+            orderBy: { sortDate: 'desc' }
+        }),
+        prisma.fact.findMany({
+            where: { placeId: id },
+            include: {
+                person: { include: { names: { where: { isPrimary: true }, take: 1 } } },
+                family: true
+            },
+            orderBy: { sortOrder: 'asc' }
+        }),
+        prisma.association.findMany({
+            where: { placeId: id },
+            include: {
+                person: { include: { names: { where: { isPrimary: true }, take: 1 } } },
+                associated: { include: { names: { where: { isPrimary: true }, take: 1 } } }
+            },
+            orderBy: { createdAt: 'desc' }
+        }),
+        prisma.place.findMany({
+            where: { parentId: id },
+            select: { id: true, name: true },
+            orderBy: { name: 'asc' }
+        })
+    ]);
+
+    const personLabel = (p: any) =>
+        p ? `${p.names?.[0]?.given || ''} ${p.names?.[0]?.surname || ''}`.trim() || p.gedcomId || p.id : null;
+
+    res.json({
+        success: true,
+        usage: {
+            events: events.map((e) => ({
+                id: e.id,
+                type: e.type,
+                dateText: e.dateText,
+                personId: e.person?.gedcomId || e.person?.id || null,
+                personName: personLabel(e.person),
+                familyId: e.family?.id || null,
+                familyGedcomId: e.family?.gedcomId || null
+            })),
+            facts: facts.map((f) => ({
+                id: f.id,
+                type: f.type,
+                value: f.value,
+                dateText: f.dateText,
+                personId: f.person?.gedcomId || f.person?.id || null,
+                personName: personLabel(f.person),
+                familyId: f.family?.id || null,
+                familyGedcomId: f.family?.gedcomId || null
+            })),
+            associations: associations.map((a) => ({
+                id: a.id,
+                role: a.role,
+                personId: a.person?.gedcomId || a.person?.id || null,
+                personName: personLabel(a.person),
+                associatedPersonId: a.associated?.gedcomId || a.associated?.id || null,
+                associatedPersonName: personLabel(a.associated)
+            })),
+            children
+        }
+    });
+});
+
+app.post('/api/tree/:tree/place/merge', async (req, res) => {
+    const { tree: treeName } = req.params;
+    const { sourceId, targetId } = req.body;
+    if (!sourceId || !targetId || sourceId === targetId) {
+        return res.status(400).json({ success: false, message: 'sourceId and targetId required and must differ' });
+    }
+
+    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+    if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
+
+    const [source, target] = await Promise.all([
+        prisma.place.findFirst({ where: { id: sourceId, treeId: tree.id } }),
+        prisma.place.findFirst({ where: { id: targetId, treeId: tree.id } })
+    ]);
+    if (!source || !target) return res.status(404).json({ success: false, message: 'Source or target not found' });
+
+    await prisma.$transaction(async (tx) => {
+        await tx.event.updateMany({ where: { placeId: source.id }, data: { placeId: target.id } });
+        await tx.fact.updateMany({ where: { placeId: source.id }, data: { placeId: target.id } });
+        await tx.association.updateMany({ where: { placeId: source.id }, data: { placeId: target.id } });
+        await tx.place.updateMany({ where: { parentId: source.id }, data: { parentId: target.id } });
+        await tx.place.delete({ where: { id: source.id } });
+    });
+
+    res.json({ success: true });
+});
+
 app.post('/api/tree/:tree/place', async (req, res) => {
     const { tree: treeName } = req.params;
-    const { name, old_name, latitude, longitude, mode } = req.body;
+    const {
+        id,
+        name,
+        old_name,
+        latitude,
+        longitude,
+        mode,
+        jurisdiction,
+        historicNames,
+        parentId,
+        reassignToId
+    } = req.body;
 
     const tree = await prisma.tree.findUnique({ where: { name: treeName } });
     if (!tree) return res.status(404).json({ success: false });
 
     try {
-        if (mode === 'delete' && name) {
+        if (mode === 'delete' && (name || id)) {
             const placeToDelete = await prisma.place.findFirst({
-                where: { treeId: tree.id, name: name, parentId: null }
+                where: id
+                    ? { id, treeId: tree.id }
+                    : { treeId: tree.id, name: name, parentId: null }
             });
             if (placeToDelete) {
-                await prisma.place.delete({ where: { id: placeToDelete.id } });
+                const [eventCount, factCount, associationCount, childCount] = await Promise.all([
+                    prisma.event.count({ where: { placeId: placeToDelete.id } }),
+                    prisma.fact.count({ where: { placeId: placeToDelete.id } }),
+                    prisma.association.count({ where: { placeId: placeToDelete.id } }),
+                    prisma.place.count({ where: { parentId: placeToDelete.id } })
+                ]);
+                const totalLinks = eventCount + factCount + associationCount;
+
+                if ((totalLinks > 0 || childCount > 0) && !reassignToId) {
+                    return res.status(409).json({
+                        success: false,
+                        message: 'Place is still in use. Provide reassignToId or merge first.',
+                        usage: { eventCount, factCount, associationCount, childCount, totalLinks }
+                    });
+                }
+
+                if (reassignToId) {
+                    const target = await prisma.place.findFirst({ where: { id: reassignToId, treeId: tree.id } });
+                    if (!target) {
+                        return res.status(400).json({ success: false, message: 'Invalid reassignToId' });
+                    }
+                    if (target.id === placeToDelete.id) {
+                        return res.status(400).json({ success: false, message: 'reassignToId must differ from deleting place' });
+                    }
+
+                    await prisma.$transaction(async (tx) => {
+                        await tx.event.updateMany({ where: { placeId: placeToDelete.id }, data: { placeId: target.id } });
+                        await tx.fact.updateMany({ where: { placeId: placeToDelete.id }, data: { placeId: target.id } });
+                        await tx.association.updateMany({ where: { placeId: placeToDelete.id }, data: { placeId: target.id } });
+                        await tx.place.updateMany({ where: { parentId: placeToDelete.id }, data: { parentId: target.id } });
+                        await tx.place.delete({ where: { id: placeToDelete.id } });
+                    });
+                } else {
+                    await prisma.place.delete({ where: { id: placeToDelete.id } });
+                }
             }
             return res.json({ success: true });
         }
 
         const lat = (latitude !== undefined && latitude !== '') ? parseFloat(latitude) : null;
         const lng = (longitude !== undefined && longitude !== '') ? parseFloat(longitude) : null;
+        const normalizedParentId = parentId || null;
+        const normalizedHistoricNames = Array.isArray(historicNames)
+            ? historicNames.filter((h: any) => typeof h === 'string' && h.trim()).map((h: string) => h.trim())
+            : (typeof historicNames === 'string'
+                ? historicNames.split(',').map((h) => h.trim()).filter(Boolean)
+                : []);
 
-        if (old_name && old_name !== name) {
+        if (normalizedParentId) {
+            const parent = await prisma.place.findFirst({ where: { id: normalizedParentId, treeId: tree.id } });
+            if (!parent) {
+                return res.status(400).json({ success: false, message: 'Invalid parentId for this tree.' });
+            }
+            if (id && normalizedParentId === id) {
+                return res.status(400).json({ success: false, message: 'A place cannot be its own parent.' });
+            }
+        }
+
+        if (id) {
+            const existingById = await prisma.place.findFirst({ where: { id, treeId: tree.id } });
+            if (!existingById) {
+                return res.status(404).json({ success: false, message: 'Place not found.' });
+            }
+            await prisma.place.update({
+                where: { id: existingById.id },
+                data: {
+                    name: name,
+                    latitude: lat,
+                    longitude: lng,
+                    jurisdiction: jurisdiction || null,
+                    historicNames: normalizedHistoricNames,
+                    parentId: normalizedParentId
+                }
+            });
+        } else if (old_name && old_name !== name) {
             const existingPlace = await prisma.place.findFirst({
                 where: { treeId: tree.id, name: old_name, parentId: null }
             });
@@ -1316,25 +1603,34 @@ app.post('/api/tree/:tree/place', async (req, res) => {
                     data: {
                         name: name,
                         latitude: lat,
-                        longitude: lng
+                        longitude: lng,
+                        jurisdiction: jurisdiction || null,
+                        historicNames: normalizedHistoricNames
                     }
                 });
             }
         } else {
             const existingPlace = await prisma.place.findFirst({
-                where: { treeId: tree.id, name: name, parentId: null }
+                where: { treeId: tree.id, name: name, parentId: normalizedParentId }
             });
             if (existingPlace) {
                 await prisma.place.update({
                     where: { id: existingPlace.id },
-                    data: { latitude: lat, longitude: lng }
+                    data: {
+                        latitude: lat,
+                        longitude: lng,
+                        jurisdiction: jurisdiction || null,
+                        historicNames: normalizedHistoricNames
+                    }
                 });
             } else {
                 await prisma.place.create({
                     data: {
                         treeId: tree.id,
                         name: name,
-                        historicNames: [],
+                        historicNames: normalizedHistoricNames,
+                        jurisdiction: jurisdiction || null,
+                        parentId: normalizedParentId,
                         latitude: lat,
                         longitude: lng
                     }

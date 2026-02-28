@@ -27,6 +27,9 @@
                 <button class="btn btn-primary" (click)="savePerson()" [disabled]="isSaving">
                     {{ isSaving ? 'Speichere...' : 'Speichern' }}
                 </button>
+                <button class="btn btn-secondary" (click)="openDeleteModal()" [disabled]="isSaving || isDeleting">
+                    Löschen
+                </button>
             </div>
         </div>
 
@@ -950,3 +953,21 @@
             [initialLastName]="newPersonData().lastName" (created)="onPersonCreated($event)"
             (closed)="closeRelationModal()">
         </app-person-create-modal>
+
+        <div class="relation-modal-overlay" *ngIf="showDeleteModal()" (click)="closeDeleteModal()">
+            <div class="relation-modal" (click)="$event.stopPropagation()">
+                <div class="modal-header">
+                    <h3>Person löschen</h3>
+                    <button class="btn-close" (click)="closeDeleteModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    Möchten Sie diese Person wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" (click)="closeDeleteModal()" [disabled]="isDeleting">Abbrechen</button>
+                    <button class="btn btn-primary" (click)="confirmDeletePerson()" [disabled]="isDeleting">
+                        {{ isDeleting ? 'Lösche...' : 'Ja, löschen' }}
+                    </button>
+                </div>
+            </div>
+        </div>

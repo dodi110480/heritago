@@ -23,6 +23,8 @@ export class PersonList {
     families = signal<any[]>([]);
     loading = signal(true);
     searchTerm = signal('');
+    sortMode = signal<'completion_desc' | 'first_asc' | 'last_asc' | 'family_desc'>('completion_desc');
+    sortDirection = signal<'asc' | 'desc'>('desc');
     treeName = signal('');
     focusedPersonId = signal<string>(localStorage.getItem(this.FOCUS_PERSON_KEY) || '');
     isCreating = false;
@@ -40,16 +42,15 @@ export class PersonList {
             );
         });
 
-        const focusId = this.focusedPersonId();
-        if (!focusId) return base;
+        return this.sortIndividuals(base);
+    });
 
-        const familySet = this.relatedPeopleSet(focusId);
-        return [...base].sort((a, b) => {
-            const pa = this.priorityForPerson(a.id, focusId, familySet);
-            const pb = this.priorityForPerson(b.id, focusId, familySet);
-            if (pa !== pb) return pa - pb;
-            return (a.name || '').localeCompare(b.name || '');
-        });
+    completionById = computed(() => {
+        const map = new Map<string, { score: number; missing: string[] }>();
+        for (const p of this.individuals()) {
+            map.set(p.id, this.computeCompletion(p));
+        }
+        return map;
     });
 
     constructor() {
@@ -128,5 +129,109 @@ export class PersonList {
         if (id === focusId) return 0;
         if (familySet.has(id)) return 1;
         return 2;
+    }
+
+    private sortIndividuals(items: Individual[]): Individual[] {
+        return [...items].sort((a, b) => this.compareBySortMode(a, b));
+    }
+
+    private compareBySortMode(a: Individual, b: Individual): number {
+        const mode = this.sortMode();
+        const dir = this.sortDirection() === 'asc' ? 1 : -1;
+        if (mode === 'first_asc') {
+            const cmp = (a.firstName || '').localeCompare(b.firstName || '') || (a.lastName || '').localeCompare(b.lastName || '');
+            return cmp * dir;
+        }
+        if (mode === 'last_asc') {
+            const cmp = (a.lastName || '').localeCompare(b.lastName || '') || (a.firstName || '').localeCompare(b.firstName || '');
+            return cmp * dir;
+        }
+        if (mode === 'family_desc') {
+            const fa = this.familyLinkCount(a);
+            const fb = this.familyLinkCount(b);
+            if (fa !== fb) return (fa - fb) * dir;
+            return (a.lastName || '').localeCompare(b.lastName || '') * dir;
+        }
+        // default: completion
+        const ca = this.completionFor(a).score;
+        const cb = this.completionFor(b).score;
+        if (ca !== cb) return (ca - cb) * dir;
+        return (a.lastName || '').localeCompare(b.lastName || '') * dir;
+    }
+
+    private familyLinkCount(person: Individual): number {
+        let count = 0;
+        if (Array.isArray(person.parents)) count += person.parents.length;
+        if (Array.isArray(person.spouses)) count += person.spouses.length;
+        if (Array.isArray(person.familiesAsSpouse)) {
+            count += person.familiesAsSpouse.length;
+            for (const fam of person.familiesAsSpouse) {
+                count += Array.isArray(fam.children) ? fam.children.length : 0;
+            }
+        }
+        return count;
+    }
+
+    completionFor(person: Individual): { score: number; missing: string[] } {
+        return this.completionById().get(person.id) || { score: 0, missing: [] };
+    }
+
+    completionColor(score: number): string {
+        if (score >= 80) return '#22c55e';
+        if (score >= 60) return '#84cc16';
+        if (score >= 40) return '#eab308';
+        return '#ef4444';
+    }
+
+    completionTooltip(person: Individual): string {
+        const c = this.completionFor(person);
+        if (c.missing.length === 0) return `Datenqualität: ${c.score}%\nSehr gut gepflegt.`;
+        return `Datenqualität: ${c.score}%\nFehlt: ${c.missing.join(', ')}`;
+    }
+
+    toggleSortDirection() {
+        this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    }
+
+    private computeCompletion(person: Individual): { score: number; missing: string[] } {
+        let points = 0;
+        let max = 0;
+        const missing: string[] = [];
+
+        const addRule = (ok: boolean, weight: number, label: string) => {
+            max += weight;
+            if (ok) points += weight;
+            else missing.push(label);
+        };
+
+        const has = (v: any) => typeof v === 'string' ? v.trim().length > 0 : !!v;
+        const hasArray = (a: any) => Array.isArray(a) && a.length > 0;
+
+        // Core identity
+        addRule(has(person.firstName) || has(person.lastName), 15, 'Name');
+        addRule(person.gender === 'M' || person.gender === 'F' || person.gender === 'X', 8, 'Geschlecht');
+
+        // Life facts (smart for living/deceased)
+        const birthKnown = has(person.birthDate) || person.events?.some((e: any) => e.type === 'BIRT' && has(e.date));
+        const birthPlaceKnown = has(person.birthPlace) || person.events?.some((e: any) => e.type === 'BIRT' && has(e.place));
+        addRule(!!birthKnown, 14, 'Geburtsdatum');
+        addRule(!!birthPlaceKnown, 8, 'Geburtsort');
+
+        const isLikelyDeceased = person.isLiving === false || has(person.deathDate);
+        if (isLikelyDeceased) {
+            addRule(has(person.deathDate), 8, 'Sterbedatum');
+            addRule(has(person.deathPlace), 6, 'Sterbeort');
+        }
+
+        // Structure and quality
+        addRule(hasArray(person.names), 8, 'Namensvarianten');
+        addRule(hasArray(person.events) || hasArray(person.facts), 10, 'Ereignisse/Fakten');
+        addRule(hasArray(person.parents) || hasArray(person.spouses) || hasArray(person.familiesAsSpouse), 10, 'Familienbezüge');
+        addRule(hasArray(person.citations), 8, 'Quellen');
+        addRule(hasArray(person.media), 7, 'Medien');
+        addRule(hasArray(person.notes), 6, 'Notizen');
+
+        const score = max > 0 ? Math.max(0, Math.min(100, Math.round((points / max) * 100))) : 0;
+        return { score, missing: missing.slice(0, 5) };
     }
 }
