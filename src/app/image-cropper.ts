@@ -157,8 +157,12 @@ export class ImageCropper implements AfterViewInit {
   private dragging = false;
   private resizing = false;
   private resizeCorner: 'nw' | 'ne' | 'sw' | 'se' | null = null;
+  private dragOffsetX = 0;
+  private dragOffsetY = 0;
 
   private minSize = 80;
+  private handleSize = 10;
+  private cornerHitSize = 18;
 
   ngAfterViewInit() {
     const canvas = this.canvasRef.nativeElement;
@@ -187,6 +191,26 @@ export class ImageCropper implements AfterViewInit {
 
     this.ctx.scale(dpr, dpr);
     this.scale = ratio;
+
+    const visualW = canvas.width / dpr;
+    const visualH = canvas.height / dpr;
+    const base = Math.min(visualW, visualH);
+    // Start with ~25% of image area side length to improve touch usability on small screens.
+    const initial = Math.max(this.minSize, Math.round(base * 0.5));
+    this.rect.w = Math.min(initial, visualW);
+    this.rect.h = this.aspect === 'free' ? Math.min(initial, visualH) : this.rect.w / (this.aspect as number);
+    this.rect.x = Math.max(0, Math.round((visualW - this.rect.w) / 2));
+    this.rect.y = Math.max(0, Math.round((visualH - this.rect.h) / 2));
+
+    if (window.innerWidth <= 768) {
+      this.minSize = 56;
+      this.handleSize = 18;
+      this.cornerHitSize = 28;
+    } else {
+      this.minSize = 80;
+      this.handleSize = 10;
+      this.cornerHitSize = 18;
+    }
 
     this.draw();
   }
@@ -244,7 +268,7 @@ export class ImageCropper implements AfterViewInit {
 
   private drawHandles() {
     const ctx = this.ctx;
-    const s = 10;
+    const s = this.handleSize;
     const { x, y, w, h } = this.rect;
 
     ctx.fillStyle = '#3b82f6';
@@ -256,11 +280,14 @@ export class ImageCropper implements AfterViewInit {
 
   onPointerDown(e: PointerEvent) {
     const pos = this.getPos(e);
+    this.canvasRef.nativeElement.setPointerCapture(e.pointerId);
 
     if (this.hitCorner(pos)) {
       this.resizing = true;
     } else if (this.inRect(pos)) {
       this.dragging = true;
+      this.dragOffsetX = pos.x - this.rect.x;
+      this.dragOffsetY = pos.y - this.rect.y;
     }
   }
 
@@ -268,8 +295,8 @@ export class ImageCropper implements AfterViewInit {
     const pos = this.getPos(e);
 
     if (this.dragging) {
-      this.rect.x = pos.x - this.rect.w / 2;
-      this.rect.y = pos.y - this.rect.h / 2;
+      this.rect.x = pos.x - this.dragOffsetX;
+      this.rect.y = pos.y - this.dragOffsetY;
       this.constrain();
       this.draw();
     }
@@ -312,6 +339,8 @@ export class ImageCropper implements AfterViewInit {
 
     this.rect.w = Math.max(this.minSize, this.rect.w);
     this.rect.h = Math.max(this.minSize, this.rect.h);
+    this.rect.w = Math.min(this.rect.w, w);
+    this.rect.h = Math.min(this.rect.h, h);
 
     this.rect.x = Math.max(0, Math.min(this.rect.x, w - this.rect.w));
     this.rect.y = Math.max(0, Math.min(this.rect.y, h - this.rect.h));
@@ -331,7 +360,7 @@ export class ImageCropper implements AfterViewInit {
   }
 
   private hitCorner(p: any) {
-    const s = 15;
+    const s = this.cornerHitSize;
     const { x, y, w, h } = this.rect;
 
     if (Math.abs(p.x - (x + w)) < s && Math.abs(p.y - (y + h)) < s) {
