@@ -1,75 +1,109 @@
-<div class="settings-container">
-    <div class="glass-card">
-        <div class="header">
-            <h1>Einstellungen</h1>
-            <p>Konfiguriere deine Heritago-Umgebung</p>
-        </div>
-
-        <div class="actions-grid">
-            <a routerLink="/tree-management" class="action-card">
-                <div class="icon">
-                    <svg #treeIcon xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M12 20v-8"></path>
-                        <path d="M5 20v-2a7 7 0 0 1 14 0v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                </div>
-                <h3>Stammbaumverwaltung</h3>
-                <p>Erstellen, wechseln oder bearbeiten</p>
-            </a>
-
-            <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/admin/users" class="action-card">
-                <div class="icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                </div>
-                <h3>Benutzerverwaltung</h3>
-                <p>Nutzer hinzufügen oder Berechtigungen anpassen</p>
-            </a>
-            <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/gedcom-io" class="action-card">
-                <div class="icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                </div>
-                <h3>GEDCOM Import/Export</h3>
-                <p>Datensicherung und Datenaustausch</p>
-            </a>
-
-            <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/settings/update" class="action-card">
-                <div class="icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 2v6h-6"></path>
-                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
-                        <path d="M3 22v-6h6"></path>
-                        <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
-                    </svg>
-                </div>
-                <h3>Update & System</h3>
-                <p>Version prüfen und System aktualisieren</p>
-            </a>
-        </div>
-
-        <div class="back-link">
-            <a routerLink="/" class="back-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                    <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-                <span>Zurück zum Dashboard</span>
-            </a>
+<div class="min-h-screen text-slate-200 flex flex-col p-0 m-0 pb-20">
+    <!-- Unified Sticky Header -->
+    <div class="page-header px-6 md:px-10 pt-6">
+        <div class="page-header-inner flex-wrap md:flex-nowrap gap-4">
+            <div
+                class="flex flex-col gap-1 items-center md:items-start w-full md:w-auto text-center md:text-left flex-1">
+                <h1 class="page-title leading-tight">Einstellungen</h1>
+                <p class="page-subtitle text-slate-400 mt-1">Konfiguriere deine Heritago-Umgebung</p>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Page Content Container -->
+    <div class="flex-1 p-6 md:p-10 max-w-[1200px] w-full mx-auto">
+        <div
+            class="bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-[32px] p-8 md:p-12 shadow-2xl relative overflow-hidden">
+            <!-- Decorative Background Glow -->
+            <div class="absolute -top-24 -right-24 w-96 h-96 bg-blue-600/10 blur-[100px] rounded-full"></div>
+            <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-600/10 blur-[100px] rounded-full"></div>
+
+            <div class="relative z-10">
+
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Stammbaumverwaltung -->
+                    <a routerLink="/tree-management"
+                        class="group p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-brand-500/50 hover:bg-brand-500/5 transition-all duration-300">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-400 mb-4 group-hover:scale-110 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 20v-8"></path>
+                                <path d="M5 20v-2a7 7 0 0 1 14 0v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-100 mb-1">Stammbaumverwaltung</h3>
+                        <p class="text-sm text-slate-400">Erstellen, wechseln oder bearbeiten</p>
+                    </a>
+
+                    <!-- Benutzerverwaltung -->
+                    <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/admin/users"
+                        class="group p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-accent-purple/50 hover:bg-accent-purple/5 transition-all duration-300">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-accent-purple/10 flex items-center justify-center text-accent-purple mb-4 group-hover:scale-110 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-100 mb-1">Benutzerverwaltung</h3>
+                        <p class="text-sm text-slate-400">Nutzer hinzufügen oder Berechtigungen anpassen</p>
+                    </a>
+
+                    <!-- GEDCOM Import/Export -->
+                    <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/gedcom-io"
+                        class="group p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-accent-emerald/50 hover:bg-accent-emerald/5 transition-all duration-300">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-accent-emerald/10 flex items-center justify-center text-accent-emerald mb-4 group-hover:scale-110 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-100 mb-1">GEDCOM Import/Export</h3>
+                        <p class="text-sm text-slate-400">Datensicherung und Datenaustausch</p>
+                    </a>
+
+                    <!-- Update & System -->
+                    <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/settings/update"
+                        class="group p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-accent-amber/50 hover:bg-accent-amber/5 transition-all duration-300">
+                        <div
+                            class="w-12 h-12 rounded-xl bg-accent-amber/10 flex items-center justify-center text-accent-amber mb-4 group-hover:scale-110 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 2v6h-6"></path>
+                                <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                                <path d="M3 22v-6h6"></path>
+                                <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-100 mb-1">Update & System</h3>
+                        <p class="text-sm text-slate-400">Version prüfen und System aktualisieren</p>
+                    </a>
+                </div>
+
+                <div class="mt-12 pt-8 border-t border-white/5 flex justify-center">
+                    <a routerLink="/" class="btn-ghost !w-auto !py-4 !px-8 flex items-center gap-3">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                        <span>Zurück zum Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>

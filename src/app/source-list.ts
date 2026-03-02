@@ -3,42 +3,42 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { GedcomService } from './gedcom.service';
-import { PlaceModal } from './place-modal';
+import { SourceModal } from './source-modal';
 
 @Component({
-    selector: 'app-place-list',
+    selector: 'app-source-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, PlaceModal],
-    templateUrl: './place-list.html',
+    imports: [CommonModule, FormsModule, SourceModal],
+    templateUrl: './source-list.html',
     encapsulation: ViewEncapsulation.None
 })
-export class PlaceList implements OnInit {
+export class SourceList implements OnInit {
     private gedcomService = inject(GedcomService);
     private router = inject(Router);
 
-    places = signal<any[]>([]);
-    hierarchy = signal<any[]>([]);
+    sources = signal<any[]>([]);
     loading = signal(true);
     isSaving = signal(false);
     currentTree = signal<string | null>(null);
     errorMessage = signal<string | null>(null);
-    selectedPlace = signal<any | null>(null);
+    selectedSource = signal<any | null>(null);
     selectedUsage = signal<any | null>(null);
     loadingUsage = signal(false);
     mergeTargetId = signal<string>('');
     reassignTargetId = signal<string>('');
     detailsOpen = signal(false);
+    searchQuery = signal<string>('');
 
     // Modal State
     isModalOpen = false;
     modalMode: 'add' | 'edit' = 'add';
-    selectedPlaceData: any = null;
+    selectedSourceData: any = null;
 
     ngOnInit() {
-        this.loadPlaces();
+        this.loadSources();
     }
 
-    loadPlaces() {
+    loadSources() {
         this.loading.set(true);
         this.gedcomService.getTreeData().subscribe(treeData => {
             if (treeData && treeData.meta && treeData.meta.tree) {
@@ -54,16 +54,16 @@ export class PlaceList implements OnInit {
         const tree = this.currentTree();
         if (!tree) return;
 
-        this.gedcomService.getPlaces(tree).subscribe({
+        this.gedcomService.getSources(tree).subscribe({
             next: (res: any) => {
-                const items = res.places || [];
-                this.places.set(items);
-                this.hierarchy.set(this.buildHierarchy(items));
+                const items = res.sources || [];
+                // Client-side sorting is already done from backend, but could be dynamic
+                this.sources.set(items);
                 this.loading.set(false);
-                const sel = this.selectedPlace();
+                const sel = this.selectedSource();
                 if (sel) {
-                    const refreshed = items.find((p: any) => p.id === sel.id) || null;
-                    this.selectedPlace.set(refreshed);
+                    const refreshed = items.find((s: any) => s.id === sel.id) || null;
+                    this.selectedSource.set(refreshed);
                     if (refreshed) this.loadUsage(refreshed.id);
                 }
             },
@@ -71,45 +71,30 @@ export class PlaceList implements OnInit {
         });
     }
 
-    private buildHierarchy(places: any[]) {
-        const byId = new Map<string, any>();
-        const nodes = places.map((p) => ({ ...p, children: [] as any[] }));
-        nodes.forEach((n) => byId.set(n.id, n));
-        const roots: any[] = [];
-        for (const n of nodes) {
-            if (n.parentId && byId.has(n.parentId)) byId.get(n.parentId).children.push(n);
-            else roots.push(n);
-        }
-        const sortRec = (arr: any[]) => {
-            arr.sort((a, b) => a.name.localeCompare(b.name));
-            arr.forEach((c) => sortRec(c.children));
-        };
-        sortRec(roots);
-        return roots;
+    get filteredSources() {
+        const query = this.searchQuery().toLowerCase();
+        if (!query) return this.sources();
+        return this.sources().filter((s: any) =>
+            (s.title || '').toLowerCase().includes(query) ||
+            (s.shortTitle || '').toLowerCase().includes(query) ||
+            (s.author || '').toLowerCase().includes(query) ||
+            (s.repositoryName || '').toLowerCase().includes(query)
+        );
     }
 
-    flattenHierarchy(nodes: any[], depth = 0): any[] {
-        const out: any[] = [];
-        for (const n of nodes) {
-            out.push({ ...n, depth });
-            out.push(...this.flattenHierarchy(n.children || [], depth + 1));
-        }
-        return out;
-    }
-
-    selectPlace(place: any) {
-        this.selectedPlace.set(place);
+    selectSource(source: any) {
+        this.selectedSource.set(source);
         this.mergeTargetId.set('');
         this.reassignTargetId.set('');
         this.detailsOpen.set(true);
-        this.loadUsage(place.id);
+        this.loadUsage(source.id);
     }
 
-    loadUsage(placeId: string) {
+    loadUsage(sourceId: string) {
         const tree = this.currentTree();
         if (!tree) return;
         this.loadingUsage.set(true);
-        this.gedcomService.getPlaceUsage(tree, placeId).subscribe({
+        this.gedcomService.getSourceUsage(tree, sourceId).subscribe({
             next: (res: any) => {
                 this.selectedUsage.set(res?.usage || null);
                 this.loadingUsage.set(false);
@@ -123,13 +108,13 @@ export class PlaceList implements OnInit {
 
     openAddModal() {
         this.modalMode = 'add';
-        this.selectedPlaceData = null;
+        this.selectedSourceData = null;
         this.isModalOpen = true;
     }
 
-    openEditModal(place: any) {
+    openEditModal(source: any) {
         this.modalMode = 'edit';
-        this.selectedPlaceData = place;
+        this.selectedSourceData = source;
         this.isModalOpen = true;
     }
 
@@ -141,25 +126,25 @@ export class PlaceList implements OnInit {
         this.detailsOpen.set(false);
     }
 
-    onPlaceSaved() {
+    onSourceSaved() {
         this.refreshList();
         this.closeModal();
     }
 
-    deletePlace(place: any) {
-        if (!confirm(`Möchten Sie den Ort "${place.name}" wirklich aus diesem Stammbaum entfernen?\nDies löscht auch den Ortsnamen aus allen verknüpften Personen und Familien!`)) return;
+    deleteSource(source: any) {
+        if (!confirm(`Möchten Sie die Quelle "${source.title}" wirklich aus diesem Stammbaum entfernen?\nDies löscht diese Quelle aus allen Zitationsverknüpfungen!`)) return;
 
         const tree = this.currentTree();
         if (!tree) return;
 
-        const payload: any = { mode: 'delete', id: place.id, name: place.name };
+        const payload: any = { mode: 'delete', id: source.id };
         if (this.reassignTargetId()) payload.reassignToId = this.reassignTargetId();
 
-        this.gedcomService.savePlace(tree, payload).subscribe({
+        this.gedcomService.saveSource(tree, payload).subscribe({
             next: (res: any) => {
                 if (res.success) {
-                    if (this.selectedPlace()?.id === place.id) {
-                        this.selectedPlace.set(null);
+                    if (this.selectedSource()?.id === source.id) {
+                        this.selectedSource.set(null);
                         this.selectedUsage.set(null);
                         this.detailsOpen.set(false);
                     }
@@ -171,7 +156,7 @@ export class PlaceList implements OnInit {
             error: (err: any) => {
                 const usage = err.error?.usage;
                 const msg = usage
-                    ? `${err.error?.message}\nVerknüpfungen: ${usage.totalLinks}, Unterorte: ${usage.childCount}\nWähle einen Zielort zum Umhängen oder merge zuerst.`
+                    ? `${err.error?.message}\nVerknüpfungen: ${usage.totalLinks}\nWähle eine Ziel-Quelle zum Umhängen oder merge zuerst.`
                     : (err.error?.message || 'Unbekannter Fehler');
                 alert('Fehler beim Löschen: ' + msg);
             }
@@ -179,16 +164,16 @@ export class PlaceList implements OnInit {
     }
 
     mergeSelected() {
-        const source = this.selectedPlace();
+        const source = this.selectedSource();
         const targetId = this.mergeTargetId();
         const tree = this.currentTree();
         if (!source || !targetId || !tree) return;
-        if (!confirm(`Ort "${source.name}" in Zielort zusammenführen?`)) return;
+        if (!confirm(`Quelle "${source.title}" in Ziel-Quelle zusammenführen?`)) return;
 
-        this.gedcomService.mergePlaces(tree, source.id, targetId).subscribe({
+        this.gedcomService.mergeSources(tree, source.id, targetId).subscribe({
             next: (res: any) => {
                 if (res.success) {
-                    this.selectedPlace.set(null);
+                    this.selectedSource.set(null);
                     this.selectedUsage.set(null);
                     this.mergeTargetId.set('');
                     this.detailsOpen.set(false);

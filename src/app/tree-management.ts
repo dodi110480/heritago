@@ -8,8 +8,7 @@ import { AuthService, Tree } from './auth.service';
     selector: 'app-tree-management',
     standalone: true,
     imports: [CommonModule, RouterModule, FormsModule],
-    templateUrl: './tree-management.html',
-    styleUrl: './tree-management.css'
+    templateUrl: './tree-management.html'
 })
 export class TreeManagement implements OnInit {
     authService = inject(AuthService);

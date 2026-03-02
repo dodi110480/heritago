@@ -1,20 +1,84 @@
-<div class="image-viewer-overlay" *ngIf="url" (click)="close()">
-    <div class="viewer-container" (click)="$event.stopPropagation()">
-        <div class="viewer-header">
-            <span class="image-title">{{ title }}</span>
-            <div class="viewer-actions">
-                <button class="btn-icon" (click)="zoomOut()" title="Zoom Out">➖</button>
-                <button class="btn-icon" (click)="resetZoom()" title="Reset Zoom">🔄</button>
-                <button class="btn-icon" (click)="zoomIn()" title="Zoom In">➕</button>
-                <div class="divider"></div>
-                <button class="btn-icon" (click)="download()" title="Download">💾</button>
-                <button class="btn-icon close-btn" (click)="close()" title="Schließen">&times;</button>
+<div class="fixed inset-0 z-[2000] flex items-center justify-center p-4 md:p-12 animate-in fade-in duration-300"
+    *ngIf="url" (click)="close()">
+
+    <!-- Backdrop Blur -->
+    <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"></div>
+
+    <div class="relative w-full h-full max-w-7xl flex flex-col items-center justify-center animate-in zoom-in-95 duration-500"
+        (click)="$event.stopPropagation()">
+
+        <!-- FLOATING HEADER / CONTROLS -->
+        <div class="absolute top-6 left-1/2 -translate-x-1/2 z-10 w-full max-w-2xl px-6">
+            <div
+                class="flex items-center justify-between gap-6 px-6 py-4 bg-slate-900/60 backdrop-blur-2xl border border-white/10 rounded-[32px] shadow-2xl">
+                <span class="text-sm font-black text-white truncate max-w-[200px] md:max-w-md tracking-tight">{{ title
+                    }}</span>
+
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1 bg-white/5 p-1 rounded-2xl border border-white/5 mr-2">
+                        <button (click)="zoomOut()"
+                            class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                        <button (click)="resetZoom()"
+                            class="px-3 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 text-[10px] font-black tracking-widest text-slate-400 hover:text-blue-400 transition-all">
+                            {{ (zoom() * 100).toFixed(0) }}%
+                        </button>
+                        <button (click)="zoomIn()"
+                            class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="h-6 w-px bg-white/10 mx-2"></div>
+
+                    <button (click)="download()"
+                        class="w-12 h-12 flex items-center justify-center rounded-2xl bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 hover:scale-110 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                    </button>
+
+                    <button (click)="close()"
+                        class="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 hover:bg-red-500/20 border border-white/5 hover:border-red-500/20 text-slate-400 hover:text-red-400 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
-        <div class="viewer-content" (wheel)="onWheel($event)">
-            <div class="image-wrapper" [style.transform]="'scale(' + zoom() + ')'">
-                <img [src]="url" [alt]="title">
+
+        <!-- IMAGE DISPLAY AREA -->
+        <div class="w-full h-full flex items-center justify-center overflow-auto custom-scrollbar p-12"
+            (wheel)="onWheel($event)">
+            <div class="relative transition-transform duration-300 ease-out"
+                [style.transform]="'scale(' + zoom() + ')'">
+                <img [src]="url" [alt]="title"
+                    class="max-w-[85vw] max-h-[80vh] object-contain rounded-2xl shadow-[0_0_100px_rgba(0,0,0,0.8)] border border-white/5 select-none pointer-events-auto">
+                <div class="absolute inset-0 rounded-2xl shadow-[inset_0_0_80px_rgba(0,0,0,0.4)] pointer-events-none">
+                </div>
             </div>
+        </div>
+
+        <!-- FOOTER HELP -->
+        <div
+            class="absolute bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] pointer-events-none opacity-50">
+            Scrollen zum Zoomen • Mausrad drücken zum Verschieben
         </div>
     </div>
 </div>

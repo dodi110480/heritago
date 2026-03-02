@@ -1,4 +1,4 @@
-import { Component, inject, signal, ViewChild, ElementRef, AfterViewInit, effect } from '@angular/core';
+import { Component, inject, signal, ViewChild, ElementRef, AfterViewInit, effect, ViewEncapsulation } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './auth.service';
@@ -11,7 +11,7 @@ import * as d3 from 'd3';
     standalone: true,
     imports: [CommonModule, RouterLink, CalendarWidget],
     templateUrl: './dashboard.html',
-    styleUrl: './dashboard.css'
+    encapsulation: ViewEncapsulation.None
 })
 export class Dashboard implements AfterViewInit {
     @ViewChild('miniTree') miniTreeSvg!: ElementRef<SVGSVGElement>;

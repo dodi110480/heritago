@@ -6,8 +6,7 @@ import { GedcomService } from './gedcom.service';
     selector: 'app-calendar-widget',
     standalone: true,
     imports: [CommonModule],
-    templateUrl: './calendar-widget.html',
-    styleUrl: './calendar-widget.css'
+    templateUrl: './calendar-widget.html'
 })
 export class CalendarWidget implements OnInit {
     private gedcomService = inject(GedcomService);

@@ -9,8 +9,7 @@ import { MediaAddModal } from './media-add-modal';
     selector: 'app-media-gallery',
     standalone: true,
     imports: [CommonModule, FormsModule, MediaAddModal],
-    templateUrl: './media-gallery.html',
-    styleUrl: './media-gallery.css'
+    templateUrl: './media-gallery.html'
 })
 export class MediaGallery implements OnInit {
     private gedcomService = inject(GedcomService);

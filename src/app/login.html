@@ -1,42 +1,53 @@
-<div class="login-container">
-    <div class="glass-card">
-        <div class="header">
-            <div class="logo">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 22v-5M9 7l3 3 3-3M8 10V7a4 4 0 0 1 8 0v3M12 22a9 9 0 1 1 0-18 9 9 0 0 1 0 18z" />
-                </svg>
-            </div>
-            <h1>Heritago</h1>
-            <p>Entdecke deine Wurzeln</p>
-        </div>
+<div class="modal-container bg-slate-950">
+    <div class="modal-glass max-w-[440px]">
+        <!-- Decorative Background Glow -->
+        <div class="modal-glow-blue"></div>
+        <div class="modal-glow-purple"></div>
 
-        <form (submit)="onSubmit()" #loginForm="ngForm">
-            <div class="form-group">
-                <label for="username">Benutzername</label>
-                <input type="text" id="username" name="username" [(ngModel)]="username" required
-                    placeholder="Dein Benutzername" autocomplete="username">
-            </div>
-
-            <div class="form-group">
-                <label for="password">Passwort</label>
-                <input type="password" id="password" name="password" [(ngModel)]="password" required
-                    placeholder="••••••••" autocomplete="current-password">
+        <div class="relative z-10">
+            <div class="text-center mb-10">
+                <div
+                    class="inline-flex p-4 rounded-3xl bg-blue-500/10 text-blue-400 mb-6 border border-blue-500/20 shadow-lg shadow-blue-500/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22v-5M9 7l3 3 3-3M8 10V7a4 4 0 0 1 8 0v3M12 22a9 9 0 1 1 0-18 9 9 0 0 1 0 18z" />
+                    </svg>
+                </div>
+                <h1
+                    class="text-4xl font-black bg-gradient-to-br from-white to-slate-400 bg-clip-text text-transparent tracking-tighter mb-2">
+                    Heritago
+                </h1>
+                <p class="text-slate-500 font-medium tracking-wide">Entdecke deine Wurzeln</p>
             </div>
 
-            <div *ngIf="error()" class="error-message">
-                {{ error() }}
+            <form (submit)="onSubmit()" #loginForm="ngForm" class="flex flex-col gap-2">
+                <div class="form-group">
+                    <label class="form-label" for="username">Benutzername</label>
+                    <input type="text" id="username" name="username" [(ngModel)]="username" required class="form-input"
+                        placeholder="Benutzername" autocomplete="username">
+                </div>
+
+                <div class="form-group mb-8">
+                    <label class="form-label" for="password">Passwort</label>
+                    <input type="password" id="password" name="password" [(ngModel)]="password" required
+                        class="form-input" placeholder="••••••••" autocomplete="current-password">
+                </div>
+
+                <div *ngIf="error()" class="form-error">
+                    {{ error() }}
+                </div>
+
+                <button type="submit" [disabled]="!loginForm.form.valid || loading()"
+                    class="btn-primary !py-4 text-lg transform transition-all active:scale-95 disabled:opacity-50">
+                    <span *ngIf="!loading()">Einloggen</span>
+                    <span *ngIf="loading()"
+                        class="w-6 h-6 border-2 border-white/20 border-l-white rounded-full animate-spin"></span>
+                </button>
+            </form>
+
+            <div class="mt-10 text-center text-[10px] font-bold text-slate-600 uppercase tracking-[0.3em]">
+                &copy; 2026 Heritago &middot; Modern Genealogy
             </div>
-
-            <button type="submit" [disabled]="!loginForm.form.valid || loading()" class="submit-btn"
-                [class.loading]="loading()">
-                <span *ngIf="!loading()">Einloggen</span>
-                <span *ngIf="loading()" class="loader"></span>
-            </button>
-        </form>
-
-        <div class="footer">
-            <p>&copy; 2026 Heritago - Modern Genealogy</p>
         </div>
     </div>
 </div>

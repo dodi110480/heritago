@@ -8,8 +8,7 @@ import { ImageCropper } from './image-cropper';
     selector: 'app-media-add-modal',
     standalone: true,
     imports: [CommonModule, FormsModule, ImageCropper],
-    templateUrl: './media-add-modal.html',
-    styleUrl: './media-add-modal.css'
+    templateUrl: './media-add-modal.html'
 })
 export class MediaAddModal {
     private gedcomService = inject(GedcomService);

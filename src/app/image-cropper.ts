@@ -15,20 +15,21 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="overlay" (click)="cancel.emit()">
-      <div class="modal" (click)="$event.stopPropagation()">
+    <div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[3000]" (click)="cancel.emit()">
+      <div class="modal-glass w-[90vw] max-w-[1200px] h-[85vh] flex flex-col overflow-hidden shadow-2xl" (click)="$event.stopPropagation()">
 
-        <div class="modal-header">
-          <h3>Bild zuschneiden</h3>
-          <div class="actions">
-            <button class="btn secondary" (click)="setAspect('free')">Frei</button>
-            <button class="btn secondary" (click)="setAspect(1)">1:1</button>
-            <button class="btn secondary" (click)="useFullImage()">Ganzes Bild</button>
+        <div class="p-6 bg-white/5 border-b border-white/10 flex items-center justify-between">
+          <h3 class="text-xl font-bold text-white">Bild zuschneiden</h3>
+          <div class="flex gap-2">
+            <button class="btn-ghost !w-auto !px-4 !py-2 border border-white/10" (click)="setAspect('free')">Frei</button>
+            <button class="btn-ghost !w-auto !px-4 !py-2 border border-white/10" (click)="setAspect(1)">1:1</button>
+            <button class="btn-ghost !w-auto !px-4 !py-2 border border-white/10" (click)="useFullImage()">Ganzes Bild</button>
           </div>
         </div>
 
-        <div class="modal-body">
+        <div class="flex-1 flex items-center justify-center bg-[radial-gradient(circle_at_center,_#1e293b,_#0f172a)] overflow-hidden">
           <canvas #canvas
+            class="max-w-full max-h-full touch-none rounded-xl"
             (pointerdown)="onPointerDown($event)"
             (pointermove)="onPointerMove($event)"
             (pointerup)="onPointerUp()"
@@ -37,106 +38,14 @@ import { CommonModule } from '@angular/common';
           ></canvas>
         </div>
 
-        <div class="modal-footer">
-          <button class="btn secondary" (click)="cancel.emit()">Abbrechen</button>
-          <button class="btn primary" (click)="crop()">Übernehmen</button>
+        <div class="p-6 bg-white/5 border-t border-white/10 flex justify-end gap-3">
+          <button class="btn-secondary !w-auto !py-2.5 !px-6" (click)="cancel.emit()">Abbrechen</button>
+          <button class="btn-primary !w-auto !py-2.5 !px-8" (click)="crop()">Übernehmen</button>
         </div>
 
       </div>
     </div>
-  `,
-  styles: [`
-    :host { font-family: Inter, system-ui, sans-serif; }
-
-    .overlay {
-      position: fixed; inset: 0;
-      background: rgba(15,23,42,0.8);
-      backdrop-filter: blur(8px);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 3000;
-    }
-
-    .modal {
-      width: 90vw;
-      max-width: 1200px;
-      height: 85vh;
-      background: #ffffff;
-      border-radius: 28px;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.35);
-      overflow: hidden;
-    }
-
-    .modal-header,
-    .modal-footer {
-      padding: 24px;
-      background: #f8fafc;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .modal-footer {
-      border-top: 1px solid #e2e8f0;
-      border-bottom: none;
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-    }
-
-    .modal-body {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(circle at center, #1e293b, #0f172a);
-      overflow: hidden;
-    }
-
-    canvas {
-      max-width: 100%;
-      max-height: 100%;
-      touch-action: none;
-      border-radius: 12px;
-    }
-
-    .btn {
-      padding: 10px 16px;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s ease;
-      border: none;
-    }
-
-    .btn.primary {
-      background: #3b82f6;
-      color: white;
-    }
-    .btn.primary:hover {
-      background: #2563eb;
-    }
-
-    .btn.secondary {
-      background: white;
-      border: 1px solid #cbd5e1;
-      color: #1e293b;
-    }
-    .btn.secondary:hover {
-      background: #f1f5f9;
-    }
-
-    h3 {
-      margin: 0;
-      font-weight: 700;
-      color: #334155;
-    }
-
-    .actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-  `]
+  `
 })
 export class ImageCropper implements AfterViewInit {
 

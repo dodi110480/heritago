@@ -8,8 +8,7 @@ import { FormsModule } from '@angular/forms';
     selector: 'app-media-selector',
     standalone: true,
     imports: [CommonModule, FormsModule],
-    templateUrl: './media-selector.html',
-    styleUrl: './media-selector.css'
+    templateUrl: './media-selector.html'
 })
 export class MediaSelector implements OnInit, OnChanges {
     @Input() visible = false;

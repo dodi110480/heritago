@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,6 +13,10 @@ import { PersonCreateModal } from './person-create-modal';
 import { MediaAddModal } from './media-add-modal';
 import { CanComponentDeactivate } from './unsaved-changes.guard';
 import { firstValueFrom } from 'rxjs';
+import { AppCardComponent } from './ui/app-card';
+import { AppButtonComponent } from './ui/app-button';
+import { AppPageContainerComponent } from './ui/app-page-container';
+import { AppPageHeaderComponent } from './ui/app-page-header';
 
 interface TimelineItem {
     originalType: 'event' | 'fact' | 'family-event';
@@ -34,9 +38,22 @@ interface TimelineItem {
 @Component({
     selector: 'app-person-detail',
     standalone: true,
-    imports: [CommonModule, FormsModule, CleanDatePipe, MediaSelector, PlaceModal, ImageViewer, PersonCreateModal, MediaAddModal],
+    imports: [
+        CommonModule,
+        FormsModule,
+        CleanDatePipe,
+        MediaSelector,
+        PlaceModal,
+        ImageViewer,
+        PersonCreateModal,
+        MediaAddModal,
+        AppCardComponent,
+        AppButtonComponent,
+        AppPageContainerComponent,
+        AppPageHeaderComponent
+    ],
     templateUrl: './person-detail.html',
-    styleUrl: './person-detail.css'
+    encapsulation: ViewEncapsulation.None
 })
 export class PersonDetail implements OnInit, CanComponentDeactivate {
     private readonly FOCUS_PERSON_KEY = 'heritago_last_focus_person';

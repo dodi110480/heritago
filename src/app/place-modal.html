@@ -1,52 +1,76 @@
-<div class="modal-backdrop" *ngIf="visible" (click)="closeModal()">
-    <div class="modal glass-card" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-            <h2>{{ mode === 'add' ? 'Neuen Ort anlegen' : 'Ort bearbeiten' }}</h2>
-            <button class="close-btn" (click)="closeModal()">&times;</button>
+<div class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-md p-4" *ngIf="visible"
+    (click)="closeModal()">
+    <div class="w-full max-w-4xl bg-slate-900/95 border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl overflow-y-auto max-h-[90vh] animate-[modalIn_0.3s_cubic-bezier(0.16,1,0.3,1)]"
+        (click)="$event.stopPropagation()">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-white tracking-tight m-0">{{ mode === 'add' ? 'Neuen Ort anlegen' : 'Ort
+                bearbeiten' }}</h2>
+            <button class="text-slate-500 hover:text-white text-3xl leading-none transition-colors"
+                (click)="closeModal()">&times;</button>
         </div>
-        <div class="modal-body">
-            <div class="error-box" *ngIf="errorMessage()">
+
+        <div class="flex flex-col gap-5">
+            <div class="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm"
+                *ngIf="errorMessage()">
                 {{ errorMessage() }}
             </div>
 
-            <div class="form-group">
-                <label>Beschreibung des Ortes</label>
-                <input type="text" [(ngModel)]="modalData.description" class="form-control" placeholder="z.B. Krankenhaus, Haus, Rathaus, Kirche">
+            <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-slate-400">Beschreibung des Ortes</label>
+                <input type="text" [(ngModel)]="modalData.description"
+                    class="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-white text-base focus:outline-none focus:border-blue-500 focus:bg-slate-900/80 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                    placeholder="z.B. Krankenhaus, Haus, Rathaus, Kirche">
             </div>
 
-            <div class="form-group" *ngIf="locationLabel()">
-                <label>Automatisch erkannt</label>
-                <input type="text" class="form-control" [value]="locationLabel()" readonly>
+            <div class="space-y-1.5" *ngIf="locationLabel()">
+                <label class="block text-sm font-medium text-slate-400">Automatisch erkannt</label>
+                <input type="text"
+                    class="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-slate-300 text-base focus:outline-none opacity-80"
+                    [value]="locationLabel()" readonly>
             </div>
 
-            <div class="form-group">
-                <label>Übergeordneter Ort (optional)</label>
-                <select class="form-control" [(ngModel)]="modalData.parentId">
+            <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-slate-400">Übergeordneter Ort (optional)</label>
+                <select
+                    class="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-white text-base focus:outline-none focus:border-blue-500 focus:bg-slate-900/80 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                    [(ngModel)]="modalData.parentId">
                     <option value="">Kein übergeordneter Ort</option>
                     <option *ngFor="let p of parentOptions()" [value]="p.id">{{ p.name }}</option>
                 </select>
             </div>
 
-            <div class="form-group">
-                <label>Jurisdiktion (optional)</label>
-                <input type="text" [(ngModel)]="modalData.jurisdiction" class="form-control" placeholder="z.B. Standesamt Coburg">
+            <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-slate-400">Jurisdiktion (optional)</label>
+                <input type="text" [(ngModel)]="modalData.jurisdiction"
+                    class="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-white text-base focus:outline-none focus:border-blue-500 focus:bg-slate-900/80 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                    placeholder="z.B. Standesamt Coburg">
             </div>
 
-            <div class="form-group">
-                <label>Historische Namen (optional)</label>
-                <input type="text" [(ngModel)]="modalData.historicNames" class="form-control" placeholder="Kommagetrennt, z.B. Kronach, Crana">
+            <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-slate-400">Historische Namen (optional)</label>
+                <input type="text" [(ngModel)]="modalData.historicNames"
+                    class="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-white text-base focus:outline-none focus:border-blue-500 focus:bg-slate-900/80 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                    placeholder="Kommagetrennt, z.B. Kronach, Crana">
             </div>
 
-            <div class="map-actions">
-                <button class="btn btn-secondary btn-sm" (click)="useMyLocation()" type="button">Aktuelle Position verwenden</button>
-                <small>Karte anklicken oder Marker ziehen.</small>
+            <div class="flex justify-between items-center gap-3 mt-2">
+                <button
+                    class="bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+                    (click)="useMyLocation()" type="button">Aktuelle Position verwenden</button>
+                <small class="text-slate-400 text-xs">Karte anklicken oder Marker ziehen.</small>
             </div>
-            <div class="osm-map" #mapContainer></div>
+
+            <div class="w-full h-[350px] md:h-[460px] rounded-xl overflow-hidden border border-white/10" #mapContainer>
+            </div>
         </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="closeModal()">Abbrechen</button>
-            <button class="btn btn-primary" (click)="save()"
-                [disabled]="isSaving() || modalData.latitude === '' || modalData.longitude === ''">
+
+        <div class="flex justify-end gap-3 mt-8">
+            <button
+                class="px-5 py-2.5 rounded-xl font-semibold bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition-all"
+                (click)="closeModal()">Abbrechen</button>
+            <button
+                class="px-5 py-2.5 rounded-xl font-semibold bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 disabled:opacity-50 text-white transition-all shadow-lg shadow-blue-500/20 disabled:shadow-none"
+                (click)="save()" [disabled]="isSaving() || modalData.latitude === '' || modalData.longitude === ''">
                 {{ isSaving() ? 'Speichere...' : 'Speichern' }}
             </button>
         </div>

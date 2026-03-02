@@ -20,8 +20,7 @@ interface GedcomError {
     selector: 'app-diagnostics',
     standalone: true,
     imports: [CommonModule, RouterLink],
-    templateUrl: './diagnostics.html',
-    styleUrl: './diagnostics.css'
+    templateUrl: './diagnostics.html'
 })
 export class Diagnostics implements OnInit {
     private gedcomService = inject(GedcomService);

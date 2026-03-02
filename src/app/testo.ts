@@ -11,18 +11,15 @@ import 'family-chart/styles/family-chart.css';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div style="background-color: #1a1a1a; padding: 10px; border-bottom: 1px solid #333;">
-        <button routerLink="/" style="background: #448aff; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">
+    <div class="bg-[#1a1a1a] p-2.5 border-b border-white/10 flex items-center gap-5">
+        <button routerLink="/" class="bg-blue-500 text-white border-none py-2 px-4 rounded cursor-pointer hover:bg-blue-600 transition-colors">
             ← Zurück zum Dashboard
         </button>
-        <span style="color: #448aff; margin-left: 20px; font-weight: bold;">Testo Labor: Stammbaum Experiment</span>
+        <span class="text-blue-500 font-bold">Testo Labor: Stammbaum Experiment</span>
     </div>
     
-    <div class="f3" id="FamilyChartTesto" style="width:100%; height:calc(100vh - 60px); margin:auto; background-color:rgb(33,33,33); color:#fff;"></div>
-  `,
-  styles: [`
-    :host { display: block; overflow: hidden; height: 100vh; }
-  `]
+    <div class="w-full h-[calc(100vh-60px)] m-auto bg-[#212121] text-white" id="FamilyChartTesto"></div>
+  `
 })
 export class TestoComponent implements OnInit {
   constructor(private elementRef: ElementRef) { }

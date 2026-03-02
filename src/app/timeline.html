@@ -1,28 +1,75 @@
-<div class="timeline-container">
-    <div *ngIf="loading()" class="loading">Laden...</div>
+<div class="max-w-3xl mx-auto py-12 px-6">
+    <div *ngIf="loading()" class="py-20 flex flex-col items-center gap-4 text-slate-500">
+        <div class="w-10 h-10 border-4 border-white/5 border-l-blue-500 rounded-full animate-spin"></div>
+        <p class="font-bold uppercase tracking-widest text-xs">Lebenslauf wird geladen...</p>
+    </div>
 
-    <div *ngIf="!loading() && timelineData()" class="content">
-        <header>
-            <h2>{{ timelineData().individual.name }}</h2>
-            <p class="subtitle">Lebenslauf</p>
+    <div *ngIf="!loading() && timelineData()" class="animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <header class="text-center mb-16 relative">
+            <div class="absolute inset-0 bg-blue-500/5 blur-[100px] rounded-full -z-10"></div>
+            <h2
+                class="text-4xl md:text-5xl font-black text-white tracking-tighter mb-4 bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                {{ timelineData().individual.name }}
+            </h2>
+            <div class="badge badge-blue !py-2 !px-6">
+                <p class="text-sm font-black uppercase tracking-[0.2em] !mb-0">Lebenslauf</p>
+            </div>
         </header>
 
-        <div class="timeline">
-            <div class="timeline-item" *ngFor="let event of timelineData().events">
-                <div class="timeline-icon">
-                    {{ getIcon(event.fact_type) }}
-                </div>
-                <div class="timeline-content">
-                    <div class="date">{{ event.date }}</div>
-                    <h3 class="title">{{ event.type }}</h3>
-                    <p class="description" *ngIf="event.description">{{ event.description }}</p>
-                    <div class="place" *ngIf="event.place">📍 {{ event.place }}</div>
-                </div>
+        <div class="relative pl-12 md:pl-0">
+            <!-- Central Vertical Line (Visible on Desktop) -->
+            <div
+                class="absolute left-6 md:left-1/2 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-slate-800 rounded-full -translate-x-1/2 opacity-20 hidden md:block">
+            </div>
+            <!-- Side Line (Mobile) -->
+            <div
+                class="absolute left-6 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-slate-800 rounded-full -translate-x-1/2 opacity-20 md:hidden">
             </div>
 
-            <div class="timeline-item" *ngIf="timelineData().events.length === 0">
-                <div class="timeline-content">
-                    <p>Keine Ereignisse verfügbar.</p>
+            <div class="flex flex-col gap-12 relative">
+                <div class="relative flex flex-col md:flex-row items-center w-full group"
+                    *ngFor="let event of timelineData().events; let i = index; let last = last"
+                    [ngClass]="{'md:flex-row-reverse': i % 2 !== 0}">
+
+                    <!-- Timeline Dot/Icon -->
+                    <div class="absolute left-6 md:left-1/2 w-12 h-12 bg-slate-900 border-4 border-slate-950 rounded-full -translate-x-1/2 z-20 flex items-center justify-center text-xl shadow-2xl transition-all duration-300 group-hover:scale-125 group-hover:border-blue-500/50"
+                        [ngClass]="i % 2 === 0 ? 'md:ring-4 md:ring-slate-900/50' : 'md:ring-4 md:ring-slate-900/50'">
+                        {{ getIcon(event.fact_type) }}
+                    </div>
+
+                    <!-- Content Card -->
+                    <div class="w-full md:w-[45%] pl-10 md:pl-0" [ngClass]="i % 2 === 0 ? 'md:pr-10' : 'md:pl-10'">
+                        <div
+                            class="bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[32px] p-6 transition-all duration-500 hover:bg-slate-800/60 hover:border-blue-500/30 hover:-translate-y-1 shadow-2xl group/card relative overflow-hidden">
+                            <div
+                                class="absolute top-0 right-0 p-8 modal-glow-blue opacity-10 group-hover/card:opacity-30 transition-opacity">
+                            </div>
+
+                            <div class="relative z-10">
+                                <span class="text-blue-400 font-black tracking-widest text-xs uppercase mb-2 block">{{
+                                    event.date }}</span>
+                                <h3 class="text-xl font-bold text-white mb-3 tracking-tight">{{ event.type }}</h3>
+                                <p class="text-slate-400 text-sm leading-relaxed mb-4" *ngIf="event.description">{{
+                                    event.description }}</p>
+                                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-xl text-slate-500 text-[10px] font-bold uppercase tracking-widest"
+                                    *ngIf="event.place">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                        <circle cx="12" cy="10" r="3"></circle>
+                                    </svg>
+                                    {{ event.place }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative py-12 flex flex-col items-center gap-4 bg-white/5 border-2 border-dashed border-white/5 rounded-[40px]"
+                    *ngIf="timelineData().events.length === 0">
+                    <p class="text-slate-500 font-bold uppercase tracking-widest text-xs">Keine Ereignisse verfügbar.
+                    </p>
                 </div>
             </div>
         </div>

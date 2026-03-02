@@ -9,8 +9,7 @@ declare const L: any;
     selector: 'app-map-view',
     standalone: true,
     imports: [CommonModule, RouterLink],
-    templateUrl: './map-view.html',
-    styleUrl: './map-view.css'
+    templateUrl: './map-view.html'
 })
 export class MapView implements OnInit {
     private gedcomService = inject(GedcomService);

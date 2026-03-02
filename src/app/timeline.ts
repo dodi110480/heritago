@@ -7,8 +7,7 @@ import { GedcomService } from './gedcom.service';
     selector: 'app-timeline',
     standalone: true,
     imports: [CommonModule],
-    templateUrl: './timeline.html',
-    styleUrl: './timeline.css'
+    templateUrl: './timeline.html'
 })
 export class TimelineView implements OnInit {
     private route = inject(ActivatedRoute);

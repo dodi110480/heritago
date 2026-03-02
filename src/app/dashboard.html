@@ -1,151 +1,191 @@
-<div class="dashboard-container">
-    <!-- Hero Section -->
-    <div class="hero-section">
-        <div class="hero-bg-accent"></div>
-        <div class="hero-content">
-            <div class="welcome-text">
-                <h1>Willkommen zurück, {{ authService.currentUser()?.username }}</h1>
-                <p>{{ funStat() || 'Deine Familiengeschichte auf einen Blick' }}</p>
+<div class="min-h-screen text-slate-100 flex flex-col p-0 m-0">
+    <!-- Unified Sticky Header -->
+    <div class="page-header overflow-hidden">
+        <div class="absolute -top-1/2 -left-[10%] w-[60%] h-[150%] pointer-events-none -rotate-12"
+            style="background: radial-gradient(circle, rgba(96, 165, 250, 0.05) 0%, transparent 70%);"></div>
+        <div class="page-header-inner">
+            <div class="header-info">
+                <h1 class="page-title">
+                    Willkommen zurück, {{ authService.currentUser()?.username }}
+                </h1>
+                <p class="page-subtitle">{{ funStat() || 'Deine Familiengeschichte auf einen Blick' }}</p>
             </div>
 
-            <div class="hero-preview" *ngIf="treeName()" (dragover)="onDragOver($event)" (drop)="onDrop($event)"
-                [class.drop-target]="isDragging()" (click)="toggleSwitcher()"
-                title="Klicken oder Stammbaum hierher ziehen zum Wechseln">
-                <div class="mini-tree-container">
-                    <svg #miniTree class="mini-tree-svg"></svg>
-                    <div class="hero-info-overlay">
-                        <div class="pulsing-photos">
-                            <div class="photo-circle p1"></div>
-                            <div class="photo-circle p2"></div>
-                            <div class="photo-circle p3"></div>
-                        </div>
-                        <div class="active-tree-info">
-                            <span class="label">Aktiver Stammbaum</span>
-                            <span class="name text-glow">{{ authService.currentTree()?.title || treeName() }}</span>
+            <div class="page-actions">
+
+                <div class="shrink-0 transition-all duration-300" *ngIf="treeName()" (dragover)="onDragOver($event)"
+                    (drop)="onDrop($event)"
+                    [ngClass]="{'border-blue-500 bg-blue-500/10 scale-105 shadow-[0_0_30px_rgba(59,130,246,0.3)]': isDragging()}"
+                    (click)="toggleSwitcher()" title="Klicken oder Stammbaum hierher ziehen zum Wechseln">
+                    <div
+                        class="relative glass-card w-[480px] max-w-full h-[240px] flex items-center justify-center overflow-hidden cursor-pointer group transition-all duration-300">
+                        <svg #miniTree class="absolute inset-0 w-full h-full opacity-60"></svg>
+                        <div
+                            class="relative z-10 bg-slate-900/60 backdrop-blur-sm py-5 px-8 rounded-2xl border border-white/10 flex items-center gap-6 shadow-xl">
+                            <div class="flex -mr-2.5">
+                                <div class="w-11 h-11 rounded-full border-2 border-white/20 -ml-4 first:ml-0 shadow-lg animate-pulse-photo bg-gradient-to-br from-slate-700 to-slate-800"
+                                    style="animation-delay: 0s;"></div>
+                                <div class="w-11 h-11 rounded-full border-2 border-white/20 -ml-4 shadow-lg animate-pulse-photo bg-gradient-to-br from-slate-600 to-slate-700"
+                                    style="animation-delay: 1s;"></div>
+                                <div class="w-11 h-11 rounded-full border-2 border-white/20 -ml-4 shadow-lg animate-pulse-photo bg-gradient-to-br from-slate-800 to-slate-900"
+                                    style="animation-delay: 2s;"></div>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[0.7rem] uppercase text-slate-400 tracking-wider mb-0.5">Aktiver
+                                    Stammbaum</span>
+                                <span
+                                    class="text-xl font-bold text-white tracking-tight text-shadow-[0_0_15px_rgba(96,165,250,0.4)]">{{
+                                    authService.currentTree()?.title || treeName() }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="max-w-[1400px] mx-auto -mt-10 px-10 pb-20 relative z-20">
+            <!-- KPI Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-10" *ngIf="!loading()">
+                <div class="glass-card flex flex-col items-center text-center shadow-lg">
+                    <span class="text-3xl font-extrabold text-blue-400 leading-none mb-2">{{
+                        stats()?.counts?.individuals ||
+                        0 }}</span>
+                    <span class="text-sm text-slate-400 font-medium">Personen</span>
+                </div>
+                <div class="glass-card flex flex-col items-center text-center shadow-lg">
+                    <span class="text-3xl font-extrabold text-blue-400 leading-none mb-2">{{ stats()?.counts?.families
+                        || 0
+                        }}</span>
+                    <span class="text-sm text-slate-400 font-medium">Familien</span>
+                </div>
+                <div class="glass-card flex flex-col items-center text-center shadow-lg">
+                    <span class="text-3xl font-extrabold text-blue-400 leading-none mb-2">{{ stats()?.counts?.media || 0
+                        }}</span>
+                    <span class="text-sm text-slate-400 font-medium">Medien</span>
+                </div>
+                <div class="glass-card flex flex-col items-center text-center shadow-lg">
+                    <span class="text-3xl font-extrabold text-emerald-400 leading-none mb-2">{{ completeness()
+                        }}%</span>
+                    <span class="text-sm text-slate-400 font-medium">Vollständigkeit</span>
+                    <div class="w-full h-1 bg-white/5 rounded-full mt-3 overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.4)] transition-all duration-1000 ease-out"
+                            [style.width.%]="completeness()"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main CTAs -->
+            <div class="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-6 mb-16">
+                <a routerLink="/tree"
+                    class="relative no-underline text-inherit flex items-center rounded-[28px] transition-all duration-400 overflow-hidden bg-gradient-to-br from-blue-500/15 to-blue-600/10 border border-blue-500/20 p-10 gap-8 group hover:from-blue-500/25 hover:to-blue-600/20 hover:border-blue-500/40 hover:-translate-y-2 hover:shadow-2xl">
+                    <div class="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center shrink-0">
+                        <img src="/favicon.svg" alt="Tree" class="w-[60%] h-[60%] object-contain" />
+                    </div>
+                    <div>
+                        <h3 class="text-3xl font-bold mb-2 text-white">Stammbaum ansehen</h3>
+                        <p class="text-slate-400 text-base leading-relaxed">Erforsche deine Ahnen in der interaktiven
+                            Ansicht</p>
+                    </div>
+                    <div
+                        class="text-3xl text-blue-400 ml-auto opacity-50 transition-all duration-300 group-hover:translate-x-2.5 group-hover:opacity-100">
+                        →</div>
+                </a>
+
+                <div class="flex flex-col gap-5">
+                    <a routerLink="/tree"
+                        class="flex flex-col sm:flex-row items-start sm:items-center glass-card gap-5 transition-all duration-400 group cursor-pointer"
+                        (click)="$event.preventDefault(); toggleSwitcher()">
+                        <div
+                            class="text-blue-400 text-3xl font-extrabold w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                            ＋</div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-1 text-white">Stammbaum wechseln</h3>
+                            <p class="text-slate-400 text-sm">Anderen Baum öffnen</p>
+                        </div>
+                    </a>
+                    <a class="flex flex-col sm:flex-row items-start sm:items-center bg-gradient-to-br from-purple-500/10 to-violet-500/5 border border-purple-500/20 p-6 gap-5 rounded-[28px] transition-all duration-400 hover:border-purple-500/40 hover:translate-x-2.5 group cursor-pointer"
+                        (click)="discoverAncestor()">
+                        <div
+                            class="text-purple-400 text-2xl w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                            ✨</div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-1 text-white">Entdecken</h3>
+                            <p class="text-slate-400 text-sm">Zufälligen Vorfahren finden</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Secondary Navigation -->
+            <div
+                class="flex flex-wrap justify-center gap-3 glass-card !p-3 !rounded-2xl border border-white/5 mb-16 max-w-fit mx-auto">
+                <a routerLink="/map" title="Karte"
+                    class="flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 hover:-translate-y-0.5 hover:border-blue-500/20 border border-transparent transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+                    </svg>
+                    <span class="text-sm font-semibold">Karte</span>
+                </a>
+                <a routerLink="/media" title="Galerie"
+                    class="flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 hover:-translate-y-0.5 hover:border-blue-500/20 border border-transparent transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span class="text-sm font-semibold">Galerie</span>
+                </a>
+                <a routerLink="/statistics" title="Statistik"
+                    class="flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 hover:-translate-y-0.5 hover:border-blue-500/20 border border-transparent transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span class="text-sm font-semibold">Statistik</span>
+                </a>
+                <a routerLink="/diagnostics" title="Fehlersuche"
+                    class="flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 hover:-translate-y-0.5 hover:border-blue-500/20 border border-transparent transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span class="text-sm font-semibold">Prüfung</span>
+                </a>
+            </div>
+
+            <!-- Tree Switcher Overlay -->
+            <div class="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex justify-center items-center z-[2000]"
+                *ngIf="showTreeSwitcher()" (click)="$event.stopPropagation(); toggleSwitcher()">
+                <div class="glass-card !rounded-3xl border border-white/10 shadow-2xl max-w-lg w-full mx-4"
+                    (click)="$event.stopPropagation()">
+                    <h2 class="text-2xl font-bold text-white mb-6">Stammbaum wählen</h2>
+                    <div class="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2">
+                        <div *ngFor="let tree of availableTrees()"
+                            class="glass-card !p-4 !rounded-2xl flex items-center gap-4 cursor-pointer transition-all hover:bg-white/10"
+                            [ngClass]="{'border-blue-500 bg-blue-500/10': tree.name === treeName()}" draggable="true"
+                            (dragstart)="onDragStart($event, tree)" (dragend)="onDragEnd()" (click)="selectTree(tree)">
+                            <div
+                                class="w-10 h-10 shrink-0 bg-slate-900/50 rounded-xl flex items-center justify-center border border-white/10">
+                                <img src="/favicon.svg" alt="Tree" class="w-6 h-6" />
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="block font-bold text-white">{{ tree.title }}</span>
+                                <span class="text-xs text-slate-400">{{ tree.name }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar Widget -->
+            <div>
+                <app-calendar-widget></app-calendar-widget>
             </div>
         </div>
     </div>
-
-    <div class="dashboard-content">
-        <!-- KPI Row -->
-        <div class="kpi-row" *ngIf="!loading()">
-            <div class="kpi-mini-card">
-                <span class="val">{{ stats()?.counts?.individuals || 0 }}</span>
-                <span class="lbl">Personen</span>
-            </div>
-            <div class="kpi-mini-card">
-                <span class="val">{{ stats()?.counts?.families || 0 }}</span>
-                <span class="lbl">Familien</span>
-            </div>
-            <div class="kpi-mini-card">
-                <span class="val">{{ stats()?.counts?.media || 0 }}</span>
-                <span class="lbl">Medien</span>
-            </div>
-            <div class="kpi-mini-card completeness">
-                <span class="val">{{ completeness() }}%</span>
-                <span class="lbl">Vollständigkeit</span>
-                <div class="progress-bar-mini">
-                    <div class="fill" [style.width.%]="completeness()"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main CTAs -->
-        <div class="cta-grid">
-            <a routerLink="/tree" class="cta-large primary">
-                <div class="cta-icon">
-                    <img src="/favicon.svg" alt="Tree" />
-                </div>
-                <div class="cta-text">
-                    <h3>Stammbaum ansehen</h3>
-                    <p>Erforsche deine Ahnen in der interaktiven Ansicht</p>
-                </div>
-                <div class="cta-arrow">→</div>
-            </a>
-
-            <div class="cta-group">
-                <a routerLink="/tree" class="cta-medium" (click)="$event.preventDefault(); toggleSwitcher()">
-                    <div class="cta-icon add-icon">＋</div>
-                    <div class="cta-text">
-                        <h3>Person hinzufügen</h3>
-                        <p>Erweitere deine Geschichte</p>
-                    </div>
-                </a>
-                <a class="cta-medium discover" (click)="discoverAncestor()">
-                    <div class="cta-icon discover-icon">✨</div>
-                    <div class="cta-text">
-                        <h3>Entdecken</h3>
-                        <p>Zufälligen Vorfahren finden</p>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-        <!-- Secondary Navigation -->
-        <div class="secondary-nav">
-            <a routerLink="/map" title="Karte">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-                </svg>
-                <span>Karte</span>
-            </a>
-            <a routerLink="/media" title="Galerie">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21 15 16 10 5 21"></polyline>
-                </svg>
-                <span>Galerie</span>
-            </a>
-            <a routerLink="/statistics" title="Statistik">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                    <line x1="12" y1="20" x2="12" y2="4"></line>
-                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                </svg>
-                <span>Statistik</span>
-            </a>
-            <a routerLink="/diagnostics" title="Fehlersuche">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                <span>Prüfung</span>
-            </a>
-        </div>
-
-        <!-- Tree Switcher Overlay (Kept from original) -->
-        <div class="tree-switcher-overlay" *ngIf="showTreeSwitcher()"
-            (click)="$event.stopPropagation(); toggleSwitcher()">
-            <div class="switcher-card glass-card" (click)="$event.stopPropagation()">
-                <h2>Stammbaum wählen</h2>
-                <div class="tree-list">
-                    <div *ngFor="let tree of availableTrees()" class="tree-item"
-                        [class.active]="tree.name === treeName()" draggable="true"
-                        (dragstart)="onDragStart($event, tree)" (dragend)="onDragEnd()" (click)="selectTree(tree)">
-                        <div class="tree-item-icon">
-                            <img src="/favicon.svg" alt="Tree" class="item-logo" />
-                        </div>
-                        <div class="tree-item-info">
-                            <span class="tree-name">{{ tree.title }}</span>
-                            <span class="tree-meta">{{ tree.name }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Calendar Widget -->
-        <div class="calendar-section">
-            <app-calendar-widget></app-calendar-widget>
-        </div>
-    </div>
-</div>

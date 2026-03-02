@@ -1,173 +1,210 @@
-<div class="settings-container">
-    <div class="glass-card">
-        <div class="header">
-            <div class="title-row">
-                <a routerLink="/settings" class="back-link-icon">
+<div class="min-h-screen text-slate-200 flex flex-col p-0 m-0 pb-20">
+    <!-- Unified Sticky Header -->
+    <div class="page-header px-6 md:px-10 pt-6">
+        <div class="page-header-inner flex-wrap md:flex-nowrap gap-4">
+            <div class="flex items-center gap-4 flex-1">
+                <a routerLink="/settings"
+                    class="p-2 rounded-full hover:bg-white/5 transition-colors text-slate-400 hover:text-blue-400">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="19" y1="12" x2="5" y2="12"></line>
                         <polyline points="12 19 5 12 12 5"></polyline>
                     </svg>
                 </a>
-                <h1>System & Updates</h1>
+                <div class="flex flex-col gap-1">
+                    <h1 class="page-title leading-tight">System & Updates</h1>
+                    <p class="page-subtitle text-slate-400">Verwalte deine Heritago-Installation</p>
+                </div>
             </div>
-            <p>Verwalte deine Heritago-Installation und prüfe auf Updates</p>
         </div>
+    </div>
 
-        <div class="content">
-            <div class="update-grid">
-                <!-- Status Card -->
-                <div class="section-card">
-                    <div class="card-header">
-                        <h3 style="color: #f1f5f9; margin: 0;">Installierte Version</h3>
-                        <span class="version-badge">{{ currentVersion }}</span>
+    <!-- Page Content Container -->
+    <div class="flex-1 p-6 md:p-10 max-w-[1200px] w-full mx-auto">
+        <div class="flex flex-col gap-8">
+            <!-- Main Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <!-- Status Section -->
+                <div
+                    class="glass-card shadow-xl flex flex-col gap-6 group hover:border-brand-500/20 transition-all duration-300">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                            <span class="w-1.5 h-6 bg-blue-500 rounded-full"></span>
+                            Installierte Version
+                        </h3>
+                        <span
+                            class="px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-400 text-sm font-bold border border-blue-500/20 shadow-lg shadow-blue-500/10">
+                            {{ currentVersion }}
+                        </span>
                     </div>
 
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <span class="label">Node.js</span>
-                            <span class="value">{{ systemInfo?.nodeVersion || '...' }}</span>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <span
+                                class="block text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Node.js</span>
+                            <span class="text-slate-200 font-medium">{{ systemInfo?.nodeVersion || '...' }}</span>
                         </div>
-                        <div class="info-item">
-                            <span class="label">Platform</span>
-                            <span class="value">{{ systemInfo?.platform || '...' }}</span>
+                        <div class="p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <span
+                                class="block text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">Platform</span>
+                            <span class="text-slate-200 font-medium">{{ systemInfo?.platform || '...' }}</span>
                         </div>
                     </div>
 
-                    <div *ngIf="updateStatus" class="status-indicator" [class.success]="!updateStatus.hasUpdate"
-                        [class.warning]="updateStatus.hasUpdate">
-                        <svg *ngIf="!updateStatus.hasUpdate" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        <svg *ngIf="updateStatus.hasUpdate" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        <span>{{ updateStatus.hasUpdate ? 'Update verfügbar!' : 'System ist aktuell ✓' }}</span>
+                    <div *ngIf="updateStatus" class="mt-auto p-4 rounded-2xl flex items-center gap-3 transition-colors"
+                        [ngClass]="updateStatus.hasUpdate ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'">
+                        <div class="p-2 rounded-full bg-current/10">
+                            <svg *ngIf="!updateStatus.hasUpdate" xmlns="http://www.w3.org/2000/svg" width="20"
+                                height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <svg *ngIf="updateStatus.hasUpdate" xmlns="http://www.w3.org/2000/svg" width="20"
+                                height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                        </div>
+                        <span class="font-bold">{{ updateStatus.hasUpdate ? 'Update verfügbar!' : 'System ist aktuell ✓'
+                            }}</span>
                     </div>
                 </div>
 
-                <!-- Update Card -->
-                <div class="section-card">
-                    <div class="card-header">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <div class="io-icon" [class.rotating]="checking">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M21 2v6h-6"></path>
-                                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
-                                    <path d="M3 22v-6h6"></path>
-                                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
-                                </svg>
-                            </div>
-                            <h3 style="color: #f1f5f9; margin: 0;">Software-Update</h3>
+                <!-- Action Section -->
+                <div
+                    class="glass-card shadow-xl flex flex-col gap-6 group hover:border-purple-500/20 transition-all duration-300">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-400 border border-purple-500/20 group-hover:scale-110 transition-transform">
+                            <svg [class.animate-spin]="checking" xmlns="http://www.w3.org/2000/svg" width="24"
+                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 2v6h-6"></path>
+                                <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                                <path d="M3 22v-6h6"></path>
+                                <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                            </svg>
                         </div>
+                        <h3 class="text-xl font-bold text-white leading-none">Software-Update</h3>
                     </div>
 
-                    <p style="color: #64748b; font-size: 0.9rem; margin: 0;">Prüfe auf neue Versionen direkt aus dem
-                        GitHub Repository.</p>
+                    <p class="text-slate-400">Prüfe auf neue Versionen direkt aus dem GitHub Repository und installiere
+                        diese mit einem Klick.</p>
 
-                    <div style="display: flex; gap: 1rem; margin-top: auto;">
+                    <div class="mt-auto flex flex-wrap gap-4">
                         <button *ngIf="!updateStatus?.hasUpdate" (click)="checkUpdate()" [disabled]="checking"
-                            class="btn btn-primary">
+                            class="grow btn-primary !py-4 !rounded-2xl">
+                            <span *ngIf="checking"
+                                class="w-4 h-4 border-2 border-white/20 border-l-white rounded-full animate-spin mr-2"></span>
                             {{ checking ? 'Suche...' : 'Nach Updates suchen' }}
                         </button>
 
                         <button *ngIf="updateStatus?.hasUpdate" (click)="performUpdate()" [disabled]="updating"
-                            class="btn btn-success">
+                            class="grow btn-primary !bg-gradient-to-r !from-emerald-600 !to-teal-600 !py-4 !rounded-2xl">
+                            <span *ngIf="updating"
+                                class="w-4 h-4 border-2 border-white/20 border-l-white rounded-full animate-spin mr-2"></span>
                             {{ updating ? 'Wird installiert...' : 'Version ' + updateStatus.latestVersion + '
                             installieren' }}
                         </button>
 
-                        <button *ngIf="updateStatus" (click)="updateStatus = null" class="btn btn-outline">
+                        <button *ngIf="updateStatus" (click)="updateStatus = null"
+                            class="btn-secondary !py-4 !px-8 !rounded-2xl">
                             Abbrechen
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Found Update Details -->
-            <div *ngIf="updateStatus?.hasUpdate" class="section-card update-details-card" style="margin-top: 1rem;">
-                <h4 style="margin: 0; color: #f1f5f9;">Gefundenes Update</h4>
-                <div class="version-comparison">
-                    <div class="version-box current">
-                        <span class="version-label">Installiert</span>
-                        <span class="version-number">{{ updateStatus.currentVersion }}</span>
+            <!-- Detailed Info Cards -->
+            <div class="flex flex-col gap-6">
+                <!-- Update Details -->
+                <div *ngIf="updateStatus?.hasUpdate"
+                    class="glass-card shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <h4 class="text-lg font-black text-emerald-400 uppercase tracking-widest mb-6 px-1">Gefundenes
+                        Update</h4>
+
+                    <div class="flex flex-col md:flex-row items-center gap-8 justify-center py-6">
+                        <div class="flex flex-col items-center gap-2 glass-card min-w-[160px]">
+                            <span
+                                class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Installiert</span>
+                            <span class="text-2xl font-black text-slate-300">{{ updateStatus.currentVersion }}</span>
+                        </div>
+
+                        <div class="text-blue-500 animate-pulse">
+                            <svg class="rotate-90 md:rotate-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                <polyline points="12 5 19 12 12 19"></polyline>
+                            </svg>
+                        </div>
+
+                        <div
+                            class="flex flex-col items-center gap-2 p-6 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 min-w-[160px] shadow-lg shadow-emerald-500/5">
+                            <span
+                                class="text-[10px] font-bold text-emerald-400/60 uppercase tracking-widest">Verfügbar</span>
+                            <span class="text-2xl font-black text-emerald-400">{{ updateStatus.latestVersion }}</span>
+                        </div>
                     </div>
-                    <div class="version-arrow">
+
+                    <div *ngIf="updateStatus.releaseName"
+                        class="mt-8 pt-6 border-t border-emerald-500/10 flex items-center gap-3">
+                        <span class="text-slate-500 font-bold text-sm uppercase">Release:</span>
+                        <span class="text-emerald-300 font-semibold">{{ updateStatus.releaseName }}</span>
+                    </div>
+
+                    <div *ngIf="updateStatus.details"
+                        class="mt-6 p-6 bg-black/40 rounded-2xl border border-white/5 font-mono text-sm text-slate-400 overflow-x-auto max-h-[300px]">
+                        <pre class="whitespace-pre-wrap">{{ updateStatus.details }}</pre>
+                    </div>
+                </div>
+
+                <!-- No Update / Success Messages -->
+                <div *ngIf="updateStatus && !updateStatus.hasUpdate"
+                    class="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-4 text-emerald-400">
+                    <div class="p-2 rounded-full bg-emerald-500/20 animate-pulse">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
+                            stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                     </div>
-                    <div class="version-box latest">
-                        <span class="version-label">Verfügbar</span>
-                        <span class="version-number">{{ updateStatus.latestVersion }}</span>
+                    <span class="font-medium text-lg">Kein Update verfügbar. Du nutzt bereits die neueste Version
+                        <strong>{{ updateStatus.currentVersion }}</strong>.</span>
+                </div>
+
+                <div *ngIf="updateResult"
+                    class="bg-emerald-900/20 border border-emerald-500/30 rounded-3xl p-8 shadow-2xl">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div
+                            class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <h4 class="text-xl font-bold text-white">{{ updateResult.message }}</h4>
+                    </div>
+                    <div *ngIf="updateResult.output"
+                        class="p-6 bg-black/40 rounded-2xl border border-white/5 font-mono text-xs text-emerald-400/80 overflow-x-auto max-h-[400px]">
+                        <pre>{{ updateResult.output }}</pre>
                     </div>
                 </div>
-                <div *ngIf="updateStatus.releaseName" class="release-name">
-                    <span class="label">Release:</span> {{ updateStatus.releaseName }}
-                </div>
-                <div *ngIf="updateStatus.details" class="log-box">
-                    <pre>{{ updateStatus.details }}</pre>
-                </div>
-            </div>
 
-            <!-- No Update Found -->
-            <div *ngIf="updateStatus && !updateStatus.hasUpdate" class="section-card" style="margin-top: 1rem;">
-                <div class="status-indicator success">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                <!-- Error Indication -->
+                <div *ngIf="error"
+                    class="p-6 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-4 text-red-400 animate-bounce">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
                     </svg>
-                    <span>Kein Update verfügbar. Du nutzt bereits die neueste Version <strong>{{
-                            updateStatus.currentVersion }}</strong>.</span>
+                    <span class="font-bold">{{ error }}</span>
                 </div>
             </div>
-
-            <!-- Update Result -->
-            <div *ngIf="updateResult" class="section-card" style="margin-top: 1rem;">
-                <h4 style="margin: 0; color: #f1f5f9;">Update Ergebnis</h4>
-                <div class="status-indicator success" style="margin-top: 1rem;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                    <span>{{ updateResult.message }}</span>
-                </div>
-                <div *ngIf="updateResult.output" class="log-box">
-                    <pre>{{ updateResult.output }}</pre>
-                </div>
-            </div>
-
-            <!-- Error -->
-            <div *ngIf="error" class="status-indicator error" style="margin-top: 1rem;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                <span>{{ error }}</span>
-            </div>
-        </div>
-
-        <div class="back-link">
-            <a routerLink="/settings" class="back-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                    <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-                <span>Zurück zu Einstellungen</span>
-            </a>
         </div>
     </div>
 </div>

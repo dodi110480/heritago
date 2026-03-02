@@ -10,8 +10,7 @@ declare const L: any;
     selector: 'app-place-modal',
     standalone: true,
     imports: [CommonModule, FormsModule],
-    templateUrl: './place-modal.html',
-    styleUrl: './place-modal.css'
+    templateUrl: './place-modal.html'
 })
 export class PlaceModal implements OnInit {
     private gedcomService = inject(GedcomService);

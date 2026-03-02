@@ -7,29 +7,20 @@ import { RouterModule } from '@angular/router';
     standalone: true,
     imports: [CommonModule, RouterModule],
     template: `
-        <div class="placeholder-container">
-            <div class="glass-card">
-                <div class="header">
-                    <h1>Benutzerverwaltung</h1>
-                    <p>Hier kannst du bald Benutzer und Rollen verwalten.</p>
+        <div class="flex justify-center items-center min-h-[calc(100vh-64px)] p-5">
+            <div class="bg-slate-800/70 backdrop-blur-xl border border-white/10 rounded-[24px] p-12 w-full max-w-[800px] text-center">
+                <div class="mb-8">
+                    <h1 class="text-[2.5rem] font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-2">Benutzerverwaltung</h1>
+                    <p class="text-slate-400">Hier kannst du bald Benutzer und Rollen verwalten.</p>
                 </div>
-                <div class="content">
+                <div class="text-slate-100 leading-relaxed mb-12">
                     <p>Die Benutzerverwaltung wird in Kürze verfügbar sein. Hier kannst du neue Nutzer einladen, Passwörter zurücksetzen und Berechtigungen verwalten.</p>
                 </div>
-                <div class="back-link">
-                    <a routerLink="/settings" class="back-btn">Zurück zu den Einstellungen</a>
+                <div>
+                    <a routerLink="/settings" class="btn-ghost !w-auto !py-3 !px-6">Zurück zu den Einstellungen</a>
                 </div>
             </div>
         </div>
-    `,
-    styles: [`
-        .placeholder-container { display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 64px); padding: 20px; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 3rem; width: 100%; max-width: 800px; text-align: center; }
-        .header h1 { font-size: 2.5rem; background: linear-gradient(to right, #60a5fa, #a855f7); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 0.5rem; }
-        .header p { color: #94a3b8; margin-bottom: 2rem; }
-        .content { color: #f1f5f9; line-height: 1.6; margin-bottom: 3rem; }
-        .back-btn { color: #60a5fa; text-decoration: none; border: 1px solid rgba(96, 165, 250, 0.3); padding: 0.75rem 1.5rem; border-radius: 12px; transition: all 0.2s; }
-        .back-btn:hover { background: rgba(96, 165, 250, 0.1); border-color: #60a5fa; }
-    `]
+    `
 })
 export class UserManagement { }

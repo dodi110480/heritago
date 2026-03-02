@@ -1,203 +1,277 @@
-<div class="page-container" *ngIf="!loading() && family()">
-    <header class="header-glass">
-        <div class="header-content">
-            <div class="title-row">
-                <a routerLink="/families" class="btn-back">
+<div class="min-h-screen text-slate-200 flex flex-col p-0 m-0" *ngIf="!loading() && family()">
+    <!-- Unified Sticky Header -->
+    <div class="page-header">
+        <div class="page-header-inner">
+            <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-center w-full">
+                <a routerLink="/families"
+                    class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-slate-400 flex items-center justify-center hover:bg-white/10 hover:text-white transition-colors cursor-pointer shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">
                         <line x1="19" y1="12" x2="5" y2="12"></line>
                         <polyline points="12 19 5 12 12 5"></polyline>
                     </svg>
                 </a>
-                <div class="header-info">
-                    <h1>Familie {{ family()?.id }}</h1>
-                    <p class="subtitle">
+
+                <div class="flex-1 text-center md:text-left">
+                    <h1 class="page-title">Familie {{ family()?.id }}</h1>
+                    <p class="page-subtitle text-slate-300 mt-1">
                         {{ getPersonName(family()?.husband) }} & {{ getPersonName(family()?.wife) }}
-                        <span class="header-date" *ngIf="getMarriageInfo()"> — {{ getMarriageInfo() }}</span>
+                        <span class="text-slate-500 text-sm ml-2" *ngIf="getMarriageInfo()"> — {{ getMarriageInfo()
+                            }}</span>
                     </p>
                 </div>
-                <div class="header-actions">
+
+                <div class="page-actions flex gap-3">
                     <button class="btn-secondary" (click)="cancel()">Abbrechen</button>
-                    <button class="btn-primary" [disabled]="!isDirty() || isSaving()" (click)="save()">
-                        <span *ngIf="isSaving()" class="spinner-small"></span>
+                    <button class="btn-primary flex items-center gap-2" [disabled]="!isDirty() || isSaving()"
+                        (click)="save()">
+                        <div *ngIf="isSaving()"
+                            class="w-4 h-4 border-2 border-white/20 border-l-white rounded-full animate-spin"></div>
                         Speichern
                     </button>
                 </div>
             </div>
         </div>
-    </header>
+    </div>
 
-    <main class="content-body">
-        <div class="container-inner">
+    <!-- Main Content -->
+    <main class="flex-1 p-6 md:p-10 max-w-[1200px] w-full mx-auto">
+        <div class="flex flex-col gap-10">
             <!-- Partners Section -->
-            <section class="detail-section">
-                <div class="section-header">
-                    <h2>Partner</h2>
+            <section>
+                <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-6">
+                    <h2 class="text-xl font-bold text-slate-200 m-0">Partner</h2>
                 </div>
-                <div class="partners-grid">
+
+                <div
+                    class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-10 items-center bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 md:p-10 shadow-2xl relative">
                     <!-- Husband -->
-                    <div class="partner-card">
-                        <div class="avatar-box" [class]="'gender-' + getPersonGender(family()?.husband)"
-                            [style.background-image]="'url(' + getPersonImage(family()?.husband) + ')'">
+                    <div class="flex items-center gap-5">
+                        <div class="w-20 h-20 rounded-2xl bg-center bg-no-repeat bg-cover border-[3px] border-white/5 shrink-0 flex items-center justify-center"
+                            [ngClass]="{'bg-blue-500/15 text-blue-400': getPersonGender(family()?.husband) === 'M', 'bg-pink-500/15 text-pink-400': getPersonGender(family()?.husband) === 'F', 'bg-slate-500/15 text-slate-400': getPersonGender(family()?.husband) === 'U'}"
+                            [style.background-image]="'url(' + getPersonImage(family()?.husband) + ')'"
+                            [style.background-size]="getPersonImage(family()?.husband).includes('assets/avatars/') ? '40px' : 'cover'">
                         </div>
-                        <div class="partner-info">
-                            <span class="label">Ehemann</span>
-                            <span class="name">{{ getPersonName(family()?.husband) }}</span>
-                            <a [routerLink]="['/person', family()?.husband]" class="btn-link">Profil ansehen</a>
+                        <div class="flex flex-col">
+                            <span
+                                class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Ehemann</span>
+                            <span class="text-lg font-bold text-slate-100">{{ getPersonName(family()?.husband) }}</span>
+                            <a [routerLink]="['/person', family()?.husband]"
+                                class="text-sm text-blue-400 hover:text-blue-300 hover:underline mt-1">Profil
+                                ansehen</a>
                         </div>
                     </div>
 
-                    <div class="wedding-ring-large">💍</div>
+                    <div class="text-4xl opacity-30 rotate-90 md:rotate-0">💍</div>
 
                     <!-- Wife -->
-                    <div class="partner-card">
-                        <div class="avatar-box" [class]="'gender-' + getPersonGender(family()?.wife)"
-                            [style.background-image]="'url(' + getPersonImage(family()?.wife) + ')'">
+                    <div
+                        class="flex items-center gap-5 justify-start md:justify-end text-left md:text-right flex-row md:flex-row-reverse">
+                        <div class="w-20 h-20 rounded-2xl bg-center bg-no-repeat bg-cover border-[3px] border-white/5 shrink-0 flex items-center justify-center"
+                            [ngClass]="{'bg-blue-500/15 text-blue-400': getPersonGender(family()?.wife) === 'M', 'bg-pink-500/15 text-pink-400': getPersonGender(family()?.wife) === 'F', 'bg-slate-500/15 text-slate-400': getPersonGender(family()?.wife) === 'U'}"
+                            [style.background-image]="'url(' + getPersonImage(family()?.wife) + ')'"
+                            [style.background-size]="getPersonImage(family()?.wife).includes('assets/avatars/') ? '40px' : 'cover'">
                         </div>
-                        <div class="partner-info">
-                            <span class="label">Ehefrau</span>
-                            <span class="name">{{ getPersonName(family()?.wife) }}</span>
-                            <a [routerLink]="['/person', family()?.wife]" class="btn-link">Profil ansehen</a>
+                        <div class="flex flex-col">
+                            <span
+                                class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Ehefrau</span>
+                            <span class="text-lg font-bold text-slate-100">{{ getPersonName(family()?.wife) }}</span>
+                            <a [routerLink]="['/person', family()?.wife]"
+                                class="text-sm text-blue-400 hover:text-blue-300 hover:underline mt-1">Profil
+                                ansehen</a>
                         </div>
                     </div>
                 </div>
             </section>
 
             <!-- Events Section -->
-            <section class="detail-section">
-                <div class="section-header">
-                    <h2>Ereignisse</h2>
-                    <button class="btn-add" (click)="addEvent()">+ Ereignis</button>
+            <section>
+                <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-6">
+                    <h2 class="text-xl font-bold text-slate-200 m-0">Ereignisse</h2>
+                    <button class="btn-primary !w-auto !py-1.5 text-sm" (click)="addEvent()">+ Ereignis</button>
                 </div>
-                <div class="events-list">
-                    <div class="event-item glass-card" *ngFor="let event of family()?.events; let i = index">
-                        <div class="event-form">
-                            <div class="form-group type-group">
-                                <label>Typ</label>
-                                <select [(ngModel)]="event.type" (change)="updateEvent()" class="form-control">
-                                    <option value="MARR">Hochzeit</option>
-                                    <option value="DIV">Scheidung</option>
-                                    <option value="ENGA">Verlobung</option>
-                                    <option value="MARB">Aufgebot</option>
-                                    <option value="MARC">Ehevertrag</option>
-                                    <option value="MARS">Eheschließung (Zivil)</option>
-                                    <option value="DIVF">Scheidungsantrag</option>
-                                    <option value="ANUL">Annullierung</option>
-                                </select>
+
+                <div class="flex flex-col gap-4">
+                    <div class="bg-slate-900/30 backdrop-blur-md border border-white/5 rounded-2xl p-4 md:p-6 shadow-lg"
+                        *ngFor="let event of family()?.events; let i = index">
+                        <div class="flex flex-col gap-4">
+                            <!-- Main Event Row -->
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                                <div class="flex flex-col gap-1.5 md:col-span-3 lg:col-span-2">
+                                    <label class="text-xs text-slate-500 font-semibold">Typ</label>
+                                    <select [(ngModel)]="event.type" (change)="updateEvent()"
+                                        class="form-input !py-2 text-sm">
+                                        <option value="MARR">Hochzeit</option>
+                                        <option value="DIV">Scheidung</option>
+                                        <option value="ENGA">Verlobung</option>
+                                        <option value="MARB">Aufgebot</option>
+                                        <option value="MARC">Ehevertrag</option>
+                                        <option value="MARS">Eheschließung (Zivil)</option>
+                                        <option value="DIVF">Scheidungsantrag</option>
+                                        <option value="ANUL">Annullierung</option>
+                                    </select>
+                                </div>
+                                <div class="flex flex-col gap-1.5 md:col-span-3 lg:col-span-2">
+                                    <label class="text-xs text-slate-500 font-semibold">Datum</label>
+                                    <input type="text" [(ngModel)]="event.dateText" (ngModelChange)="updateEvent()"
+                                        placeholder="DD MMM YYYY" class="form-input !py-2 text-sm">
+                                </div>
+                                <div class="flex flex-col gap-1.5 md:col-span-3 lg:col-span-2"
+                                    *ngIf="event.type === 'MARR'">
+                                    <label class="text-xs text-slate-500 font-semibold">Untertyp</label>
+                                    <select [(ngModel)]="event.subType" (change)="updateEvent()"
+                                        class="form-input !py-2 text-sm">
+                                        <option value="">Bitte wählen</option>
+                                        <option value="CIVIL">Standesamtlich</option>
+                                        <option value="RELIGIOUS">Kirchlich</option>
+                                    </select>
+                                </div>
+                                <!-- Span Place to fill remaining space, button takes auto -->
+                                <div class="flex flex-col gap-1.5 md:col-span-full lg:col-span-5 flex-1">
+                                    <label class="text-xs text-slate-500 font-semibold">Ort</label>
+                                    <input type="text" [(ngModel)]="event.place" (ngModelChange)="updateEvent()"
+                                        placeholder="Ort eingeben" class="form-input !py-2 text-sm">
+                                </div>
+                                <div class="flex justify-end lg:col-span-1">
+                                    <button
+                                        class="p-2 text-red-500/60 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
+                                        (click)="removeEvent(i)" title="Ereignis löschen">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                            <path
+                                                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                            </path>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="form-group date-group">
-                                <label>Datum</label>
-                                <input type="text" [(ngModel)]="event.dateText" (ngModelChange)="updateEvent()"
-                                    placeholder="DD MMM YYYY" class="form-control">
-                            </div>
-                            <div class="form-group subtype-group" *ngIf="event.type === 'MARR'">
-                                <label>Untertyp</label>
-                                <select [(ngModel)]="event.subType" (change)="updateEvent()" class="form-control">
-                                    <option value="">Bitte wählen</option>
-                                    <option value="CIVIL">Standesamtlich</option>
-                                    <option value="RELIGIOUS">Kirchlich</option>
-                                </select>
-                            </div>
-                            <div class="form-group place-group">
-                                <label>Ort</label>
-                                <input type="text" [(ngModel)]="event.place" (ngModelChange)="updateEvent()"
-                                    placeholder="Ort eingeben" class="form-control">
-                            </div>
-                            <div class="event-expert-sections">
-                                <div class="event-subsection">
-                                    <div class="subsection-header">
-                                        <strong>Medien</strong>
-                                        <button class="btn btn-text btn-sm" (click)="addEventMedia(i)">+ Medium</button>
+
+                            <!-- Expert Sections -->
+                            <div class="flex flex-col gap-3 mt-2">
+                                <!-- Media -->
+                                <div class="bg-slate-950/40 border border-white/5 rounded-xl p-3 md:p-4">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <strong class="text-sm text-slate-300">Medien</strong>
+                                        <button class="btn-ghost !w-auto !py-1 text-xs" (click)="addEventMedia(i)">+
+                                            Medium</button>
                                     </div>
-                                    <div *ngIf="event.media && event.media.length > 0" class="subsection-list">
-                                        <div *ngFor="let med of event.media; let mIndex = index" class="subsection-item">
-                                            <div class="media-mini-thumb">
-                                                <img *ngIf="isImage(med) && getMediaUrl(med.url)" [src]="getMediaUrl(med.url)" alt="Vorschau">
+                                    <div *ngIf="event.media && event.media.length > 0" class="flex flex-col gap-3">
+                                        <div *ngFor="let med of event.media; let mIndex = index"
+                                            class="grid grid-cols-1 md:grid-cols-[64px_1fr_1fr_auto] gap-3 items-center">
+                                            <div
+                                                class="w-full md:w-16 h-24 md:h-12 bg-slate-900 rounded-lg border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
+                                                <img *ngIf="isImage(med) && getMediaUrl(med.url)"
+                                                    [src]="getMediaUrl(med.url)" class="w-full h-full object-cover">
                                             </div>
                                             <input type="text" [(ngModel)]="med.title" (ngModelChange)="updateEvent()"
-                                                placeholder="Titel" class="form-control">
+                                                placeholder="Titel"
+                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
                                             <input type="text" [(ngModel)]="med.url" (ngModelChange)="updateEvent()"
-                                                placeholder="URL / Dateipfad" class="form-control">
-                                            <button class="btn-icon text-danger" (click)="removeEventMedia(i, mIndex)">&times;</button>
+                                                placeholder="URL / Dateipfad"
+                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+                                            <button
+                                                class="p-2 text-red-500/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors place-self-end md:place-self-auto"
+                                                (click)="removeEventMedia(i, mIndex)">&times;</button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="event-subsection">
-                                    <div class="subsection-header">
-                                        <strong>Notizen</strong>
-                                        <button class="btn btn-text btn-sm" (click)="addEventNote(i)">+ Notiz</button>
+                                <!-- Notes -->
+                                <div class="bg-slate-950/40 border border-white/5 rounded-xl p-3 md:p-4">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <strong class="text-sm text-slate-300">Notizen</strong>
+                                        <button class="btn-ghost !w-auto !py-1 text-xs" (click)="addEventNote(i)">+
+                                            Notiz</button>
                                     </div>
-                                    <div *ngIf="event.notes && event.notes.length > 0" class="subsection-list">
-                                        <div *ngFor="let note of event.notes; let nIndex = index" class="subsection-item">
-                                            <textarea [ngModel]="note" (ngModelChange)="updateEventNote(i, nIndex, $event)"
-                                                class="form-control" placeholder="Notiz zum Ereignis"></textarea>
-                                            <button class="btn-icon text-danger" (click)="removeEventNote(i, nIndex)">&times;</button>
+                                    <div *ngIf="event.notes && event.notes.length > 0" class="flex flex-col gap-3">
+                                        <div *ngFor="let note of event.notes; let nIndex = index"
+                                            class="grid grid-cols-[1fr_auto] gap-3 items-start">
+                                            <textarea [ngModel]="note"
+                                                (ngModelChange)="updateEventNote(i, nIndex, $event)"
+                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 min-h-[60px]"
+                                                placeholder="Notiz zum Ereignis"></textarea>
+                                            <button
+                                                class="p-2 text-red-500/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                (click)="removeEventNote(i, nIndex)">&times;</button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="event-subsection">
-                                    <div class="subsection-header">
-                                        <strong>Quellen</strong>
-                                        <button class="btn btn-text btn-sm" (click)="addEventCitation(i)">+ Quelle</button>
+                                <!-- Citations -->
+                                <div class="bg-slate-950/40 border border-white/5 rounded-xl p-3 md:p-4">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <strong class="text-sm text-slate-300">Quellen</strong>
+                                        <button class="btn-ghost !w-auto !py-1 text-xs" (click)="addEventCitation(i)">+
+                                            Quelle</button>
                                     </div>
-                                    <div *ngIf="event.citations && event.citations.length > 0" class="subsection-list">
-                                        <div *ngFor="let cit of event.citations; let cIndex = index" class="subsection-item citation-item">
-                                            <input type="text" [(ngModel)]="cit.sourceTitle" (ngModelChange)="updateEvent()"
-                                                placeholder="Quelle" class="form-control">
-                                            <select [(ngModel)]="cit.quality" (change)="updateEvent()" class="form-control">
+                                    <div *ngIf="event.citations && event.citations.length > 0"
+                                        class="flex flex-col gap-3">
+                                        <div *ngFor="let cit of event.citations; let cIndex = index"
+                                            class="grid grid-cols-1 md:grid-cols-[1fr_160px_180px_1fr_auto] gap-3 items-center">
+                                            <input type="text" [(ngModel)]="cit.sourceTitle"
+                                                (ngModelChange)="updateEvent()" placeholder="Quelle"
+                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+                                            <select [(ngModel)]="cit.quality" (change)="updateEvent()"
+                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
                                                 <option value="0">Unzuverlässig</option>
                                                 <option value="1">Fragwürdig</option>
                                                 <option value="2">Sekundär</option>
                                                 <option value="3">Primär / Sicher</option>
                                             </select>
-                                            <input type="text" [(ngModel)]="cit.whereInSource" (ngModelChange)="updateEvent()"
-                                                placeholder="Seite/Position" class="form-control">
+                                            <input type="text" [(ngModel)]="cit.whereInSource"
+                                                (ngModelChange)="updateEvent()" placeholder="Seite/Position"
+                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
                                             <input type="text" [(ngModel)]="cit.text" (ngModelChange)="updateEvent()"
-                                                placeholder="Zitat/Bemerkung" class="form-control">
-                                            <button class="btn-icon text-danger" (click)="removeEventCitation(i, cIndex)">&times;</button>
+                                                placeholder="Zitat/Bemerkung"
+                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
+                                            <button
+                                                class="p-2 text-red-500/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors place-self-end md:place-self-auto"
+                                                (click)="removeEventCitation(i, cIndex)">&times;</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <button class="btn-delete-icon" (click)="removeEvent(i)" title="Löschen">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path
-                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                    </path>
-                                </svg>
-                            </button>
                         </div>
                     </div>
-                    <div class="no-events" *ngIf="!family()?.events || family()?.events?.length === 0">
+
+                    <div class="text-center p-8 bg-slate-900/20 border border-white/5 rounded-2xl text-slate-500 italic"
+                        *ngIf="!family()?.events || family()?.events?.length === 0">
                         Keine Ereignisse hinterlegt.
                     </div>
                 </div>
             </section>
 
             <!-- Children Section -->
-            <section class="detail-section">
-                <div class="section-header">
-                    <h2>Kinder ({{ family()?.children?.length || 0 }})</h2>
-                    <button class="btn-add" (click)="addChild()">+ Kind</button>
+            <section>
+                <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-6">
+                    <h2 class="text-xl font-bold text-slate-200 m-0">Kinder <span
+                            class="text-slate-500 text-lg font-normal">({{ family()?.children?.length || 0 }})</span>
+                    </h2>
+                    <button class="btn-primary !w-auto !py-1.5 text-sm" (click)="addChild()">+ Kind</button>
                 </div>
-                <div class="children-grid">
-                    <div class="child-card glass-card" *ngFor="let childId of family()?.children">
-                        <div class="avatar-box-small" [class]="'gender-' + getPersonGender(childId)"
-                            [style.background-image]="'url(' + getPersonImage(childId) + ')'">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div class="flex items-center gap-4 bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-4 shadow-sm"
+                        *ngFor="let childId of family()?.children">
+                        <div class="w-12 h-12 rounded-xl bg-center bg-no-repeat bg-cover border-[2px] border-white/5 shrink-0 flex items-center justify-center"
+                            [ngClass]="{'bg-blue-500/15 text-blue-400': getPersonGender(childId) === 'M', 'bg-pink-500/15 text-pink-400': getPersonGender(childId) === 'F', 'bg-slate-500/15 text-slate-400': getPersonGender(childId) === 'U'}"
+                            [style.background-image]="'url(' + getPersonImage(childId) + ')'"
+                            [style.background-size]="getPersonImage(childId).includes('assets/avatars/') ? '24px' : 'cover'">
                         </div>
-                        <div class="child-info">
-                            <span class="child-name">{{ getPersonName(childId) }}</span>
-                            <div class="child-actions">
-                                <a [routerLink]="['/person', childId]" class="btn-view">Profil</a>
-                                <button class="btn-remove" (click)="removeChild(childId)">Entfernen</button>
+                        <div class="flex flex-col flex-1 min-w-0">
+                            <span class="font-bold text-sm text-slate-200 truncate">{{ getPersonName(childId) }}</span>
+                            <div class="flex gap-3 mt-1 text-xs">
+                                <a [routerLink]="['/person', childId]"
+                                    class="text-blue-400 hover:text-blue-300 hover:underline">Profil</a>
+                                <button class="text-red-500 hover:text-red-400 hover:underline"
+                                    (click)="removeChild(childId)">Entfernen</button>
                             </div>
                         </div>
                     </div>
-                    <div class="no-children" *ngIf="!family()?.children || family()?.children?.length === 0">
+
+                    <div class="col-span-full text-center p-8 bg-slate-900/20 border border-white/5 rounded-2xl text-slate-500 italic"
+                        *ngIf="!family()?.children || family()?.children?.length === 0">
                         Keine Kinder in dieser Familie hinterlegt.
                     </div>
                 </div>
@@ -206,7 +280,9 @@
     </main>
 </div>
 
-<div class="loading-overlay" *ngIf="loading()">
-    <div class="spinner"></div>
-    <p>Lade Familiendetails...</p>
+<!-- Global Loading Overlay -->
+<div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1000] flex flex-col items-center justify-center gap-4"
+    *ngIf="loading()">
+    <div class="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+    <p class="text-slate-300 font-medium tracking-wide">Lade Familiendetails...</p>
 </div>

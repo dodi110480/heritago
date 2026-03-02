@@ -10,8 +10,7 @@ import { environment } from './environment';
     selector: 'app-gedcom-io',
     standalone: true,
     imports: [CommonModule, FormsModule],
-    templateUrl: './gedcom-io.html',
-    styleUrl: './gedcom-io.css'
+    templateUrl: './gedcom-io.html'
 })
 export class GedcomIo {
     private gedcomService = inject(GedcomService);

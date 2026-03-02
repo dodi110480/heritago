@@ -11,8 +11,7 @@ import { AuthService } from './auth.service';
     selector: 'app-family-detail',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterLink],
-    templateUrl: './family-detail.html',
-    styleUrl: './family-detail.css'
+    templateUrl: './family-detail.html'
 })
 export class FamilyDetail implements OnInit, OnDestroy {
     private gedcomService = inject(GedcomService);

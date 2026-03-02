@@ -9,8 +9,7 @@ import { Individual } from './models';
     selector: 'app-person-create-modal',
     standalone: true,
     imports: [CommonModule, FormsModule],
-    templateUrl: './person-create-modal.html',
-    styleUrl: './person-create-modal.css'
+    templateUrl: './person-create-modal.html'
 })
 export class PersonCreateModal {
     private gedcomService = inject(GedcomService);

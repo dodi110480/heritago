@@ -111,7 +111,7 @@ import 'family-chart/styles/family-chart.css';
         </div>
       </div>
 
-      <div #familyChart class="f3" id="FamilyChart"></div>
+      <div #familyChart class="f3 w-full h-full flex-1" id="FamilyChart"></div>
     </div>
   `,
   styles: [`

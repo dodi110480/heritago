@@ -1,29 +1,51 @@
-<div class="calendar-widget" *ngIf="hasTree()">
-    <div class="calendar-header">
-        <h3>An diesem Tag...</h3>
-        <span class="date">{{ currentDate() }}</span>
-    </div>
+<div class="group relative bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 transition-all duration-500 hover:bg-slate-800/60 hover:border-blue-500/30 shadow-2xl overflow-hidden"
+    *ngIf="hasTree()">
+    <!-- Decorative Glow -->
+    <div class="modal-glow-blue opacity-20 group-hover:opacity-40 transition-opacity"></div>
 
-    <div *ngIf="loading()" class="loading">Laden...</div>
+    <div class="relative z-10">
+        <div class="flex justify-between items-center mb-6 pb-4 border-b border-white/5">
+            <h3 class="text-lg font-black text-white tracking-tight">An diesem Tag...</h3>
+            <span class="badge badge-blue">
+                {{ currentDate() }}
+            </span>
+        </div>
 
-    <div *ngIf="!loading() && events().length === 0" class="no-events">
-        Keine Ereignisse heute.
-    </div>
+        <div *ngIf="loading()"
+            class="py-8 flex justify-center text-slate-500 uppercase tracking-widest text-[10px] font-bold">
+            <div class="w-4 h-4 border-2 border-white/10 border-l-blue-500 rounded-full animate-spin mr-2"></div>
+            Laden...
+        </div>
 
-    <div class="events-list" *ngIf="!loading() && events().length > 0">
-        <div *ngFor="let event of events()" class="event-item">
-            <div class="event-icon"
-                [ngClass]="{'birth': event.type === 'BIRT', 'death': event.type === 'DEAT', 'marriage': event.type === 'MARR'}">
-                <!-- Icons based on type -->
-                <span *ngIf="event.type === 'BIRT'">🎂</span>
-                <span *ngIf="event.type === 'DEAT'">⚰️</span>
-                <span *ngIf="event.type === 'MARR'">💍</span>
-            </div>
-            <div class="event-details">
-                <span class="event-name">{{ event.name }}</span>
-                <span class="event-years">{{ event.years }} Jahre <span *ngIf="event.type === 'BIRT'">alt geworden /
-                        her</span><span *ngIf="event.type === 'MARR'">verheiratet</span><span
-                        *ngIf="event.type === 'DEAT'">tot</span></span>
+        <div *ngIf="!loading() && events().length === 0"
+            class="py-8 text-center text-slate-500 text-sm font-medium italic">
+            Keine Ereignisse heute.
+        </div>
+
+        <div class="flex flex-col gap-3" *ngIf="!loading() && events().length > 0">
+            <div *ngFor="let event of events()"
+                class="flex items-center gap-4 p-3 rounded-2xl bg-white/[0.03] border border-white/5 transition-all hover:bg-white/[0.08] hover:border-white/10 hover:translate-x-1 group/item">
+
+                <div class="w-12 h-12 shrink-0 flex items-center justify-center text-xl rounded-xl border transition-all group-hover/item:scale-110"
+                    [ngClass]="{
+                        'bg-rose-500/10 border-rose-500/20 text-rose-400': event.type === 'BIRT',
+                        'bg-slate-500/10 border-slate-500/20 text-slate-400': event.type === 'DEAT',
+                        'bg-amber-500/10 border-amber-500/20 text-amber-400': event.type === 'MARR'
+                    }">
+                    <span *ngIf="event.type === 'BIRT'">🎂</span>
+                    <span *ngIf="event.type === 'DEAT'">⚰️</span>
+                    <span *ngIf="event.type === 'MARR'">💍</span>
+                </div>
+
+                <div class="flex flex-col min-w-0">
+                    <span class="text-slate-200 font-bold truncate tracking-tight">{{ event.name }}</span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
+                        {{ event.years }} Jahre
+                        <span class="text-blue-400/70" *ngIf="event.type === 'BIRT'">her</span>
+                        <span class="text-amber-400/70" *ngIf="event.type === 'MARR'">verheiratet</span>
+                        <span class="text-slate-400/70" *ngIf="event.type === 'DEAT'">vergangen</span>
+                    </span>
+                </div>
             </div>
         </div>
     </div>

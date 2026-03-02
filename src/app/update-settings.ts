@@ -7,8 +7,7 @@ import { environment } from './environment';
     selector: 'app-update-settings',
     standalone: true,
     imports: [CommonModule, RouterModule],
-    templateUrl: './update-settings.html',
-    styleUrl: './update-settings.css'
+    templateUrl: './update-settings.html'
 })
 export class UpdateSettings implements OnInit {
     public systemInfo: any = null;

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
@@ -12,7 +12,7 @@ import { PersonCreateModal } from './person-create-modal';
     standalone: true,
     imports: [CommonModule, RouterLink, FormsModule, CleanDatePipe, PersonCreateModal],
     templateUrl: './person-list.html',
-    styleUrl: './person-list.css'
+    encapsulation: ViewEncapsulation.None
 })
 export class PersonList {
     private readonly FOCUS_PERSON_KEY = 'heritago_last_focus_person';
@@ -35,10 +35,10 @@ export class PersonList {
         const base = this.individuals().filter(person => {
             if (!term) return true;
             return (
-            person.name.toLowerCase().includes(term) ||
-            person.firstName?.toLowerCase().includes(term) ||
-            person.lastName?.toLowerCase().includes(term) ||
-            person.id.toLowerCase().includes(term)
+                person.name.toLowerCase().includes(term) ||
+                person.firstName?.toLowerCase().includes(term) ||
+                person.lastName?.toLowerCase().includes(term) ||
+                person.id.toLowerCase().includes(term)
             );
         });
 

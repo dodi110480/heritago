@@ -10,8 +10,7 @@ import { CleanDatePipe } from './clean-date.pipe';
     selector: 'app-family-list',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterLink],
-    templateUrl: './family-list.html',
-    styleUrl: './family-list.css'
+    templateUrl: './family-list.html'
 })
 export class FamilyList implements OnInit {
     private gedcomService = inject(GedcomService);
@@ -199,5 +198,12 @@ export class FamilyList implements OnInit {
 
     goToPerson(id: string | undefined) {
         if (id) this.router.navigate(['/person', id]);
+    }
+
+    getChildrenTooltip(fam: Family): string {
+        if (!fam.children || fam.children.length === 0) return '';
+        const count = fam.children.length;
+        const names = fam.children.map(id => this.getPersonName(id)).join(', ');
+        return `${count} ${count === 1 ? 'Kind' : 'Kinder'}: ${names}`;
     }
 }

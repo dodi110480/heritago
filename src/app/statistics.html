@@ -1,49 +1,148 @@
-<div class="stats-container">
-    <h2>Statistik-Dashboard</h2>
-    <p class="subtitle" *ngIf="treeName()">für Stammbaum "{{ treeName() }}"</p>
+<div class="min-h-screen text-slate-200 flex flex-col p-0 m-0">
+    <!-- Unified Sticky Header -->
+    <div class="page-header px-6 md:px-10 pt-6">
+        <div class="page-header-inner flex-wrap md:flex-nowrap gap-4">
+            <div
+                class="flex flex-col gap-1 items-center md:items-start w-full md:w-auto text-center md:text-left flex-1">
+                <h1 class="page-title leading-tight">Statistik-Dashboard</h1>
+                <p class="page-subtitle text-slate-400 mt-1" *ngIf="treeName()">Stammbaum: {{ treeName() }}</p>
+            </div>
 
-    <div *ngIf="loading()" class="loading">Laden...</div>
+            <div class="page-actions flex items-center gap-3">
+                <button class="btn-secondary !w-auto !py-2" (click)="loadStatistics()" [disabled]="loading()">
+                    <svg *ngIf="loading()" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    Aktualisieren
+                </button>
+            </div>
+        </div>
+    </div>
 
-    <div *ngIf="!loading() && stats()" class="dashboard-grid">
-        <!-- Key Metrics Cards -->
-        <div class="card metric-card">
-            <div class="metric-value">{{ stats()?.counts?.individuals || 0 }}</div>
-            <div class="metric-label">Personen</div>
-            <div class="icon">👥</div>
-        </div>
-        <div class="card metric-card">
-            <div class="metric-value">{{ stats()?.counts?.families || 0 }}</div>
-            <div class="metric-label">Familien</div>
-            <div class="icon">👨‍👩‍👧‍👦</div>
-        </div>
-        <div class="card metric-card">
-            <div class="metric-value">{{ stats()?.counts?.places || 0 }}</div>
-            <div class="metric-label">Orte</div>
-            <div class="icon">🌍</div>
-        </div>
-        <div class="card metric-card">
-            <div class="metric-value">{{ stats()?.counts?.media || 0 }}</div>
-            <div class="metric-label">Medien</div>
-            <div class="icon">🖼️</div>
+    <!-- Page Content Container -->
+    <div class="flex-1 p-6 md:p-10 max-w-[1600px] w-full mx-auto">
+        <div *ngIf="loading()" class="flex flex-col items-center justify-center py-20 text-slate-400 gap-4">
+            <div class="w-8 h-8 border-4 border-blue-500/20 border-l-blue-500 rounded-full animate-spin"></div>
+            <p class="font-medium tracking-wide">Berechne Statistiken...</p>
         </div>
 
-        <!-- Charts Row -->
-        <div class="card chart-card">
-            <h3>Geschlechterverteilung</h3>
-            <div class="gender-chart">
-                <div class="bar-container">
-                    <div class="bar male" [style.width.%]="genderPercentages.male"></div>
-                    <div class="bar female" [style.width.%]="genderPercentages.female"></div>
-                    <div class="bar unknown" [style.width.%]="genderPercentages.unknown"></div>
+        <div *ngIf="!loading() && stats()" class="flex flex-col gap-8 md:gap-10">
+            <!-- Key Metrics Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <!-- Personen -->
+                <div
+                    class="relative bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 md:p-8 flex flex-col shadow-xl overflow-hidden group hover:border-blue-500/30 transition-all duration-300">
+                    <div class="text-3xl md:text-5xl font-black text-blue-400 mb-2 leading-none">
+                        {{ stats()?.counts?.individuals || 0 }}
+                    </div>
+                    <div class="text-slate-400 text-sm md:text-base font-semibold tracking-wide uppercase">Personen
+                    </div>
+                    <div class="absolute right-6 top-6 text-4xl opacity-10 group-hover:opacity-20 transition-opacity">👥
+                    </div>
                 </div>
-                <div class="legend">
-                    <div class="legend-item"><span class="dot male"></span> Männlich ({{ stats()?.gender?.male || 0 }})
+
+                <!-- Familien -->
+                <div
+                    class="relative bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 md:p-8 flex flex-col shadow-xl overflow-hidden group hover:border-purple-500/30 transition-all duration-300">
+                    <div class="text-3xl md:text-5xl font-black text-purple-400 mb-2 leading-none">
+                        {{ stats()?.counts?.families || 0 }}
                     </div>
-                    <div class="legend-item"><span class="dot female"></span> Weiblich ({{ stats()?.gender?.female || 0
-                        }})
+                    <div class="text-slate-400 text-sm md:text-base font-semibold tracking-wide uppercase">Familien
                     </div>
-                    <div class="legend-item"><span class="dot unknown"></span> Unbekannt ({{ stats()?.gender?.unknown ||
-                        0 }})
+                    <div class="absolute right-6 top-6 text-4xl opacity-10 group-hover:opacity-20 transition-opacity">
+                        👨‍👩‍👧‍👦</div>
+                </div>
+
+                <!-- Orte -->
+                <div
+                    class="relative bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 md:p-8 flex flex-col shadow-xl overflow-hidden group hover:border-emerald-500/30 transition-all duration-300">
+                    <div class="text-3xl md:text-5xl font-black text-emerald-400 mb-2 leading-none">
+                        {{ stats()?.counts?.places || 0 }}
+                    </div>
+                    <div class="text-slate-400 text-sm md:text-base font-semibold tracking-wide uppercase">Orte</div>
+                    <div class="absolute right-6 top-6 text-4xl opacity-10 group-hover:opacity-20 transition-opacity">🌍
+                    </div>
+                </div>
+
+                <!-- Medien -->
+                <div
+                    class="relative bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 md:p-8 flex flex-col shadow-xl overflow-hidden group hover:border-amber-500/30 transition-all duration-300">
+                    <div class="text-3xl md:text-5xl font-black text-amber-400 mb-2 leading-none">
+                        {{ stats()?.counts?.media || 0 }}
+                    </div>
+                    <div class="text-slate-400 text-sm md:text-base font-semibold tracking-wide uppercase">Medien</div>
+                    <div class="absolute right-6 top-6 text-4xl opacity-10 group-hover:opacity-20 transition-opacity">
+                        🖼️
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Charts Row -->
+            <div class="grid grid-cols-1 gap-6">
+                <!-- Geschlechterverteilung -->
+                <div class="bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 md:p-8 shadow-xl">
+                    <h3 class="text-xl font-bold text-white mb-8 flex items-center gap-3">
+                        <span class="w-2 h-8 bg-blue-500 rounded-full"></span>
+                        Geschlechterverteilung
+                    </h3>
+
+                    <div class="flex flex-col gap-8">
+                        <!-- Advanced Bar -->
+                        <div
+                            class="h-10 md:h-12 bg-slate-950 rounded-full overflow-hidden flex shadow-inner border border-white/5">
+                            <div class="h-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-1000 ease-out flex items-center justify-center overflow-hidden"
+                                [style.width.%]="genderPercentages.male">
+                                <span *ngIf="genderPercentages.male > 10"
+                                    class="text-[10px] font-bold text-white uppercase tracking-tighter">Männlich</span>
+                            </div>
+                            <div class="h-full bg-gradient-to-r from-pink-600 to-pink-400 transition-all duration-1000 ease-out flex items-center justify-center border-l border-white/10 overflow-hidden"
+                                [style.width.%]="genderPercentages.female">
+                                <span *ngIf="genderPercentages.female > 10"
+                                    class="text-[10px] font-bold text-white uppercase tracking-tighter">Weiblich</span>
+                            </div>
+                            <div class="h-full bg-slate-700 transition-all duration-1000 ease-out flex items-center justify-center border-l border-white/10 overflow-hidden"
+                                [style.width.%]="genderPercentages.unknown">
+                                <span *ngIf="genderPercentages.unknown > 10"
+                                    class="text-[10px] font-bold text-slate-300 uppercase tracking-tighter">?</span>
+                            </div>
+                        </div>
+
+                        <!-- Legend Items -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-10">
+                            <div
+                                class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-3 h-3 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(56,189,248,0.5)]">
+                                    </div>
+                                    <span class="text-slate-300 font-medium">Männlich</span>
+                                </div>
+                                <span class="text-white font-bold">{{ stats()?.gender?.male || 0 }}</span>
+                            </div>
+                            <div
+                                class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-3 h-3 rounded-full bg-pink-400 shadow-[0_0_10px_rgba(244,114,182,0.5)]">
+                                    </div>
+                                    <span class="text-slate-300 font-medium">Weiblich</span>
+                                </div>
+                                <span class="text-white font-bold">{{ stats()?.gender?.female || 0 }}</span>
+                            </div>
+                            <div
+                                class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-slate-500"></div>
+                                    <span class="text-slate-300 font-medium">Unbekannt</span>
+                                </div>
+                                <span class="text-white font-bold">{{ stats()?.gender?.unknown || 0 }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

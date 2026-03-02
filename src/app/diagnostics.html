@@ -1,110 +1,156 @@
-<div class="diagnostics-container">
-    <header class="diagnostics-header">
-        <div class="header-content">
-            <h1>Fehlerdiagnose — Stammbaum {{ treeName() }}</h1>
-            <p>Übersicht über GEDCOM-Compliance-Fehler und Datenprobleme</p>
-        </div>
-        <button class="refresh-btn" (click)="loadDiagnostics()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-            </svg>
-            Aktualisieren
-        </button>
-    </header>
-
-    <div class="loading-state" *ngIf="isLoading()">
-        <div class="spinner"></div>
-        <p>Datenbank wird analysiert...</p>
-    </div>
-
-    <div class="logical-validation-results" *ngIf="!isLoading() && logicalErrors().length > 0">
-        <h2 class="section-title">Logische Prüfungen</h2>
-        <div class="error-list">
-            <div class="logical-card" *ngFor="let result of logicalErrors()" [class.warning]="result.type === 'warning'"
-                [class.error]="result.type === 'error'">
-                <div class="result-icon">
-                    <svg *ngIf="result.type === 'error'" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="12"></line>
-                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    <svg *ngIf="result.type === 'warning'" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
+<div class="min-h-screen">
+    <header class="page-header">
+        <div class="page-header-inner">
+            <div class="flex-1">
+                <h1 class="page-title">Fehlerdiagnose — {{ treeName() }}</h1>
+                <p class="page-subtitle">Übersicht über GEDCOM-Compliance-Fehler und Datenprobleme</p>
+            </div>
+            <div class="page-actions">
+                <button class="btn-primary !w-auto !py-2" (click)="loadDiagnostics()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path
-                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
-                        </path>
-                        <line x1="12" y1="9" x2="12" y2="13"></line>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
                     </svg>
-                </div>
-                <div class="result-content">
-                    <span class="result-msg">{{ result.message }}</span>
-                    <div class="involved-links">
-                        <a *ngFor="let id of result.involvedIds" [routerLink]="['/tree']" [queryParams]="{focus: id}"
-                            class="person-link">Person {{id}} ansehen</a>
-                    </div>
-                </div>
+                    Aktualisieren
+                </button>
             </div>
         </div>
-    </div>
+    </header>
 
-    <div class="syntax-validation-results" *ngIf="!isLoading() && errors().length > 0">
-        <h2 class="section-title">Syntax & Standard-Prüfungen</h2>
-        <div class="error-list">
-            <div class="error-card" *ngFor="let error of errors()" [class.expanded]="error.expanded"
-                (click)="toggleExpand(error)">
-                <div class="error-summary">
-                    <div class="error-icon" [ngClass]="error.code">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <main class="p-6 md:p-10 max-w-7xl mx-auto">
+        <!-- LOADING -->
+        <div class="flex flex-col items-center justify-center py-20 animate-in fade-in duration-500"
+            *ngIf="isLoading()">
+            <div
+                class="w-16 h-16 border-4 border-white/5 border-l-blue-500 rounded-full animate-spin shadow-[0_0_30px_#3b82f633] mb-8">
+            </div>
+            <p class="text-sm font-black text-slate-500 uppercase tracking-[0.3em]">Datenbank wird analysiert...</p>
+        </div>
+
+        <!-- LOGICAL VALIDATION -->
+        <div class="mb-12 animate-in slide-in-from-bottom-5 duration-700"
+            *ngIf="!isLoading() && logicalErrors().length > 0">
+            <h2 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 px-4">Logische Prüfungen
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div *ngFor="let result of logicalErrors()"
+                    class="group p-6 bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[32px] hover:bg-slate-900/60 transition-all flex items-start gap-6"
+                    [class.border-red-500/20]="result.type === 'error'"
+                    [class.border-amber-500/20]="result.type === 'warning'">
+
+                    <div class="w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110"
+                        [class.bg-red-500/10]="result.type === 'error'"
+                        [class.bg-amber-500/10]="result.type === 'warning'">
+                        <svg *ngIf="result.type === 'error'" class="text-red-400" xmlns="http://www.w3.org/2000/svg"
+                            width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="8" x2="12" y2="12"></line>
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
+                        <svg *ngIf="result.type === 'warning'" class="text-amber-400" xmlns="http://www.w3.org/2000/svg"
+                            width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                            </path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
                     </div>
-                    <div class="error-info">
-                        <span class="error-target">{{ error.type }}: {{ error.id }}</span>
-                        <span class="error-msg">{{ error.message }}</span>
+
+                    <div class="flex-1 min-w-0">
+                        <p class="text-slate-200 font-bold leading-relaxed mb-4">{{ result.message }}</p>
+                        <div class="flex flex-wrap gap-2">
+                            <a *ngFor="let id of result.involvedIds" [routerLink]="['/tree']"
+                                [queryParams]="{focus: id}"
+                                class="px-4 py-2 bg-slate-800/50 hover:bg-blue-500/10 border border-white/5 hover:border-blue-500/20 rounded-xl text-xs font-black text-slate-400 hover:text-blue-400 transition-all">
+                                Person {{id}} ansehen
+                            </a>
+                        </div>
                     </div>
-                    <div class="error-meta">
-                        <span class="line-num">Zeile {{ error.line }}</span>
-                        <div class="chevron">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                </div>
+            </div>
+        </div>
+
+        <!-- SYNTAX VALIDATION -->
+        <div class="animate-in slide-in-from-bottom-5 duration-700 delay-150"
+            *ngIf="!isLoading() && errors().length > 0">
+            <h2 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-6 px-4">Syntax &
+                Standard-Prüfungen</h2>
+            <div class="space-y-4">
+                <div *ngFor="let error of errors()" (click)="toggleExpand(error)"
+                    class="group overflow-hidden bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[40px] hover:bg-slate-900/60 transition-all cursor-pointer">
+
+                    <div class="p-6 md:p-8 flex items-center gap-6">
+                        <div
+                            class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center bg-red-500/10 text-red-400 shadow-lg group-hover:scale-105 transition-transform">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-3 mb-1">
+                                <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">{{
+                                    error.type }}: {{ error.id }}</span>
+                                <span
+                                    class="px-3 py-1 bg-slate-800 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest">Zeile
+                                    {{ error.line }}</span>
+                            </div>
+                            <h3 class="text-lg font-black text-white truncate">{{ error.message }}</h3>
+                        </div>
+
+                        <div class="shrink-0 w-10 h-10 rounded-full border border-white/5 flex items-center justify-center text-slate-500 group-hover:text-blue-400 transition-all"
+                            [class.rotate-180]="error.expanded">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                 stroke-linejoin="round">
                                 <polyline points="6 9 12 15 18 9"></polyline>
                             </svg>
                         </div>
                     </div>
-                </div>
 
-                <div class="error-details" *ngIf="error.expanded">
-                    <div class="explanation">
-                        <h4>Erklärung</h4>
-                        <p>{{ error.explanation }}</p>
-                    </div>
-                    <div class="code-box">
-                        <h4>Datenfragment</h4>
-                        <pre><code>{{ error.content }}</code></pre>
+                    <div class="px-8 pb-8 animate-in slide-in-from-top-4 duration-300" *ngIf="error.expanded">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
+                            <div>
+                                <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
+                                    Erklärung</h4>
+                                <p class="text-sm text-slate-400 leading-relaxed">{{ error.explanation }}</p>
+                            </div>
+                            <div>
+                                <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">
+                                    Datenfragment</h4>
+                                <div
+                                    class="bg-black/40 rounded-2xl p-4 border border-white/5 text-xs font-mono text-blue-300 overflow-x-auto custom-scrollbar">
+                                    <pre><code>{{ error.content }}</code></pre>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="empty-state" *ngIf="!isLoading() && errors().length === 0 && logicalErrors().length === 0">
-        <div class="success-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-            </svg>
+        <!-- EMPTY STATE (SUCCESS) -->
+        <div class="flex flex-col items-center justify-center py-32 text-center animate-in zoom-in-95 duration-700"
+            *ngIf="!isLoading() && errors().length === 0 && logicalErrors().length === 0">
+            <div
+                class="w-32 h-32 bg-green-500/10 border border-green-500/20 rounded-[48px] flex items-center justify-center text-green-400 shadow-[0_0_50px_#22c55e11] mb-8 scale-in duration-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+            </div>
+            <h2 class="text-3xl font-black text-white tracking-tight mb-4">Keine Fehler gefunden</h2>
+            <p class="text-slate-400 max-w-md mx-auto leading-relaxed">Dein Stammbaum entspricht den GEDCOM 7.0
+                Standards und der logischen Validierung.</p>
         </div>
-        <h2>Keine Fehler gefunden</h2>
-        <p>Dein Stammbaum entspricht den GEDCOM 7.0 Standards und der logischen Validierung.</p>
-    </div>
+    </main>
 </div>

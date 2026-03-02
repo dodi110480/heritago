@@ -8,8 +8,7 @@ import { AuthService } from './auth.service';
     selector: 'app-search-results',
     standalone: true,
     imports: [CommonModule, RouterLink],
-    templateUrl: './search-results.html',
-    styleUrl: './search-results.css'
+    templateUrl: './search-results.html'
 })
 export class SearchResults {
     private route = inject(ActivatedRoute);

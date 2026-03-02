@@ -190,6 +190,22 @@ export class GedcomService {
         return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, { mode: 'delete', name: placeName }, { withCredentials: true });
     }
 
+    getSources(treeName: string): Observable<any> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/source`, { withCredentials: true });
+    }
+
+    getSourceUsage(treeName: string, sourceId: string): Observable<any> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/source/${sourceId}/usage`, { withCredentials: true });
+    }
+
+    saveSource(treeName: string, payload: any): Observable<any> {
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/source`, payload, { withCredentials: true });
+    }
+
+    mergeSources(treeName: string, sourceId: string, targetId: string): Observable<any> {
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/source/merge`, { sourceId, targetId }, { withCredentials: true });
+    }
+
     getDiagnostics(treeName: string): Observable<any> {
         return this.http.get<any>(`${this.baseApiUrl}${treeName}/diagnostics`, { withCredentials: true });
     }

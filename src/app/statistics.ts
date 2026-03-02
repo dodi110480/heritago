@@ -6,8 +6,7 @@ import { GedcomService } from './gedcom.service';
     selector: 'app-statistics',
     standalone: true,
     imports: [CommonModule],
-    templateUrl: './statistics.html',
-    styleUrl: './statistics.css'
+    templateUrl: './statistics.html'
 })
 export class StatisticsDashboard implements OnInit {
     private gedcomService = inject(GedcomService);

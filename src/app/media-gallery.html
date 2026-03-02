@@ -1,174 +1,320 @@
-<div class="page-container">
-  <div class="header-glass">
-    <div class="profile-header">
-      <div class="header-info">
-        <h1>Medien</h1>
-        <p class="subtitle">Zentral verwalten, bearbeiten und verknüpfen</p>
+<div class="min-h-screen text-slate-200 flex flex-col p-0 m-0">
+  <!-- Unified Sticky Header -->
+  <div class="page-header">
+    <div class="page-header-inner flex-wrap md:flex-nowrap gap-4">
+      <div
+        class="flex flex-col gap-1 items-center md:items-start w-full md:w-auto text-center md:text-left flex-1 min-w-[200px]">
+        <h1 class="page-title">Medien</h1>
+        <p class="page-subtitle text-slate-400 mt-1">Zentral verwalten, bearbeiten und verknüpfen</p>
       </div>
 
-      <div class="header-actions">
-        <div class="search-bar unified-search">
-          <div class="search-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+      <div class="page-actions flex flex-wrap justify-center md:justify-end gap-3 w-full md:w-auto">
+        <div class="search-wrapper flex-1 md:flex-none min-w-[200px]">
+          <div class="search-icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
           </div>
-          <input
-            class="search-input"
-            [ngModel]="searchQuery()"
-            (ngModelChange)="searchQuery.set($event)"
-            (keyup.enter)="loadMedia()"
-            placeholder="Suchen nach Name, ID..."
-          >
+          <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+            (keyup.enter)="loadMedia()" placeholder="Name, ID..." class="search-input w-full">
         </div>
-        <button class="btn ghost" (click)="loadMedia()">Aktualisieren</button>
-        <button class="btn primary" (click)="showAddModal.set(true)">+ Medium hinzufügen</button>
+
+        <button class="btn-secondary" (click)="loadMedia()">Aktualisieren</button>
+        <button class="btn-primary" (click)="showAddModal.set(true)">
+          + Medium
+        </button>
       </div>
     </div>
 
-    <ul class="nav-tabs">
-      <li [class.active]="filterType() === 'ALLE'" (click)="filterType.set('ALLE'); loadMedia()">Alle</li>
-      <li [class.active]="filterType() === 'FOTOS'" (click)="filterType.set('FOTOS'); loadMedia()">Fotos</li>
-      <li [class.active]="filterType() === 'DOKUMENTE'" (click)="filterType.set('DOKUMENTE'); loadMedia()">Dokumente</li>
-      <li [class.active]="filterType() === 'UNLINKED'" (click)="filterType.set('UNLINKED'); loadMedia()">Ohne Zuordnung</li>
-    </ul>
+    <!-- Tabs integration -->
+    <div
+      class="flex gap-6 mt-4 overflow-x-auto no-scrollbar border-b border-white/5 pb-0 px-6 md:px-10 max-w-[1600px] mx-auto w-full">
+      <button [class.border-blue-500]="filterType() === 'ALLE'" [class.text-blue-400]="filterType() === 'ALLE'"
+        [class.border-transparent]="filterType() !== 'ALLE'" [class.text-slate-400]="filterType() !== 'ALLE'"
+        class="pb-3 border-b-2 font-semibold hover:text-slate-200 transition-colors whitespace-nowrap text-sm tracking-wide"
+        (click)="filterType.set('ALLE'); loadMedia()">Alle</button>
+      <button [class.border-blue-500]="filterType() === 'FOTOS'" [class.text-blue-400]="filterType() === 'FOTOS'"
+        [class.border-transparent]="filterType() !== 'FOTOS'" [class.text-slate-400]="filterType() !== 'FOTOS'"
+        class="pb-3 border-b-2 font-semibold hover:text-slate-200 transition-colors whitespace-nowrap text-sm tracking-wide"
+        (click)="filterType.set('FOTOS'); loadMedia()">Fotos</button>
+      <button [class.border-blue-500]="filterType() === 'DOKUMENTE'"
+        [class.text-blue-400]="filterType() === 'DOKUMENTE'" [class.border-transparent]="filterType() !== 'DOKUMENTE'"
+        [class.text-slate-400]="filterType() !== 'DOKUMENTE'"
+        class="pb-3 border-b-2 font-semibold hover:text-slate-200 transition-colors whitespace-nowrap text-sm tracking-wide"
+        (click)="filterType.set('DOKUMENTE'); loadMedia()">Dokumente</button>
+      <button [class.border-blue-500]="filterType() === 'UNLINKED'" [class.text-blue-400]="filterType() === 'UNLINKED'"
+        [class.border-transparent]="filterType() !== 'UNLINKED'" [class.text-slate-400]="filterType() !== 'UNLINKED'"
+        class="pb-3 border-b-2 font-semibold hover:text-slate-200 transition-colors whitespace-nowrap text-sm tracking-wide"
+        (click)="filterType.set('UNLINKED'); loadMedia()">Ohne Zuordnung</button>
+    </div>
   </div>
 
-  <div class="content-body">
-    <div class="container-inner media-page">
-      <section class="stats">
-        <div><span>Gesamt</span><strong>{{ stats().total }}</strong></div>
-        <div><span>Fotos</span><strong>{{ stats().fotos }}</strong></div>
-        <div><span>Dokumente</span><strong>{{ stats().docs }}</strong></div>
-        <div><span>Ohne Link</span><strong>{{ stats().unlinked }}</strong></div>
-      </section>
-
-      <section class="grid" *ngIf="!loading()">
-        <article class="card" *ngFor="let item of filteredItems()" (click)="openDetails(item)">
-          <div class="thumb">
-            <img *ngIf="isImage(item)" [src]="item.previewUrl" loading="lazy">
-            <div *ngIf="!isImage(item)" class="placeholder">{{ isPdf(item) ? 'PDF' : 'DATEI' }}</div>
-          </div>
-          <div class="meta">
-            <strong>{{ item.title || item.filePath || 'Unbenannt' }}</strong>
-            <small *ngIf="item.orphanFile">Datei ohne DB-Eintrag</small>
-            <small>{{ item.mimeType }} • {{ formatSize(item.fileSize) }}</small>
-            <small>Typ: {{ item.mediaType || '-' }}</small>
-            <small>Links: {{ item.links?.length || 0 }}</small>
-          </div>
-        </article>
-      </section>
-
-      <section class="empty" *ngIf="!loading() && filteredItems().length === 0">Keine Medien gefunden.</section>
-      <section class="empty" *ngIf="loading()">Lade Medien...</section>
-    </div>
-  </div>
-</div>
-
-<div class="detail-overlay" *ngIf="selected()" (click)="closeDetails()">
-  <div class="detail" (click)="$event.stopPropagation()">
-    <div class="preview">
-      <img *ngIf="isImage(selected())" [src]="selected()?.previewUrl">
-      <iframe *ngIf="isPdf(selected())" [src]="pdfUrl(selected())"></iframe>
-      <div *ngIf="!isImage(selected()) && !isPdf(selected())" class="file-fallback">
-        <p>Keine Inline-Vorschau verfügbar.</p>
-        <a class="btn ghost" [href]="selected()?.previewUrl" target="_blank" rel="noopener">Datei öffnen</a>
+  <!-- Page Content Container -->
+  <div class="flex-1 p-6 md:p-10 max-w-[1600px] w-full mx-auto">
+    <!-- Statistics Row -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="glass-card flex flex-col justify-between items-center text-center shadow-lg">
+        <span class="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-widest">Gesamt</span>
+        <strong class="text-2xl md:text-3xl text-white font-black">{{ stats().total }}</strong>
       </div>
+      <div class="glass-card flex flex-col justify-between items-center text-center shadow-lg">
+        <span class="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-widest">Fotos</span>
+        <strong class="text-2xl md:text-3xl text-blue-400 font-black">{{ stats().fotos }}</strong>
+      </div>
+      <div class="glass-card flex flex-col justify-between items-center text-center shadow-lg">
+        <span class="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-widest">Dokumente</span>
+        <strong class="text-2xl md:text-3xl text-emerald-400 font-black">{{ stats().docs }}</strong>
+      </div>
+      <div class="glass-card flex flex-col justify-between items-center text-center shadow-lg">
+        <span class="text-slate-400 text-xs font-semibold mb-1 uppercase tracking-widest">Ohne Link</span>
+        <strong class="text-2xl md:text-3xl text-rose-400 font-black">{{ stats().unlinked }}</strong>
+      </div>
+    </section>
+
+    <!-- Loading / Empty States -->
+    <div *ngIf="loading()" class="flex flex-col items-center justify-center py-20 text-slate-400 gap-4">
+      <div class="w-8 h-8 border-4 border-blue-500/20 border-l-blue-500 rounded-full animate-spin"></div>
+      <p class="font-medium tracking-wide">Lade Medien...</p>
     </div>
 
-    <div class="panel">
-      <h3>Medium bearbeiten</h3>
+    <div *ngIf="!loading() && filteredItems().length === 0"
+      class="flex flex-col items-center justify-center py-20 text-slate-500 gap-4">
+      <p class="text-lg italic">Keine Medien gefunden.</p>
+    </div>
 
-      <ng-container *ngIf="!selected()?.orphanFile; else orphanMeta">
-        <label>Titel</label>
-        <input [ngModel]="selected()?.title" (ngModelChange)="selected()!.title = $event">
+    <!-- Media Grid (Smaller Thumbnails via highly column-dense grid) -->
+    <section
+      class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-3 md:gap-4"
+      *ngIf="!loading()">
+      <article class="glass-card !p-0 overflow-hidden cursor-pointer group flex flex-col h-full relative"
+        *ngFor="let item of filteredItems()" (click)="openDetails(item)">
 
-        <label>Medientyp</label>
-        <select [ngModel]="selected()?.mediaType" (ngModelChange)="selected()!.mediaType = $event">
-          <option *ngFor="let type of mediaTypeOptions" [value]="type">{{ type }}</option>
-        </select>
+        <!-- Thumbnail Square -->
+        <div class="aspect-square bg-slate-950 relative overflow-hidden flex-shrink-0">
+          <img *ngIf="isImage(item)" [src]="item.previewUrl" loading="lazy"
+            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
 
-        <button class="btn ghost" (click)="saveTitle()">Titel speichern</button>
-      </ng-container>
-      <ng-template #orphanMeta>
-        <small>Diese Datei liegt in `/server/uploads`, aber hat noch keinen DB-Eintrag.</small>
-      </ng-template>
-
-      <div class="block" *ngIf="!selected()?.orphanFile">
-        <h4>Verknüpfungen</h4>
-        <div class="links" *ngIf="selected()?.links?.length; else noLinks">
-          <div *ngFor="let link of selected()?.links" class="link-row">
-            <span>{{ linkLabel(link) }}</span>
-            <button class="btn ghost btn-xs" (click)="unlinkMedia(link.id)">Lösen</button>
+          <!-- PDF/File Fallback -->
+          <div *ngIf="!isImage(item)" class="absolute inset-0 flex items-center justify-center bg-slate-800/50">
+            <span class="text-slate-400 font-bold tracking-widest text-lg">{{ isPdf(item) ? 'PDF' : 'DATEI' }}</span>
           </div>
-        </div>
-        <ng-template #noLinks>
-          <small>Noch keine Verknüpfungen</small>
-        </ng-template>
-      </div>
 
-      <div class="block" *ngIf="!selected()?.orphanFile">
-        <h4>Neue Verknüpfung</h4>
-        <select [ngModel]="linkMode()" (ngModelChange)="linkMode.set($event)">
-          <option value="person">Person</option>
-          <option value="family">Familie</option>
-          <option value="source">Quelle (ID)</option>
-        </select>
-
-        <div *ngIf="linkMode() === 'person'" class="person-picker">
-          <div class="search-bar unified-search">
-            <div class="search-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          <!-- Badges Overlay -->
+          <div class="absolute top-2 right-2 flex gap-1">
+            <span *ngIf="item.links?.length" class="badge badge-blue !px-1.5 !py-0.5 !text-[10px] !rounded shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
               </svg>
-            </div>
-            <input
-              class="search-input"
-              [ngModel]="linkPersonQuery()"
-              (ngModelChange)="linkPersonQuery.set($event); linkPersonId.set('')"
-              placeholder="Suchen nach Name, ID..."
-            >
-          </div>
-          <div class="person-results" *ngIf="filteredPersonOptions().length">
-            <button
-              type="button"
-              class="person-result"
-              *ngFor="let p of filteredPersonOptions()"
-              (click)="choosePerson(p)"
-            >
-              {{ p.name }} <small>({{ p.birthYear ? ('* ' + p.birthYear) : p.id }})</small>
-            </button>
+              {{ item.links.length }}
+            </span>
           </div>
         </div>
 
-        <select *ngIf="linkMode() === 'family'" [ngModel]="linkFamilyId()" (ngModelChange)="linkFamilyId.set($event)">
-          <option value="">Familie wählen...</option>
-          <option *ngFor="let f of familyOptions()" [value]="f.id">{{ f.label }}</option>
-        </select>
+        <!-- Meta Data (Compact) -->
+        <div
+          class="p-2 md:p-3 flex flex-col gap-1 flex-1 justify-between bg-gradient-to-b from-slate-900/50 to-slate-900">
+          <strong class="text-slate-200 text-xs line-clamp-2 leading-snug break-words"
+            [title]="item.title || item.filePath || 'Unbenannt'">
+            {{ item.title || item.filePath || 'Unbenannt' }}
+          </strong>
 
-        <input *ngIf="linkMode() === 'source'" [ngModel]="linkSourceId()" (ngModelChange)="linkSourceId.set($event)" placeholder="Source ID">
+          <div class="mt-auto pt-2 flex flex-col gap-1">
+            <small *ngIf="item.orphanFile" class="text-rose-400 text-[10px] font-bold leading-none">Kein
+              DB-Eintrag</small>
+            <div class="flex items-center justify-between text-[10px] text-slate-500">
+              <span class="truncate max-w-[60%]">{{ item.mimeType?.split('/')[1]?.toUpperCase() || 'FILE' }}</span>
+              <span>{{ formatSize(item.fileSize) }}</span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </div>
+</div>
 
-        <button class="btn primary" (click)="addLink()">Verknüpfen</button>
+<!-- Details Modal Overlay (Tailwind replacement for .detail-overlay and .detail) -->
+<div class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[2000] flex items-center justify-center p-4 md:p-8"
+  *ngIf="selected()" (click)="closeDetails()">
+  <div
+    class="w-full max-w-[1200px] h-full max-h-[85vh] glass-card !rounded-2xl flex flex-col md:flex-row overflow-hidden shadow-2xl"
+    (click)="$event.stopPropagation()">
+
+    <!-- Left: Preview Area -->
+    <div class="w-full md:w-2/3 h-[40vh] md:h-full bg-black relative flex items-center justify-center">
+      <img *ngIf="isImage(selected())" [src]="selected()?.previewUrl" class="w-full h-full object-contain">
+      <iframe *ngIf="isPdf(selected())" [src]="pdfUrl(selected())" class="w-full h-full border-0"></iframe>
+
+      <div *ngIf="!isImage(selected()) && !isPdf(selected())"
+        class="flex flex-col items-center justify-center gap-4 text-slate-400 text-center p-8">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="opacity-50">
+          <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+          <polyline points="13 2 13 9 20 9"></polyline>
+        </svg>
+        <p>Keine Inline-Vorschau für diesen Dateityp verfügbar.</p>
+        <a class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-white/10"
+          [href]="selected()?.previewUrl" target="_blank" rel="noopener">In neuem Tab öffnen</a>
       </div>
 
-      <div class="panel-actions">
-        <button *ngIf="!selected()?.orphanFile" class="btn danger" (click)="deleteMedia(selected())">Löschen</button>
-        <button *ngIf="selected()?.orphanFile" class="btn primary" (click)="adoptOrphan(selected())">Übernehmen</button>
-        <button *ngIf="selected()?.orphanFile" class="btn danger" (click)="deleteOrphan(selected())">Datei löschen</button>
-        <a *ngIf="isPdf(selected())" class="btn ghost" [href]="pdfUrl(selected())" target="_blank" rel="noopener">PDF ansehen</a>
-        <a class="btn ghost" [href]="selected()?.previewUrl" download>Download</a>
+      <!-- Close Button Mobile overlay -->
+      <button
+        class="md:hidden absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/80 text-white rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20"
+        (click)="closeDetails()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Right: Meta Panel -->
+    <div
+      class="w-full md:w-1/3 bg-slate-900 border-t md:border-t-0 md:border-l border-white/10 flex flex-col h-full overflow-y-auto custom-scrollbar">
+      <div class="p-5 md:p-6 flex flex-col gap-6">
+
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-bold text-white m-0">Medium bearbeiten</h3>
+          <button
+            class="hidden md:flex w-8 h-8 hover:bg-white/10 text-slate-400 hover:text-white rounded-lg items-center justify-center transition-colors"
+            (click)="closeDetails()" title="Schließen">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Meta Info -->
+        <ng-container *ngIf="!selected()?.orphanFile; else orphanMeta">
+          <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-1.5">
+              <label class="form-label !mb-0">Titel</label>
+              <input [ngModel]="selected()?.title" (ngModelChange)="selected()!.title = $event"
+                class="form-input !py-2 text-sm">
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="form-label !mb-0">Medientyp</label>
+              <select [ngModel]="selected()?.mediaType" (ngModelChange)="selected()!.mediaType = $event"
+                class="form-input !py-2 text-sm">
+                <option *ngFor="let type of mediaTypeOptions" [value]="type">{{ type }}</option>
+              </select>
+            </div>
+
+            <button class="btn-primary !py-2 text-sm" (click)="saveTitle()">Metadaten speichern</button>
+          </div>
+        </ng-container>
+
+        <ng-template #orphanMeta>
+          <div class="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 text-rose-300 text-sm">
+            Diese Datei liegt in <code>/server/uploads</code>, aber hat noch keinen Datenbank-Eintrag.
+          </div>
+        </ng-template>
+
+        <!-- Current Links -->
+        <div class="flex flex-col gap-3 pt-6 border-t border-white/10" *ngIf="!selected()?.orphanFile">
+          <h4 class="text-sm font-bold text-slate-200 m-0">In Datenbank verknüpft mit</h4>
+
+          <div class="flex flex-col gap-2" *ngIf="selected()?.links?.length; else noLinks">
+            <div *ngFor="let link of selected()?.links"
+              class="flex items-center justify-between glass-card !p-2.5 !rounded-lg">
+              <span class="text-sm text-slate-300 font-medium truncate pr-2" [title]="linkLabel(link)">{{
+                linkLabel(link) }}</span>
+              <button class="btn-danger !w-auto !px-2 !py-1 !text-xs" (click)="unlinkMedia(link.id)">Lösen</button>
+            </div>
+          </div>
+          <ng-template #noLinks>
+            <div class="text-sm text-slate-500 italic p-4 bg-slate-950/50 rounded-xl border border-white/5 text-center">
+              Noch nicht in der Datenbank zugewiesen</div>
+          </ng-template>
+        </div>
+
+        <!-- Add Link -->
+        <div class="flex flex-col gap-3 pt-6 border-t border-white/10" *ngIf="!selected()?.orphanFile">
+          <h4 class="text-sm font-bold text-slate-200 m-0">Neue Zuordnung</h4>
+
+          <select [ngModel]="linkMode()" (ngModelChange)="linkMode.set($event)" class="form-input !py-2 text-sm mb-2">
+            <option value="person">An Person verknüpfen</option>
+            <option value="family">An Familie verknüpfen</option>
+            <option value="source">An Quelle verknüpfen</option>
+          </select>
+
+          <!-- Person Picker -->
+          <div *ngIf="linkMode() === 'person'" class="relative flex flex-col gap-2">
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+              </div>
+              <input class="form-input !pl-9 !py-2 text-sm" [ngModel]="linkPersonQuery()"
+                (ngModelChange)="linkPersonQuery.set($event); linkPersonId.set('')"
+                placeholder="Name oder ID tippen...">
+            </div>
+
+            <div
+              class="max-h-[160px] overflow-y-auto bg-slate-950 border border-white/10 rounded-xl custom-scrollbar absolute top-full left-0 right-0 z-10 mt-1 shadow-2xl"
+              *ngIf="filteredPersonOptions().length && !linkPersonId()">
+              <button type="button"
+                class="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-blue-500/20 hover:text-white border-b border-white/5 last:border-0 transition-colors"
+                *ngFor="let p of filteredPersonOptions()" (click)="choosePerson(p)">
+                {{ p.name }} <span class="text-slate-500 text-xs ml-1">({{ p.birthYear ? ('* ' + p.birthYear) : p.id
+                  }})</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Family Picker -->
+          <select *ngIf="linkMode() === 'family'" [ngModel]="linkFamilyId()" (ngModelChange)="linkFamilyId.set($event)"
+            class="form-input !py-2 text-sm">
+            <option value="">Familie wählen...</option>
+            <option *ngFor="let f of familyOptions()" [value]="f.id">{{ f.label }}</option>
+          </select>
+
+          <!-- Source ID Input -->
+          <input *ngIf="linkMode() === 'source'" [ngModel]="linkSourceId()" (ngModelChange)="linkSourceId.set($event)"
+            placeholder="Source ID" class="form-input !py-2 text-sm">
+
+          <button class="btn-primary !py-2 text-sm mt-1" (click)="addLink()"
+            [disabled]="(linkMode() === 'person' && !linkPersonId()) || (linkMode() === 'family' && !linkFamilyId()) || (linkMode() === 'source' && !linkSourceId())">
+            Verknüpfen
+          </button>
+        </div>
+
+        <!-- Danger Zone & Actions -->
+        <div class="mt-auto pt-6 flex flex-col gap-3">
+          <div class="grid grid-cols-2 gap-3" *ngIf="!selected()?.orphanFile">
+            <a class="btn-secondary !py-2.5 text-sm" [href]="selected()?.previewUrl" download>Herunterladen</a>
+            <button class="btn-danger !py-2.5 text-sm" (click)="deleteMedia(selected())">Endgültig löschen</button>
+          </div>
+
+          <a *ngIf="isPdf(selected())"
+            class="py-2 inline-block bg-slate-800 hover:bg-slate-700 text-white text-center rounded-xl text-sm font-semibold transition-colors border border-white/5 w-full mt-2"
+            [href]="pdfUrl(selected())" target="_blank" rel="noopener">In Browser Tab betrachten</a>
+
+          <div class="grid grid-cols-2 gap-3" *ngIf="selected()?.orphanFile">
+            <button
+              class="py-2 px-3 bg-emerald-500 hover:bg-emerald-600 text-white text-center rounded-xl text-sm font-semibold transition-colors"
+              (click)="adoptOrphan(selected())">In DB einpflegen</button>
+            <button
+              class="py-2 px-3 bg-red-600 hover:bg-red-700 text-white text-center rounded-xl text-sm font-semibold transition-colors"
+              (click)="deleteOrphan(selected())">Datei löschen</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
 
-<app-media-add-modal
-  [visible]="showAddModal()"
-  [treeId]="tree?.id || ''"
-  (closed)="showAddModal.set(false)"
+<app-media-add-modal [visible]="showAddModal()" [treeId]="tree?.id || ''" (closed)="showAddModal.set(false)"
   (uploaded)="loadMedia()">
 </app-media-add-modal>

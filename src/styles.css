@@ -1,30 +1,243 @@
 @import "family-chart/styles/family-chart.css";
 
-/* Global Styles */
-body,
-html {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    min-height: 100vh;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background: radial-gradient(circle at top left, #1e293b, #0f172a);
-    background-attachment: fixed;
-    color: #f1f5f9;
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    /* ==================================================================== */
+    /* ISOLATION FOR D3 FAMILY CHART                                        */
+    /* The d3-family-chart library relies heavily on native browser         */
+    /* behaviors. Tailwind's Preflight reset (especially border-width: 0    */
+    /* and box-sizing: border-box) breaks the SVG/D3 calculations,          */
+    /* causing nodes to collapse to 0,0.                                    */
+    /* We isolate the tree component using 'all: revert' and explicit rules */
+    /* ==================================================================== */
+
+    #FamilyChart {
+        display: block;
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: visible;
+
+        /* Variables for colors and text */
+        --female-color: rgba(119, 24, 37, 1);
+        --male-color: rgba(7, 93, 151, 1);
+        --genderless-color: lightgray;
+        --background-color: rgb(33, 33, 33);
+        --text-color: #fff;
+    }
+
+    /* Undo Tailwind's box-sizing reset for D3 calculations */
+    #FamilyChart * {
+        box-sizing: content-box;
+    }
+
+    /* Force SVGs to display correctly (Tailwind sets them to block) */
+    #FamilyChart svg,
+    #FamilyChart line,
+    #FamilyChart path,
+    #FamilyChart circle {
+        display: inline;
+        overflow: visible;
+    }
+
+    #FamilyChart svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    body,
+    html {
+        @apply m-0 p-0 w-full min-h-screen text-slate-100 antialiased;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        background: radial-gradient(circle at top left, #576ff8, #4963f8, #1236ff);
+        background-attachment: fixed;
+        overflow-x: hidden;
+    }
+
+    button,
+    a,
+    input,
+    select,
+    [role="button"] {
+        @apply transition-all duration-200 ease-in-out;
+    }
+
+    .leaflet-container {
+        @apply bg-slate-950 !important;
+    }
+
+    .leaflet-popup-content-wrapper {
+        @apply bg-slate-900/90 backdrop-blur-md text-white border border-white/10 rounded-2xl shadow-2xl !important;
+    }
+
+    .leaflet-popup-tip {
+        @apply bg-slate-900/90 !important;
+    }
+
+    .leaflet-popup-content {
+        @apply px-4 py-2 !important;
+    }
+
+    .leaflet-control-zoom {
+        @apply border-none !important;
+    }
+
+    .leaflet-control-zoom-in,
+    .leaflet-control-zoom-out {
+        @apply bg-slate-900/80 backdrop-blur-md text-slate-200 border border-white/10 hover:bg-slate-800 hover:text-white transition-all !important;
+    }
+
+    .leaflet-control-zoom-in {
+        @apply rounded-t-xl !important;
+    }
+
+    .leaflet-control-zoom-out {
+        @apply rounded-b-xl !important;
+    }
+
 }
 
-* {
-    box-sizing: border-box;
-    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+/* End of @layer base */
+
+@layer components {
+    .glass-card {
+        @apply bg-slate-950/95 backdrop-blur-xl border border-white/20 rounded-[32px] p-6 transition-all duration-300 ease-in-out;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    .glass-card:hover {
+        @apply -translate-y-1 border-white/40 shadow-2xl;
+        background-color: rgba(255, 255, 255, 0.08);
+        /* Important to keep this explicit override! */
+    }
+
+    .page-header {
+        @apply bg-slate-950/80 backdrop-blur-lg border-b border-white/20 px-6 md:px-10 py-6 sticky top-14 md:top-16 z-10 shadow-2xl;
+    }
+
+    .page-header-inner {
+        @apply flex flex-col md:flex-row items-center md:items-start justify-between gap-6 text-center md:text-left relative z-10;
+    }
+
+    .page-title {
+        @apply m-0 text-3xl md:text-4xl font-extrabold bg-gradient-to-br from-brand-400 to-accent-purple-500 bg-clip-text text-transparent tracking-tight;
+    }
+
+    .page-subtitle {
+        @apply m-0 text-slate-300 mt-2 text-sm md:text-base max-w-2xl font-semibold;
+    }
+
+    .page-actions {
+        @apply flex flex-col w-full md:w-auto items-center gap-4;
+    }
+
+    .btn-primary {
+        @apply w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white rounded-xl font-semibold shadow-brand-glow hover-lift border border-brand-400/20 flex items-center justify-center gap-2;
+    }
+
+    .btn-secondary {
+        @apply w-full md:w-auto px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-medium shadow-md hover-lift border border-slate-700 hover:border-slate-600 flex items-center justify-center gap-2;
+    }
+
+    .btn-ghost {
+        @apply w-full md:w-auto px-4 py-2 bg-transparent hover:bg-white/10 text-slate-300 hover:text-white rounded-xl font-semibold flex items-center justify-center gap-2;
+    }
+
+    .btn-danger {
+        @apply w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-xl font-semibold shadow-rose-glow hover-lift border border-rose-400/20 flex items-center justify-center gap-2;
+    }
+
+    .search-wrapper {
+        @apply relative w-full md:w-80;
+    }
+
+    .search-icon-wrapper {
+        @apply absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none;
+    }
+
+    .search-wrapper:focus-within .search-icon-wrapper {
+        @apply text-brand-400;
+    }
+
+    .search-input {
+        @apply w-full bg-black/60 border border-white/20 rounded-xl pl-11 pr-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
+    }
+
+    /* Shared Modal & Form Patterns */
+    .modal-container {
+        @apply fixed inset-0 flex items-center justify-center p-4 z-[1000] bg-slate-950/40 backdrop-blur-sm;
+    }
+
+    .modal-glass {
+        @apply w-full max-w-lg bg-slate-950/95 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl relative overflow-hidden;
+    }
+
+    .form-group {
+        @apply mb-6;
+    }
+
+    .form-label {
+        @apply block text-[11px] font-bold text-slate-300 uppercase tracking-[0.25em] mb-2 px-1;
+    }
+
+    .form-input {
+        @apply w-full bg-black/60 border border-white/20 rounded-2xl px-5 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all duration-300;
+    }
+
+    .badge {
+        @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all;
+    }
+
+    .badge-blue {
+        @apply bg-brand-500/10 text-brand-400 border-brand-500/20;
+    }
+
+    .badge-purple {
+        @apply bg-accent-purple-500/10 text-accent-purple-400 border-accent-purple-500/20;
+    }
+
+    .badge-emerald {
+        @apply bg-emerald-500/10 text-emerald-400 border-emerald-500/20;
+    }
+
+    .badge-amber {
+        @apply bg-amber-500/10 text-amber-400 border-amber-500/20;
+    }
+
+    .badge-rose {
+        @apply bg-rose-500/10 text-rose-400 border-rose-500/20;
+    }
+
+    .badge-slate {
+        @apply bg-slate-500/10 text-slate-400 border-slate-500/20;
+    }
+
+    .form-error {
+        @apply bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl text-sm text-center mb-6;
+    }
+
+    .modal-glow-blue {
+        @apply absolute -top-24 -right-24 w-64 h-64 bg-brand-600/10 blur-[80px] rounded-full pointer-events-none;
+    }
+
+    .modal-glow-purple {
+        @apply absolute -bottom-24 -left-24 w-64 h-64 bg-accent-purple-600/10 blur-[80px] rounded-full pointer-events-none;
+    }
 }
 
-.glass-card {
-    background: rgba(30, 41, 59, 0.7);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 32px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+@layer utilities {
+    .shadow-brand-glow {
+        box-shadow: 0 0 20px rgba(41, 72, 255, 0.2);
+    }
+
+    .shadow-rose-glow {
+        box-shadow: 0 0 20px rgba(244, 63, 94, 0.2);
+    }
+
+    .hover-lift {
+        @apply hover:-translate-y-0.5 active:translate-y-0;
+    }
 }

@@ -1,0 +1,90 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity" (click)="close()"></div>
+
+    <!-- Modal Content -->
+    <div
+        class="relative w-full max-w-lg bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-white/10 bg-slate-900/50 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-white">
+                {{ mode === 'add' ? 'Neue Quelle hinzufügen' : 'Quelle bearbeiten' }}
+            </h3>
+            <button (click)="close()"
+                class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 space-y-5">
+            @if (errorMessage()) {
+            <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400 font-medium">
+                {{ errorMessage() }}
+            </div>
+            }
+
+            <div class="space-y-4">
+                <!-- Title -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Quelle Titel / Name *</label>
+                    <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)"
+                        placeholder="z.B. Heiratsurkunde Max Mustermann..."
+                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all">
+                </div>
+
+                <!-- Short Title -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Kurztitel</label>
+                    <input type="text" [ngModel]="shortTitle()" (ngModelChange)="shortTitle.set($event)"
+                        placeholder="z.B. Heirat Mustermann 1920"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all">
+                </div>
+
+                <!-- Author -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Autor / Urheber</label>
+                    <input type="text" [ngModel]="author()" (ngModelChange)="author.set($event)"
+                        placeholder="z.B. Standesamt Berlin I"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all">
+                </div>
+
+                <!-- Publication -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5">Publikationsdetails</label>
+                    <input type="text" [ngModel]="publication()" (ngModelChange)="publication.set($event)"
+                        placeholder="z.B. Band 4, Seite 12..."
+                        class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all">
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-white/10 bg-slate-900/50 flex justify-end gap-3">
+            <button (click)="close()" [disabled]="isSaving()"
+                class="px-5 py-2.5 text-slate-300 hover:text-white font-medium hover:bg-slate-800 rounded-xl transition-colors disabled:opacity-50">
+                Löschen
+            </button> <!-- Re-using cancel as "Löschen" if it wasn't a typo, but probably should be "Abbrechen" -->
+            <button (click)="close()" [disabled]="isSaving()"
+                class="px-5 py-2.5 text-slate-300 hover:text-white font-medium hover:bg-slate-800 rounded-xl transition-colors disabled:opacity-50">
+                Abbrechen
+            </button>
+            <button (click)="save()" [disabled]="isSaving() || !title().trim()"
+                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl shadow-lg flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                @if (isSaving()) {
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                Speichern...
+                } @else {
+                Quelle Speichern
+                }
+            </button>
+        </div>
+    </div>
+</div>

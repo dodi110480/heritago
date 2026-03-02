@@ -5,8 +5,7 @@ import { CommonModule } from '@angular/common';
     selector: 'app-image-viewer',
     standalone: true,
     imports: [CommonModule],
-    templateUrl: './image-viewer.html',
-    styleUrl: './image-viewer.css'
+    templateUrl: './image-viewer.html'
 })
 export class ImageViewer {
     @Input() url: string | null = null;
