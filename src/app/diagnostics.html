@@ -4,8 +4,7 @@
         <button actions class="btn-primary !w-auto !py-2" (click)="loadDiagnostics()">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path
-                    d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
             </svg>
             Aktualisieren
         </button>
@@ -28,16 +27,16 @@
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div *ngFor="let result of logicalErrors()"
-                    class="group p-6 bg-surface-dark/40 backdrop-blur-xl border border-canvas-white/5 rounded-[32px] hover:bg-surface-dark/60 transition-all flex items-start gap-6"
-                    [class.border-state-errorBg/20]="result.type === 'error'"
+                    class="group p-6 bg-ui-panel/40 backdrop-blur-xl border border-canvas-white/5 rounded-[32px] hover:bg-ui-panel/60 transition-all flex items-start gap-6"
+                    [class.border-accent-danger-500/20]="result.type === 'error'"
                     [class.border-amber-500/20]="result.type === 'warning'">
 
                     <div class="w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110"
-                        [class.bg-state-errorBg/10]="result.type === 'error'"
+                        [class.bg-accent-danger-500/10]="result.type === 'error'"
                         [class.bg-amber-500/10]="result.type === 'warning'">
-                        <svg *ngIf="result.type === 'error'" class="text-state-error" xmlns="http://www.w3.org/2000/svg"
-                            width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <svg *ngIf="result.type === 'error'" class="text-accent-danger-500"
+                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="8" x2="12" y2="12"></line>
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -74,11 +73,11 @@
                 Standard-Prüfungen</h2>
             <div class="space-y-4">
                 <div *ngFor="let error of errors()" (click)="toggleExpand(error)"
-                    class="group overflow-hidden bg-surface-dark/40 backdrop-blur-xl border border-canvas-white/5 rounded-[40px] hover:bg-surface-dark/60 transition-all cursor-pointer">
+                    class="group overflow-hidden bg-ui-panel/40 backdrop-blur-xl border border-canvas-white/5 rounded-[40px] hover:bg-ui-panel/60 transition-all cursor-pointer">
 
                     <div class="p-6 md:p-8 flex items-center gap-6">
                         <div
-                            class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center bg-state-errorBg/10 text-state-error shadow-lg group-hover:scale-105 transition-transform">
+                            class="w-14 h-14 shrink-0 rounded-2xl flex items-center justify-center bg-accent-danger-500/10 text-accent-danger-500 shadow-lg group-hover:scale-105 transition-transform">
                             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                                 stroke-linejoin="round">

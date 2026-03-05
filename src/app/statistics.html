@@ -1,8 +1,8 @@
 <app-page-container [wide]="true">
     <app-page-header title="Statistik-Dashboard" [description]="treeName() ? 'Stammbaum: ' + treeName() : ''">
         <button actions class="btn-secondary !w-auto !py-2" (click)="loadStatistics()" [disabled]="loading()">
-            <svg *ngIf="loading()" class="animate-spin -ml-1 mr-2 h-4 w-4 text-canvas-white" xmlns="http://www.w3.org/2000/svg"
-                fill="none" viewBox="0 0 24 24">
+            <svg *ngIf="loading()" class="animate-spin -ml-1 mr-2 h-4 w-4 text-canvas-white"
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
@@ -32,60 +32,57 @@
             </div>
 
             <div class="grid grid-cols-1 gap-6">
-                <div class="bg-surface-dark/40 backdrop-blur-md border border-canvas-white/5 rounded-3xl p-6 md:p-8 shadow-xl">
-                    <h3 class="text-xl font-bold text-canvas-white mb-8 flex items-center gap-3">
+                <div class="glass-card !rounded-3xl !p-6 md:!p-8">
+                    <h3 class="text-xl font-bold text-ui-text mb-8 flex items-center gap-3">
                         <span class="w-2 h-8 bg-brand-500 rounded-full"></span>
                         Geschlechterverteilung
                     </h3>
 
                     <div class="flex flex-col gap-8">
                         <div
-                            class="h-10 md:h-12 bg-surface-darkest rounded-full overflow-hidden flex shadow-inner border border-canvas-white/5">
+                            class="h-10 md:h-12 bg-ui-panel rounded-full overflow-hidden flex shadow-inner border border-ui-border/30">
                             <div class="h-full bg-gradient-to-r from-brand-600 to-brand-400 transition-all duration-1000 ease-out flex items-center justify-center overflow-hidden"
                                 [style.width.%]="genderPercentages.male">
                                 <span *ngIf="genderPercentages.male > 10"
                                     class="text-[10px] font-bold text-canvas-white uppercase tracking-tighter">Männlich</span>
                             </div>
-                            <div class="h-full bg-gradient-to-r from-pink-600 to-pink-400 transition-all duration-1000 ease-out flex items-center justify-center border-l border-canvas-white/10 overflow-hidden"
+                            <div class="h-full bg-gradient-to-r from-pink-600 to-pink-400 transition-all duration-1000 ease-out flex items-center justify-center border-l border-ui-border/20 overflow-hidden"
                                 [style.width.%]="genderPercentages.female">
                                 <span *ngIf="genderPercentages.female > 10"
                                     class="text-[10px] font-bold text-canvas-white uppercase tracking-tighter">Weiblich</span>
                             </div>
-                            <div class="h-full bg-surface-light transition-all duration-1000 ease-out flex items-center justify-center border-l border-canvas-white/10 overflow-hidden"
+                            <div class="h-full bg-ui-surfaceLightest/30 transition-all duration-1000 ease-out flex items-center justify-center border-l border-ui-border/20 overflow-hidden"
                                 [style.width.%]="genderPercentages.unknown">
                                 <span *ngIf="genderPercentages.unknown > 10"
-                                    class="text-[10px] font-bold text-neutral-300 uppercase tracking-tighter">?</span>
+                                    class="text-[10px] font-bold text-ui-textMuted uppercase tracking-tighter">?</span>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-10">
-                            <div
-                                class="flex items-center justify-between p-4 bg-canvas-white/5 rounded-2xl border border-canvas-white/5">
+                            <div class="flex items-center justify-between p-4 glass-card !rounded-2xl">
                                 <div class="flex items-center gap-3">
                                     <div
                                         class="w-3 h-3 rounded-full bg-brand-400 shadow-[0_0_10px_rgba(56,189,248,0.5)]">
                                     </div>
-                                    <span class="text-neutral-300 font-medium">Männlich</span>
+                                    <span class="text-ui-textSoft font-medium">Männlich</span>
                                 </div>
-                                <span class="text-canvas-white font-bold">{{ stats()?.gender?.male || 0 }}</span>
+                                <span class="text-ui-text font-bold">{{ stats()?.gender?.male || 0 }}</span>
                             </div>
-                            <div
-                                class="flex items-center justify-between p-4 bg-canvas-white/5 rounded-2xl border border-canvas-white/5">
+                            <div class="flex items-center justify-between p-4 glass-card !rounded-2xl">
                                 <div class="flex items-center gap-3">
                                     <div
                                         class="w-3 h-3 rounded-full bg-gender-female shadow-[0_0_10px_rgba(244,114,182,0.5)]">
                                     </div>
-                                    <span class="text-neutral-300 font-medium">Weiblich</span>
+                                    <span class="text-ui-textSoft font-medium">Weiblich</span>
                                 </div>
-                                <span class="text-canvas-white font-bold">{{ stats()?.gender?.female || 0 }}</span>
+                                <span class="text-ui-text font-bold">{{ stats()?.gender?.female || 0 }}</span>
                             </div>
-                            <div
-                                class="flex items-center justify-between p-4 bg-canvas-white/5 rounded-2xl border border-canvas-white/5">
+                            <div class="flex items-center justify-between p-4 glass-card !rounded-2xl">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-3 h-3 rounded-full bg-surface-lightest"></div>
-                                    <span class="text-neutral-300 font-medium">Unbekannt</span>
+                                    <div class="w-3 h-3 rounded-full bg-neutral-500"></div>
+                                    <span class="text-ui-textSoft font-medium">Unbekannt</span>
                                 </div>
-                                <span class="text-canvas-white font-bold">{{ stats()?.gender?.unknown || 0 }}</span>
+                                <span class="text-ui-text font-bold">{{ stats()?.gender?.unknown || 0 }}</span>
                             </div>
                         </div>
                     </div>

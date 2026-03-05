@@ -6,9 +6,8 @@ trigger: always_on
 
 Dieses Regelwerk ersetzt alle vorherigen GEDCOM-fokussierten Entwicklungsmodelle. Der Fokus liegt auf der Effizienz der Arbeit mit der PostgreSQL/Prisma-Datenbank.
 
-## 1. Das Schema ist das Gesetz
-- Die Datei `schema.prisma` ist auf einem finalen Stand ("New Level") und darf **nicht mehr verändert werden**.
-- Alle neuen Funktionen müssen so implementiert werden, dass sie mit den existierenden Tabellen und Relationen optimal funktionieren.
+1. Das Schema ist das Gesetz
+## Die bestehende schema.prisma ist unveränderlich. Du darfst neue Felder, Modelle oder Relationen hinzufügen, solange sie das bestehende System nicht brechen. Jede Änderung kurz dokumentieren und Migrationen testen.
 
 ## 2. Prisma-native Entwicklung (Internal Source of Truth)
 - Backend (NestJS/Node) und Frontend (Angular) kommunizieren direkt über die Strukturen, die durch das Prisma-Schema vorgegeben sind.

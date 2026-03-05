@@ -12,6 +12,7 @@ import path from 'path';
 import crypto from 'crypto';
 import sharp from 'sharp';
 import axios from 'axios';
+import { GedcomImportEngine } from './import-phases/GedcomImportEngine.service';
 
 const execAsync = promisify(exec);
 
@@ -1599,7 +1600,7 @@ export class GedcomManager {
                             data: {
                                 treeId,
                                 personId: dbId,
-                                type: child.tag,
+                                type: child.tag as any,
                                 dateText: dateNode?.value || null,
                                 placeId: dbPlaceId,
                                 description: child.value || null,
@@ -1697,7 +1698,7 @@ export class GedcomManager {
                             data: {
                                 treeId,
                                 familyId: dbId,
-                                type: child.tag,
+                                type: child.tag as any,
                                 dateText: dateNode?.value || null,
                                 placeId: dbPlaceId,
                                 description: child.value || null,
@@ -2806,12 +2807,17 @@ app.post('/api/tree/:tree/import', upload.single('file'), async (req, res) => {
     if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
 
     try {
-        const content = fs.readFileSync(req.file.path, 'utf-8');
-        const report = await GedcomManager.importGedcom(prisma, tree.id, content);
+        const engine = new GedcomImportEngine(prisma);
+        const result = await engine.runImport(tree.id, req.file.path, req.file.originalname);
+
+        // Datei nach Import löschen
         fs.unlinkSync(req.file.path);
-        res.json({ success: true, report });
+
+        res.json({ success: true, importId: result.importId });
     } catch (error: any) {
         console.error('Import error:', error);
+        // Auch bei Fehler löschen
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         res.status(500).json({ success: false, message: error.message });
     }
 });

@@ -3,7 +3,8 @@
     (close)="closeModal()" (save)="save()">
 
     <div class="flex flex-col gap-5">
-        <div class="bg-state-errorBg/10 border border-state-errorBg/20 text-state-error p-4 rounded-xl text-sm" *ngIf="errorMessage()">
+        <div class="bg-accent-danger-500/10 border border-accent-danger-500/20 text-accent-danger-500 p-4 rounded-xl text-sm"
+            *ngIf="errorMessage()">
             {{ errorMessage() }}
         </div>
 
@@ -44,7 +45,8 @@
             <small class="text-neutral-400 text-xs text-right pr-2">Karte anklicken oder Marker ziehen.</small>
         </div>
 
-        <div class="w-full h-[350px] md:h-[400px] rounded-xl overflow-hidden border border-canvas-white/10" #mapContainer>
+        <div class="w-full h-[350px] md:h-[400px] rounded-xl overflow-hidden border border-canvas-white/10"
+            #mapContainer>
         </div>
     </div>
 </app-modal-shell>

@@ -18,8 +18,8 @@
     <div *ngIf="!loading() && repositories().length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-2">
         <app-entity-card *ngFor="let repo of repositories()" [title]="repo.name"
             [subtitle]="repo.address || 'Keine Adresse angegeben'"
-            [meta]="(repo.sourceCount || 0) + ' Quelle(n) verknüpft'" icon="🏛️" badgeText="Archiv" badgeColor="highlight"
-            (onClick)="openEditModal(repo)">
+            [meta]="(repo.sourceCount || 0) + ' Quelle(n) verknüpft'" icon="🏛️" badgeText="Archiv"
+            badgeColor="highlight" (onClick)="openEditModal(repo)">
 
             <div actions class="flex gap-1 items-center">
                 <span *ngIf="repo.website"
@@ -54,7 +54,8 @@
     deleteText="Archiv löschen" (close)="closeModal()" (save)="save()" (delete)="deleteRepo(selectedRepo())">
 
     <div class="flex flex-col gap-4">
-        <div class="bg-state-errorBg/10 border border-state-errorBg/20 text-state-error p-3 rounded-xl text-sm" *ngIf="errorMessage()">
+        <div class="bg-accent-danger-500/10 border border-accent-danger-500/20 text-accent-danger-500 p-3 rounded-xl text-sm"
+            *ngIf="errorMessage()">
             {{ errorMessage() }}
         </div>
 

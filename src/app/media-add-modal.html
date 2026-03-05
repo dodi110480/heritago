@@ -1,70 +1,70 @@
 <app-modal-shell [visible]="visible" title="Medium hinzufügen" icon="🖼️" size="md" [showFooter]="false"
   [showSave]="false" (close)="close()">
-    <div class="relative z-10 flex flex-col gap-6">
-      <!-- Modal Body -->
-      <div class="flex flex-col gap-6 max-h-[75vh] overflow-y-auto px-1 custom-scrollbar">
-        <!-- Upload Zone -->
-        <label
-          class="group relative flex flex-col items-center justify-center p-12 border-2 border-dashed border-canvas-white/10 rounded-[32px] bg-canvas-black/20 hover:bg-canvas-black/40 hover:border-brand-500/50 transition-all cursor-pointer overflow-hidden">
-          <input type="file" accept="image/*,application/pdf" (change)="onFilePicked($event)" hidden>
-          <div class="bg-brand-500/10 p-4 rounded-2xl text-brand-400 mb-4 group-hover:scale-110 transition-transform">
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="17 8 12 3 7 8"></polyline>
-              <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-          </div>
-          <span class="text-neutral-300 font-bold tracking-tight">Datei wählen</span>
-          <span class="text-neutral-500 text-xs mt-1">Bilder oder PDF-Dokumente</span>
-        </label>
+  <div class="relative z-10 flex flex-col gap-6">
+    <!-- Modal Body -->
+    <div class="flex flex-col gap-6 max-h-[75vh] overflow-y-auto px-1 custom-scrollbar">
+      <!-- Upload Zone -->
+      <label
+        class="group relative flex flex-col items-center justify-center p-12 border-2 border-dashed border-canvas-white/10 rounded-[32px] bg-canvas-black/20 hover:bg-canvas-black/40 hover:border-brand-500/50 transition-all cursor-pointer overflow-hidden">
+        <input type="file" accept="image/*,application/pdf" (change)="onFilePicked($event)" hidden>
+        <div class="bg-brand-500/10 p-4 rounded-2xl text-brand-400 mb-4 group-hover:scale-110 transition-transform">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+        </div>
+        <span class="text-neutral-300 font-bold tracking-tight">Datei wählen</span>
+        <span class="text-neutral-500 text-xs mt-1">Bilder oder PDF-Dokumente</span>
+      </label>
 
-        <div class="flex flex-col gap-5" *ngIf="selectedFile() as file">
-          <!-- File Info -->
-          <div class="grid grid-cols-2 gap-4">
-            <div class="form-group mb-0">
-              <label class="form-label px-0">Typ</label>
-              <div class="form-input py-3 pointer-events-none opacity-60 bg-canvas-white/5">{{ kind() }}</div>
-            </div>
-            <div class="form-group mb-0">
-              <label class="form-label px-0">Dateiname</label>
-              <div class="form-input py-3 pointer-events-none opacity-60 bg-canvas-white/5 truncate">{{ file.name }}</div>
-            </div>
-          </div>
-
-          <!-- Options -->
+      <div class="flex flex-col gap-5" *ngIf="selectedFile() as file">
+        <!-- File Info -->
+        <div class="grid grid-cols-2 gap-4">
           <div class="form-group mb-0">
-            <label class="form-label">Namens-Hinweis (optional)</label>
-            <input type="text" [ngModel]="hint()" (ngModelChange)="hint.set($event)" (blur)="refreshTitle()"
-              class="form-input" placeholder="z.B. Lebenslauf, Hochzeit, Grabstein...">
+            <label class="form-label px-0">Typ</label>
+            <div class="form-input py-3 pointer-events-none opacity-60 bg-canvas-white/5">{{ kind() }}</div>
           </div>
-
           <div class="form-group mb-0">
-            <label class="form-label">Titel (Dateiname auf Server)</label>
-            <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)"
-              class="form-input font-mono text-sm" placeholder="Picture_Name_Family">
-          </div>
-
-          <div class="form-group mb-0">
-            <label class="form-label">Kategorie</label>
-            <select [ngModel]="mediaType()" (ngModelChange)="mediaType.set($event)"
-              class="form-input appearance-none bg-canvas-black/40">
-              <option *ngFor="let type of mediaTypeOptions" [value]="type" class="bg-surface-dark">{{ type }}</option>
-            </select>
+            <label class="form-label px-0">Dateiname</label>
+            <div class="form-input py-3 pointer-events-none opacity-60 bg-canvas-white/5 truncate">{{ file.name }}</div>
           </div>
         </div>
-      </div>
-      <div class="flex gap-4 pt-4 px-1">
-        <button (click)="close()" class="btn-secondary !flex-1 !py-4">
-          Abbrechen
-        </button>
-        <button (click)="submit()" [disabled]="!selectedFile() || uploading()" class="btn-primary !flex-[2] !py-4">
-          <span *ngIf="uploading()"
-            class="w-5 h-5 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin"></span>
-          {{ uploading() ? 'Wird hochgeladen...' : 'Datei speichern' }}
-        </button>
+
+        <!-- Options -->
+        <div class="form-group mb-0">
+          <label class="form-label">Namens-Hinweis (optional)</label>
+          <input type="text" [ngModel]="hint()" (ngModelChange)="hint.set($event)" (blur)="refreshTitle()"
+            class="form-input" placeholder="z.B. Lebenslauf, Hochzeit, Grabstein...">
+        </div>
+
+        <div class="form-group mb-0">
+          <label class="form-label">Titel (Dateiname auf Server)</label>
+          <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)"
+            class="form-input font-mono text-sm" placeholder="Picture_Name_Family">
+        </div>
+
+        <div class="form-group mb-0">
+          <label class="form-label">Kategorie</label>
+          <select [ngModel]="mediaType()" (ngModelChange)="mediaType.set($event)"
+            class="form-input appearance-none bg-canvas-black/40">
+            <option *ngFor="let type of mediaTypeOptions" [value]="type" class="bg-ui-input">{{ type }}</option>
+          </select>
+        </div>
       </div>
     </div>
+    <div class="flex gap-4 pt-4 px-1">
+      <button (click)="close()" class="btn-secondary !flex-1 !py-4">
+        Abbrechen
+      </button>
+      <button (click)="submit()" [disabled]="!selectedFile() || uploading()" class="btn-primary !flex-[2] !py-4">
+        <span *ngIf="uploading()"
+          class="w-5 h-5 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin"></span>
+        {{ uploading() ? 'Wird hochgeladen...' : 'Datei speichern' }}
+      </button>
+    </div>
+  </div>
 </app-modal-shell>
 
 <!-- Image Cropper Modal (Nested) -->

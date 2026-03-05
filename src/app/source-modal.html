@@ -2,43 +2,44 @@
     size="md" [loading]="isSaving()" [disabledSave]="!title().trim()" (close)="close()" (save)="save()">
 
     <div class="flex flex-col gap-4">
-        <div class="bg-state-errorBg/10 border border-state-errorBg/20 text-state-error p-3 rounded-xl text-sm" *ngIf="errorMessage()">
+        <div class="bg-accent-danger-500/10 border border-accent-danger-500/20 text-accent-danger-500 p-3 rounded-xl text-sm"
+            *ngIf="errorMessage()">
             {{ errorMessage() }}
         </div>
 
         <!-- Title -->
         <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Titel / Name *</label>
+            <label class="form-label">Titel / Name *</label>
             <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)" class="form-input"
                 placeholder="z.B. Heiratsurkunde Max Mustermann...">
         </div>
 
         <!-- Short Title -->
         <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Kurztitel</label>
+            <label class="form-label">Kurztitel</label>
             <input type="text" [ngModel]="shortTitle()" (ngModelChange)="shortTitle.set($event)" class="form-input"
                 placeholder="z.B. Heirat Mustermann 1920">
         </div>
 
         <!-- Author -->
         <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Autor / Urheber</label>
+            <label class="form-label">Autor / Urheber</label>
             <input type="text" [ngModel]="author()" (ngModelChange)="author.set($event)" class="form-input"
                 placeholder="z.B. Standesamt Berlin I">
         </div>
 
         <!-- Publication -->
         <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Publikationsdetails</label>
+            <label class="form-label">Publikationsdetails</label>
             <input type="text" [ngModel]="publication()" (ngModelChange)="publication.set($event)" class="form-input"
                 placeholder="z.B. Band 4, Seite 12...">
         </div>
 
         <!-- Repository -->
         <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">
+            <label class="form-label">
                 Archiv / Repositorium
-                <span class="text-neutral-500 font-normal">(optional)</span>
+                <span class="text-ui-textMuted font-normal">(optional)</span>
             </label>
             <select [ngModel]="repositoryId()" (ngModelChange)="repositoryId.set($event)" class="form-input">
                 <option value="">— Kein Archiv —</option>
@@ -56,15 +57,16 @@
             <div class="mt-6 border-t border-canvas-white/10 pt-6 space-y-6">
 
                 <!-- Merge Section -->
-                <div class="bg-canvas-black/20 p-4 rounded-xl border border-canvas-white/5 space-y-3">
+                <div class="bg-ui-panel/50 p-4 rounded-xl border border-ui-border/30 space-y-3">
                     <div>
-                        <h4 class="text-sm font-semibold text-canvas-white">In andere Quelle zusammenführen</h4>
-                        <p class="text-xs text-neutral-400 mt-1">Überträgt alle Zitate dieser Quelle auf eine andere und
+                        <h4 class="text-sm font-semibold text-ui-text">In andere Quelle zusammenführen</h4>
+                        <p class="text-xs text-ui-textMuted mt-1">Überträgt alle Zitate dieser Quelle auf eine andere
+                            und
                             löscht diese hier.</p>
                     </div>
                     <div class="flex gap-2">
                         <select [ngModel]="mergeTargetId()" (ngModelChange)="mergeTargetId.set($event)"
-                            class="flex-1 bg-surface-dark border border-canvas-white/10 rounded-lg text-sm text-canvas-white px-3 py-2">
+                            class="form-input form-input-sm flex-1">
                             <option value="">-- Ziel-Quelle wählen --</option>
                             <ng-container *ngFor="let s of allSources">
                                 <option *ngIf="s.id !== sourceData?.id" [value]="s.id">
@@ -73,22 +75,23 @@
                             </ng-container>
                         </select>
                         <button (click)="mergeSource()" [disabled]="!mergeTargetId()"
-                            class="px-4 py-2 bg-surface-light hover:bg-surface-lighter text-canvas-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50">
+                            class="btn-secondary !w-auto !py-2 !px-4 disabled:opacity-50">
                             Merge
                         </button>
                     </div>
                 </div>
 
                 <!-- Delete Section -->
-                <div class="bg-state-errorBg/5 border border-state-errorBg/10 p-4 rounded-xl space-y-3">
+                <div class="bg-accent-danger-500/5 border border-accent-danger-500/10 p-4 rounded-xl space-y-3">
                     <div>
-                        <h4 class="text-sm font-semibold text-state-error">Quelle löschen</h4>
-                        <p class="text-xs text-state-error/70 mt-1">Achtung: Dies entfernt die Quelle endgültig. Zitate
+                        <h4 class="text-sm font-semibold text-accent-danger-500">Quelle löschen</h4>
+                        <p class="text-xs text-accent-danger-500/70 mt-1">Achtung: Dies entfernt die Quelle endgültig.
+                            Zitate
                             können wahlweise umgehängt werden.</p>
                     </div>
                     <div class="flex flex-col gap-2">
                         <select [ngModel]="reassignTargetId()" (ngModelChange)="reassignTargetId.set($event)"
-                            class="w-full bg-surface-dark border border-state-errorBg/20 rounded-lg text-sm text-canvas-white px-3 py-2">
+                            class="form-input form-input-sm w-full border-accent-danger-500/20">
                             <option value="">-- Ohne Ersatz löschen (Zitate werden entfernt) --</option>
                             <ng-container *ngFor="let s of allSources">
                                 <option *ngIf="s.id !== sourceData?.id" [value]="s.id">
@@ -97,7 +100,7 @@
                             </ng-container>
                         </select>
                         <button (click)="deleteSource()"
-                            class="w-full px-4 py-2.5 bg-state-errorDeep/40 hover:bg-state-errorDeep/60 text-state-errorSoft rounded-lg text-sm font-semibold transition-colors border border-state-errorBg/20">
+                            class="w-full px-4 py-2.5 bg-accent-danger-500/20 hover:bg-accent-danger-500/30 text-accent-danger-400 rounded-lg text-sm font-semibold transition-colors border border-accent-danger-500/20">
                             {{ reassignTargetId() ? 'Umhängen & Löschen' : 'Unwiderruflich Löschen' }}
                         </button>
                     </div>

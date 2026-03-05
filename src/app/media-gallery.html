@@ -63,7 +63,7 @@
 
   <!-- Statistics Row -->
   <section
-    class="glass-card mb-8 !py-4 flex flex-wrap items-center justify-around gap-6 border-brand-500/10 bg-surface-darkest/40">
+    class="glass-card mb-8 !py-4 flex flex-wrap items-center justify-around gap-6 border-brand-500/10 bg-ui-panel/40">
     <div class="flex flex-col items-center gap-1">
       <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Gesamt</span>
       <strong class="text-2xl text-canvas-white font-black tracking-tight">{{ stats().total }}</strong>
@@ -96,7 +96,8 @@
 
     <div *ngIf="!loading() && filteredItems().length === 0"
       class="py-32 flex flex-col items-center justify-center text-neutral-500 glass-card">
-      <div class="w-20 h-20 bg-canvas-white/5 rounded-full flex items-center justify-center mb-6 text-4xl opacity-20">🖼️
+      <div class="w-20 h-20 bg-canvas-white/5 rounded-full flex items-center justify-center mb-6 text-4xl opacity-20">
+        🖼️
       </div>
       <h3 class="text-xl font-bold text-canvas-white mb-2">Keine Medien gefunden</h3>
       <p class="text-neutral-400">Lade dein erstes Foto oder Dokument hoch.</p>
@@ -117,7 +118,7 @@
 
           <div actions class="flex flex-col items-end gap-1.5">
             <span *ngIf="item.links?.length; else noLinksSpan"
-              class="text-[10px] px-2 py-0.5 rounded bg-surface-darkest/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
+              class="text-[10px] px-2 py-0.5 rounded bg-ui-panel/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
               {{ item.links.length }} Link{{ item.links.length !== 1 ? 's' : '' }}
             </span>
             <ng-template #noLinksSpan>
@@ -140,7 +141,7 @@
 
 <!-- Details Modal Overlay -->
 <div
-  class="fixed inset-0 bg-surface-darkest/90 backdrop-blur-xl z-[2000] flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300"
+  class="fixed inset-0 bg-ui-canvasDark/90 backdrop-blur-xl z-[2000] flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300"
   *ngIf="selected()" (click)="closeDetails()">
   <div
     class="w-full max-w-[1200px] h-full max-h-[90vh] glass-card !p-0 !rounded-3xl flex flex-col md:flex-row overflow-hidden shadow-2xl border-canvas-white/5 animate-in zoom-in-95 duration-300"
@@ -175,7 +176,7 @@
     </div>
 
     <!-- Right: Meta Panel -->
-    <div class="w-full md:w-1/3 bg-surface-darkest/30 flex flex-col h-full overflow-hidden">
+    <div class="w-full md:w-1/3 bg-ui-panel/30 flex flex-col h-full overflow-hidden">
 
       <div class="p-6 md:p-8 flex items-center justify-between border-b border-canvas-white/5">
         <h3 class="text-xl font-black text-canvas-white tracking-tight">Details</h3>
@@ -253,7 +254,7 @@
               (ngModelChange)="linkPersonQuery.set($event); linkPersonId.set('')" placeholder="Name oder ID suchen...">
 
             <div
-              class="max-h-[200px] overflow-y-auto bg-surface-darkest border border-canvas-white/10 rounded-2xl custom-scrollbar absolute top-full left-0 right-0 z-50 mt-2 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200"
+              class="max-h-[200px] overflow-y-auto bg-ui-panel border border-canvas-white/10 rounded-2xl custom-scrollbar absolute top-full left-0 right-0 z-50 mt-2 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200"
               *ngIf="filteredPersonOptions().length && !linkPersonId()">
               <button type="button"
                 class="w-full text-left px-4 py-3 text-sm text-neutral-300 hover:bg-brand-500/10 hover:text-brand-400 border-b border-canvas-white/5 last:border-0 transition-colors"
