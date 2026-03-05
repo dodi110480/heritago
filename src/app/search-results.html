@@ -1,94 +1,41 @@
-<div class="min-h-screen p-6 md:p-12">
-    <div class="max-w-6xl mx-auto">
-        <header class="page-header !static !bg-transparent !border-0 !p-0 !mb-12">
-            <h1 class="page-title !text-4xl mb-4">
-                <span
-                    class="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Suchergebnisse</span>
-                für "{{ query() }}"
-            </h1>
-            <div class="flex items-center gap-2">
-                <div class="h-1 w-12 bg-blue-500 rounded-full"></div>
-                <p class="page-subtitle">Gefundene Personen in deiner Familiengeschichte</p>
-            </div>
-        </header>
+<app-page-container [wide]="true">
+    <div class="max-w-6xl mx-auto pb-20">
+        <app-page-header [title]="'Suchergebnisse für „' + query() + '“'"
+            description="Gefundene Personen in deiner Familiengeschichte">
+        </app-page-header>
 
         <!-- LOADING -->
         <div *ngIf="loading()" class="flex flex-col items-center justify-center py-32 animate-in fade-in">
             <div
-                class="w-12 h-12 border-4 border-white/5 border-l-blue-500 rounded-full animate-spin shadow-[0_0_20px_#3b82f633] mb-6">
+                class="w-12 h-12 border-4 border-ui-border/40 border-l-brand-500 rounded-full animate-spin shadow-brand-glow mb-6">
             </div>
-            <p class="text-xs font-black text-slate-500 uppercase tracking-widest">Suche läuft...</p>
+            <p class="text-xs font-black text-neutral-500 uppercase tracking-widest">Suche läuft...</p>
         </div>
 
         <!-- NO RESULTS -->
         <div *ngIf="!loading() && results().length === 0"
             class="flex flex-col items-center justify-center py-32 text-center animate-in zoom-in-95 duration-700">
             <div
-                class="w-24 h-24 bg-slate-900 rounded-[32px] flex items-center justify-center text-4xl mb-8 border border-white/5 shadow-xl">
+                class="w-24 h-24 bg-ui-panel rounded-[32px] flex items-center justify-center text-4xl mb-8 border border-ui-border/60 shadow-xl">
                 🔎
             </div>
-            <h2 class="text-2xl font-black text-white tracking-tight mb-2">Keine Ergebnisse gefunden</h2>
-            <p class="text-slate-500 max-w-xs leading-relaxed">Bitte versuche es mit einem anderen Suchbegriff oder
+            <h2 class="text-2xl font-black text-ui-text tracking-tight mb-2">Keine Ergebnisse gefunden</h2>
+            <p class="text-ui-textMuted max-w-xs leading-relaxed">Bitte versuche es mit einem anderen Suchbegriff oder
                 prüfe die Schreibweise.</p>
         </div>
 
         <!-- RESULTS GRID -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in slide-in-from-bottom-5 duration-700 delay-150"
             *ngIf="!loading() && results().length > 0">
-
-            <a *ngFor="let result of results()" [routerLink]="['/tree']" [queryParams]="{focus: result.id}"
-                class="group relative block p-6 bg-slate-900/40 backdrop-blur-xl border border-white/5 rounded-[40px] hover:bg-slate-900/70 hover:border-blue-500/20 transition-all duration-300 shadow-2xl overflow-hidden">
-
-                <!-- HOVER GLOW -->
-                <div
-                    class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/5 blur-[60px] rounded-full pointer-events-none group-hover:bg-blue-600/10 transition-colors">
-                </div>
-
-                <div class="relative z-10 flex items-center gap-6">
-                    <!-- AVATAR / ICON -->
-                    <div class="w-16 h-16 shrink-0 rounded-2xl flex items-center justify-center shadow-lg border border-white/5 group-hover:scale-110 transition-transform"
-                        [class.bg-blue-500/10]="result.gender === 'M'" [class.bg-pink-500/10]="result.gender === 'F'"
-                        [class.bg-slate-800]="result.gender !== 'M' && result.gender !== 'F'">
-
-                        <svg *ngIf="result.gender === 'M'" xmlns="http://www.w3.org/2000/svg" width="28" height="28"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                            stroke-linecap="round" stroke-linejoin="round" class="text-blue-400">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                            <circle cx="12" cy="7" r="4" />
-                        </svg>
-                        <svg *ngIf="result.gender === 'F'" xmlns="http://www.w3.org/2000/svg" width="28" height="28"
-                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                            stroke-linecap="round" stroke-linejoin="round" class="text-pink-400">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                            <circle cx="12" cy="7" r="4" />
-                        </svg>
-                        <svg *ngIf="result.gender !== 'M' && result.gender !== 'F'" xmlns="http://www.w3.org/2000/svg"
-                            width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-500">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                            <circle cx="12" cy="7" r="4" />
-                        </svg>
-                    </div>
-
-                    <div class="flex-1 min-w-0">
-                        <h3
-                            class="text-xl font-black text-white truncate group-hover:text-blue-400 transition-colors tracking-tight">
-                            {{ result.name }}</h3>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">{{
-                                result.lifespan }}</span>
-                        </div>
-                    </div>
-
-                    <div class="shrink-0 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
-                            class="text-blue-400">
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                    </div>
-                </div>
-            </a>
+            <app-entity-card *ngFor="let result of results()"
+                [title]="result.name"
+                [subtitle]="result.lifespan"
+                [badgeText]="'Treffer'"
+                [badgeColor]="result.gender === 'F' ? 'rose' : result.gender === 'M' ? 'blue' : 'slate'"
+                [icon]="result.gender === 'F' ? '👩' : result.gender === 'M' ? '👨' : '👤'"
+                [routerLink]="['/tree']"
+                [queryParams]="{focus: result.id}">
+            </app-entity-card>
         </div>
     </div>
-</div>
+</app-page-container>

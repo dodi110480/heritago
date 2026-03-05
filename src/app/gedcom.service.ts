@@ -143,6 +143,12 @@ export class GedcomService {
         return this.http.get<any>(`${this.baseApiUrl}${treeName}/statistics`, { withCredentials: true });
     }
 
+    getChangeLog(treeName: string): Observable<any[]> {
+        return this.http.get<{ success: boolean, logs: any[] }>(`${this.baseApiUrl}${treeName}/changelog`, { withCredentials: true }).pipe(
+            switchMap(res => of(res.logs || []))
+        );
+    }
+
     getTimeline(treeName: string, xref: string): Observable<any> {
         return this.http.get<any>(`${this.baseApiUrl}${treeName}/timeline/${xref}`, { withCredentials: true });
     }
@@ -208,5 +214,13 @@ export class GedcomService {
 
     getDiagnostics(treeName: string): Observable<any> {
         return this.http.get<any>(`${this.baseApiUrl}${treeName}/diagnostics`, { withCredentials: true });
+    }
+
+    getRepositories(treeName: string): Observable<any> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/repository`, { withCredentials: true });
+    }
+
+    saveRepository(treeName: string, payload: any): Observable<any> {
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/repository`, payload, { withCredentials: true });
     }
 }

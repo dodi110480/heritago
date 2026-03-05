@@ -362,7 +362,37 @@ export class GedcomManager {
                         const mediaObj = await this.ensureMediaObject(prisma, treeId, med);
                         if (mediaObj) {
                             await prisma.mediaLink.create({
-                                data: { treeId, eventId: createdEvent.id, mediaId: mediaObj.id }
+                                data: {
+                                    treeId,
+                                    eventId: createdEvent.id,
+                                    mediaId: mediaObj.id,
+                                    role: med.role || null,
+                                    caption: med.caption || null
+                                }
+                            });
+                        }
+                    }
+                }
+
+                // Event Citations: support direct sourceId
+                if (e.citations && Array.isArray(e.citations)) {
+                    for (const cit of e.citations) {
+                        let sourceId: string | null = cit.sourceId || null;
+                        if (!sourceId && cit.source) {
+                            let src = await prisma.source.findFirst({ where: { treeId, title: cit.source } });
+                            if (!src) src = await prisma.source.create({ data: { treeId, title: cit.source } });
+                            sourceId = src?.id || null;
+                        }
+                        if (sourceId) {
+                            await prisma.citation.create({
+                                data: {
+                                    treeId,
+                                    eventId: createdEvent.id,
+                                    sourceId,
+                                    page: cit.page || null,
+                                    dateText: cit.dateText || null,
+                                    confidence: cit.confidence || null
+                                }
                             });
                         }
                     }
@@ -382,7 +412,7 @@ export class GedcomManager {
                     }
                     placeId = place.id;
                 }
-                await prisma.fact.create({
+                const createdFact = await prisma.fact.create({
                     data: {
                         treeId,
                         personId: person.id,
@@ -392,10 +422,43 @@ export class GedcomManager {
                         placeId
                     }
                 });
+
+                // Fact Citations
+                if (f.citations && Array.isArray(f.citations)) {
+                    for (const cit of f.citations) {
+                        let sourceId: string | null = cit.sourceId || null;
+                        if (!sourceId && cit.source) {
+                            let src = await prisma.source.findFirst({ where: { treeId, title: cit.source } });
+                            if (!src) src = await prisma.source.create({ data: { treeId, title: cit.source } });
+                            sourceId = src?.id || null;
+                        }
+                        if (sourceId) {
+                            await prisma.citation.create({
+                                data: {
+                                    treeId,
+                                    factId: createdFact.id,
+                                    sourceId,
+                                    page: cit.page || null,
+                                    dateText: cit.dateText || null,
+                                    confidence: cit.confidence || null
+                                }
+                            });
+                        }
+                    }
+                }
+                // Fact Notes
+                if (f.notes && Array.isArray(f.notes)) {
+                    for (const noteText of f.notes) {
+                        const t = String(noteText || '').trim();
+                        if (!t) continue;
+                        const note = await prisma.sharedNote.findFirst({ where: { treeId, text: t } })
+                            || await prisma.sharedNote.create({ data: { treeId, text: t } });
+                        await prisma.noteLink.create({ data: { treeId, eventId: createdFact.id, noteId: note.id } });
+                    }
+                }
             }
         }
 
-        // 4b. Associations
         await prisma.association.deleteMany({ where: { treeId, personId: person.id } });
         if (data.associations && Array.isArray(data.associations)) {
             for (const assoc of data.associations) {
@@ -467,26 +530,26 @@ export class GedcomManager {
             }
         }
 
-        // 5. Citations
+        // 5. Citations (Person-Level)
         await prisma.citation.deleteMany({ where: { personId: person.id } });
         if (data.citations && Array.isArray(data.citations)) {
             for (const cit of data.citations) {
-                let source = await prisma.source.findFirst({
-                    where: { treeId, title: cit.source }
-                });
-                if (!source && cit.source) {
-                    source = await prisma.source.create({
-                        data: { treeId, title: cit.source }
-                    });
+                // Support direct sourceId OR legacy title lookup
+                let sourceId: string | null = cit.sourceId || null;
+                if (!sourceId && cit.source) {
+                    let src = await prisma.source.findFirst({ where: { treeId, title: cit.source } });
+                    if (!src) src = await prisma.source.create({ data: { treeId, title: cit.source } });
+                    sourceId = src?.id || null;
                 }
-                if (source) {
+                if (sourceId) {
                     await prisma.citation.create({
                         data: {
                             treeId,
                             personId: person.id,
-                            sourceId: source.id,
+                            sourceId,
                             page: cit.page || null,
                             dateText: cit.dateText || null,
+                            confidence: cit.confidence || null,
                         }
                     });
                 }
@@ -496,39 +559,54 @@ export class GedcomManager {
         // 6. Media
         await prisma.mediaLink.deleteMany({ where: { personId: person.id } });
         if (data.media && Array.isArray(data.media)) {
+            console.log("Saving media objects for person: ", JSON.stringify(data.media, null, 2));
             for (const med of data.media) {
                 const mediaObj = await this.ensureMediaObject(prisma, treeId, med);
                 if (mediaObj) {
+                    console.log(`Creating MediaLink for ${mediaObj.id} with role: ${med.role}, caption: ${med.caption}`);
                     await prisma.mediaLink.create({
                         data: {
                             treeId,
                             personId: person.id,
                             mediaId: mediaObj.id,
-                            isPrimary: !!med.isPrimary
+                            isPrimary: !!med.isPrimary,
+                            role: med.role || null,
+                            caption: med.caption || null
                         }
                     });
                 }
             }
         }
 
-        // 7. Notes
+        // 7. Notes (Person-Level)
         await prisma.noteLink.deleteMany({ where: { personId: person.id } });
         if (data.notes && Array.isArray(data.notes)) {
-            for (const noteText of data.notes) {
-                if (noteText && noteText.trim()) {
-                    const note = await prisma.sharedNote.findFirst({
-                        where: { treeId, text: noteText }
-                    }) || await prisma.sharedNote.create({
-                        data: { treeId, text: noteText }
-                    });
-                    await prisma.noteLink.create({
-                        data: {
-                            treeId,
-                            personId: person.id,
-                            noteId: note.id
-                        }
+            for (const noteData of data.notes) {
+                // Support both string (legacy/GEDCOM) and object (UI)
+                const noteText = typeof noteData === 'string' ? noteData : (noteData?.text || '');
+                const noteType = typeof noteData === 'object' ? (noteData?.noteType || 'GENERAL') : 'GENERAL';
+                const researchStatus = typeof noteData === 'object' ? (noteData?.researchStatus || 'OPEN') : 'OPEN';
+                const privacyLevel = typeof noteData === 'object' ? (noteData?.privacyLevel || 'PRIVATE') : 'PRIVATE';
+                if (!noteText.trim()) continue;
+                // Try to find existing note by id, else find/create by text
+                let note;
+                if (noteData?.id) {
+                    note = await prisma.sharedNote.findUnique({ where: { id: noteData.id } });
+                    if (note) {
+                        note = await prisma.sharedNote.update({
+                            where: { id: note.id },
+                            data: { text: noteText, noteType, researchStatus: researchStatus as any, privacyLevel: privacyLevel as any }
+                        });
+                    }
+                }
+                if (!note) {
+                    note = await prisma.sharedNote.create({
+                        data: { treeId, text: noteText, noteType, researchStatus: researchStatus as any, privacyLevel: privacyLevel as any }
                     });
                 }
+                await prisma.noteLink.create({
+                    data: { treeId, personId: person.id, noteId: note.id }
+                });
             }
         }
 
@@ -594,8 +672,8 @@ export class GedcomManager {
             where: { id: person.id },
             include: {
                 names: true,
-                events: { include: { place: true } },
-                facts: { include: { place: true } },
+                events: { include: { place: true, citations: { include: { source: true } } } },
+                facts: { include: { place: true, citations: { include: { source: true } } } },
                 mediaLinks: { include: { media: true } },
                 noteLinks: { include: { note: true } },
                 citations: { include: { source: true } },
@@ -650,23 +728,52 @@ export class GedcomManager {
                 type: e.type,
                 date: e.dateText,
                 place: e.place?.name,
-                description: e.description || ''
+                description: e.description || '',
+                citations: (e.citations || []).map((c: any) => ({
+                    sourceId: c.source?.id || c.sourceId || '',
+                    sourceTitle: c.source?.title || '',
+                    page: c.page || '',
+                    confidence: c.confidence || '',
+                    dateText: c.dateText || ''
+                }))
             })),
             facts: person.facts?.map((f: any) => ({
                 type: f.type,
                 value: f.value,
                 date: f.dateText || '',
                 dateText: f.dateText || '',
-                place: f.place?.name || ''
+                place: f.place?.name || '',
+                citations: (f.citations || []).map((c: any) => ({
+                    sourceId: c.source?.id || c.sourceId || '',
+                    sourceTitle: c.source?.title || '',
+                    page: c.page || '',
+                    confidence: c.confidence || '',
+                    dateText: c.dateText || ''
+                }))
             })) || [],
             media: person.mediaLinks?.map((ml: any) => ({
                 id: ml.media?.id,
                 url: ml.media?.remoteUrl || ml.media?.filePath,
                 title: ml.media?.title || ml.media?.filePath,
                 isPrimary: ml.isPrimary,
+                role: ml.role || '',
+                caption: ml.caption || '',
                 mimeType: ml.media?.mimeType
             })) || [],
-            notes: person.noteLinks?.map((nl: any) => nl.note?.text).filter(Boolean) || [],
+            notes: person.noteLinks?.map((nl: any) => ({
+                id: nl.note?.id,
+                text: nl.note?.text || '',
+                noteType: nl.note?.noteType || 'GENERAL',
+                researchStatus: nl.note?.researchStatus || 'OPEN',
+                privacyLevel: nl.note?.privacyLevel || 'PRIVATE'
+            })).filter((n: any) => n.text) || [],
+            citations: (person.citations || []).map((c: any) => ({
+                sourceId: c.source?.id || c.sourceId || '',
+                sourceTitle: c.source?.title || '',
+                page: c.page || '',
+                confidence: c.confidence || '',
+                dateText: c.dateText || ''
+            })),
             associations: (person.associations || []).map((a: any) => ({
                 role: a.role,
                 associatedPersonId: a.associated?.gedcomId || '',
@@ -700,7 +807,10 @@ export class GedcomManager {
             birthDate: birthEvent?.dateText || '',
             birthPlace: birthEvent?.place?.name || '',
             deathDate: deathEvent?.dateText || '',
-            deathPlace: deathEvent?.place?.name || ''
+            deathPlace: deathEvent?.place?.name || '',
+            createdAt: person.createdAt,
+            updatedAt: person.updatedAt,
+            chanDate: person.chanDate || null
         };
     }
 
@@ -866,23 +976,55 @@ export class GedcomManager {
 
                     if (Array.isArray(e?.citations)) {
                         for (const cit of e.citations) {
-                            const sourceTitle = (cit?.sourceTitle || cit?.source || '').trim();
-                            if (!sourceTitle) continue;
-                            let source = await tx.source.findFirst({ where: { treeId, title: sourceTitle } });
-                            if (!source) {
-                                source = await tx.source.create({ data: { treeId, title: sourceTitle } });
+                            // Support direct sourceId OR legacy sourceTitle lookup
+                            let sourceId: string | null = cit?.sourceId || null;
+                            if (!sourceId) {
+                                const sourceTitle = (cit?.sourceTitle || cit?.source || '').trim();
+                                if (sourceTitle) {
+                                    let src = await tx.source.findFirst({ where: { treeId, title: sourceTitle } });
+                                    if (!src) src = await tx.source.create({ data: { treeId, title: sourceTitle } });
+                                    sourceId = src?.id || null;
+                                }
                             }
+                            if (!sourceId) continue;
                             await tx.citation.create({
                                 data: {
                                     treeId,
                                     eventId: createdEvent.id,
-                                    sourceId: source.id,
-                                    page: cit?.whereInSource || cit?.page || null,
-                                    dateText: cit?.date || cit?.dateText || null
+                                    sourceId,
+                                    page: cit?.page || cit?.whereInSource || null,
+                                    dateText: cit?.date || cit?.dateText || null,
+                                    confidence: cit?.confidence || null
                                 }
                             });
                         }
                     }
+                }
+            }
+
+            // Family-Level Notes
+            await tx.noteLink.deleteMany({ where: { familyId: family.id, eventId: null } });
+            if (Array.isArray(data?.notes)) {
+                for (const noteData of data.notes) {
+                    const noteText = typeof noteData === 'string' ? noteData : (noteData?.text || '');
+                    const noteType = typeof noteData === 'object' ? (noteData?.noteType || 'GENERAL') : 'GENERAL';
+                    const researchStatus = typeof noteData === 'object' ? (noteData?.researchStatus || 'OPEN') : 'OPEN';
+                    const privacyLevel = typeof noteData === 'object' ? (noteData?.privacyLevel || 'PRIVATE') : 'PRIVATE';
+                    if (!noteText.trim()) continue;
+                    let note;
+                    if (noteData?.id) {
+                        note = await tx.sharedNote.findUnique({ where: { id: noteData.id } });
+                        if (note) {
+                            note = await tx.sharedNote.update({
+                                where: { id: note.id },
+                                data: { text: noteText, noteType, researchStatus: researchStatus as any, privacyLevel: privacyLevel as any }
+                            });
+                        }
+                    }
+                    if (!note) {
+                        note = await tx.sharedNote.create({ data: { treeId, text: noteText, noteType, researchStatus: researchStatus as any, privacyLevel: privacyLevel as any } });
+                    }
+                    await tx.noteLink.create({ data: { treeId, familyId: family.id, noteId: note.id } });
                 }
             }
 
@@ -951,7 +1093,14 @@ export class GedcomManager {
             })),
             husband: husband?.gedcomId,
             wife: wife?.gedcomId,
-            children: children.map((p: any) => p.gedcomId).filter(Boolean)
+            children: children.map((p: any) => p.gedcomId).filter(Boolean),
+            notes: (fam.noteLinks || []).filter((nl: any) => !nl.eventId).map((nl: any) => ({
+                id: nl.note?.id,
+                text: nl.note?.text || '',
+                noteType: nl.note?.noteType || 'GENERAL',
+                researchStatus: nl.note?.researchStatus || 'OPEN',
+                privacyLevel: nl.note?.privacyLevel || 'PRIVATE'
+            })).filter((n: any) => n.text)
         };
     }
 
@@ -1734,12 +1883,14 @@ app.get('/api/tree/:tree', async (req, res) => {
                     events: {
                         include: {
                             place: true,
-                            mediaLinks: { include: { media: true } }
+                            mediaLinks: { include: { media: true } },
+                            citations: { include: { source: true } }
                         }
                     },
                     facts: {
                         include: {
-                            place: true
+                            place: true,
+                            citations: { include: { source: true } }
                         }
                     },
                     citations: { include: { source: true } },
@@ -1762,7 +1913,8 @@ app.get('/api/tree/:tree', async (req, res) => {
                         }
                     },
                     familyMembers: { include: { person: true } },
-                    mediaLinks: { include: { media: true } }
+                    mediaLinks: { include: { media: true } },
+                    noteLinks: { include: { note: true } }
                 }
             }
         }
@@ -1781,6 +1933,21 @@ app.get('/api/tree/:tree', async (req, res) => {
     res.json({ success: true, individuals, families, meta: { tree: treeName, treeId: tree.id } });
 });
 
+app.get('/api/tree/:tree/changelog', async (req, res) => {
+    const { tree: treeName } = req.params;
+    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+    if (!tree) return res.status(404).json({ success: false });
+
+    const logs = await prisma.changeLog.findMany({
+        where: { treeId: tree.id },
+        include: { user: { select: { username: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 50
+    });
+
+    res.json({ success: true, logs });
+});
+
 app.post('/api/tree/:tree/person', async (req, res) => {
     const { tree: treeName } = req.params;
     const { mode, id } = req.body;
@@ -1795,17 +1962,76 @@ app.post('/api/tree/:tree/person', async (req, res) => {
 
         if (personToDelete) {
             await prisma.person.delete({ where: { id: personToDelete.id } });
+            await prisma.changeLog.create({
+                data: {
+                    treeId: tree.id,
+                    action: 'DELETE',
+                    entityType: 'PERSON',
+                    entityId: personToDelete.id,
+                    before: personToDelete as any,
+                    summary: `Person ${id} gelöscht`
+                }
+            });
         }
         return res.json({ success: true });
     }
 
+    // Für CREATE / UPDATE den alten Stand holen
+    let beforeState = null;
+    let action: 'CREATE' | 'UPDATE' = 'CREATE';
+    if (id) {
+        const existing = await prisma.person.findUnique({
+            where: { treeId_gedcomId: { treeId: tree.id, gedcomId: id } },
+            include: { names: true, events: true, facts: true }
+        });
+        if (existing) {
+            beforeState = existing;
+            action = 'UPDATE';
+        }
+    }
+
     const record = await GedcomManager.createPerson(prisma, tree.id, req.body);
+
+    // Nach dem Speichern den neuen Stand für das Log holen
+    const afterState = await prisma.person.findUnique({
+        where: { id: record.id },
+        include: { names: true, events: true, facts: true }
+    });
+
+    await prisma.changeLog.create({
+        data: {
+            treeId: tree.id,
+            action: action,
+            entityType: 'PERSON',
+            entityId: record.id,
+            before: beforeState as any,
+            after: afterState as any,
+            summary: `Person ${req.body?.firstName || ''} ${req.body?.lastName || ''} ${action === 'CREATE' ? 'erstellt' : 'aktualisiert'}`.trim()
+        }
+    });
+
     res.json({ success: true, person: record });
 });
 
 app.delete('/api/tree/:tree/person/:id', async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id, tree: treeName } = req.params;
+        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+
+        const personToDelete = await prisma.person.findUnique({ where: { id } });
+        if (personToDelete) {
+            await prisma.changeLog.create({
+                data: {
+                    treeId: tree?.id || personToDelete.treeId,
+                    action: 'DELETE',
+                    entityType: 'PERSON',
+                    entityId: id,
+                    before: personToDelete as any,
+                    summary: `Person ${personToDelete.gedcomId} gelöscht`
+                }
+            });
+        }
+
         await prisma.person.delete({ where: { id } });
         res.json({ success: true });
     } catch (error: any) {
@@ -1854,7 +2080,53 @@ app.post('/api/tree/:tree/family', async (req, res) => {
         const tree = await prisma.tree.findUnique({ where: { name: treeName } });
         if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
 
+        let beforeState = null;
+        if (data.id) {
+            beforeState = await prisma.family.findUnique({
+                where: { treeId_gedcomId: { treeId: tree.id, gedcomId: data.id } },
+                include: { familyMembers: { include: { person: { include: { names: true } } } }, events: true, noteLinks: { include: { note: true } } }
+            });
+        }
+
         const result = await GedcomManager.saveFamily(prisma, tree.id, data);
+
+        if (result && !('deleted' in result)) {
+            const familyAfter = await prisma.family.findUnique({
+                where: { id: result.id },
+                include: { familyMembers: { include: { person: { include: { names: true } } } }, events: true, noteLinks: { include: { note: true } } }
+            });
+
+            const action = beforeState ? 'UPDATE' : 'CREATE';
+            const husband = familyAfter?.familyMembers.find(m => m.role === 'SPOUSE' && m.person.sex === 'M')?.person;
+            const wife = familyAfter?.familyMembers.find(m => m.role === 'SPOUSE' && m.person.sex === 'F')?.person;
+
+            const hName = husband ? (husband.names[0]?.surname || husband.gedcomId) : '?';
+            const wName = wife ? (wife.names[0]?.surname || wife.gedcomId) : '?';
+
+            await prisma.changeLog.create({
+                data: {
+                    treeId: tree.id,
+                    action: action,
+                    entityType: 'FAMILY',
+                    entityId: result.id,
+                    before: beforeState as any,
+                    after: familyAfter as any,
+                    summary: `Familie ${hName} / ${wName} ${action === 'CREATE' ? 'erstellt' : 'aktualisiert'}`
+                }
+            });
+        } else if (result && 'deleted' in result && beforeState) {
+            await prisma.changeLog.create({
+                data: {
+                    treeId: tree.id,
+                    action: 'DELETE',
+                    entityType: 'FAMILY',
+                    entityId: (beforeState as any).id,
+                    before: beforeState as any,
+                    summary: `Familie ${(beforeState as any).gedcomId} gelöscht`
+                }
+            });
+        }
+
         res.json({ success: true, family: result });
     } catch (error: any) {
         console.error('Save family error:', error);
@@ -2011,6 +2283,16 @@ app.post('/api/tree/:tree/place/merge', async (req, res) => {
         await tx.place.delete({ where: { id: source.id } });
     });
 
+    await prisma.changeLog.create({
+        data: {
+            treeId: tree.id,
+            action: 'UPDATE',
+            entityType: 'PLACE',
+            entityId: target.id,
+            summary: `Ort ${source.name} in ${target.name} zusammengeführt`
+        }
+    });
+
     res.json({ success: true });
 });
 
@@ -2075,6 +2357,17 @@ app.post('/api/tree/:tree/place', async (req, res) => {
                 } else {
                     await prisma.place.delete({ where: { id: placeToDelete.id } });
                 }
+
+                await prisma.changeLog.create({
+                    data: {
+                        treeId: tree.id,
+                        action: 'DELETE',
+                        entityType: 'PLACE',
+                        entityId: placeToDelete.id,
+                        before: placeToDelete as any,
+                        summary: `Ort ${placeToDelete.name} gelöscht`
+                    }
+                });
             }
             return res.json({ success: true });
         }
@@ -2098,13 +2391,17 @@ app.post('/api/tree/:tree/place', async (req, res) => {
             }
         }
 
+        let beforeState = null;
+        let action: 'CREATE' | 'UPDATE' = 'CREATE';
+        let targetPlaceId: string | null = null;
+
         if (id) {
-            const existingById = await prisma.place.findFirst({ where: { id, treeId: tree.id } });
-            if (!existingById) {
+            beforeState = await prisma.place.findFirst({ where: { id, treeId: tree.id } });
+            if (!beforeState) {
                 return res.status(404).json({ success: false, message: 'Place not found.' });
             }
-            await prisma.place.update({
-                where: { id: existingById.id },
+            const p = await prisma.place.update({
+                where: { id: beforeState.id },
                 data: {
                     name: name,
                     latitude: lat,
@@ -2114,13 +2411,15 @@ app.post('/api/tree/:tree/place', async (req, res) => {
                     parentId: normalizedParentId
                 }
             });
+            targetPlaceId = p.id;
+            action = 'UPDATE';
         } else if (old_name && old_name !== name) {
-            const existingPlace = await prisma.place.findFirst({
+            beforeState = await prisma.place.findFirst({
                 where: { treeId: tree.id, name: old_name, parentId: null }
             });
-            if (existingPlace) {
-                await prisma.place.update({
-                    where: { id: existingPlace.id },
+            if (beforeState) {
+                const p = await prisma.place.update({
+                    where: { id: beforeState.id },
                     data: {
                         name: name,
                         latitude: lat,
@@ -2129,13 +2428,16 @@ app.post('/api/tree/:tree/place', async (req, res) => {
                         historicNames: normalizedHistoricNames
                     }
                 });
+                targetPlaceId = p.id;
+                action = 'UPDATE';
             }
         } else {
             const existingPlace = await prisma.place.findFirst({
                 where: { treeId: tree.id, name: name, parentId: normalizedParentId }
             });
             if (existingPlace) {
-                await prisma.place.update({
+                beforeState = existingPlace;
+                const p = await prisma.place.update({
                     where: { id: existingPlace.id },
                     data: {
                         latitude: lat,
@@ -2144,8 +2446,10 @@ app.post('/api/tree/:tree/place', async (req, res) => {
                         historicNames: normalizedHistoricNames
                     }
                 });
+                targetPlaceId = p.id;
+                action = 'UPDATE';
             } else {
-                await prisma.place.create({
+                const p = await prisma.place.create({
                     data: {
                         treeId: tree.id,
                         name: name,
@@ -2156,7 +2460,24 @@ app.post('/api/tree/:tree/place', async (req, res) => {
                         longitude: lng
                     }
                 });
+                targetPlaceId = p.id;
+                action = 'CREATE';
             }
+        }
+
+        if (targetPlaceId) {
+            const afterState = await prisma.place.findUnique({ where: { id: targetPlaceId } });
+            await prisma.changeLog.create({
+                data: {
+                    treeId: tree.id,
+                    action: action,
+                    entityType: 'PLACE',
+                    entityId: targetPlaceId,
+                    before: beforeState as any,
+                    after: afterState as any,
+                    summary: `Ort ${name} ${action === 'CREATE' ? 'erstellt' : 'aktualisiert'}`
+                }
+            });
         }
 
         res.json({ success: true });
@@ -2360,6 +2681,76 @@ app.post('/api/tree/:tree/source', async (req, res) => {
         res.json({ success: true });
     } catch (error: any) {
         console.error('Source save error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// --- Repository API ---
+
+app.get('/api/tree/:tree/repository', async (req, res) => {
+    const { tree: treeName } = req.params;
+    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+    if (!tree) return res.status(404).json({ success: false });
+
+    const repos = await prisma.repository.findMany({
+        where: { treeId: tree.id },
+        include: { _count: { select: { sources: true } } },
+        orderBy: { name: 'asc' }
+    });
+
+    res.json({
+        success: true,
+        repositories: repos.map(r => ({
+            id: r.id,
+            name: r.name,
+            address: r.address,
+            phone: r.phone,
+            email: r.email,
+            website: r.website,
+            sourceCount: r._count.sources
+        }))
+    });
+});
+
+app.post('/api/tree/:tree/repository', async (req, res) => {
+    const { tree: treeName } = req.params;
+    const { id, name, address, phone, email, website, mode } = req.body;
+
+    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+    if (!tree) return res.status(404).json({ success: false });
+
+    try {
+        if (mode === 'delete' && id) {
+            const repo = await prisma.repository.findFirst({ where: { id, treeId: tree.id } });
+            if (repo) {
+                // Unlink sources before deleting
+                await prisma.source.updateMany({ where: { repositoryId: id }, data: { repositoryId: null } });
+                await prisma.repository.delete({ where: { id: repo.id } });
+            }
+            return res.json({ success: true });
+        }
+
+        if (!name) return res.status(400).json({ success: false, message: 'Name is required' });
+
+        const data = {
+            name,
+            address: address || null,
+            phone: phone || null,
+            email: email || null,
+            website: website || null,
+        };
+
+        if (id) {
+            const existing = await prisma.repository.findFirst({ where: { id, treeId: tree.id } });
+            if (!existing) return res.status(404).json({ success: false, message: 'Repository not found' });
+            await prisma.repository.update({ where: { id }, data });
+        } else {
+            await prisma.repository.create({ data: { ...data, treeId: tree.id } });
+        }
+
+        res.json({ success: true });
+    } catch (error: any) {
+        console.error('Repository save error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -2811,6 +3202,17 @@ app.post('/api/media/upload', upload.single('file'), async (req, res) => {
             }
         });
 
+        await prisma.changeLog.create({
+            data: {
+                treeId,
+                action: 'CREATE',
+                entityType: 'MEDIA',
+                entityId: media.id,
+                after: media as any,
+                summary: `Medium ${media.title} hochgeladen`
+            }
+        });
+
         res.json({ success: true, media });
     } catch (error: any) {
         console.error('Upload error:', error);
@@ -2962,6 +3364,18 @@ app.delete('/api/media/:id', async (req, res) => {
         }
 
         await prisma.media.delete({ where: { id: req.params.id } });
+
+        await prisma.changeLog.create({
+            data: {
+                treeId: media.treeId,
+                action: 'DELETE',
+                entityType: 'MEDIA',
+                entityId: media.id,
+                before: media as any,
+                summary: `Medium ${media.title} gelöscht`
+            }
+        });
+
         res.json({ success: true });
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });

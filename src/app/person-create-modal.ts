@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
 import { Individual } from './models';
+import { AppModalShell } from './ui/app-modal-shell';
 
 @Component({
     selector: 'app-person-create-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, AppModalShell],
     templateUrl: './person-create-modal.html'
 })
 export class PersonCreateModal {

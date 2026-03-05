@@ -1,14 +1,15 @@
-import { Component, inject, signal, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
+import { AppEntityCard } from './ui/app-entity-card';
 
 declare const L: any;
 
 @Component({
     selector: 'app-map-view',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, AppEntityCard],
     templateUrl: './map-view.html'
 })
 export class MapView implements OnInit {
@@ -19,8 +20,19 @@ export class MapView implements OnInit {
     map: any;
     markers = signal<any[]>([]);
     persons = signal<any[]>([]);
+    listEntries = computed(() => {
+        const persons = this.persons();
+        if (persons.length > 0) return persons;
+        return this.markers().map((m: any) => ({
+            name: m.name,
+            places: [m]
+        }));
+    });
+    visibleCount = computed(() => this.listEntries().length);
     loading = signal(true);
+    mapTheme = signal<'dark' | 'light'>((localStorage.getItem('heritago_map_theme') as 'dark' | 'light') || 'dark');
     private leafletMarkers: any[] = [];
+    private baseLayer: any;
 
     ngOnInit() {
         this.loadMapData();
@@ -56,11 +68,7 @@ export class MapView implements OnInit {
             zoomControl: false // Move zoom control later or keep simple
         }).setView([51.1657, 10.4515], 5);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20
-        }).addTo(this.map);
+        this.applyBaseLayer();
 
         L.control.zoom({
             position: 'bottomright'
@@ -74,7 +82,7 @@ export class MapView implements OnInit {
                     .bindPopup(`
                         <div style="padding: 5px;">
                             <h4 style="margin: 0 0 5px 0;">${m.name}</h4>
-                            <p style="margin: 0; font-size: 12px; color: #94a3b8;">${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}</p>
+                            <p style="margin: 0; font-size: 12px;">${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}</p>
                         </div>
                     `)
                     .addTo(this.map);
@@ -85,6 +93,32 @@ export class MapView implements OnInit {
 
             this.map.fitBounds(bounds, { padding: [100, 100], maxZoom: 12 });
         }
+    }
+
+    toggleMapTheme() {
+        const next = this.mapTheme() === 'dark' ? 'light' : 'dark';
+        this.mapTheme.set(next);
+        localStorage.setItem('heritago_map_theme', next);
+        this.applyBaseLayer();
+    }
+
+    private applyBaseLayer() {
+        if (!this.map) return;
+
+        if (this.baseLayer) {
+            this.map.removeLayer(this.baseLayer);
+        }
+
+        const isDark = this.mapTheme() === 'dark';
+        const url = isDark
+            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
+        this.baseLayer = L.tileLayer(url, {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(this.map);
     }
 
     focusPlace(place: any) {

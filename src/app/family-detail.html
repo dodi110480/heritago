@@ -1,288 +1,233 @@
-<div class="min-h-screen text-slate-200 flex flex-col p-0 m-0" *ngIf="!loading() && family()">
-    <!-- Unified Sticky Header -->
-    <div class="page-header">
-        <div class="page-header-inner">
-            <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-center w-full">
-                <a routerLink="/families"
-                    class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-slate-400 flex items-center justify-center hover:bg-white/10 hover:text-white transition-colors cursor-pointer shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <line x1="19" y1="12" x2="5" y2="12"></line>
-                        <polyline points="12 19 5 12 12 5"></polyline>
-                    </svg>
-                </a>
+<app-page-container [wide]="true" *ngIf="!loading() && family()">
+    <app-page-header [title]="'Familie ' + family()?.id"
+        [description]="getPersonName(family()?.husband) + ' & ' + getPersonName(family()?.wife) + (getMarriageInfo() ? ' — ' + getMarriageInfo() : '')">
+        <a breadcrumbs routerLink="/families"
+            class="w-10 h-10 rounded-xl bg-canvas-white/5 border border-canvas-white/10 text-neutral-400 flex items-center justify-center hover:bg-canvas-white/10 hover:text-canvas-white transition-colors cursor-pointer shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </a>
+        <div actions class="flex gap-3">
+            <button class="btn-secondary" (click)="requestCancel()">Abbrechen</button>
+            <button class="btn-primary flex items-center gap-2" [disabled]="!isDirty() || isSaving()" (click)="save()">
+                <div *ngIf="isSaving()"
+                    class="w-4 h-4 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin"></div>
+                Speichern
+            </button>
+        </div>
+    </app-page-header>
 
-                <div class="flex-1 text-center md:text-left">
-                    <h1 class="page-title">Familie {{ family()?.id }}</h1>
-                    <p class="page-subtitle text-slate-300 mt-1">
-                        {{ getPersonName(family()?.husband) }} & {{ getPersonName(family()?.wife) }}
-                        <span class="text-slate-500 text-sm ml-2" *ngIf="getMarriageInfo()"> — {{ getMarriageInfo()
-                            }}</span>
-                    </p>
+    <div class="flex flex-col gap-8 pb-20">
+
+        <!-- Partner Section -->
+        <app-card>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-ui-text m-0">Partner</h2>
+            </div>
+            <div
+                class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-10 items-center glass-card !rounded-2xl p-6 md:p-10 relative">
+                <!-- Husband -->
+                <div class="flex items-center gap-5">
+                    <div class="w-20 h-20 rounded-2xl bg-center bg-no-repeat bg-cover border-[3px] border-canvas-white/5 shrink-0 flex items-center justify-center"
+                        [ngClass]="{'bg-brand-500/15 text-brand-400': getPersonGender(family()?.husband) === 'M', 'bg-gender-female/15 text-gender-female': getPersonGender(family()?.husband) === 'F', 'bg-ui-surfaceLightest/15 text-neutral-400': getPersonGender(family()?.husband) === 'U'}"
+                        [style.background-image]="'url(' + getPersonImage(family()?.husband) + ')'"
+                        [style.background-size]="getPersonImage(family()?.husband).includes('assets/avatars/') ? '40px' : 'cover'">
+                    </div>
+                    <div class="flex flex-col">
+                        <span
+                            class="text-xs text-ui-textMuted font-semibold uppercase tracking-wider mb-1">Ehemann</span>
+                        <span class="text-lg font-bold text-ui-text">{{ getPersonName(family()?.husband) }}</span>
+                        <a [routerLink]="['/person', family()?.husband]"
+                            class="text-sm text-brand-400 hover:text-brand-300 hover:underline mt-1">Profil ansehen</a>
+                    </div>
                 </div>
 
-                <div class="page-actions flex gap-3">
-                    <button class="btn-secondary" (click)="cancel()">Abbrechen</button>
-                    <button class="btn-primary flex items-center gap-2" [disabled]="!isDirty() || isSaving()"
-                        (click)="save()">
-                        <div *ngIf="isSaving()"
-                            class="w-4 h-4 border-2 border-white/20 border-l-white rounded-full animate-spin"></div>
-                        Speichern
+                <div class="text-4xl opacity-30 rotate-90 md:rotate-0 text-center">💍</div>
+
+                <!-- Wife -->
+                <div
+                    class="flex items-center gap-5 justify-start md:justify-end text-left md:text-right flex-row md:flex-row-reverse">
+                    <div class="w-20 h-20 rounded-2xl bg-center bg-no-repeat bg-cover border-[3px] border-canvas-white/5 shrink-0 flex items-center justify-center"
+                        [ngClass]="{'bg-brand-500/15 text-brand-400': getPersonGender(family()?.wife) === 'M', 'bg-gender-female/15 text-gender-female': getPersonGender(family()?.wife) === 'F', 'bg-ui-surfaceLightest/15 text-neutral-400': getPersonGender(family()?.wife) === 'U'}"
+                        [style.background-image]="'url(' + getPersonImage(family()?.wife) + ')'"
+                        [style.background-size]="getPersonImage(family()?.wife).includes('assets/avatars/') ? '40px' : 'cover'">
+                    </div>
+                    <div class="flex flex-col">
+                        <span
+                            class="text-xs text-ui-textMuted font-semibold uppercase tracking-wider mb-1">Ehefrau</span>
+                        <span class="text-lg font-bold text-ui-text">{{ getPersonName(family()?.wife) }}</span>
+                        <a [routerLink]="['/person', family()?.wife]"
+                            class="text-sm text-brand-400 hover:text-brand-300 hover:underline mt-1">Profil ansehen</a>
+                    </div>
+                </div>
+            </div>
+        </app-card>
+
+        <!-- Events Section -->
+        <app-card>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-ui-text m-0">Ereignisse</h2>
+                <button class="btn-primary !w-auto !py-1.5 text-sm" (click)="addEvent()">+ Ereignis</button>
+            </div>
+            <div class="flex flex-col gap-4">
+                <app-family-event-card *ngFor="let event of family()?.events; let i = index" [event]="event"
+                    [availableSources]="availableSources()" (changed)="updateEvent()"
+                    (removeRequested)="removeEvent(i)">
+                </app-family-event-card>
+
+                <div class="text-center py-8 border-2 border-dashed border-ui-border/60 rounded-2xl text-ui-textMuted"
+                    *ngIf="!family()?.events || family()?.events?.length === 0">
+                    <div class="text-3xl opacity-20 mb-2">📅</div>
+                    <p class="text-sm font-medium">Keine Ereignisse hinterlegt.</p>
+                </div>
+            </div>
+        </app-card>
+
+        <!-- Notes Section -->
+        <app-card>
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-ui-text m-0">
+                        Notizen
+                        <span *ngIf="family()?.notes?.length" class="text-ui-textMuted text-base font-normal ml-2">({{
+                            family()?.notes?.length }})</span>
+                    </h2>
+                    <p class="text-xs text-ui-textMuted mt-1">Allgemeine Anmerkungen zur Familie</p>
+                </div>
+                <button class="btn-primary !w-auto !py-1.5 text-sm" (click)="addNote()">+ Notiz</button>
+            </div>
+
+            <div class="flex flex-col gap-3" *ngIf="family()?.notes && family()?.notes!.length > 0">
+                <div *ngFor="let note of family()?.notes; let i = index"
+                    class="glass-card !p-4 !rounded-2xl space-y-3 group">
+                    <!-- Pill Row -->
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <select [(ngModel)]="note.noteType" (ngModelChange)="isDirty.set(true)"
+                            class="bg-brand-500/15 border border-brand-500/30 text-brand-300 text-xs font-semibold rounded-full px-3 py-1 focus:outline-none cursor-pointer">
+                            <option value="GENERAL">📝 Allgemein</option>
+                            <option value="RESEARCH">🔍 Recherche</option>
+                            <option value="TRANSCRIPTION">📄 Transkript</option>
+                            <option value="ANALYSIS">📊 Analyse</option>
+                            <option value="TODO">⚠️ ToDo</option>
+                        </select>
+                        <select [(ngModel)]="note.researchStatus" (ngModelChange)="isDirty.set(true)" [ngClass]="{
+                                'bg-amber-500/15 border-amber-500/30 text-amber-300': note.researchStatus === 'OPEN',
+                                'bg-brand-500/15 border-brand-500/30 text-brand-300': note.researchStatus === 'IN_PROGRESS',
+                                'bg-emerald-500/15 border-emerald-500/30 text-emerald-300': note.researchStatus === 'DONE',
+                                'bg-ui-panel/30 border-ui-border/30 text-ui-textMuted': note.researchStatus === 'BLOCKED'
+                            }"
+                            class="border text-xs font-semibold rounded-full px-3 py-1 focus:outline-none cursor-pointer">
+                            <option value="OPEN">🔍 Offen</option>
+                            <option value="IN_PROGRESS">🔄 In Bearbeitung</option>
+                            <option value="DONE">✅ Fertig</option>
+                            <option value="BLOCKED">🚫 Blockiert</option>
+                        </select>
+                        <select [(ngModel)]="note.privacyLevel" (ngModelChange)="isDirty.set(true)"
+                            class="bg-ui-panel/40 border border-ui-border/40 text-ui-textSoft text-xs font-semibold rounded-full px-3 py-1 focus:outline-none cursor-pointer">
+                            <option value="PUBLIC">🌍 Öffentlich</option>
+                            <option value="FAMILY">👨‍👩‍👧 Familie</option>
+                            <option value="PRIVATE">🔒 Privat</option>
+                        </select>
+                        <button (click)="removeNote(i)"
+                            class="ml-auto p-1.5 text-ui-textMuted hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2.5">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <textarea [(ngModel)]="note.text" (ngModelChange)="isDirty.set(true)"
+                        placeholder="Notiz zur Familie..." class="form-input min-h-[100px] resize-none"></textarea>
+                </div>
+            </div>
+
+            <div class="py-8 flex flex-col items-center justify-center border-2 border-dashed border-ui-border/60 rounded-2xl text-ui-textMuted"
+                *ngIf="!family()?.notes || family()?.notes!.length === 0">
+                <span class="text-3xl mb-2 opacity-20">📝</span>
+                <p class="text-sm font-medium">Keine Notizen vorhanden.</p>
+            </div>
+        </app-card>
+
+        <!-- Children Section -->
+        <app-card>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-ui-text m-0">
+                    Kinder
+                    <span class="text-ui-textMuted text-lg font-normal ml-2">({{ family()?.children?.length || 0
+                        }})</span>
+                </h2>
+                <button class="btn-primary !w-auto !py-1.5 text-sm" (click)="openAddChildModal()">+ Kind</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div class="glass-card !p-4 !rounded-2xl flex items-center gap-4"
+                    *ngFor="let childId of family()?.children">
+                    <div class="w-12 h-12 rounded-xl bg-center bg-no-repeat bg-cover border-[2px] border-canvas-white/5 shrink-0 flex items-center justify-center"
+                        [ngClass]="{'bg-brand-500/15 text-brand-400': getPersonGender(childId) === 'M', 'bg-gender-female/15 text-gender-female': getPersonGender(childId) === 'F', 'bg-ui-surfaceLightest/15 text-neutral-400': getPersonGender(childId) === 'U'}"
+                        [style.background-image]="'url(' + getPersonImage(childId) + ')'"
+                        [style.background-size]="getPersonImage(childId).includes('assets/avatars/') ? '24px' : 'cover'">
+                    </div>
+                    <div class="flex flex-col flex-1 min-w-0">
+                        <span class="font-bold text-sm text-ui-text truncate">{{ getPersonName(childId) }}</span>
+                        <div class="flex gap-3 mt-1 text-xs">
+                            <a [routerLink]="['/person', childId]"
+                                class="text-brand-400 hover:text-brand-300 hover:underline">Profil</a>
+                            <button class="text-accent-danger-500/70 hover:text-accent-danger-500 hover:underline"
+                                (click)="removeChild(childId)">Entfernen</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-span-full text-center py-8 border-2 border-dashed border-ui-border/60 rounded-2xl text-ui-textMuted"
+                    *ngIf="!family()?.children || family()?.children?.length === 0">
+                    <div class="text-3xl opacity-20 mb-2">👶</div>
+                    <p class="text-sm font-medium">Keine Kinder in dieser Familie hinterlegt.</p>
+                </div>
+            </div>
+        </app-card>
+
+    </div>
+
+    <!-- Kind hinzufügen Modal -->
+    <app-modal-shell [visible]="showAddChildModal()" title="Kind hinzufügen" icon="👶" size="sm" [showSave]="true"
+        saveText="Hinzufügen" [showDelete]="false" (close)="showAddChildModal.set(false)" (save)="confirmAddChild()">
+        <div class="space-y-4">
+            <div class="form-group mb-0">
+                <label class="form-label">Name oder ID der Person</label>
+                <input type="text" [(ngModel)]="addChildQuery" class="form-input"
+                    placeholder="z.B. Max Mustermann oder I001" autofocus>
+            </div>
+            <div *ngIf="addChildResults().length > 1" class="space-y-2">
+                <label class="form-label">Treffer auswählen</label>
+                <div class="space-y-1 max-h-48 overflow-y-auto">
+                    <button *ngFor="let c of addChildResults()" (click)="selectChildCandidate(c)"
+                        [class]="selectedChildId() === c.id ? 'w-full text-left px-3 py-2 rounded-lg bg-brand-500/20 border border-brand-500/40 text-brand-300 text-sm' : 'w-full text-left px-3 py-2 rounded-lg bg-ui-panel/50 hover:bg-ui-panel border border-ui-border/30 text-ui-textSoft text-sm'">
+                        {{ c.firstName }} {{ c.lastName }} <span class="text-ui-textMuted text-xs ml-1">({{ c.id
+                            }})</span>
                     </button>
                 </div>
             </div>
+            <p *ngIf="addChildError()"
+                class="text-sm text-accent-danger-500 bg-accent-danger-500/10 px-3 py-2 rounded-lg">{{ addChildError()
+                }}</p>
         </div>
-    </div>
+    </app-modal-shell>
 
-    <!-- Main Content -->
-    <main class="flex-1 p-6 md:p-10 max-w-[1200px] w-full mx-auto">
-        <div class="flex flex-col gap-10">
-            <!-- Partners Section -->
-            <section>
-                <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-6">
-                    <h2 class="text-xl font-bold text-slate-200 m-0">Partner</h2>
-                </div>
+    <!-- Abbrechen Bestätigen Modal -->
+    <app-modal-shell [visible]="showCancelConfirmModal()" title="Änderungen verwerfen?" icon="⚠️" size="sm"
+        [showSave]="false" [showDelete]="true" deleteText="Ja, verwerfen" (close)="showCancelConfirmModal.set(false)"
+        (delete)="confirmCancel()">
+        <p class="p-4 text-ui-textSoft text-center">Ungespeicherte Änderungen gehen verloren.</p>
+    </app-modal-shell>
 
-                <div
-                    class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-10 items-center bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-3xl p-6 md:p-10 shadow-2xl relative">
-                    <!-- Husband -->
-                    <div class="flex items-center gap-5">
-                        <div class="w-20 h-20 rounded-2xl bg-center bg-no-repeat bg-cover border-[3px] border-white/5 shrink-0 flex items-center justify-center"
-                            [ngClass]="{'bg-blue-500/15 text-blue-400': getPersonGender(family()?.husband) === 'M', 'bg-pink-500/15 text-pink-400': getPersonGender(family()?.husband) === 'F', 'bg-slate-500/15 text-slate-400': getPersonGender(family()?.husband) === 'U'}"
-                            [style.background-image]="'url(' + getPersonImage(family()?.husband) + ')'"
-                            [style.background-size]="getPersonImage(family()?.husband).includes('assets/avatars/') ? '40px' : 'cover'">
-                        </div>
-                        <div class="flex flex-col">
-                            <span
-                                class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Ehemann</span>
-                            <span class="text-lg font-bold text-slate-100">{{ getPersonName(family()?.husband) }}</span>
-                            <a [routerLink]="['/person', family()?.husband]"
-                                class="text-sm text-blue-400 hover:text-blue-300 hover:underline mt-1">Profil
-                                ansehen</a>
-                        </div>
-                    </div>
-
-                    <div class="text-4xl opacity-30 rotate-90 md:rotate-0">💍</div>
-
-                    <!-- Wife -->
-                    <div
-                        class="flex items-center gap-5 justify-start md:justify-end text-left md:text-right flex-row md:flex-row-reverse">
-                        <div class="w-20 h-20 rounded-2xl bg-center bg-no-repeat bg-cover border-[3px] border-white/5 shrink-0 flex items-center justify-center"
-                            [ngClass]="{'bg-blue-500/15 text-blue-400': getPersonGender(family()?.wife) === 'M', 'bg-pink-500/15 text-pink-400': getPersonGender(family()?.wife) === 'F', 'bg-slate-500/15 text-slate-400': getPersonGender(family()?.wife) === 'U'}"
-                            [style.background-image]="'url(' + getPersonImage(family()?.wife) + ')'"
-                            [style.background-size]="getPersonImage(family()?.wife).includes('assets/avatars/') ? '40px' : 'cover'">
-                        </div>
-                        <div class="flex flex-col">
-                            <span
-                                class="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Ehefrau</span>
-                            <span class="text-lg font-bold text-slate-100">{{ getPersonName(family()?.wife) }}</span>
-                            <a [routerLink]="['/person', family()?.wife]"
-                                class="text-sm text-blue-400 hover:text-blue-300 hover:underline mt-1">Profil
-                                ansehen</a>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Events Section -->
-            <section>
-                <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-6">
-                    <h2 class="text-xl font-bold text-slate-200 m-0">Ereignisse</h2>
-                    <button class="btn-primary !w-auto !py-1.5 text-sm" (click)="addEvent()">+ Ereignis</button>
-                </div>
-
-                <div class="flex flex-col gap-4">
-                    <div class="bg-slate-900/30 backdrop-blur-md border border-white/5 rounded-2xl p-4 md:p-6 shadow-lg"
-                        *ngFor="let event of family()?.events; let i = index">
-                        <div class="flex flex-col gap-4">
-                            <!-- Main Event Row -->
-                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                                <div class="flex flex-col gap-1.5 md:col-span-3 lg:col-span-2">
-                                    <label class="text-xs text-slate-500 font-semibold">Typ</label>
-                                    <select [(ngModel)]="event.type" (change)="updateEvent()"
-                                        class="form-input !py-2 text-sm">
-                                        <option value="MARR">Hochzeit</option>
-                                        <option value="DIV">Scheidung</option>
-                                        <option value="ENGA">Verlobung</option>
-                                        <option value="MARB">Aufgebot</option>
-                                        <option value="MARC">Ehevertrag</option>
-                                        <option value="MARS">Eheschließung (Zivil)</option>
-                                        <option value="DIVF">Scheidungsantrag</option>
-                                        <option value="ANUL">Annullierung</option>
-                                    </select>
-                                </div>
-                                <div class="flex flex-col gap-1.5 md:col-span-3 lg:col-span-2">
-                                    <label class="text-xs text-slate-500 font-semibold">Datum</label>
-                                    <input type="text" [(ngModel)]="event.dateText" (ngModelChange)="updateEvent()"
-                                        placeholder="DD MMM YYYY" class="form-input !py-2 text-sm">
-                                </div>
-                                <div class="flex flex-col gap-1.5 md:col-span-3 lg:col-span-2"
-                                    *ngIf="event.type === 'MARR'">
-                                    <label class="text-xs text-slate-500 font-semibold">Untertyp</label>
-                                    <select [(ngModel)]="event.subType" (change)="updateEvent()"
-                                        class="form-input !py-2 text-sm">
-                                        <option value="">Bitte wählen</option>
-                                        <option value="CIVIL">Standesamtlich</option>
-                                        <option value="RELIGIOUS">Kirchlich</option>
-                                    </select>
-                                </div>
-                                <!-- Span Place to fill remaining space, button takes auto -->
-                                <div class="flex flex-col gap-1.5 md:col-span-full lg:col-span-5 flex-1">
-                                    <label class="text-xs text-slate-500 font-semibold">Ort</label>
-                                    <input type="text" [(ngModel)]="event.place" (ngModelChange)="updateEvent()"
-                                        placeholder="Ort eingeben" class="form-input !py-2 text-sm">
-                                </div>
-                                <div class="flex justify-end lg:col-span-1">
-                                    <button
-                                        class="p-2 text-red-500/60 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
-                                        (click)="removeEvent(i)" title="Ereignis löschen">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                            <path
-                                                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                            </path>
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Expert Sections -->
-                            <div class="flex flex-col gap-3 mt-2">
-                                <!-- Media -->
-                                <div class="bg-slate-950/40 border border-white/5 rounded-xl p-3 md:p-4">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <strong class="text-sm text-slate-300">Medien</strong>
-                                        <button class="btn-ghost !w-auto !py-1 text-xs" (click)="addEventMedia(i)">+
-                                            Medium</button>
-                                    </div>
-                                    <div *ngIf="event.media && event.media.length > 0" class="flex flex-col gap-3">
-                                        <div *ngFor="let med of event.media; let mIndex = index"
-                                            class="grid grid-cols-1 md:grid-cols-[64px_1fr_1fr_auto] gap-3 items-center">
-                                            <div
-                                                class="w-full md:w-16 h-24 md:h-12 bg-slate-900 rounded-lg border border-white/10 overflow-hidden flex items-center justify-center shrink-0">
-                                                <img *ngIf="isImage(med) && getMediaUrl(med.url)"
-                                                    [src]="getMediaUrl(med.url)" class="w-full h-full object-cover">
-                                            </div>
-                                            <input type="text" [(ngModel)]="med.title" (ngModelChange)="updateEvent()"
-                                                placeholder="Titel"
-                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
-                                            <input type="text" [(ngModel)]="med.url" (ngModelChange)="updateEvent()"
-                                                placeholder="URL / Dateipfad"
-                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
-                                            <button
-                                                class="p-2 text-red-500/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors place-self-end md:place-self-auto"
-                                                (click)="removeEventMedia(i, mIndex)">&times;</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Notes -->
-                                <div class="bg-slate-950/40 border border-white/5 rounded-xl p-3 md:p-4">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <strong class="text-sm text-slate-300">Notizen</strong>
-                                        <button class="btn-ghost !w-auto !py-1 text-xs" (click)="addEventNote(i)">+
-                                            Notiz</button>
-                                    </div>
-                                    <div *ngIf="event.notes && event.notes.length > 0" class="flex flex-col gap-3">
-                                        <div *ngFor="let note of event.notes; let nIndex = index"
-                                            class="grid grid-cols-[1fr_auto] gap-3 items-start">
-                                            <textarea [ngModel]="note"
-                                                (ngModelChange)="updateEventNote(i, nIndex, $event)"
-                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 min-h-[60px]"
-                                                placeholder="Notiz zum Ereignis"></textarea>
-                                            <button
-                                                class="p-2 text-red-500/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                                                (click)="removeEventNote(i, nIndex)">&times;</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Citations -->
-                                <div class="bg-slate-950/40 border border-white/5 rounded-xl p-3 md:p-4">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <strong class="text-sm text-slate-300">Quellen</strong>
-                                        <button class="btn-ghost !w-auto !py-1 text-xs" (click)="addEventCitation(i)">+
-                                            Quelle</button>
-                                    </div>
-                                    <div *ngIf="event.citations && event.citations.length > 0"
-                                        class="flex flex-col gap-3">
-                                        <div *ngFor="let cit of event.citations; let cIndex = index"
-                                            class="grid grid-cols-1 md:grid-cols-[1fr_160px_180px_1fr_auto] gap-3 items-center">
-                                            <input type="text" [(ngModel)]="cit.sourceTitle"
-                                                (ngModelChange)="updateEvent()" placeholder="Quelle"
-                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
-                                            <select [(ngModel)]="cit.quality" (change)="updateEvent()"
-                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
-                                                <option value="0">Unzuverlässig</option>
-                                                <option value="1">Fragwürdig</option>
-                                                <option value="2">Sekundär</option>
-                                                <option value="3">Primär / Sicher</option>
-                                            </select>
-                                            <input type="text" [(ngModel)]="cit.whereInSource"
-                                                (ngModelChange)="updateEvent()" placeholder="Seite/Position"
-                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
-                                            <input type="text" [(ngModel)]="cit.text" (ngModelChange)="updateEvent()"
-                                                placeholder="Zitat/Bemerkung"
-                                                class="w-full bg-slate-900/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500">
-                                            <button
-                                                class="p-2 text-red-500/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors place-self-end md:place-self-auto"
-                                                (click)="removeEventCitation(i, cIndex)">&times;</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="text-center p-8 bg-slate-900/20 border border-white/5 rounded-2xl text-slate-500 italic"
-                        *ngIf="!family()?.events || family()?.events?.length === 0">
-                        Keine Ereignisse hinterlegt.
-                    </div>
-                </div>
-            </section>
-
-            <!-- Children Section -->
-            <section>
-                <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-6">
-                    <h2 class="text-xl font-bold text-slate-200 m-0">Kinder <span
-                            class="text-slate-500 text-lg font-normal">({{ family()?.children?.length || 0 }})</span>
-                    </h2>
-                    <button class="btn-primary !w-auto !py-1.5 text-sm" (click)="addChild()">+ Kind</button>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    <div class="flex items-center gap-4 bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-4 shadow-sm"
-                        *ngFor="let childId of family()?.children">
-                        <div class="w-12 h-12 rounded-xl bg-center bg-no-repeat bg-cover border-[2px] border-white/5 shrink-0 flex items-center justify-center"
-                            [ngClass]="{'bg-blue-500/15 text-blue-400': getPersonGender(childId) === 'M', 'bg-pink-500/15 text-pink-400': getPersonGender(childId) === 'F', 'bg-slate-500/15 text-slate-400': getPersonGender(childId) === 'U'}"
-                            [style.background-image]="'url(' + getPersonImage(childId) + ')'"
-                            [style.background-size]="getPersonImage(childId).includes('assets/avatars/') ? '24px' : 'cover'">
-                        </div>
-                        <div class="flex flex-col flex-1 min-w-0">
-                            <span class="font-bold text-sm text-slate-200 truncate">{{ getPersonName(childId) }}</span>
-                            <div class="flex gap-3 mt-1 text-xs">
-                                <a [routerLink]="['/person', childId]"
-                                    class="text-blue-400 hover:text-blue-300 hover:underline">Profil</a>
-                                <button class="text-red-500 hover:text-red-400 hover:underline"
-                                    (click)="removeChild(childId)">Entfernen</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-span-full text-center p-8 bg-slate-900/20 border border-white/5 rounded-2xl text-slate-500 italic"
-                        *ngIf="!family()?.children || family()?.children?.length === 0">
-                        Keine Kinder in dieser Familie hinterlegt.
-                    </div>
-                </div>
-            </section>
-        </div>
-    </main>
-</div>
+</app-page-container>
 
 <!-- Global Loading Overlay -->
-<div class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[1000] flex flex-col items-center justify-center gap-4"
+<div class="fixed inset-0 bg-ui-canvasDark/80 backdrop-blur-sm z-[1000] flex flex-col items-center justify-center gap-4"
     *ngIf="loading()">
-    <div class="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-    <p class="text-slate-300 font-medium tracking-wide">Lade Familiendetails...</p>
+    <div class="w-10 h-10 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin"></div>
+    <p class="text-ui-textSoft font-medium tracking-wide">Lade Familiendetails...</p>
 </div>

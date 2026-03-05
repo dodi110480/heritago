@@ -6,11 +6,14 @@ import { Individual } from './models';
 import { FormsModule } from '@angular/forms';
 import { CleanDatePipe } from './clean-date.pipe';
 import { PersonCreateModal } from './person-create-modal';
+import { AppEntityCard } from './ui/app-entity-card';
+import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppPageContainerComponent } from './ui/app-page-container';
 
 @Component({
     selector: 'app-person-list',
     standalone: true,
-    imports: [CommonModule, RouterLink, FormsModule, CleanDatePipe, PersonCreateModal],
+    imports: [CommonModule, RouterLink, FormsModule, CleanDatePipe, PersonCreateModal, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent],
     templateUrl: './person-list.html',
     encapsulation: ViewEncapsulation.None
 })
@@ -176,11 +179,18 @@ export class PersonList {
         return this.completionById().get(person.id) || { score: 0, missing: [] };
     }
 
-    completionColor(score: number): string {
-        if (score >= 80) return '#22c55e';
-        if (score >= 60) return '#84cc16';
-        if (score >= 40) return '#eab308';
-        return '#ef4444';
+    completionColorClass(score: number): string {
+        if (score >= 80) return 'text-accent-emerald-600';
+        if (score >= 60) return 'text-accent-emerald-500';
+        if (score >= 40) return 'text-accent-highlight-500';
+        return 'text-accent-amber-600';
+    }
+
+    completionDotClass(score: number): string {
+        if (score >= 80) return 'bg-accent-emerald-600';
+        if (score >= 60) return 'bg-accent-emerald-500';
+        if (score >= 40) return 'bg-accent-highlight-500';
+        return 'bg-accent-amber-600';
     }
 
     completionTooltip(person: Individual): string {

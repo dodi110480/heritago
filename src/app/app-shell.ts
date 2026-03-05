@@ -7,7 +7,7 @@ import { Navbar } from './navbar';
   standalone: true,
   imports: [RouterOutlet, Navbar],
   template: `
-    <div class="min-h-screen text-slate-200">
+    <div class="min-h-screen text-neutral-200">
       <!-- Central Navbar -->
       <app-navbar></app-navbar>
 
@@ -18,7 +18,7 @@ import { Navbar } from './navbar';
 
 
       <!-- Simple Footer -->
-      <footer class="py-12 border-t border-white/5 text-center text-slate-500 text-sm">
+      <footer class="py-12 border-t border-canvas-white/5 text-center text-neutral-500 text-sm">
         <p>&copy; 2026 Heritago - Gedächtnis der Generationen</p>
       </footer>
     </div>

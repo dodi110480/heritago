@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
 import { GenealogyValidationService, ValidationResult } from './genealogy-validation.service';
+import { AppPageContainerComponent } from './ui/app-page-container';
+import { AppPageHeaderComponent } from './ui/app-page-header';
 
 interface GedcomError {
     id: string;
@@ -19,7 +21,7 @@ interface GedcomError {
 @Component({
     selector: 'app-diagnostics',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, AppPageContainerComponent, AppPageHeaderComponent],
     templateUrl: './diagnostics.html'
 })
 export class Diagnostics implements OnInit {

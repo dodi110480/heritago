@@ -2,11 +2,12 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { GedcomService } from './gedcom.service';
+import { AppPageContainerComponent } from './ui/app-page-container';
 
 @Component({
     selector: 'app-timeline',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, AppPageContainerComponent],
     templateUrl: './timeline.html'
 })
 export class TimelineView implements OnInit {

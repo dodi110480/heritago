@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,22 +6,30 @@ import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
 import { Individual, TreeData, Family } from './models';
 import { CleanDatePipe } from './clean-date.pipe';
-import { MediaSelector } from './media-selector';
 import { PlaceModal } from './place-modal';
-import { ImageViewer } from './image-viewer';
 import { PersonCreateModal } from './person-create-modal';
-import { MediaAddModal } from './media-add-modal';
 import { CanComponentDeactivate } from './unsaved-changes.guard';
-import { firstValueFrom } from 'rxjs';
+import { forkJoin, of, switchMap } from 'rxjs';
 import { AppCardComponent } from './ui/app-card';
-import { AppButtonComponent } from './ui/app-button';
 import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppModalShell } from './ui/app-modal-shell';
+import { PersonExpertBasicsTabComponent } from './person-expert-basics-tab';
+import { PersonExpertTimelineTabComponent } from './person-expert-timeline-tab';
+import { PersonExpertRelationsTabComponent } from './person-expert-relations-tab';
+import { PersonTabMediaComponent } from './person-tab-media';
+import { PersonTabNotesComponent } from './person-tab-notes';
+import { PersonTabCitationsComponent } from './person-tab-citations';
+import { PersonTabNamesComponent } from './person-tab-names';
+import { PersonTabAssociationsComponent } from './person-tab-associations';
+import { PersonTabDnaComponent } from './person-tab-dna';
 
 interface TimelineItem {
     originalType: 'event' | 'fact' | 'family-event';
     originalIndex: number;
     familyId?: string;
+    sourcePersonId?: string;
+    sourcePersonName?: string;
     tag: string;
     date?: string;
     place?: string;
@@ -42,15 +50,20 @@ interface TimelineItem {
         CommonModule,
         FormsModule,
         CleanDatePipe,
-        MediaSelector,
         PlaceModal,
-        ImageViewer,
         PersonCreateModal,
-        MediaAddModal,
-        AppCardComponent,
-        AppButtonComponent,
         AppPageContainerComponent,
-        AppPageHeaderComponent
+        AppPageHeaderComponent,
+        AppModalShell,
+        PersonExpertBasicsTabComponent,
+        PersonExpertTimelineTabComponent,
+        PersonExpertRelationsTabComponent,
+        PersonTabMediaComponent,
+        PersonTabNotesComponent,
+        PersonTabCitationsComponent,
+        PersonTabNamesComponent,
+        PersonTabAssociationsComponent,
+        PersonTabDnaComponent
     ],
     templateUrl: './person-detail.html',
     encapsulation: ViewEncapsulation.None
@@ -61,18 +74,29 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     private router = inject(Router);
     private gedcomService = inject(GedcomService);
     private authService = inject(AuthService);
+    readonly self = this;
 
     personId = '';
     person = signal<Individual | null>(null);
     treeData = signal<TreeData | null>(null);
     loading = signal(true);
     isSaving = false;
-    isDeleting = false;
+    allPersonsOptions = computed(() => {
+        const data = this.treeData();
+        if (!data || !data.individuals) return [];
+        return data.individuals.map(ind => ({
+            id: ind.id,
+            displayName: `${this.getPrimaryName(ind)} (${ind.id})`
+        })).sort((a, b) => a.displayName.localeCompare(b.displayName));
+    });
+    isEventSectionOpen = false;
     showDeleteModal = signal(false);
+    mediaDeletePendingIndex = signal<number | null>(null);
+    get isDeleting(): boolean {
+        return this.isSaving;
+    }
 
     activeTab: 'basics' | 'timeline' | 'relations' | 'media' | 'notes' | 'citations' | 'names' | 'associations' | 'dna' = 'basics';
-    isExpertMode = signal<boolean>(localStorage.getItem('heritago_expert_mode') === 'true');
-    openSections = new Set<string>(); // Only timeline open by default
 
     // --- Relation Modal State ---
     showRelationModal = signal(false);
@@ -80,26 +104,8 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     relationModalFamilyIndex: number | null = null;
     newPersonData = signal({ firstName: '', lastName: '', gender: 'U' as 'M' | 'F' | 'X' | 'U' });
 
-    toggleSection(section: string) {
-        if (this.openSections.has(section)) {
-            this.openSections.delete(section);
-        } else {
-            this.openSections.add(section);
-        }
-    }
-
     updateNewPersonField(field: string, value: any) {
         this.newPersonData.update(prev => ({ ...prev, [field]: value }));
-    }
-
-    isSectionOpen(section: string): boolean {
-        return this.openSections.has(section);
-    }
-
-    toggleMode() {
-        const newVal = !this.isExpertMode();
-        this.isExpertMode.set(newVal);
-        localStorage.setItem('heritago_expert_mode', newVal ? 'true' : 'false');
     }
 
     // Die verschmolzene Liste aus Events und Fakten
@@ -110,10 +116,92 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
     // Media Modal State
     showMediaAddModal = signal(false);
+    showMediaEditModal = signal(false);
+    activeMediaIndex = signal<number | null>(null);
+    editMediaDraft = signal<any>({});
     activeTimelineIndexForMediaAdd: number | null = null;
 
     showMediaSelector = false;
     isEditingFamily = signal(false);
+    showNameCreateModal = signal(false);
+    showNameEditModal = signal(false);
+    activeNameIndex = signal<number | null>(null);
+    editNameDraft = signal<any>({});
+    newNameDraft = signal<{ given: string; surname: string; type: 'BIRTH' | 'MARRIED' | 'AKA'; isPrimary: boolean }>({
+        given: '',
+        surname: '',
+        type: 'AKA',
+        isPrimary: false
+    });
+    showRelationCreateModal = signal(false);
+    newRelationDraft = signal<{ type: 'SPOUSE' | 'FATHER' | 'MOTHER' | 'CHILD'; personInput: string }>({
+        type: 'SPOUSE',
+        personInput: ''
+    });
+    showNoteCreateModal = signal(false);
+    newNoteDraft = signal<{ text: string; noteType: string; researchStatus: string; privacyLevel: string }>({
+        text: '',
+        noteType: 'GENERAL',
+        researchStatus: 'OPEN',
+        privacyLevel: 'PRIVATE'
+    });
+    showCitationCreateModal = signal(false);
+    newCitationDraft = signal<{ sourceId: string, confidence?: string, page?: string, dateText?: string }>({ sourceId: '' });
+    citationEditDraft = signal<{ index?: number, sourceId: string, confidence?: string, page?: string, dateText?: string }>({ sourceId: '' });
+    showAssociationCreateModal = signal(false);
+    showAssociationEditModal = signal(false);
+    activeAssociationIndex = signal<number | null>(null);
+    editAssociationDraft = signal<any>({});
+    newAssociationDraft = signal<{ role: string; personInput: string; relationText: string; dateText: string; confidence: string; notes: string }>({
+        role: 'OTHER',
+        personInput: '',
+        relationText: '',
+        dateText: '',
+        confidence: '',
+        notes: ''
+    });
+    showDnaMatchCreateModal = signal(false);
+    showDnaMatchEditModal = signal(false);
+    activeDnaMatchIndex = signal<number | null>(null);
+    editDnaMatchDraft = signal<any>({});
+    newDnaMatchDraft = signal<{ provider: string; matchPersonId: string; totalCm: number | null }>({
+        provider: '',
+        matchPersonId: '',
+        totalCm: null
+    });
+    showTimelineCreateModal = signal(false);
+    newTimelineDraft = signal<{
+        itemKind: 'event' | 'fact';
+        tag: string;
+        date: string;
+        place: string;
+        description: string;
+    }>({
+        itemKind: 'event',
+        tag: 'DEAT',
+        date: '',
+        place: '',
+        description: ''
+    });
+    showTimelineItemModal = signal(false);
+    activeTimelineItemIndex = signal<number | null>(null);
+    showNoteEditModal = signal(false);
+    activePersonNoteIndex = signal<number | null>(null);
+    noteEditDraft = signal<{ text: string; noteType: string; researchStatus: string; privacyLevel: string }>({
+        text: '',
+        noteType: 'GENERAL',
+        researchStatus: 'OPEN',
+        privacyLevel: 'PRIVATE'
+    });
+    showCitationEditModal = signal(false);
+    activePersonCitationIndex = signal<number | null>(null);
+    // This signal is now defined above with the new type
+    // citationEditDraft = signal<{ sourceId: string; page: string; confidence: string; dateText: string }>({
+    //     sourceId: '',
+    //     page: '',
+    //     confidence: '',
+    //     dateText: ''
+    // });
 
     // Individual Search results for families
     familySearchResults = signal<Individual[]>([]);
@@ -135,6 +223,9 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
     individualSearchResults = signal<Individual[]>([]);
     showIndividualResults = signal<number | null>(null);
+
+    // Available sources for citation dropdowns
+    availableSources = signal<any[]>([]);
 
     // Unsaved Changes Guard
     isDirty = false;
@@ -172,6 +263,15 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         const given = p.names?.[0]?.given || p.firstName || '';
         const sur = p.names?.[0]?.surname || p.lastName || '';
         return `${given} ${sur}`.trim() || id;
+    }
+
+    getPrimaryName(person: Individual): string {
+        if (!person) return '';
+        const primaryName = person.names?.find(n => n.isPrimary);
+        if (primaryName) {
+            return `${primaryName.given || ''} ${primaryName.surname || ''}`.trim();
+        }
+        return `${person.firstName || ''} ${person.lastName || ''}`.trim() || person.id;
     }
 
     getProfileImage(person: Individual): string | null {
@@ -279,17 +379,17 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     }
 
     confirmDeletePerson() {
-        if (this.isDeleting) return;
+        if (this.isSaving) return; // Changed from isDeleting to isSaving based on instruction snippet
         const tree = this.authService.currentTree();
         if (!tree) {
             alert('Kein aktiver Stammbaum gefunden.');
             return;
         }
 
-        this.isDeleting = true;
+        this.isSaving = true; // Changed from isDeleting to isSaving
         this.gedcomService.deletePerson(tree.name, this.personId).subscribe({
             next: (res) => {
-                this.isDeleting = false;
+                this.isSaving = false; // Changed from isDeleting to isSaving
                 if (res?.success) {
                     this.showDeleteModal.set(false);
                     this.router.navigate(['/persons']);
@@ -298,7 +398,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                 }
             },
             error: (err) => {
-                this.isDeleting = false;
+                this.isSaving = false; // Changed from isDeleting to isSaving
                 alert('Fehler beim Löschen: ' + (err.error?.message || 'Unbekannter Fehler'));
             }
         });
@@ -310,6 +410,15 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             next: (data) => {
                 if (data) {
                     this.treeData.set(data);
+                    // Load available sources for citation dropdowns
+                    const treeName = data.meta?.tree;
+                    if (treeName) {
+                        this.gedcomService.getSources(treeName).subscribe({
+                            next: (res: any) => {
+                                if (res.success) this.availableSources.set(res.sources || []);
+                            }
+                        });
+                    }
                     const found = data.individuals.find(i => i.id === this.personId);
                     if (found) {
                         // Deep copy to avoid direct mutation before save
@@ -320,12 +429,24 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                         if (!copy.names || copy.names.length === 0) {
                             copy.names = [{ isPrimary: true, type: 'BIRTH', given: copy.firstName || '', surname: copy.lastName || '', full: copy.name || '' }];
                         }
-                        if (!copy.associations) copy.associations = [];
-                        if (!copy.dnaMatches) copy.dnaMatches = [];
                         if (!copy.privacyLevel) copy.privacyLevel = 'PRIVATE';
+
+                        // Initialisiere temporäres Feld für Typeahead-Suche bei Assoziationen
+                        if (!copy.associations) copy.associations = [];
+                        copy.associations.forEach((a: any) => {
+                            if (a.associatedPersonId) {
+                                a._tempTargetName = this.getPersonName(a.associatedPersonId) + ` (${a.associatedPersonId})`;
+                                a.associatedPersonName = this.getPersonName(a.associatedPersonId);
+                            } else if (a.associatedPersonName) {
+                                a._tempTargetName = a.associatedPersonName;
+                            }
+                        });
+
                         this.person.set(copy);
-                        this.buildTimeline();
+                        // Build relations first because timeline depends on familiesAsSpouse
+                        // for family events (e.g. marriage, child births).
                         this.buildRelations();
+                        this.buildTimeline();
                     } else {
                         // Person not found
                         this.router.navigate(['/persons']);
@@ -413,6 +534,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         }
         // Familien-Events (Heirat, etc.) hinzufügen
         if (p.familiesAsSpouse) {
+            const childBirthSeen = new Set<string>();
             p.familiesAsSpouse.forEach((famLink) => {
                 const fullFam = this.treeData()?.families.find(f => f.id === famLink.familyId);
                 if (fullFam && fullFam.events) {
@@ -429,6 +551,47 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                             notes: (ef as any).notes || [],
                             citations: (ef as any).citations || [],
                             editing: false
+                        });
+                    });
+                }
+
+                // Abgeleitete Eltern-Ereignisse: Geburt/Heirat/Tod des Kindes
+                if (famLink.children && famLink.children.length > 0) {
+                    famLink.children.forEach((childRef) => {
+                        const child = this.treeData()?.individuals.find(i => i.id === childRef.id);
+                        if (!child || !child.events) return;
+
+                        const derivedChildEvents = [
+                            { tag: 'BIRT', label: 'Geburt' },
+                            { tag: 'MARR', label: 'Heirat' },
+                            { tag: 'DEAT', label: 'Tod' }
+                        ];
+
+                        derivedChildEvents.forEach((spec) => {
+                            const ev = child.events!.find(e => e.type === spec.tag);
+                            if (!ev) return;
+
+                            const childDate = ev.date || (ev as any).dateText;
+                            const childPlace = ev.place || (ev as any).placeName;
+                            const key = `${famLink.familyId || ''}:${child.id}:${spec.tag}:${childDate || ''}:${childPlace || ''}`;
+                            if (childBirthSeen.has(key)) return;
+                            childBirthSeen.add(key);
+
+                            merged.push({
+                                originalType: 'family-event',
+                                originalIndex: -1,
+                                familyId: famLink.familyId,
+                                sourcePersonId: child.id,
+                                sourcePersonName: childRef.name || this.getPersonName(child.id) || 'Person',
+                                tag: spec.tag,
+                                date: childDate,
+                                place: childPlace,
+                                description: `${spec.label} von ${childRef.name || this.getPersonName(child.id) || 'Kind'}`,
+                                media: [],
+                                notes: [],
+                                citations: [],
+                                editing: false
+                            });
                         });
                     });
                 }
@@ -573,6 +736,8 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                 }
             });
             this.person.set(updatedPerson);
+            // Rebuild timeline after relation-derived fields were refreshed.
+            this.buildTimeline();
         }
     }
 
@@ -684,6 +849,33 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         this.markDirty();
     }
 
+    addRelation() {
+        this.newRelationDraft.set({ type: 'SPOUSE', personInput: '' });
+        this.showRelationCreateModal.set(true);
+    }
+
+    closeRelationCreateModal() {
+        this.showRelationCreateModal.set(false);
+    }
+
+    confirmAddRelation() {
+        const draft = this.newRelationDraft();
+        const personInput = (draft.personInput || '').trim();
+        if (!personInput) return;
+
+        const match = this.allPersonsOptions().find(opt => opt.displayName === personInput);
+        const personId = match?.id || '';
+        const personName = match ? match.displayName.replace(` (${match.id})`, '') : personInput;
+        if (!personId) return;
+        if (personId === this.personId) return;
+        if (this.relations().some(r => r.personId === personId && r.type === draft.type)) return;
+
+        this.relations.set([...this.relations(), { type: draft.type, personId, personName }]);
+        this.markDirty();
+        this.showRelationCreateModal.set(false);
+        this.savePerson();
+    }
+
     getMediaUrlExt(url: string | undefined): string | null {
         if (!url) return null;
         return this.gedcomService.getMediaUrl(url);
@@ -743,6 +935,44 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         }
         this.markDirty();
         this.showMediaAddModal.set(false);
+    }
+
+    openMediaEditModal(index: number) {
+        const p = this.person();
+        if (!p || !p.media) return;
+        this.activeMediaIndex.set(index);
+        this.editMediaDraft.set({ ...p.media[index] });
+        this.showMediaEditModal.set(true);
+    }
+
+    closeMediaEditModal() {
+        this.showMediaEditModal.set(false);
+        this.activeMediaIndex.set(null);
+    }
+
+    saveMediaEditModal() {
+        const p = this.person();
+        const idx = this.activeMediaIndex();
+        if (!p || !p.media || idx === null) return;
+
+        const draft = this.editMediaDraft();
+        const wasPrimary = p.media[idx].isPrimary;
+        const isNowPrimary = draft.isPrimary;
+
+        p.media[idx] = {
+            ...p.media[idx],
+            ...draft
+        };
+
+        if (isNowPrimary && !wasPrimary) {
+            p.media.forEach((m, i) => m.isPrimary = i === idx);
+            p.profileImageUrl = p.media[idx].url || '';
+        }
+
+        this.person.set({ ...p });
+        this.markDirty();
+        this.closeMediaEditModal();
+        this.savePerson();
     }
 
     openMediaSelector(itemIndex?: number) {
@@ -811,7 +1041,25 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         if (p) {
             p.media!.splice(index, 1);
             this.person.set({ ...p });
+            this.markDirty();
+            this.savePerson();
         }
+    }
+
+    requestDeletePersonMedia(index: number) {
+        this.mediaDeletePendingIndex.set(index);
+    }
+
+    confirmDeletePersonMedia() {
+        const idx = this.mediaDeletePendingIndex();
+        if (idx !== null) {
+            this.removePersonMedia(idx);
+        }
+        this.mediaDeletePendingIndex.set(null);
+    }
+
+    cancelDeletePersonMedia() {
+        this.mediaDeletePendingIndex.set(null);
     }
 
     setPrimaryMedia(index: number) {
@@ -824,10 +1072,30 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     }
 
     addPersonNote() {
+        this.newNoteDraft.set({ text: '', noteType: 'GENERAL', researchStatus: 'OPEN', privacyLevel: 'PRIVATE' });
+        this.showNoteCreateModal.set(true);
+    }
+
+    closeNoteModal() {
+        this.showNoteCreateModal.set(false);
+    }
+
+    confirmAddPersonNote() {
         const p = this.person();
         if (p) {
-            p.notes!.push('');
+            const draft = this.newNoteDraft();
+            const text = (draft.text || '').trim();
+            if (!text) return;
+            p.notes!.push({
+                text,
+                noteType: draft.noteType || 'GENERAL',
+                researchStatus: draft.researchStatus || 'OPEN',
+                privacyLevel: draft.privacyLevel || 'PRIVATE'
+            } as any);
             this.person.set({ ...p });
+            this.markDirty();
+            this.showNoteCreateModal.set(false);
+            this.savePerson();
         }
     }
 
@@ -839,19 +1107,214 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         }
     }
 
+    openPersonNoteModal(index: number) {
+        const p = this.person();
+        if (!p || !p.notes || !p.notes[index]) return;
+        const note = p.notes[index] as any;
+        this.noteEditDraft.set({
+            text: note.text || '',
+            noteType: note.noteType || 'GENERAL',
+            researchStatus: note.researchStatus || 'OPEN',
+            privacyLevel: note.privacyLevel || 'PRIVATE'
+        });
+        this.activePersonNoteIndex.set(index);
+        this.showNoteEditModal.set(true);
+    }
+
+    closePersonNoteModal() {
+        this.showNoteEditModal.set(false);
+        this.activePersonNoteIndex.set(null);
+    }
+
+    savePersonNoteModal() {
+        const p = this.person();
+        const idx = this.activePersonNoteIndex();
+        if (!p || idx === null || !p.notes || !p.notes[idx]) return;
+        const draft = this.noteEditDraft();
+        p.notes[idx] = {
+            ...(p.notes[idx] as any),
+            text: draft.text || '',
+            noteType: draft.noteType || 'GENERAL',
+            researchStatus: draft.researchStatus || 'OPEN',
+            privacyLevel: draft.privacyLevel || 'PRIVATE'
+        } as any;
+        this.person.set({ ...p });
+        this.markDirty();
+        this.closePersonNoteModal();
+        this.savePerson();
+    }
+
+    removePersonNoteModal() {
+        const idx = this.activePersonNoteIndex();
+        if (idx === null) return;
+        this.removePersonNote(idx);
+        this.markDirty();
+        this.closePersonNoteModal();
+        this.savePerson();
+    }
+
+    // --- Association Management ---
+    addAssociation() {
+        this.newAssociationDraft.set({
+            role: 'OTHER',
+            personInput: '',
+            relationText: '',
+            dateText: '',
+            confidence: '',
+            notes: ''
+        });
+        this.showAssociationCreateModal.set(true);
+    }
+
+    closeAssociationModal() {
+        this.showAssociationCreateModal.set(false);
+    }
+
+    openAssociationEditModal(index: number) {
+        const p = this.person();
+        if (!p || !p.associations) return;
+        this.activeAssociationIndex.set(index);
+        this.editAssociationDraft.set({ ...p.associations[index] });
+        this.showAssociationEditModal.set(true);
+    }
+
+    closeAssociationEditModal() {
+        this.showAssociationEditModal.set(false);
+        this.activeAssociationIndex.set(null);
+    }
+
+    saveAssociationEditModal() {
+        const p = this.person();
+        const idx = this.activeAssociationIndex();
+        if (!p || !p.associations || idx === null) return;
+
+        const draft = this.editAssociationDraft();
+        const personInput = (draft._tempTargetName || draft.associatedPersonName || '').trim();
+        const match = this.allPersonsOptions().find(opt => opt.displayName === personInput);
+        const associatedPersonId = match?.id || null;
+        const associatedPersonName = match
+            ? match.displayName.replace(` (${match.id})`, '')
+            : personInput;
+
+        p.associations[idx] = {
+            ...p.associations[idx],
+            ...draft,
+            associatedPersonId,
+            associatedPersonName,
+            _tempTargetName: personInput
+        };
+
+        this.person.set({ ...p });
+        this.markDirty();
+        this.closeAssociationEditModal();
+        this.savePerson();
+    }
+
+    confirmAddAssociation() {
+        const p = this.person();
+        if (p) {
+            const draft = this.newAssociationDraft();
+            const personInput = (draft.personInput || '').trim();
+            const match = this.allPersonsOptions().find(opt => opt.displayName === personInput);
+            const associatedPersonId = match?.id || null;
+            const associatedPersonName = match
+                ? match.displayName.replace(` (${match.id})`, '')
+                : (personInput || '');
+
+            if (!p.associations) p.associations = [];
+            p.associations.push({
+                role: draft.role || 'OTHER',
+                associatedPersonId,
+                associatedPersonName,
+                _tempTargetName: personInput,
+                relationText: draft.relationText || '',
+                dateText: draft.dateText || '',
+                confidence: draft.confidence || '',
+                notes: draft.notes || ''
+            } as any);
+            this.person.set({ ...p });
+            this.markDirty();
+            this.showAssociationCreateModal.set(false);
+            this.savePerson();
+        }
+    }
+
+    removeAssociation(index: number) {
+        const p = this.person();
+        if (p) {
+            p.associations!.splice(index, 1);
+            this.person.set({ ...p });
+            this.markDirty();
+        }
+    }
+
+    updateAssociatedPerson(assoc: any, text: string) {
+        if (!text) {
+            assoc.associatedPersonId = null;
+            assoc.associatedPersonName = null;
+            this.markDirty();
+            return;
+        }
+
+        const list = this.allPersonsOptions();
+        const match = list.find(opt => opt.displayName === text);
+
+        if (match) {
+            assoc.associatedPersonId = match.id;
+            assoc.associatedPersonName = match.displayName.replace(` (${match.id})`, '');
+        } else {
+            // Freitext-Eingabe (Achtung: Prisma speichert dies nur, 
+            // wenn das Backend freie Namensverknüpfungen zulässt. 
+            // Falls nicht, wird es als relationText gespeichert/übertragen.
+            assoc.associatedPersonId = null;
+            assoc.associatedPersonName = text;
+            assoc.relationText = assoc.relationText ? assoc.relationText : text;
+        }
+
+        this.markDirty();
+    }
+
+    // updatePersonNote kept for backward compat but notes are now objects
     updatePersonNote(index: number, val: string) {
         const p = this.person();
         if (p) {
-            p.notes![index] = val;
+            const note = p.notes![index] as any;
+            if (typeof note === 'object') {
+                note.text = val;
+            } else {
+                p.notes![index] = { text: val, noteType: 'GENERAL', researchStatus: 'OPEN', privacyLevel: 'PRIVATE' } as any;
+            }
             this.person.set({ ...p });
         }
     }
 
     addPersonCitation() {
+        this.newCitationDraft.set({ sourceId: '', page: '', confidence: '', dateText: '' });
+        this.showCitationCreateModal.set(true);
+    }
+
+    closeCitationModal() {
+        this.showCitationCreateModal.set(false);
+    }
+
+    confirmAddPersonCitation() {
         const p = this.person();
         if (p) {
-            p.citations!.push({ sourceId: '', sourceTitle: '', quality: 2, whereInSource: '', text: '' } as any);
+            const draft = this.newCitationDraft();
+            if (!draft.sourceId) {
+                alert('Bitte wählen Sie eine gültige Quelle aus.');
+                return;
+            }
+            p.citations!.push({
+                sourceId: draft.sourceId,
+                confidence: draft.confidence || '',
+                page: draft.page || '',
+                dateText: draft.dateText || ''
+            } as any);
             this.person.set({ ...p });
+            this.markDirty();
+            this.showCitationCreateModal.set(false);
+            this.savePerson();
         }
     }
 
@@ -863,12 +1326,197 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         }
     }
 
+    openPersonCitationModal(index: number) {
+        const p = this.person();
+        if (!p || !p.citations || !p.citations[index]) return;
+        const cit = p.citations[index] as any;
+        this.citationEditDraft.set({
+            index,
+            sourceId: cit.sourceId,
+            confidence: cit.confidence || '',
+            page: cit.page || '',
+            dateText: cit.dateText || ''
+        });
+        this.activePersonCitationIndex.set(index);
+        this.showCitationEditModal.set(true);
+    }
+
+    closePersonCitationModal() {
+        this.showCitationEditModal.set(false);
+        this.activePersonCitationIndex.set(null);
+    }
+
+    savePersonCitationModal() {
+        const p = this.person();
+        const idx = this.activePersonCitationIndex();
+        if (!p || idx === null || !p.citations || !p.citations[idx]) return;
+        const draft = this.citationEditDraft();
+        if (!draft.sourceId) {
+            alert('Bitte wählen Sie eine gültige Quelle aus.');
+            return;
+        }
+        p.citations[idx] = {
+            ...(p.citations[idx] as any),
+            sourceId: draft.sourceId || '',
+            page: draft.page || '',
+            confidence: draft.confidence || '',
+            dateText: draft.dateText || ''
+        } as any;
+        this.person.set({ ...p });
+        this.markDirty();
+        this.closePersonCitationModal();
+        this.savePerson();
+    }
+
+    removePersonCitationModal() {
+        const idx = this.activePersonCitationIndex();
+        if (idx === null) return;
+        this.removePersonCitation(idx);
+        this.markDirty();
+        this.closePersonCitationModal();
+        this.savePerson();
+    }
+
+    getSourceTitle(sourceId?: string): string {
+        if (!sourceId) return 'Ohne Quelle';
+        const src = this.availableSources().find((s: any) => s.id === sourceId);
+        return src ? src.title : sourceId;
+    }
+
+    getNoteTypeLabel(type?: string): string {
+        const map: Record<string, string> = {
+            GENERAL: 'Allgemein',
+            RESEARCH: 'Recherche',
+            TRANSCRIPTION: 'Transkript',
+            ANALYSIS: 'Analyse',
+            TODO: 'ToDo'
+        };
+        return map[type || ''] || (type || 'Allgemein');
+    }
+
+    getConfidenceLabel(conf: string): string {
+        switch (conf) {
+            case 'CERTAIN': return 'Sicher';
+            case 'VERY_LIKELY': return 'Sehr wahrscheinlich';
+            case 'LIKELY': return 'Wahrscheinlich';
+            case 'POSSIBLE': return 'Möglich';
+            case 'UNLIKELY': return 'Unwahrscheinlich';
+            default: return 'Keine Angabe';
+        }
+    }
+
+    getConfidenceColorClass(conf: string): string {
+        switch (conf) {
+            case 'CERTAIN': return 'badge-success';
+            case 'VERY_LIKELY': return 'bg-emerald-500/10 text-emerald-500'; // Success, but slightly different
+            case 'LIKELY': return 'badge-highlight';
+            case 'POSSIBLE': return 'badge-warn';
+            case 'UNLIKELY': return 'badge-danger';
+            default: return 'bg-neutral-500/10 text-neutral-400';
+        }
+    }
+
     addName() {
+        this.openNameModal();
+    }
+
+    openNameModal() {
+        const p = this.person();
+        this.newNameDraft.set({
+            given: '',
+            surname: '',
+            type: 'AKA',
+            isPrimary: !p?.names?.length
+        });
+        this.showNameCreateModal.set(true);
+    }
+
+    closeNameModal() {
+        this.showNameCreateModal.set(false);
+    }
+
+    openNameEditModal(index: number) {
+        const p = this.person();
+        if (!p || !p.names) return;
+        this.activeNameIndex.set(index);
+        this.editNameDraft.set({ ...p.names[index] });
+        this.showNameEditModal.set(true);
+    }
+
+    closeNameEditModal() {
+        this.showNameEditModal.set(false);
+        this.activeNameIndex.set(null);
+    }
+
+    saveNameEditModal() {
+        const p = this.person();
+        const idx = this.activeNameIndex();
+        if (!p || !p.names || idx === null) return;
+
+        const draft = this.editNameDraft();
+        const given = (draft.given || '').trim();
+        const surname = (draft.surname || '').trim();
+        if (!given && !surname) return;
+
+        const isNowPrimary = draft.isPrimary;
+
+        if (isNowPrimary) {
+            p.names.forEach(n => n.isPrimary = false);
+        }
+
+        p.names[idx] = {
+            ...p.names[idx],
+            ...draft,
+            given,
+            surname,
+            full: `${given} ${surname}`.trim()
+        };
+
+        if (p.names[idx].isPrimary) {
+            p.firstName = given;
+            p.lastName = surname;
+            p.name = `${given} ${surname}`.trim();
+        }
+
+        this.person.set({ ...p });
+        this.markDirty();
+        this.closeNameEditModal();
+        this.savePerson();
+    }
+
+    confirmAddName() {
         const p = this.person();
         if (!p) return;
+        const draft = this.newNameDraft();
+
+        const given = (draft.given || '').trim();
+        const surname = (draft.surname || '').trim();
+        if (!given && !surname) return;
+
         p.names = p.names || [];
-        p.names.push({ isPrimary: p.names.length === 0, type: 'AKA', given: '', surname: '', full: '' });
+        const shouldBePrimary = draft.isPrimary || p.names.length === 0;
+        if (shouldBePrimary) {
+            p.names.forEach(n => n.isPrimary = false);
+        }
+
+        p.names.push({
+            isPrimary: shouldBePrimary,
+            type: draft.type,
+            given,
+            surname,
+            full: `${given} ${surname}`.trim()
+        });
+
+        if (shouldBePrimary) {
+            p.firstName = given;
+            p.lastName = surname;
+            p.name = `${given} ${surname}`.trim();
+        }
+
         this.person.set({ ...p });
+        this.markDirty();
+        this.showNameCreateModal.set(false);
+        this.savePerson();
     }
 
     removeName(index: number) {
@@ -890,27 +1538,66 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         this.person.set({ ...p });
     }
 
-    addAssociation() {
-        const p = this.person();
-        if (!p) return;
-        p.associations = p.associations || [];
-        p.associations.push({ role: 'OTHER', associatedPersonId: '', associatedPersonName: '', relationText: '', dateText: '', notes: '' });
-        this.person.set({ ...p });
-    }
 
-    removeAssociation(index: number) {
-        const p = this.person();
-        if (!p || !p.associations) return;
-        p.associations.splice(index, 1);
-        this.person.set({ ...p });
-    }
 
     addDnaMatch() {
+        this.newDnaMatchDraft.set({ provider: '', matchPersonId: '', totalCm: null });
+        this.showDnaMatchCreateModal.set(true);
+    }
+
+    closeDnaMatchModal() {
+        this.showDnaMatchCreateModal.set(false);
+    }
+
+    openDnaMatchEditModal(index: number) {
+        const p = this.person();
+        if (!p || !p.dnaMatches) return;
+        this.activeDnaMatchIndex.set(index);
+        this.editDnaMatchDraft.set({ ...p.dnaMatches[index] });
+        this.showDnaMatchEditModal.set(true);
+    }
+
+    closeDnaMatchEditModal() {
+        this.showDnaMatchEditModal.set(false);
+        this.activeDnaMatchIndex.set(null);
+    }
+
+    saveDnaMatchEditModal() {
+        const p = this.person();
+        const idx = this.activeDnaMatchIndex();
+        if (!p || !p.dnaMatches || idx === null) return;
+
+        const draft = this.editDnaMatchDraft();
+        const matchPersonId = draft.matchPersonId;
+        const matchPerson = this.allPersonsOptions().find(opt => opt.id === matchPersonId);
+
+        p.dnaMatches[idx] = {
+            ...p.dnaMatches[idx],
+            ...draft,
+            matchPersonName: matchPerson ? matchPerson.displayName.replace(` (${matchPerson.id})`, '') : undefined
+        };
+
+        this.person.set({ ...p });
+        this.markDirty();
+        this.closeDnaMatchEditModal();
+        this.savePerson();
+    }
+
+    confirmAddDnaMatch() {
         const p = this.person();
         if (!p) return;
         p.dnaMatches = p.dnaMatches || [];
-        p.dnaMatches.push({ provider: '', matchPersonId: '', segments: [] });
+        const draft = this.newDnaMatchDraft();
+        p.dnaMatches.push({
+            provider: draft.provider || '',
+            matchPersonId: draft.matchPersonId || '',
+            totalCm: draft.totalCm ?? undefined,
+            segments: []
+        });
         this.person.set({ ...p });
+        this.markDirty();
+        this.showDnaMatchCreateModal.set(false);
+        this.savePerson();
     }
 
     removeDnaMatch(index: number) {
@@ -929,6 +1616,20 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         this.person.set({ ...p });
     }
 
+    addDnaSegmentDraft() {
+        const draft = this.editDnaMatchDraft();
+        draft.segments = draft.segments || [];
+        draft.segments.push({ chromosome: '1', startPosition: 0, endPosition: 0, cm: 0 });
+        this.editDnaMatchDraft.set({ ...draft });
+    }
+
+    removeDnaSegmentDraft(index: number) {
+        const draft = this.editDnaMatchDraft();
+        if (!draft.segments) return;
+        draft.segments.splice(index, 1);
+        this.editDnaMatchDraft.set({ ...draft });
+    }
+
     removeDnaSegment(matchIndex: number, segmentIndex: number) {
         const p = this.person();
         if (!p || !p.dnaMatches) return;
@@ -937,25 +1638,118 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     }
 
     addTimelineItem() {
-        // Standardmäßig als Ereignis 'BIRT' oder Fakt 'OCCU' hinzufügen.
-        const current = this.timeline();
-        this.timeline.set([...current, {
-            originalType: 'event', // Standard
-            originalIndex: -1, // Neu
-            tag: 'DEAT', // Irgendwas als Standard
+        this.newTimelineDraft.set({
+            itemKind: 'event',
+            tag: 'DEAT',
             date: '',
             place: '',
-            description: '',
+            description: ''
+        });
+        this.showTimelineCreateModal.set(true);
+    }
+
+    closeTimelineCreateModal() {
+        this.showTimelineCreateModal.set(false);
+    }
+
+    confirmAddTimelineItem() {
+        const draft = this.newTimelineDraft();
+        const isFact = draft.itemKind === 'fact';
+        const text = (draft.description || '').trim();
+
+        const current = this.timeline();
+        this.timeline.set([...current, {
+            originalType: isFact ? 'fact' : 'event',
+            originalIndex: -1,
+            tag: draft.tag,
+            date: draft.date || '',
+            place: draft.place || '',
+            description: isFact ? '' : text,
+            value: isFact ? text : '',
             media: [],
             notes: [],
             citations: [],
-            editing: true,
+            editing: false,
             expanded: true
         }]);
+        this.markDirty();
+        this.showTimelineCreateModal.set(false);
+        this.savePerson();
+    }
+
+    isTimelineItemLocked(item: TimelineItem): boolean {
+        return item.originalType === 'family-event';
+    }
+
+    hasTimelineItemSource(item: TimelineItem): boolean {
+        return !!item.sourcePersonId || !!item.familyId;
+    }
+
+    getTimelineItemSourceLabel(item: TimelineItem): string {
+        if (item.sourcePersonId) return `Zu ${item.sourcePersonName || 'Person'}`;
+        if (item.familyId) return 'Zur Familie';
+        return 'Zum Ursprung';
+    }
+
+    goToTimelineItemSource(item: TimelineItem) {
+        if (item.sourcePersonId) {
+            this.closeTimelineItemModal();
+            this.router.navigate(['/person', item.sourcePersonId]);
+            return;
+        }
+        if (item.familyId) {
+            this.closeTimelineItemModal();
+            this.router.navigate(['/family', item.familyId]);
+        }
+    }
+
+    openTimelineItemModal(index: number) {
+        const current = this.timeline();
+        if (!current[index]) return;
+        current[index].editing = false;
+        this.timeline.set([...current]);
+        this.activeTimelineItemIndex.set(index);
+        this.showTimelineItemModal.set(true);
+    }
+
+    closeTimelineItemModal() {
+        this.showTimelineItemModal.set(false);
+        this.activeTimelineItemIndex.set(null);
+    }
+
+    activeTimelineItem(): TimelineItem | null {
+        const idx = this.activeTimelineItemIndex();
+        if (idx === null) return null;
+        return this.timeline()[idx] || null;
+    }
+
+    saveTimelineItemModal() {
+        const idx = this.activeTimelineItemIndex();
+        if (idx === null) return;
+        const current = this.timeline();
+        if (!current[idx]) return;
+        current[idx].editing = false;
+        this.timeline.set([...current]);
+        this.markDirty();
+        this.closeTimelineItemModal();
+        this.savePerson();
+    }
+
+    removeTimelineItemModal() {
+        const idx = this.activeTimelineItemIndex();
+        if (idx === null) return;
+        const current = this.timeline();
+        if (!current[idx] || this.isTimelineItemLocked(current[idx])) return;
+        current.splice(idx, 1);
+        this.timeline.set([...current]);
+        this.markDirty();
+        this.closeTimelineItemModal();
+        this.savePerson();
     }
 
     editTimelineItem(index: number) {
         const current = this.timeline();
+        if (!current[index] || this.isTimelineItemLocked(current[index])) return;
         current[index].editing = true;
         this.timeline.set([...current]);
     }
@@ -971,6 +1765,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
     removeTimelineItem(index: number) {
         const current = this.timeline();
+        if (!current[index] || this.isTimelineItemLocked(current[index])) return;
         current.splice(index, 1);
         this.timeline.set([...current]);
     }
@@ -984,7 +1779,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     addEventCitation(index: number) {
         const current = this.timeline();
         if (!current[index].citations) current[index].citations = [];
-        current[index].citations!.push({ source: '', quality: 2, page: '', text: '' });
+        current[index].citations!.push({ sourceId: '', confidence: '', page: '', text: '' });
         this.timeline.set([...current]);
     }
 
@@ -1150,11 +1945,39 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             ))
         );
 
-        // 3. Timeline wie bisher verarbeiten
+        // 3. Family-Events aus Timeline separat vorbereiten (nicht als Personen-Event speichern)
+        const treeSnapshot = this.treeData()!;
+        const changedFamilies = new Map<string, Family>();
+        this.timeline().forEach((t) => {
+            if (t.originalType !== 'family-event' || !t.familyId || t.originalIndex < 0) return;
+
+            const sourceFamily = treeSnapshot.families.find(f => f.id === t.familyId);
+            if (!sourceFamily) return;
+
+            if (!changedFamilies.has(t.familyId)) {
+                changedFamilies.set(t.familyId, JSON.parse(JSON.stringify(sourceFamily)));
+            }
+
+            const targetFamily = changedFamilies.get(t.familyId)!;
+            targetFamily.events = targetFamily.events || [];
+            const targetEvent = targetFamily.events[t.originalIndex];
+            if (!targetEvent) return;
+
+            // Family-event bleibt Family-event: nur Event-Felder aktualisieren
+            targetEvent.date = t.date || '';
+            targetEvent.place = t.place || '';
+            targetEvent.description = t.description || '';
+            (targetEvent as any).media = t.media || [];
+            (targetEvent as any).notes = t.notes || [];
+            (targetEvent as any).citations = t.citations || [];
+        });
+
+        // 4. Timeline wie bisher verarbeiten (ohne Family-Events)
         const newEvents: any[] = [];
         const newFacts: any[] = [];
 
         this.timeline().forEach(t => {
+            if (t.originalType === 'family-event') return;
             const isEventTag = ['BIRT', 'CHR', 'DEAT', 'BURI', 'CREM', 'EMIG', 'IMMI', 'BAPM'].includes(t.tag);
             if (isEventTag || (t.originalType === 'event' && !['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(t.tag))) {
                 newEvents.push({
@@ -1164,7 +1987,13 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                     description: t.description || t.value,
                     media: t.media,
                     notes: t.notes,
-                    citations: t.citations
+                    citations: (t.citations || []).map((c: any) => ({
+                        sourceId: c.sourceId || null,
+                        page: c.page || null,
+                        dateText: c.dateText || null,
+                        confidence: c.confidence || null,
+                        text: c.text || null
+                    }))
                 });
             } else {
                 newFacts.push({
@@ -1174,12 +2003,32 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                     value: t.value || t.description,
                     media: t.media,
                     notes: t.notes,
-                    citations: t.citations
+                    citations: (t.citations || []).map((c: any) => ({
+                        sourceId: c.sourceId || null,
+                        page: c.page || null,
+                        dateText: c.dateText || null,
+                        confidence: c.confidence || null,
+                        text: c.text || null
+                    }))
                 });
             }
         });
 
-        // 4. Den Payload final zusammenbauen
+        // 5. Namen synchronisieren (firstName/lastName -> names array)
+        if (!currentPerson.names) currentPerson.names = [];
+        let primaryName = currentPerson.names.find(n => n.isPrimary);
+        if (!primaryName) {
+            primaryName = { isPrimary: true, type: 'BIRTH' };
+            currentPerson.names.push(primaryName);
+        }
+        primaryName.given = currentPerson.firstName || '';
+        primaryName.surname = currentPerson.lastName || '';
+        primaryName.full = `${primaryName.given} /${primaryName.surname}/`.trim();
+
+        // Auch das top-level 'name' Feld für Abwärtskompatibilität/Suche aktualisieren
+        currentPerson.name = `${primaryName.given} ${primaryName.surname}`.trim();
+
+        // 6. Den Payload final zusammenbauen
         const payload: any = {
             id: currentPerson.id,
             firstName: currentPerson.firstName,
@@ -1203,14 +2052,21 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             facts: newFacts,
             relations: relationsPayload, // Die gefilterte Liste
             families: currentPerson.familiesAsSpouse || [],
-            media: currentPerson.media,
+            media: (currentPerson.media || []).map((m: any) => ({
+                id: m.id || null,
+                url: m.url || m.remoteUrl || m.filePath || '',
+                title: m.title || '',
+                isPrimary: m.isPrimary || false,
+                role: m.role || '',
+                caption: m.caption || '',
+                mimeType: m.mimeType || ''
+            })),
             notes: currentPerson.notes,
             citations: (currentPerson.citations || []).map((c: any) => ({
-                source: c.source || c.sourceTitle || '',
+                sourceId: c.sourceId || c.source?.id || '',
                 page: c.page || c.whereInSource || '',
                 dateText: c.dateText || c.date || '',
-                quality: c.quality ?? null,
-                text: c.text || ''
+                confidence: c.confidence || null
             })),
             associations: (currentPerson.associations || []).map((a: any) => ({
                 role: a.role || 'OTHER',
@@ -1243,10 +2099,14 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             }))
         };
 
-        const data = this.treeData()!;
-        const treeName = data.meta?.tree || '';
+        const treeName = treeSnapshot.meta?.tree || '';
+        const saveFamilies$ = changedFamilies.size > 0
+            ? forkJoin(Array.from(changedFamilies.values()).map(f => this.gedcomService.saveFamily(treeName, f)))
+            : of([]);
 
-        this.gedcomService.savePerson(treeName, payload).subscribe({
+        saveFamilies$.pipe(
+            switchMap(() => this.gedcomService.savePerson(treeName, payload))
+        ).subscribe({
             next: () => {
                 this.isSaving = false;
                 this.hasSaved = true;

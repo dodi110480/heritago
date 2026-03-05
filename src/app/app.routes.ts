@@ -82,6 +82,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./statistics').then(m => m.StatisticsDashboard),
             },
             {
+                path: 'activity',
+                loadComponent: () => import('./activity-feed').then(m => m.ActivityFeed),
+            },
+            {
                 path: 'diagnostics',
                 loadComponent: () => import('./diagnostics').then(m => m.Diagnostics),
             },

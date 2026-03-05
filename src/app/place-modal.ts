@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
+import { AppModalShell } from './ui/app-modal-shell';
 
 declare const L: any;
 
 @Component({
     selector: 'app-place-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, AppModalShell],
     templateUrl: './place-modal.html'
 })
 export class PlaceModal implements OnInit {

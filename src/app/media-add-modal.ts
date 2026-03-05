@@ -3,11 +3,12 @@ import { Component, EventEmitter, Input, Output, inject, signal } from '@angular
 import { FormsModule } from '@angular/forms';
 import { GedcomService } from './gedcom.service';
 import { ImageCropper } from './image-cropper';
+import { AppModalShell } from './ui/app-modal-shell';
 
 @Component({
     selector: 'app-media-add-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, ImageCropper],
+    imports: [CommonModule, FormsModule, ImageCropper, AppModalShell],
     templateUrl: './media-add-modal.html'
 })
 export class MediaAddModal {

@@ -3,11 +3,14 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
+import { AppPageContainerComponent } from './ui/app-page-container';
+import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppEntityCard } from './ui/app-entity-card';
 
 @Component({
     selector: 'app-search-results',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, AppPageContainerComponent, AppPageHeaderComponent, AppEntityCard],
     templateUrl: './search-results.html'
 })
 export class SearchResults {

@@ -4,12 +4,14 @@ import { Router, RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { Individual, Family, TreeData } from './models';
 import { FormsModule } from '@angular/forms';
-import { CleanDatePipe } from './clean-date.pipe';
+import { AppEntityCard } from './ui/app-entity-card';
+import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppPageContainerComponent } from './ui/app-page-container';
 
 @Component({
     selector: 'app-family-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, RouterLink, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent],
     templateUrl: './family-list.html'
 })
 export class FamilyList implements OnInit {
@@ -64,7 +66,7 @@ export class FamilyList implements OnInit {
     getPersonName(id: string | undefined): string {
         const p = this.getPersonById(id);
         if (!p) return 'Unbekannt';
-        return `${p.firstName} ${p.lastName}`;
+        return p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unbekannt';
     }
 
     getPersonImage(id: string | undefined): string {
@@ -76,6 +78,19 @@ export class FamilyList implements OnInit {
         }
         const gender = p.gender === 'M' ? 'male' : (p.gender === 'F' ? 'female' : 'unknown');
         return `assets/avatars/${gender}.svg`;
+    }
+
+    getFamilyImage(fam: Family): string {
+        // Use husband's image, if not available use wife's, if not available return unknown
+        if (fam.husband) {
+            const img = this.getPersonImage(fam.husband);
+            if (!img.includes('unknown.svg')) return img;
+        }
+        if (fam.wife) {
+            const img = this.getPersonImage(fam.wife);
+            if (!img.includes('unknown.svg')) return img;
+        }
+        return 'assets/avatars/unknown.svg';
     }
 
     getPersonGender(id: string | undefined): string {

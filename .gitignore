@@ -60,6 +60,8 @@ server.log
 # Backup-Dateien
 *.OLD
 *.backup
+*.orig
+*.rej
 
 # Prisma migrations shadow files (optional)
 prisma/migrations/dev.db*

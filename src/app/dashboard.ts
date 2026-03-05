@@ -4,12 +4,16 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from './auth.service';
 import { CalendarWidget } from './calendar-widget';
 import { GedcomService } from './gedcom.service';
+import { DashboardFactService } from './dashboard-fact.service';
+import { AppPageContainerComponent } from './ui/app-page-container';
+import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppStatCardComponent } from './ui/app-stat-card';
 import * as d3 from 'd3';
 
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, RouterLink, CalendarWidget],
+    imports: [CommonModule, RouterLink, CalendarWidget, AppPageContainerComponent, AppPageHeaderComponent, AppStatCardComponent],
     templateUrl: './dashboard.html',
     encapsulation: ViewEncapsulation.None
 })
@@ -18,6 +22,7 @@ export class Dashboard implements AfterViewInit {
     authService = inject(AuthService);
     private gedcomService = inject(GedcomService);
     private router = inject(Router);
+    private factService = inject(DashboardFactService);
 
     stats = signal<any>(null);
     treeName = signal('');
@@ -85,20 +90,7 @@ export class Dashboard implements AfterViewInit {
                         });
                         this.completeness.set(Math.round((score / people.length) * 100));
 
-                        // Simple Fun Stat
-                        const oldest = [...people]
-                            .filter(p => p.birthDate && /\d{4}$/.test(p.birthDate))
-                            .sort((a, b) => {
-                                const yearA = a.birthDate ? (a.birthDate.match(/\d{4}$/) ? parseInt(a.birthDate.match(/\d{4}$/)![0]) : 9999) : 9999;
-                                const yearB = b.birthDate ? (b.birthDate.match(/\d{4}$/) ? parseInt(b.birthDate.match(/\d{4}$/)![0]) : 9999) : 9999;
-                                return yearA - yearB;
-                            })[0];
-                        if (oldest && oldest.birthDate) {
-                            const yearMatch = oldest.birthDate.match(/\d{4}$/);
-                            if (yearMatch) {
-                                this.funStat.set(`${oldest.firstName} ${oldest.lastName} ist dein(e) älteste(r) Ahn(in) (${yearMatch[0]})`);
-                            }
-                        }
+                        this.updateFunStat(people);
                     }
 
                     const trees = this.availableTrees();
@@ -124,6 +116,11 @@ export class Dashboard implements AfterViewInit {
             },
             error: () => this.loading.set(false)
         });
+    }
+
+    updateFunStat(people: any[]) {
+        const fact = this.factService.generateFact(people, this.allFamilies(), this.completeness());
+        this.funStat.set(fact);
     }
 
     renderMiniTree() {

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
 import { FormsModule } from '@angular/forms';
+import { AppModalShell } from './ui/app-modal-shell';
 
 @Component({
     selector: 'app-media-selector',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, AppModalShell],
     templateUrl: './media-selector.html'
 })
 export class MediaSelector implements OnInit, OnChanges {
@@ -34,11 +35,11 @@ export class MediaSelector implements OnInit, OnChanges {
         const tree = this.authService.currentTree();
         if (!tree) return;
         this.loading.set(true);
-        this.gedcomService.getMedia(tree.id, 'ALLE', this.searchQuery()).subscribe({
+        this.gedcomService.getMedia(tree.id, this.searchQuery()).subscribe({
             next: (res: any) => {
                 const items = (res.media || []).map((m: any) => ({
                     ...m,
-                    url: this.gedcomService.getMediaUrl(m.url),
+                    url: this.gedcomService.getMediaUrl(m.remoteUrl || (m.filePath ? `/uploads/${m.filePath}` : m.url || '')),
                     mimeType: m.mimeType || 'application/octet-stream'
                 }));
                 // Only images for now

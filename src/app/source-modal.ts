@@ -2,24 +2,30 @@ import { Component, Input, Output, EventEmitter, OnInit, signal, inject } from '
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GedcomService } from './gedcom.service';
+import { AppModalShell } from './ui/app-modal-shell';
 
 @Component({
     selector: 'app-source-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, AppModalShell],
     templateUrl: './source-modal.html'
 })
 export class SourceModal implements OnInit {
     @Input() mode: 'add' | 'edit' = 'add';
     @Input() sourceData: any = null;
     @Input() currentTree: string | null = null;
+    @Input() allSources: any[] = [];
     @Output() closeModal = new EventEmitter<void>();
     @Output() saved = new EventEmitter<void>();
+    @Output() deleted = new EventEmitter<any>();
+    @Output() merged = new EventEmitter<{ sourceId: string, targetId: string }>();
 
     private gedcomService = inject(GedcomService);
 
+    visible = true;
     isSaving = signal(false);
     errorMessage = signal<string | null>(null);
+    repositories = signal<any[]>([]);
 
     // Form Fields
     title = signal('');
@@ -27,7 +33,10 @@ export class SourceModal implements OnInit {
     author = signal('');
     publication = signal('');
     repositoryId = signal('');
-    repositoryName = signal(''); // Free text fallback or placeholder logic
+
+    // Actions
+    mergeTargetId = signal('');
+    reassignTargetId = signal('');
 
     ngOnInit() {
         if (this.mode === 'edit' && this.sourceData) {
@@ -36,7 +45,14 @@ export class SourceModal implements OnInit {
             this.author.set(this.sourceData.author || '');
             this.publication.set(this.sourceData.publication || '');
             this.repositoryId.set(this.sourceData.repositoryId || '');
-            this.repositoryName.set(this.sourceData.repositoryName || '');
+        }
+
+        if (this.currentTree) {
+            this.gedcomService.getRepositories(this.currentTree).subscribe({
+                next: (res: any) => {
+                    if (res.success) this.repositories.set(res.repositories);
+                }
+            });
         }
     }
 
@@ -46,7 +62,7 @@ export class SourceModal implements OnInit {
 
     save() {
         if (!this.title().trim()) {
-            this.errorMessage.set('Source Title is required.');
+            this.errorMessage.set('Titel der Quelle ist erforderlich.');
             return;
         }
 
@@ -58,10 +74,10 @@ export class SourceModal implements OnInit {
 
         const payload: any = {
             title: this.title().trim(),
-            shortTitle: this.shortTitle().trim(),
-            author: this.author().trim(),
-            publication: this.publication().trim(),
-            // repositoryId: this.repositoryId().trim() || null // Skipping repository linking for the simple V1 implementation unless specifically searched
+            shortTitle: this.shortTitle().trim() || null,
+            author: this.author().trim() || null,
+            publication: this.publication().trim() || null,
+            repositoryId: this.repositoryId() || null,
         };
 
         if (this.mode === 'edit' && this.sourceData) {
@@ -81,6 +97,23 @@ export class SourceModal implements OnInit {
                 this.isSaving.set(false);
                 this.errorMessage.set(err.error?.message || 'Netzwerkfehler beim Speichern.');
             }
+        });
+    }
+
+    deleteSource() {
+        if (!this.sourceData) return;
+        const payload = {
+            source: this.sourceData,
+            reassignToId: this.reassignTargetId()
+        };
+        this.deleted.emit(payload);
+    }
+
+    mergeSource() {
+        if (!this.sourceData || !this.mergeTargetId()) return;
+        this.merged.emit({
+            sourceId: this.sourceData.id,
+            targetId: this.mergeTargetId()
         });
     }
 }

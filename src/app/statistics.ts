@@ -1,11 +1,14 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GedcomService } from './gedcom.service';
+import { AppPageContainerComponent } from './ui/app-page-container';
+import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppStatCardComponent } from './ui/app-stat-card';
 
 @Component({
     selector: 'app-statistics',
     standalone: true,
-    imports: [CommonModule],
+    imports: [CommonModule, AppPageContainerComponent, AppPageHeaderComponent, AppStatCardComponent],
     templateUrl: './statistics.html'
 })
 export class StatisticsDashboard implements OnInit {

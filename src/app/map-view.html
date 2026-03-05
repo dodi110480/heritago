@@ -5,28 +5,33 @@
     <!-- OVERLAY CONTENT -->
     <div class="absolute inset-0 z-10 pointer-events-none flex flex-col p-6 md:p-10">
 
-        <!-- HEADER OVERLAY -->
         <header
-            class="pointer-events-auto flex flex-col md:flex-row items-center justify-between gap-6 glass-card shadow-2xl mb-8 animate-in slide-in-from-top-10 duration-700">
-            <div class="flex items-center gap-6">
-                <a routerLink="/"
-                    class="p-3 bg-white/5 hover:bg-white/10 rounded-2xl text-slate-400 hover:text-blue-400 transition-all border border-white/5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="19" y1="12" x2="5" y2="12"></line>
-                        <polyline points="12 19 5 12 12 5"></polyline>
-                    </svg>
-                </a>
-                <div class="flex flex-col gap-1">
-                    <h1 class="page-title !text-3xl">Interaktive Weltkarte</h1>
-                    <p class="page-subtitle">Orte deiner Familiengeschichte</p>
+            class="pointer-events-auto glass-card shadow-2xl mb-4 animate-in slide-in-from-top-10 duration-700 !p-3 md:!p-4">
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <a routerLink="/"
+                        class="p-2 bg-canvas-white/5 hover:bg-canvas-white/10 rounded-xl text-neutral-400 hover:text-brand-400 transition-all border border-canvas-white/5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </a>
+                    <div class="min-w-0">
+                        <h1 class="text-base md:text-lg font-black text-canvas-white leading-tight truncate">Interaktive Weltkarte</h1>
+                        <p class="text-xs text-canvas-white/50 truncate">Orte deiner Familiengeschichte</p>
+                    </div>
                 </div>
-            </div>
-
-            <div class="badge badge-blue !py-3 !px-6 !rounded-[20px]" *ngIf="!loading()">
-                <div class="flex flex-col items-center">
-                    <span class="text-2xl font-black leading-none">{{ persons().length }}</span>
-                    <span class="text-[10px] font-black uppercase tracking-widest mt-1 opacity-70">Personen</span>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button class="btn-secondary !w-auto !py-1.5 !px-3 text-xs md:text-sm" (click)="toggleMapTheme()">
+                        {{ mapTheme() === 'dark' ? 'Helle Karte' : 'Dunkle Karte' }}
+                    </button>
+                    <div class="badge badge-primary !py-2 !px-3 !rounded-xl" *ngIf="!loading()">
+                        <div class="flex flex-col items-center">
+                            <span class="text-base font-black leading-none">{{ visibleCount() }}</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest mt-0.5 opacity-70">Orte</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </header>
@@ -34,34 +39,22 @@
         <div class="flex-1 flex flex-col md:flex-row gap-8 min-h-0">
             <!-- SIDE PANEL (LIST) -->
             <div class="pointer-events-auto w-full md:w-80 flex flex-col glass-card !p-0 shadow-2xl overflow-hidden animate-in slide-in-from-left-10 duration-700 delay-150"
-                *ngIf="persons().length > 0">
+                *ngIf="listEntries().length > 0">
 
-                <div class="p-6 border-b border-white/5 flex items-center justify-between">
-                    <h3 class="text-lg font-black text-white tracking-tight">Personenliste</h3>
+                <div class="p-6 border-b border-canvas-white/5 flex items-center justify-between">
+                    <h3 class="text-lg font-black text-canvas-white tracking-tight">Ortsliste</h3>
                     <div
-                        class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-xs text-slate-500 font-black">
-                        {{ persons().length }}
+                        class="w-8 h-8 rounded-full bg-canvas-white/5 flex items-center justify-center text-xs text-neutral-500 font-black">
+                        {{ visibleCount() }}
                     </div>
                 </div>
 
                 <div class="flex-1 overflow-y-auto custom-scrollbar p-2">
                     <div class="flex flex-col gap-1">
-                        <div *ngFor="let p of persons()" (click)="focusPerson(p)"
-                            class="flex items-center gap-4 glass-card group hover:border-blue-500/20 transition-all duration-300">
-
-                            <div
-                                class="w-12 h-12 shrink-0 bg-slate-800 rounded-2xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-lg border border-white/5">
-                                👤
-                            </div>
-                            <div class="flex flex-col min-w-0">
-                                <span
-                                    class="text-slate-200 font-bold truncate group-hover:text-white transition-colors">{{
-                                    p.name }}</span>
-                                <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-0.5">
-                                    {{ p.places.length }} Ort{{ p.places.length > 1 ? 'e' : '' }}
-                                </span>
-                            </div>
-                        </div>
+                        <app-entity-card *ngFor="let p of listEntries()" [title]="p.name"
+                            [meta]="p.places.length + ' Ort' + (p.places.length > 1 ? 'e' : '')"
+                            [icon]="'📍'" badgeText="Karte" badgeColor="primary" (onClick)="focusPerson(p)">
+                        </app-entity-card>
                     </div>
                 </div>
             </div>
@@ -73,9 +66,9 @@
                     <div
                         class="glass-card shadow-xl flex flex-col gap-6 group hover:border-brand-500/20 transition-all duration-300">
                         <div
-                            class="w-16 h-16 border-4 border-white/5 border-l-blue-500 rounded-full animate-spin shadow-[0_0_30px_#3b82f633]">
+                            class="w-16 h-16 border-4 border-ui-border/40 border-l-brand-500 rounded-full animate-spin shadow-brand-glow">
                         </div>
-                        <span class="text-sm font-black text-white uppercase tracking-[0.2em]">Karte wird
+                        <span class="text-sm font-black text-ui-text uppercase tracking-[0.2em]">Karte wird
                             geladen...</span>
                     </div>
                 </div>
@@ -86,11 +79,11 @@
                     <div
                         class="glass-card !p-12 shadow-2xl flex flex-col items-center text-center max-w-sm animate-in zoom-in-95 duration-500">
                         <div
-                            class="w-20 h-20 bg-slate-800 rounded-[32px] flex items-center justify-center text-4xl mb-6 shadow-xl border border-white/5">
+                            class="w-20 h-20 bg-surface rounded-[32px] flex items-center justify-center text-4xl mb-6 shadow-xl border border-canvas-white/5">
                             🗺️
                         </div>
-                        <h3 class="text-2xl font-black text-white tracking-tight mb-4">Keine Orte gefunden</h3>
-                        <p class="text-slate-400 text-sm leading-relaxed mb-8">In deiner Datenbank sind noch keine Orte
+                        <h3 class="text-2xl font-black text-canvas-white tracking-tight mb-4">Keine Orte gefunden</h3>
+                        <p class="text-neutral-400 text-sm leading-relaxed mb-8">In deiner Datenbank sind noch keine Orte
                             mit geografischen Koordinaten hinterlegt.</p>
                         <button class="btn-primary w-full py-4 text-lg" routerLink="/">Zurück zum Dashboard</button>
                     </div>

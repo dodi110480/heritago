@@ -335,10 +335,10 @@ model Event {
   isNegative  Boolean @default(false)
 
   personId String?
-  person   Person? @relation("PersonEvents", fields: [personId], references: [id], onDelete: Cascade)
+  person   Person? @relation("PersonEvents", fields: [personId], references: [id], onDelete: SetNull)
 
   familyId String?
-  family   Family? @relation("FamilyEvents", fields: [familyId], references: [id], onDelete: Cascade)
+  family   Family? @relation("FamilyEvents", fields: [familyId], references: [id], onDelete: SetNull)
 
   citations  Citation[]
   mediaLinks MediaLink[]
@@ -373,10 +373,10 @@ model Fact {
   place   Place? @relation(fields: [placeId], references: [id], onDelete: SetNull)
 
   personId String?
-  person   Person? @relation("PersonFacts", fields: [personId], references: [id], onDelete: Cascade)
+  person   Person? @relation("PersonFacts", fields: [personId], references: [id], onDelete: SetNull)
 
   familyId String?
-  family   Family? @relation("FamilyFacts", fields: [familyId], references: [id], onDelete: Cascade)
+  family   Family? @relation("FamilyFacts", fields: [familyId], references: [id], onDelete: SetNull)
 
   citations Citation[]
 
@@ -706,7 +706,7 @@ model DnaMatch {
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
-  @@unique([personId, matchPersonId, provider])
+  @@unique([treeId, personId, matchPersonId, provider])
   @@index([treeId])
   @@index([personId])
   @@index([matchPersonId])
@@ -790,7 +790,6 @@ model ChangeLog {
 
   @@index([treeId, createdAt])
   @@index([treeId, action])
-  @@index([action])
   @@index([entityType, entityId])
   @@index([userId])
 }

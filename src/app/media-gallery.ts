@@ -4,11 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
 import { MediaAddModal } from './media-add-modal';
+import { AppEntityCard } from './ui/app-entity-card';
+import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppPageContainerComponent } from './ui/app-page-container';
 
 @Component({
     selector: 'app-media-gallery',
     standalone: true,
-    imports: [CommonModule, FormsModule, MediaAddModal],
+    imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent],
     templateUrl: './media-gallery.html'
 })
 export class MediaGallery implements OnInit {

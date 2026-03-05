@@ -1,0 +1,92 @@
+<div class="space-y-6">
+    <!-- Loading -->
+    <div *ngIf="loading()" class="flex justify-center py-16">
+        <div class="w-8 h-8 border-4 border-brand-500/20 border-l-brand-500 rounded-full animate-spin"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading() && repositories().length === 0"
+        class="flex flex-col items-center justify-center py-16 text-neutral-400 gap-4 glass-card">
+        <span class="text-4xl">🏛️</span>
+        <p class="text-lg font-medium">Noch keine Archive angelegt</p>
+        <p class="text-sm text-center">Archive sind Aufbewahrungsorte für Quellen, z.B. Standesämter, Bibliotheken oder
+            Kirchenbücher.</p>
+        <button class="btn-primary !w-auto !py-2 !px-5 mt-2" (click)="openAddModal()">+ Erstes Archiv anlegen</button>
+    </div>
+
+    <!-- Repository Grid -->
+    <div *ngIf="!loading() && repositories().length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <app-entity-card *ngFor="let repo of repositories()" [title]="repo.name"
+            [subtitle]="repo.address || 'Keine Adresse angegeben'"
+            [meta]="(repo.sourceCount || 0) + ' Quelle(n) verknüpft'" icon="🏛️" badgeText="Archiv" badgeColor="highlight"
+            (onClick)="openEditModal(repo)">
+
+            <div actions class="flex gap-1 items-center">
+                <span *ngIf="repo.website"
+                    class="text-[10px] px-1.5 py-0.5 rounded bg-surface text-brand-300 font-medium whitespace-nowrap mr-1"
+                    [title]="repo.website">🌐 Web</span>
+                <button
+                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-surface/50 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/20 transition-all border border-transparent hover:border-brand-500/30"
+                    (click)="$event.stopPropagation(); openEditModal(repo)" title="Bearbeiten">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </button>
+                <button
+                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-surface/50 text-neutral-400 hover:text-rose-400 hover:bg-rose-500/20 transition-all border border-transparent hover:border-rose-500/30"
+                    (click)="$event.stopPropagation(); deleteRepo(repo)" title="Löschen">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+        </app-entity-card>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<app-modal-shell [visible]="modalVisible" [title]="modalMode === 'add' ? 'Neues Archiv anlegen' : 'Archiv bearbeiten'"
+    icon="🏛️" size="md" [loading]="isSaving()" [disabledSave]="!formName().trim()" [showDelete]="modalMode === 'edit'"
+    deleteText="Archiv löschen" (close)="closeModal()" (save)="save()" (delete)="deleteRepo(selectedRepo())">
+
+    <div class="flex flex-col gap-4">
+        <div class="bg-state-errorBg/10 border border-state-errorBg/20 text-state-error p-3 rounded-xl text-sm" *ngIf="errorMessage()">
+            {{ errorMessage() }}
+        </div>
+
+        <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-neutral-400">Name *</label>
+            <input type="text" [ngModel]="formName()" (ngModelChange)="formName.set($event)" class="form-input"
+                placeholder="z.B. Staatsarchiv München">
+        </div>
+
+        <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-neutral-400">Adresse</label>
+            <input type="text" [ngModel]="formAddress()" (ngModelChange)="formAddress.set($event)" class="form-input"
+                placeholder="z.B. Schönfeldstraße 5, 80539 München">
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-neutral-400">Telefon</label>
+                <input type="tel" [ngModel]="formPhone()" (ngModelChange)="formPhone.set($event)" class="form-input"
+                    placeholder="+49 89 12345-0">
+            </div>
+            <div class="space-y-1.5">
+                <label class="block text-sm font-medium text-neutral-400">E-Mail</label>
+                <input type="email" [ngModel]="formEmail()" (ngModelChange)="formEmail.set($event)" class="form-input"
+                    placeholder="info@archiv.de">
+            </div>
+        </div>
+
+        <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-neutral-400">Website</label>
+            <input type="url" [ngModel]="formWebsite()" (ngModelChange)="formWebsite.set($event)" class="form-input"
+                placeholder="https://www.staatsarchiv.de">
+        </div>
+    </div>
+</app-modal-shell>

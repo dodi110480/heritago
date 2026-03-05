@@ -50,9 +50,7 @@
 
     body,
     html {
-        @apply m-0 p-0 w-full min-h-screen text-slate-100 antialiased;
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        background: radial-gradient(circle at top left, #576ff8, #4963f8, #1236ff);
+        @apply m-0 p-0 w-full min-h-screen text-ui-text antialiased font-body bg-ui-bg;
         background-attachment: fixed;
         overflow-x: hidden;
     }
@@ -66,15 +64,15 @@
     }
 
     .leaflet-container {
-        @apply bg-slate-950 !important;
+        @apply bg-ui-surfaceDarkest !important;
     }
 
     .leaflet-popup-content-wrapper {
-        @apply bg-slate-900/90 backdrop-blur-md text-white border border-white/10 rounded-2xl shadow-2xl !important;
+        @apply bg-ui-surfaceDark/90 backdrop-blur-md text-canvas-white border border-brand-500/15 rounded-2xl shadow-2xl !important;
     }
 
     .leaflet-popup-tip {
-        @apply bg-slate-900/90 !important;
+        @apply bg-ui-surfaceDark/90 !important;
     }
 
     .leaflet-popup-content {
@@ -87,7 +85,7 @@
 
     .leaflet-control-zoom-in,
     .leaflet-control-zoom-out {
-        @apply bg-slate-900/80 backdrop-blur-md text-slate-200 border border-white/10 hover:bg-slate-800 hover:text-white transition-all !important;
+        @apply bg-ui-surfaceDark/80 backdrop-blur-md text-canvas-white/80 border border-brand-500/15 hover:bg-ui-surface hover:text-canvas-white transition-all !important;
     }
 
     .leaflet-control-zoom-in {
@@ -103,19 +101,24 @@
 /* End of @layer base */
 
 @layer components {
+    .header-gold-glow {
+        @apply bg-brand-500/10;
+    }
+
     .glass-card {
-        @apply bg-slate-950/95 backdrop-blur-xl border border-white/20 rounded-[32px] p-6 transition-all duration-300 ease-in-out;
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+        @apply bg-ui-card/95 backdrop-blur-xl border border-ui-border rounded-xl p-6 transition-all duration-300 ease-in-out;
+        @apply shadow-card;
     }
 
     .glass-card:hover {
-        @apply -translate-y-1 border-white/40 shadow-2xl;
-        background-color: rgba(255, 255, 255, 0.08);
+        @apply -translate-y-1 border-ui-borderStrong;
+        @apply shadow-card-hover;
+        @apply bg-ui-cardHover;
         /* Important to keep this explicit override! */
     }
 
     .page-header {
-        @apply bg-slate-950/80 backdrop-blur-lg border-b border-white/20 px-6 md:px-10 py-6 sticky top-14 md:top-16 z-10 shadow-2xl;
+        @apply border-b border-canvas-white/5 px-6 md:px-10 py-6 mb-8;
     }
 
     .page-header-inner {
@@ -123,11 +126,11 @@
     }
 
     .page-title {
-        @apply m-0 text-3xl md:text-4xl font-extrabold bg-gradient-to-br from-brand-400 to-accent-purple-500 bg-clip-text text-transparent tracking-tight;
+        @apply m-0 text-3xl font-bold text-ui-text tracking-tight;
     }
 
     .page-subtitle {
-        @apply m-0 text-slate-300 mt-2 text-sm md:text-base max-w-2xl font-semibold;
+        @apply m-0 text-ui-textMuted mt-1 text-sm max-w-2xl;
     }
 
     .page-actions {
@@ -135,19 +138,19 @@
     }
 
     .btn-primary {
-        @apply w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white rounded-xl font-semibold shadow-brand-glow hover-lift border border-brand-400/20 flex items-center justify-center gap-2;
+        @apply w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-canvas-white rounded-btn font-semibold shadow-brand-glow hover-lift border border-brand-400/20 flex items-center justify-center gap-2;
     }
 
     .btn-secondary {
-        @apply w-full md:w-auto px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-medium shadow-md hover-lift border border-slate-700 hover:border-slate-600 flex items-center justify-center gap-2;
+        @apply w-full md:w-auto px-6 py-2.5 bg-ui-panel hover:bg-ui-card text-ui-text rounded-btn font-medium shadow-md hover-lift border border-ui-border hover:border-ui-borderStrong flex items-center justify-center gap-2;
     }
 
     .btn-ghost {
-        @apply w-full md:w-auto px-4 py-2 bg-transparent hover:bg-white/10 text-slate-300 hover:text-white rounded-xl font-semibold flex items-center justify-center gap-2;
+        @apply w-full md:w-auto px-4 py-2 bg-canvas-transparent hover:bg-brand-500/10 text-ui-textSoft hover:text-ui-text rounded-btn font-semibold flex items-center justify-center gap-2;
     }
 
     .btn-danger {
-        @apply w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-xl font-semibold shadow-rose-glow hover-lift border border-rose-400/20 flex items-center justify-center gap-2;
+        @apply w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-accent-danger-600 to-accent-danger-500 hover:from-accent-danger-500 hover:to-accent-danger-400 text-canvas-white rounded-btn font-semibold shadow-danger-glow hover-lift border border-accent-danger-400/20 flex items-center justify-center gap-2;
     }
 
     .search-wrapper {
@@ -155,7 +158,7 @@
     }
 
     .search-icon-wrapper {
-        @apply absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none;
+        @apply absolute left-4 top-1/2 -translate-y-1/2 text-ui-textMuted pointer-events-none;
     }
 
     .search-wrapper:focus-within .search-icon-wrapper {
@@ -163,16 +166,16 @@
     }
 
     .search-input {
-        @apply w-full bg-black/60 border border-white/20 rounded-xl pl-11 pr-4 py-2.5 text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
+        @apply w-full bg-ui-input border border-ui-border rounded-btn pl-11 pr-4 py-2.5 text-ui-text placeholder-ui-textMuted focus:outline-none focus:border-ui-borderStrong focus:ring-2 focus:ring-brand-500/25;
     }
 
     /* Shared Modal & Form Patterns */
     .modal-container {
-        @apply fixed inset-0 flex items-center justify-center p-4 z-[1000] bg-slate-950/40 backdrop-blur-sm;
+        @apply fixed inset-0 flex items-center justify-center p-4 z-modal bg-ui-overlay backdrop-blur-sm;
     }
 
     .modal-glass {
-        @apply w-full max-w-lg bg-slate-950/95 backdrop-blur-2xl border border-white/20 rounded-[32px] p-8 md:p-12 shadow-2xl relative overflow-hidden;
+        @apply w-full max-w-lg bg-ui-card/95 backdrop-blur-2xl border border-ui-border rounded-modal p-8 md:p-12 shadow-modal relative overflow-hidden;
     }
 
     .form-group {
@@ -180,61 +183,74 @@
     }
 
     .form-label {
-        @apply block text-[11px] font-bold text-slate-300 uppercase tracking-[0.25em] mb-2 px-1;
+        @apply block text-meta font-bold text-ui-textMuted uppercase tracking-[0.25em] mb-2 px-1;
     }
 
     .form-input {
-        @apply w-full bg-black/60 border border-white/20 rounded-2xl px-5 py-3.5 text-white placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 transition-all duration-300;
+        @apply w-full bg-ui-input border border-ui-border rounded-xl px-5 py-3.5 text-ui-text placeholder-ui-textMuted focus:outline-none focus:border-ui-borderStrong focus:ring-2 focus:ring-brand-500/30 transition-all duration-300;
+    }
+
+    .form-select {
+        @apply w-full bg-ui-input border border-ui-border rounded-xl px-4 py-2.5 text-ui-text focus:outline-none focus:border-ui-borderStrong focus:ring-2 focus:ring-brand-500/30 transition-all duration-300;
+    }
+
+    .form-input-sm {
+        @apply px-3 py-2 text-sm;
+    }
+
+    .form-input-xs {
+        @apply px-2 py-1.5 text-xs;
     }
 
     .badge {
-        @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all;
+        @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-meta font-bold uppercase tracking-wider border transition-all;
     }
 
-    .badge-blue {
+    /* Badge variants – named by semantic role, not by color */
+    .badge-primary {
         @apply bg-brand-500/10 text-brand-400 border-brand-500/20;
     }
 
-    .badge-purple {
-        @apply bg-accent-purple-500/10 text-accent-purple-400 border-accent-purple-500/20;
+    .badge-highlight {
+        @apply bg-accent-highlight-500/10 text-accent-highlight-400 border-accent-highlight-500/20;
     }
 
-    .badge-emerald {
-        @apply bg-emerald-500/10 text-emerald-400 border-emerald-500/20;
+    .badge-success {
+        @apply bg-accent-success-500/10 text-accent-success-400 border-accent-success-500/20;
     }
 
-    .badge-amber {
-        @apply bg-amber-500/10 text-amber-400 border-amber-500/20;
+    .badge-danger {
+        @apply bg-accent-danger-500/10 text-accent-danger-400 border-accent-danger-500/20;
     }
 
-    .badge-rose {
-        @apply bg-rose-500/10 text-rose-400 border-rose-500/20;
-    }
-
-    .badge-slate {
-        @apply bg-slate-500/10 text-slate-400 border-slate-500/20;
+    .badge-neutral {
+        @apply bg-ui-panel text-ui-textSoft border-ui-border;
     }
 
     .form-error {
-        @apply bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl text-sm text-center mb-6;
+        @apply bg-accent-danger-500/10 border border-accent-danger-500/20 text-accent-danger-400 p-4 rounded-card text-sm text-center mb-6;
     }
 
-    .modal-glow-blue {
+    .modal-glow-brand {
         @apply absolute -top-24 -right-24 w-64 h-64 bg-brand-600/10 blur-[80px] rounded-full pointer-events-none;
     }
 
-    .modal-glow-purple {
-        @apply absolute -bottom-24 -left-24 w-64 h-64 bg-accent-purple-600/10 blur-[80px] rounded-full pointer-events-none;
+    .modal-glow-highlight {
+        @apply absolute -bottom-24 -left-24 w-64 h-64 bg-accent-highlight-600/10 blur-[80px] rounded-full pointer-events-none;
     }
 }
 
 @layer utilities {
-    .shadow-brand-glow {
-        box-shadow: 0 0 20px rgba(41, 72, 255, 0.2);
+    .anim-delay-0 {
+        animation-delay: 0s;
     }
 
-    .shadow-rose-glow {
-        box-shadow: 0 0 20px rgba(244, 63, 94, 0.2);
+    .anim-delay-1 {
+        animation-delay: 1s;
+    }
+
+    .anim-delay-2 {
+        animation-delay: 2s;
     }
 
     .hover-lift {

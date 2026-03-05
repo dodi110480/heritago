@@ -1,14 +1,18 @@
-import { Component, inject, signal, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { SourceModal } from './source-modal';
+import { AppEntityCard } from './ui/app-entity-card';
+import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppPageContainerComponent } from './ui/app-page-container';
+import { RepositoryList } from './repository-list';
 
 @Component({
     selector: 'app-source-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, SourceModal],
+    imports: [CommonModule, FormsModule, SourceModal, AppEntityCard, RepositoryList, AppPageHeaderComponent, AppPageContainerComponent],
     templateUrl: './source-list.html',
     encapsulation: ViewEncapsulation.None
 })
@@ -16,18 +20,18 @@ export class SourceList implements OnInit {
     private gedcomService = inject(GedcomService);
     private router = inject(Router);
 
+    @ViewChild(RepositoryList) repositoryListRef?: RepositoryList;
+
     sources = signal<any[]>([]);
     loading = signal(true);
     isSaving = signal(false);
     currentTree = signal<string | null>(null);
     errorMessage = signal<string | null>(null);
     selectedSource = signal<any | null>(null);
-    selectedUsage = signal<any | null>(null);
-    loadingUsage = signal(false);
-    mergeTargetId = signal<string>('');
-    reassignTargetId = signal<string>('');
-    detailsOpen = signal(false);
     searchQuery = signal<string>('');
+
+    // Tab State
+    activeTab = signal<'sources' | 'repositories'>('sources');
 
     // Modal State
     isModalOpen = false;
@@ -64,7 +68,6 @@ export class SourceList implements OnInit {
                 if (sel) {
                     const refreshed = items.find((s: any) => s.id === sel.id) || null;
                     this.selectedSource.set(refreshed);
-                    if (refreshed) this.loadUsage(refreshed.id);
                 }
             },
             error: () => this.loading.set(false)
@@ -84,27 +87,8 @@ export class SourceList implements OnInit {
 
     selectSource(source: any) {
         this.selectedSource.set(source);
-        this.mergeTargetId.set('');
-        this.reassignTargetId.set('');
-        this.detailsOpen.set(true);
-        this.loadUsage(source.id);
     }
 
-    loadUsage(sourceId: string) {
-        const tree = this.currentTree();
-        if (!tree) return;
-        this.loadingUsage.set(true);
-        this.gedcomService.getSourceUsage(tree, sourceId).subscribe({
-            next: (res: any) => {
-                this.selectedUsage.set(res?.usage || null);
-                this.loadingUsage.set(false);
-            },
-            error: () => {
-                this.selectedUsage.set(null);
-                this.loadingUsage.set(false);
-            }
-        });
-    }
 
     openAddModal() {
         this.modalMode = 'add';
@@ -122,8 +106,14 @@ export class SourceList implements OnInit {
         this.isModalOpen = false;
     }
 
-    closeDetailsModal() {
-        this.detailsOpen.set(false);
+    openAddRepositoryModal() {
+        this.activeTab.set('repositories');
+        // Kleine Verzögerung damit der Tab-Wechsel ViewChild initialisieren kann
+        setTimeout(() => this.repositoryListRef?.openAddModal(), 50);
+    }
+
+    navigateToRepository(repositoryId: string) {
+        this.activeTab.set('repositories');
     }
 
     onSourceSaved() {
@@ -131,24 +121,24 @@ export class SourceList implements OnInit {
         this.closeModal();
     }
 
-    deleteSource(source: any) {
+    onSourceDeleted(payload: { source: any, reassignToId: string }) {
+        const { source, reassignToId } = payload;
         if (!confirm(`Möchten Sie die Quelle "${source.title}" wirklich aus diesem Stammbaum entfernen?\nDies löscht diese Quelle aus allen Zitationsverknüpfungen!`)) return;
 
         const tree = this.currentTree();
         if (!tree) return;
 
-        const payload: any = { mode: 'delete', id: source.id };
-        if (this.reassignTargetId()) payload.reassignToId = this.reassignTargetId();
+        const reqPayload: any = { mode: 'delete', id: source.id };
+        if (reassignToId) reqPayload.reassignToId = reassignToId;
 
-        this.gedcomService.saveSource(tree, payload).subscribe({
+        this.gedcomService.saveSource(tree, reqPayload).subscribe({
             next: (res: any) => {
                 if (res.success) {
                     if (this.selectedSource()?.id === source.id) {
                         this.selectedSource.set(null);
-                        this.selectedUsage.set(null);
-                        this.detailsOpen.set(false);
                     }
                     this.refreshList();
+                    this.closeModal();
                 } else {
                     alert('Fehler beim Löschen: ' + res.message);
                 }
@@ -163,21 +153,19 @@ export class SourceList implements OnInit {
         });
     }
 
-    mergeSelected() {
-        const source = this.selectedSource();
-        const targetId = this.mergeTargetId();
+    onSourceMerged(payload: { sourceId: string, targetId: string }) {
+        const { sourceId, targetId } = payload;
+        const sourceData = this.selectedSourceData || this.selectedSource();
         const tree = this.currentTree();
-        if (!source || !targetId || !tree) return;
-        if (!confirm(`Quelle "${source.title}" in Ziel-Quelle zusammenführen?`)) return;
+        if (!sourceId || !targetId || !tree) return;
+        if (!confirm(`Quelle "${sourceData?.title || 'diese'}" in Ziel-Quelle zusammenführen?`)) return;
 
-        this.gedcomService.mergeSources(tree, source.id, targetId).subscribe({
+        this.gedcomService.mergeSources(tree, sourceId, targetId).subscribe({
             next: (res: any) => {
                 if (res.success) {
                     this.selectedSource.set(null);
-                    this.selectedUsage.set(null);
-                    this.mergeTargetId.set('');
-                    this.detailsOpen.set(false);
                     this.refreshList();
+                    this.closeModal();
                 } else {
                     alert('Merge fehlgeschlagen: ' + (res.message || 'Unbekannter Fehler'));
                 }

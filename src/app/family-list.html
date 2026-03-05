@@ -1,109 +1,63 @@
-<div class="min-h-screen text-slate-200 flex flex-col p-0 m-0">
-    <!-- Unified Sticky Header -->
-    <div class="page-header">
-        <div class="page-header-inner">
-            <div class="flex flex-col gap-1 items-center md:items-start w-full md:w-auto text-center md:text-left">
-                <h1 class="page-title">
-                    Familien-Übersicht
-                </h1>
-                <p class="page-subtitle" *ngIf="treeName()">Stammbaum: {{ treeName() }}</p>
-            </div>
+<app-page-container [wide]="true">
+    <app-page-header title="Familien-Übersicht" [description]="treeName() ? 'Stammbaum: ' + treeName() : ''">
 
-            <div class="page-actions">
-                <div class="search-wrapper">
-                    <div class="search-icon-wrapper">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </div>
-                    <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
-                        placeholder="Nach Namen suchen..." class="search-input">
+        <div actions class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+            <!-- Suche -->
+            <div class="search-wrapper">
+                <div class="search-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
                 </div>
-
-                <select [ngModel]="sortMode()" (ngModelChange)="sortMode.set($event)"
-                    class="form-input !w-auto !py-2.5">
-                    <option value="date_desc">Neueste Hochzeiten</option>
-                    <option value="children_desc">Meiste Kinder</option>
-                    <option value="names_asc">Name Partner (A-Z)</option>
-                </select>
+                <input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)"
+                    placeholder="Nach Namen suchen..." class="search-input">
             </div>
-        </div>
-    </div>
 
-    <!-- Page Content Container -->
-    <div class="flex-1 p-6 md:p-10 max-w-[1600px] w-full mx-auto">
-        <div *ngIf="loading()" class="flex flex-col items-center justify-center p-16 text-slate-400 gap-4">
-            <div class="w-8 h-8 border-4 border-blue-500/20 border-l-blue-500 rounded-full animate-spin"></div>
-            <p>Lade Familien...</p>
+            <!-- Sortierung -->
+            <select [ngModel]="sortMode()" (ngModelChange)="sortMode.set($event)"
+                class="glass-card !px-3 !py-2.5 !rounded-xl text-neutral-100 min-w-[200px] w-full md:w-auto outline-none focus:ring-2 focus:ring-brand-500/30">
+                <option value="date_desc" class="bg-surface-dark text-neutral-200">Neueste Hochzeiten</option>
+                <option value="children_desc" class="bg-surface-dark text-neutral-200">Meiste Kinder</option>
+                <option value="names_asc" class="bg-surface-dark text-neutral-200">Name Partner (A-Z)</option>
+            </select>
+        </div>
+    </app-page-header>
+
+    <!-- CONTENT -->
+    <div class="relative w-full">
+        <div *ngIf="loading()" class="py-20 flex flex-col items-center justify-center gap-4 text-brand-400">
+            <div
+                class="w-12 h-12 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin shadow-brand-glow">
+            </div>
+            <p class="font-bold tracking-widest uppercase text-xs animate-pulse">Lade Familien-Archiv...</p>
         </div>
 
         <div *ngIf="!loading() && filteredFamilies().length === 0"
-            class="flex flex-col items-center justify-center p-16 text-slate-400 gap-4">
-            <p>Keine Familien gefunden.</p>
+            class="py-32 flex flex-col items-center justify-center text-neutral-500 glass-card">
+            <div class="w-20 h-20 bg-canvas-white/5 rounded-full flex items-center justify-center mb-6 text-4xl opacity-20">
+                👨‍👩‍👧‍👦
+            </div>
+            <h3 class="text-xl font-bold text-canvas-white mb-2">Keine Familien gefunden</h3>
+            <p class="text-neutral-400">Probiere es mit einem anderen Suchbegriff.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" *ngIf="!loading()">
-            <a *ngFor="let fam of filteredFamilies()"
-                class="group glass-card flex items-center gap-4 no-underline text-inherit overflow-hidden"
-                [routerLink]="['/familie', fam.id]">
+        <div *ngIf="!loading()"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <ng-container *ngFor="let fam of filteredFamilies()">
+                <app-entity-card [title]="getPersonName(fam.husband) + ' & ' + getPersonName(fam.wife)"
+                    [subtitle]="getFamilyStatusIcon(fam) + ' ' + (getMarriageInfo(fam) || 'Keine Daten')"
+                    [meta]="getMarriageSubtypeLabels(fam).join(', ')" [avatarUrl]="getFamilyImage(fam)"
+                    badgeText="Familie" badgeColor="highlight" [routerLink]="['/family', fam.id]">
 
-                <!-- Children Info (Top Right) -->
-                <div *ngIf="fam.children?.length"
-                    class="absolute top-2 right-2 flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black z-30 group-hover:bg-blue-500/20 transition-all"
-                    [title]="getChildrenTooltip(fam)">
-                    <span>{{ fam.children.length }}</span>
-                </div>
-
-                <!-- Couple Avatars (Stacked Vertically, no overlap) -->
-                <div class="flex flex-col gap-1 shrink-0 relative">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-cover bg-center bg-no-repeat border border-white/10 shadow-lg relative z-20"
-                        [ngClass]="{'bg-blue-500/15 text-blue-400': getPersonGender(fam.husband) === 'M', 'bg-pink-500/15 text-pink-400': getPersonGender(fam.husband) === 'F', 'bg-slate-500/15 text-slate-400': getPersonGender(fam.husband) !== 'M' && getPersonGender(fam.husband) !== 'F'}"
-                        [style.background-image]="'url(' + getPersonImage(fam.husband) + ')'"
-                        [style.background-size]="getPersonImage(fam.husband).includes('assets/avatars/') ? '20px' : 'cover'">
+                    <div actions *ngIf="fam.children?.length"
+                        class="text-xs px-2.5 py-1 rounded bg-surface-darkest/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap"
+                        [title]="getChildrenTooltip(fam)">
+                        {{ fam.children.length }} Kinder
                     </div>
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-cover bg-center bg-no-repeat border border-white/10 shadow-lg relative z-10"
-                        [ngClass]="{'bg-blue-500/15 text-blue-400': getPersonGender(fam.wife) === 'M', 'bg-pink-500/15 text-pink-400': getPersonGender(fam.wife) === 'F', 'bg-slate-500/15 text-slate-400': getPersonGender(fam.wife) !== 'M' && getPersonGender(fam.wife) !== 'F'}"
-                        [style.background-image]="'url(' + getPersonImage(fam.wife) + ')'"
-                        [style.background-size]="getPersonImage(fam.wife).includes('assets/avatars/') ? '20px' : 'cover'">
-                    </div>
-                </div>
-
-                <!-- Info Area (Stacked Names) -->
-                <div class="flex-1 min-w-0 flex flex-col justify-center">
-                    <div class="flex flex-col gap-0 mb-1.5">
-                        <span class="text-[0.85rem] font-bold text-slate-100 truncate tracking-tight">{{
-                            getPersonName(fam.husband) }}</span>
-                        <!-- Minimal Separator -->
-                        <div class="h-px w-4 bg-white/10 my-1"></div>
-                        <span class="text-[0.85rem] font-bold text-slate-100 truncate tracking-tight">{{
-                            getPersonName(fam.wife) }}</span>
-                    </div>
-
-                    <div class="flex items-center gap-1.5 text-slate-400 text-[0.7rem]">
-                        <span class="text-xs leading-none">{{ getFamilyStatusIcon(fam) }}</span>
-                        <span class="truncate font-medium">{{ getMarriageInfo(fam) || 'Keine Daten' }}</span>
-                    </div>
-
-                    <!-- Additional Details (Subtypes) - extra compact -->
-                    <div class="flex flex-wrap gap-1 mt-1.5" *ngIf="getMarriageSubtypeLabels(fam).length > 0">
-                        <span *ngFor="let label of getMarriageSubtypeLabels(fam)"
-                            class="text-[0.6rem] px-1 py-0.5 rounded-md bg-slate-500/10 text-slate-400 border border-white/5 font-bold uppercase tracking-wider">
-                            {{ label }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Subtle Navigation Hint -->
-                <div
-                    class="text-slate-700 opacity-0 transition-all duration-300 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-brand-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
-                </div>
-            </a>
+                </app-entity-card>
+            </ng-container>
         </div>
     </div>
-</div>
+</app-page-container>

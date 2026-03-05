@@ -4,11 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { PlaceModal } from './place-modal';
+import { AppEntityCard } from './ui/app-entity-card';
+import { AppModalShell } from './ui/app-modal-shell';
+import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppPageContainerComponent } from './ui/app-page-container';
 
 @Component({
     selector: 'app-place-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, PlaceModal],
+    imports: [CommonModule, FormsModule, PlaceModal, AppEntityCard, AppModalShell, AppPageHeaderComponent, AppPageContainerComponent],
     templateUrl: './place-list.html',
     encapsulation: ViewEncapsulation.None
 })

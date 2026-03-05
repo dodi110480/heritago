@@ -1,115 +1,84 @@
-<div class="modal-container" *ngIf="visible">
-    <div class="modal-glass max-w-[900px]">
-        <!-- Decorative Background Glow -->
-        <div class="modal-glow-blue"></div>
-        <div class="modal-glow-purple"></div>
-
-        <div class="relative z-10 flex flex-col gap-8 h-full">
-            <!-- Modal Header -->
-            <div class="flex justify-between items-center px-1">
-                <div class="flex items-center gap-4">
-                    <div class="p-3 bg-blue-500/10 text-blue-400 rounded-2xl border border-blue-500/20">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+<app-modal-shell [visible]="visible" title="Aus Galerie wählen" icon="🖼️" size="xl" [showFooter]="false"
+    [showSave]="false" (close)="close()">
+    <div class="relative z-10 flex flex-col gap-8 h-full">
+        <!-- Modal Content (Flex Column) -->
+        <div class="flex flex-col gap-6 flex-1 min-h-0">
+            <!-- Search Bar -->
+            <div class="flex gap-4 items-center bg-canvas-black/40 border border-canvas-white/5 p-2 rounded-2xl">
+                <div class="flex-1 relative">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                            <polyline points="21 15 16 10 5 21"></polyline>
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                     </div>
-                    <h3 class="text-2xl font-black text-white tracking-tight">Aus Galerie wählen</h3>
+                    <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="onSearch()"
+                        class="w-full bg-transparent border-none px-12 py-3 text-neutral-200 focus:ring-0 placeholder-neutral-600"
+                        placeholder="Nach Titel oder Dateiname suchen...">
                 </div>
-                <button (click)="close()"
-                    class="p-2 rounded-full hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
+                <button (click)="onSearch()" class="btn-primary px-6 py-3">Suchen</button>
             </div>
 
-            <!-- Modal Content (Flex Column) -->
-            <div class="flex flex-col gap-6 flex-1 min-h-0">
-                <!-- Search Bar -->
-                <div class="flex gap-4 items-center bg-black/40 border border-white/5 p-2 rounded-2xl">
-                    <div class="flex-1 relative">
-                        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                        </div>
-                        <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="onSearch()"
-                            class="w-full bg-transparent border-none px-12 py-3 text-slate-200 focus:ring-0 placeholder-slate-600"
-                            placeholder="Nach Titel oder Dateiname suchen...">
+            <!-- Scrollable Media Area -->
+            <div class="flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-2">
+                <div *ngIf="loading()" class="py-20 flex flex-col items-center gap-4 text-neutral-500">
+                    <div class="w-8 h-8 border-2 border-canvas-white/10 border-l-brand-500 rounded-full animate-spin">
                     </div>
-                    <button (click)="onSearch()" class="btn-primary px-6 py-3">Suchen</button>
+                    <span class="text-sm font-bold uppercase tracking-widest">Lade Medien...</span>
                 </div>
 
-                <!-- Scrollable Media Area -->
-                <div class="flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-2">
-                    <div *ngIf="loading()" class="py-20 flex flex-col items-center gap-4 text-slate-500">
-                        <div class="w-8 h-8 border-2 border-white/10 border-l-blue-500 rounded-full animate-spin"></div>
-                        <span class="text-sm font-bold uppercase tracking-widest">Lade Medien...</span>
+                <div *ngIf="!loading() && mediaItems().length === 0"
+                    class="py-20 text-center flex flex-col items-center gap-4 border-2 border-dashed border-canvas-white/5 rounded-[32px] bg-canvas-white/5">
+                    <div class="text-neutral-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                        </svg>
                     </div>
+                    <p class="text-neutral-500 max-w-xs mx-auto text-sm leading-relaxed">
+                        Keine Medien gefunden. Lade zunächst Dateien in der Galerie hoch!
+                    </p>
+                </div>
 
-                    <div *ngIf="!loading() && mediaItems().length === 0"
-                        class="py-20 text-center flex flex-col items-center gap-4 border-2 border-dashed border-white/5 rounded-[32px] bg-white/5">
-                        <div class="text-slate-600">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="9" y1="9" x2="15" y2="15"></line>
-                                <line x1="15" y1="9" x2="9" y2="15"></line>
-                            </svg>
+                <div *ngIf="!loading() && mediaItems().length > 0"
+                    class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <div *ngFor="let item of mediaItems()" (click)="selectItem(item)"
+                        class="group relative aspect-square bg-ui-surfaceDarkest rounded-2xl border border-canvas-white/5 overflow-hidden cursor-pointer transition-all hover:scale-[1.03] hover:border-brand-500/50 hover:shadow-2xl hover:shadow-brand-sm">
+                        <img [src]="item.url" [alt]="item.title" class="w-full h-full object-cover">
+
+                        <!-- Overlay Title -->
+                        <div
+                            class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
+                            <span
+                                class="text-[10px] font-bold text-canvas-white truncate block uppercase tracking-tighter">
+                                {{ item.title || item.originalFileName || 'Ohne Titel' }}
+                            </span>
                         </div>
-                        <p class="text-slate-500 max-w-xs mx-auto text-sm leading-relaxed">
-                            Keine Medien gefunden. Lade zunächst Dateien in der Galerie hoch!
-                        </p>
-                    </div>
 
-                    <div *ngIf="!loading() && mediaItems().length > 0"
-                        class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        <div *ngFor="let item of mediaItems()" (click)="selectItem(item)"
-                            class="group relative aspect-square bg-slate-950 rounded-2xl border border-white/5 overflow-hidden cursor-pointer transition-all hover:scale-[1.03] hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-900/20">
-                            <img [src]="item.url" [alt]="item.title" class="w-full h-full object-cover">
-
-                            <!-- Overlay Title -->
-                            <div
-                                class="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 to-transparent translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
-                                <span
-                                    class="text-[10px] font-bold text-white truncate block uppercase tracking-tighter">
-                                    {{ item.title || item.originalFileName || 'Ohne Titel' }}
-                                </span>
-                            </div>
-
-                            <!-- Select Indicator -->
-                            <div
-                                class="absolute top-3 right-3 w-6 h-6 rounded-full bg-blue-500 border-2 border-white/20 flex items-center justify-center scale-0 group-hover:scale-100 transition-transform shadow-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                            </div>
+                        <!-- Select Indicator -->
+                        <div
+                            class="absolute top-3 right-3 w-6 h-6 rounded-full bg-brand-500 border-2 border-canvas-white/20 flex items-center justify-center scale-0 group-hover:scale-100 transition-transform shadow-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="flex justify-between items-center px-1 pt-4 border-t border-white/5">
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                    {{ mediaItems().length }} Medien gefunden
-                </span>
-                <button (click)="close()"
-                    class="px-8 py-3 bg-white/5 hover:bg-white/10 text-slate-400 font-bold rounded-xl transition-colors">
-                    Abbrechen
-                </button>
             </div>
         </div>
+        <div class="flex justify-between items-center px-1 pt-4 border-t border-canvas-white/5">
+            <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                {{ mediaItems().length }} Medien gefunden
+            </span>
+            <button (click)="close()"
+                class="px-8 py-3 bg-canvas-white/5 hover:bg-canvas-white/10 text-neutral-400 font-bold rounded-xl transition-colors">
+                Abbrechen
+            </button>
+        </div>
     </div>
-</div>
+</app-modal-shell>

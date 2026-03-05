@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
@@ -6,11 +6,25 @@ import { Individual, Family } from './models';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
+import { AppPageContainerComponent } from './ui/app-page-container';
+import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppCardComponent } from './ui/app-card';
+import { AppModalShell } from './ui/app-modal-shell';
+import { FamilyEventCardComponent } from './family-event-card';
 
 @Component({
     selector: 'app-family-detail',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink],
+    imports: [
+        CommonModule,
+        FormsModule,
+        RouterLink,
+        AppPageContainerComponent,
+        AppPageHeaderComponent,
+        AppCardComponent,
+        AppModalShell,
+        FamilyEventCardComponent
+    ],
     templateUrl: './family-detail.html'
 })
 export class FamilyDetail implements OnInit, OnDestroy {
@@ -25,6 +39,17 @@ export class FamilyDetail implements OnInit, OnDestroy {
     loading = signal(true);
     isDirty = signal(false);
     isSaving = signal(false);
+    availableSources = signal<any[]>([]);
+
+    // Modal: Kind hinzufügen
+    showAddChildModal = signal(false);
+    addChildQuery = '';
+    addChildResults = signal<Individual[]>([]);
+    selectedChildId = signal<string | null>(null);
+    addChildError = signal<string | null>(null);
+
+    // Modal: Abbrechen bestätigen
+    showCancelConfirmModal = signal(false);
 
     private sub = new Subscription();
 
@@ -47,10 +72,17 @@ export class FamilyDetail implements OnInit, OnDestroy {
             next: (data) => {
                 if (data) {
                     this.individuals.set(data.individuals);
+                    const treeName = data.meta?.tree;
+                    if (treeName) {
+                        this.gedcomService.getSources(treeName).subscribe({
+                            next: (res: any) => {
+                                if (res.success) this.availableSources.set(res.sources || []);
+                            }
+                        });
+                    }
                     const fam = data.families.find(f => f.id === this.familyId());
                     if (fam) {
                         const clonedFam = JSON.parse(JSON.stringify(fam));
-                        // Normalize events
                         if (clonedFam.events) {
                             clonedFam.events.forEach((e: any) => {
                                 if (!e.dateText && e.date) e.dateText = e.date;
@@ -61,9 +93,9 @@ export class FamilyDetail implements OnInit, OnDestroy {
                                 if (!Array.isArray(e.citations)) e.citations = [];
                             });
                         }
+                        if (!Array.isArray(clonedFam.notes)) clonedFam.notes = [];
                         this.family.set(clonedFam);
                     } else {
-                        // Handle not found
                         this.router.navigate(['/families']);
                     }
                 }
@@ -114,13 +146,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
         const fam = this.family();
         if (!fam) return;
         if (!fam.events) fam.events = [];
-        fam.events.push({
-            type: 'MARR',
-            subType: '',
-            dateText: '',
-            place: '',
-            isPrimary: false
-        });
+        fam.events.push({ type: 'MARR', subType: '', dateText: '', place: '', isPrimary: false });
         this.isDirty.set(true);
     }
 
@@ -135,9 +161,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
         const fam = this.family();
         if (fam?.events) {
             for (const ev of fam.events) {
-                if (ev.type !== 'MARR') {
-                    ev.subType = '';
-                }
+                if (ev.type !== 'MARR') ev.subType = '';
                 if (!ev.media) ev.media = [];
                 if (!ev.notes) ev.notes = [];
                 if (!ev.citations) ev.citations = [];
@@ -146,90 +170,46 @@ export class FamilyDetail implements OnInit, OnDestroy {
         this.isDirty.set(true);
     }
 
-    addEventMedia(eventIndex: number) {
-        const fam = this.family();
-        const event = fam?.events?.[eventIndex];
-        if (!event) return;
-        event.media = event.media || [];
-        event.media.push({ url: '', title: '', isPrimary: false });
+    addNote() {
+        const fam = this.family() as any;
+        if (!fam) return;
+        if (!Array.isArray(fam.notes)) fam.notes = [];
+        fam.notes.push({ text: '', noteType: 'GENERAL', researchStatus: 'OPEN', privacyLevel: 'PRIVATE' });
         this.isDirty.set(true);
     }
 
-    removeEventMedia(eventIndex: number, mediaIndex: number) {
-        const fam = this.family();
-        const event = fam?.events?.[eventIndex];
-        if (!event?.media) return;
-        event.media.splice(mediaIndex, 1);
+    removeNote(index: number) {
+        const fam = this.family() as any;
+        if (!fam?.notes) return;
+        fam.notes.splice(index, 1);
         this.isDirty.set(true);
     }
 
-    addEventNote(eventIndex: number) {
-        const fam = this.family();
-        const event = fam?.events?.[eventIndex];
-        if (!event) return;
-        event.notes = event.notes || [];
-        event.notes.push('');
-        this.isDirty.set(true);
+    // ── Kind hinzufügen (Modal-Pattern) ──────────────────────────────────────
+    openAddChildModal() {
+        this.addChildQuery = '';
+        this.addChildResults.set([]);
+        this.selectedChildId.set(null);
+        this.addChildError.set(null);
+        this.showAddChildModal.set(true);
     }
 
-    updateEventNote(eventIndex: number, noteIndex: number, value: string) {
-        const fam = this.family();
-        const event = fam?.events?.[eventIndex];
-        if (!event?.notes) return;
-        event.notes[noteIndex] = value;
-        this.isDirty.set(true);
+    selectChildCandidate(person: Individual) {
+        this.selectedChildId.set(person.id);
     }
 
-    removeEventNote(eventIndex: number, noteIndex: number) {
-        const fam = this.family();
-        const event = fam?.events?.[eventIndex];
-        if (!event?.notes) return;
-        event.notes.splice(noteIndex, 1);
-        this.isDirty.set(true);
-    }
-
-    addEventCitation(eventIndex: number) {
-        const fam = this.family();
-        const event = fam?.events?.[eventIndex];
-        if (!event) return;
-        event.citations = event.citations || [];
-        event.citations.push({ sourceId: '', sourceTitle: '', quality: 2, whereInSource: '', text: '' });
-        this.isDirty.set(true);
-    }
-
-    removeEventCitation(eventIndex: number, citationIndex: number) {
-        const fam = this.family();
-        const event = fam?.events?.[eventIndex];
-        if (!event?.citations) return;
-        event.citations.splice(citationIndex, 1);
-        this.isDirty.set(true);
-    }
-
-    isImage(media: any): boolean {
-        const mime = (media?.mimeType || '').toLowerCase();
-        const url = (media?.url || '').toLowerCase();
-        return mime.startsWith('image/')
-            || url.endsWith('.jpg')
-            || url.endsWith('.jpeg')
-            || url.endsWith('.png')
-            || url.endsWith('.gif')
-            || url.endsWith('.webp')
-            || url.endsWith('.svg');
-    }
-
-    getMediaUrl(url: string | undefined): string {
-        return this.gedcomService.getMediaUrl(url);
-    }
-
-    addChild() {
+    confirmAddChild() {
+        this.addChildError.set(null);
         const fam = this.family();
         if (!fam) return;
         if (!fam.children) fam.children = [];
 
-        const query = (prompt('Kind-ID oder Name eingeben:') || '').trim();
-        if (!query) return;
+        const query = (this.addChildQuery || '').trim().toLowerCase();
+        if (!query) {
+            this.addChildError.set('Bitte einen Namen oder eine ID eingeben.');
+            return;
+        }
 
-        const normalizedQuery = query.toLowerCase();
         const existing = new Set<string>([
             ...(fam.children || []),
             fam.husband || '',
@@ -239,37 +219,33 @@ export class FamilyDetail implements OnInit, OnDestroy {
         const candidates = this.individuals().filter(p => {
             const id = (p.id || '').toLowerCase();
             const name = `${p.firstName || ''} ${p.lastName || ''}`.trim().toLowerCase();
-            return id === normalizedQuery || name.includes(normalizedQuery);
+            return id === query || name.includes(query);
         });
 
         if (candidates.length === 0) {
-            alert('Keine passende Person gefunden.');
+            this.addChildResults.set([]);
+            this.addChildError.set('Keine passende Person gefunden.');
             return;
         }
 
-        let selected = candidates[0];
-        if (candidates.length > 1) {
-            const options = candidates
-                .slice(0, 10)
-                .map(c => `${c.id}: ${(c.firstName || '')} ${(c.lastName || '')}`.trim())
-                .join('\n');
-            const selectedId = (prompt(`Mehrere Treffer gefunden. Bitte ID wählen:\n${options}`) || '').trim();
-            if (!selectedId) return;
-            const match = candidates.find(c => c.id === selectedId);
-            if (!match) {
-                alert('Ungültige ID-Auswahl.');
-                return;
-            }
-            selected = match;
+        // Wenn mehrere Treffer: anzeigen und warten
+        if (candidates.length > 1 && !this.selectedChildId()) {
+            this.addChildResults.set(candidates.slice(0, 10));
+            return;
         }
 
+        const selected = this.selectedChildId()
+            ? candidates.find(c => c.id === this.selectedChildId()) || candidates[0]
+            : candidates[0];
+
         if (existing.has(selected.id)) {
-            alert('Diese Person ist bereits in der Familie verknüpft.');
+            this.addChildError.set('Diese Person ist bereits in der Familie verknüpft.');
             return;
         }
 
         fam.children.push(selected.id);
         this.isDirty.set(true);
+        this.showAddChildModal.set(false);
     }
 
     removeChild(childId: string) {
@@ -279,6 +255,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
         this.isDirty.set(true);
     }
 
+    // ── Speichern / Abbrechen ─────────────────────────────────────────────────
     save() {
         const fam = this.family();
         const tree = this.authService.currentTree();
@@ -297,18 +274,21 @@ export class FamilyDetail implements OnInit, OnDestroy {
             },
             error: (err) => {
                 this.isSaving.set(false);
-                alert(err?.error?.message || 'Speichern der Familie fehlgeschlagen.');
+                // TODO: Fehlermeldung via Toast
+                console.error('Speichern fehlgeschlagen:', err?.error?.message);
             }
         });
     }
 
-    cancel() {
+    requestCancel() {
         if (this.isDirty()) {
-            if (confirm('Ungespeicherte Änderungen verwerfen?')) {
-                this.router.navigate(['/families']);
-            }
+            this.showCancelConfirmModal.set(true);
         } else {
             this.router.navigate(['/families']);
         }
+    }
+
+    confirmCancel() {
+        this.router.navigate(['/families']);
     }
 }

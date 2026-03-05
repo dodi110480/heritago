@@ -1,4 +1,4 @@
-<app-page-container [wide]="isExpertMode()" *ngIf="person() as p" (input)="markDirty()">
+<app-page-container [wide]="true" *ngIf="person() as p" (input)="markDirty()">
     <app-page-header [title]="p.firstName + ' ' + p.lastName"
         [description]="(p.birthDate | cleanDate) + ' - ' + (p.deathDate | cleanDate)">
         <div breadcrumbs>
@@ -12,35 +12,11 @@
             </button>
         </div>
 
-        <div actions class="flex flex-wrap items-center gap-3">
-            <!-- Mode Toggle -->
-            <div
-                class="flex items-center gap-3 glass-card !bg-white/5 !px-3 !py-1.5 !rounded-full text-xs shadow-inner">
-                <span [class.text-slate-200]="!isExpertMode()" [class.text-slate-500]="isExpertMode()">Einfach</span>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" [checked]="isExpertMode()" (change)="toggleMode()" class="sr-only peer">
-                    <div
-                        class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-500 shadow-inner">
-                    </div>
-                </label>
-                <span [class.text-slate-200]="isExpertMode()" [class.text-slate-500]="!isExpertMode()">Experte</span>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <button class="btn-primary !w-auto !py-2" (click)="savePerson()" [disabled]="isSaving">
-                    {{ isSaving ? 'Speichere...' : 'Speichern' }}
-                </button>
-                <button class="btn-secondary !w-auto !py-2" (click)="openDeleteModal()"
-                    [disabled]="isSaving || isDeleting">
-                    Löschen
-                </button>
-            </div>
-        </div>
+        <div actions></div>
     </app-page-header>
 
-    <!-- Expert Mode Tabs (Expert Mode Only) -->
-    <div *ngIf="isExpertMode()"
-        class="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-white/5 no-scrollbar animate-in slide-in-from-top-4 duration-300">
+    <div
+        class="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-canvas-white/5 no-scrollbar animate-in slide-in-from-top-4 duration-300">
         <button *ngFor="let tab of [
             {id: 'basics', label: 'Allgemeines'},
             {id: 'timeline', label: 'Lebenslauf'},
@@ -54,1037 +30,69 @@
         ]" (click)="activeTab = tab.id"
             [class]="activeTab === tab.id ? 
             'px-4 py-2 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm font-medium whitespace-nowrap shadow-lg shadow-brand-500/5' : 
-            'px-4 py-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-slate-200 text-sm font-medium transition-all whitespace-nowrap'">
+            'px-4 py-2 rounded-lg hover:bg-canvas-white/5 text-neutral-400 hover:text-neutral-200 text-sm font-medium transition-all whitespace-nowrap'">
             {{tab.label}}
         </button>
     </div>
 
-
-    <!-- SIMPLE MODE -->
-    <div *ngIf="!isExpertMode()" class="space-y-6 pb-20">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-
-            <!-- LEFT COLUMN (2/3): Stammdaten & Lebensweg -->
-            <div class="md:col-span-2 space-y-6"> <app-card>
-                    <h2 class="text-xl font-bold mb-6 text-slate-100 flex items-center gap-3">
-                        <span class="w-1.5 h-8 bg-brand rounded-full shadow-brand"></span>
-                        Stammdaten
-                    </h2>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="space-y-4">
-                            <div class="form-group mb-0">
-                                <label class="form-label">Vorname</label>
-                                <input type="text" [(ngModel)]="p.firstName" class="form-input">
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="form-label">Nachname</label>
-                                <input type="text" [(ngModel)]="p.lastName" class="form-input">
-                            </div>
-                        </div>
-
-                        <div class="space-y-2">
-                            <label class="app-label">Geschlecht</label>
-                            <div class="grid grid-cols-2 gap-2">
-                            </div>
-                        </div>
-                    </div>
-                </app-card>
-
-                <app-card>
-                    <h2 class="text-xl font-bold text-slate-100 mb-8 flex items-center gap-3">
-                        <span class="w-1.5 h-8 bg-amber-500 rounded-full"></span>
-                        Lebensweg
-                    </h2>
-
-                    <div class="timeline-container">
-                    </div>
-                </app-card>
-            </div>
-
-            <!-- RIGHT COLUMN (1/3): Profilbild & Sidebar -->
-            <div class="space-y-8">
-                <!-- Profilbild Card -->
-                <app-card>
-                    <div class="p-0">
-                        <h2 class="text-xl font-bold mb-6 text-slate-100 flex items-center gap-3">
-                            <span
-                                class="w-1.5 h-8 bg-brand-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"></span>
-                            Profilbild
-                        </h2>
-
-                        <div class="relative group cursor-pointer aspect-square overflow-hidden glass-card"
-                            (click)="openMediaAddModal()">
-                            <img *ngIf="getProfileImage(p)" [src]="getProfileImage(p)"
-                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out">
-
-                            <div *ngIf="!getProfileImage(p)"
-                                class="w-full h-full flex flex-col items-center justify-center text-slate-600 group-hover:text-brand-400 transition-colors bg-gradient-to-br from-white/5 to-transparent">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"
-                                    stroke-linejoin="round" class="mb-4 opacity-20">
-                                    <path
-                                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                                    <circle cx="12" cy="13" r="4" />
-                                </svg>
-                                <span class="text-[10px] font-bold uppercase tracking-[.2em]">Foto hochladen</span>
-                            </div>
-
-                            <div
-                                class="absolute inset-0 bg-brand-600/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                <div
-                                    class="px-6 py-3 bg-white text-slate-950 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                                    Ändern
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </app-card>
-
-                <!-- Family Sidebar Meta-Box -->
-                <div class="space-y-6">
-                    <!-- PARENTS BOX -->
-                    <div class="glass-card space-y-5 shadow-2xl">
-                        <h4 class="text-[10px] font-black text-slate-600 uppercase tracking-[.3em] px-1">Herkunft</h4>
-                        <div class="space-y-3">
-                            <div (click)="p.fatherId ? goToPerson(p.fatherId) : addRelationSimple('father')"
-                                class="flex items-center gap-4 !p-4 glass-card !bg-white/5 hover:bg-brand-500/10 hover:border-brand-500/20 cursor-pointer transition-all group">
-                                <div
-                                    class="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                                    👨</div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Vater
-                                    </div>
-                                    <div
-                                        class="text-sm font-black truncate text-white group-hover:text-brand-400 transition-colors">
-                                        {{ p.fatherName || 'Unbekannt' }}</div>
-                                </div>
-                                <div class="text-slate-700">→</div>
-                            </div>
-                            <div (click)="p.motherId ? goToPerson(p.motherId) : addRelationSimple('mother')"
-                                class="flex items-center gap-4 !p-4 glass-card !bg-white/5 hover:bg-pink-500/10 hover:border-pink-500/20 cursor-pointer transition-all group">
-                                <div
-                                    class="w-12 h-12 rounded-2xl bg-pink-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                                    👩</div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="text-[9px] font-bold text-slate-500 uppercase tracking-tighter">Mutter
-                                    </div>
-                                    <div
-                                        class="text-sm font-black truncate text-white group-hover:text-pink-400 transition-colors">
-                                        {{ p.motherName || 'Unbekannt' }}</div>
-                                </div>
-                                <div class="text-slate-700">→</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Notizen Quickview -->
-                    <div class="glass-card overflow-hidden shadow-xl" [class.ring-1]="isSectionOpen('notes')"
-                        [class.ring-brand-500/30]="isSectionOpen('notes')">
-                        <button (click)="toggleSection('notes')"
-                            class="w-full flex items-center justify-between p-6 hover:bg-white/5 transition-colors group">
-                            <span
-                                class="text-[10px] font-black flex items-center gap-4 text-slate-600 uppercase tracking-[.3em]">
-                                <span
-                                    class="flex items-center justify-center w-10 h-10 rounded-2xl bg-white/5 text-xl group-hover:rotate-6 transition-transform">📝</span>
-                                Notizen
-                            </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="3"
-                                class="text-slate-700 transition-transform" [class.rotate-180]="isSectionOpen('notes')">
-                                <polyline points="6 9 12 15 18 9"></polyline>
-                            </svg>
-                        </button>
-                        <div *ngIf="isSectionOpen('notes')" class="p-6 pt-0 space-y-4">
-                            <div *ngFor="let note of p.notes; let i = index; trackBy: trackByIndex"
-                                class="relative group">
-                                <textarea [ngModel]="note" (ngModelChange)="updatePersonNote(i, $event)"
-                                    class="form-input min-h-[120px]" placeholder="Deine Notiz..."
-                                    (input)="markDirty()"></textarea>
-                                <button (click)="removePersonNote(i)"
-                                    class="absolute top-4 right-4 w-8 h-8 rounded-xl bg-rose-500/10 text-rose-400 opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 text-white">✕</button>
-                            </div>
-                            <button (click)="addPersonNote()"
-                                class="w-full py-4 text-[9px] font-black text-brand-500 uppercase tracking-[.4em] hover:bg-white/5 rounded-2xl transition-all">+
-                                Notiz</button>
-                        </div>
-                    </div>
-
-                    <!-- Media Indicators -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <button (click)="activeTab = 'media'; isExpertMode.set(true)"
-                            class="flex flex-col items-center justify-center !p-8 glass-card hover:bg-white/5 transition-all group shadow-2xl">
-                            <span
-                                class="text-2xl mb-2 group-hover:scale-110 transition-transform grayscale group-hover:grayscale-0">🖼️</span>
-                            <span class="badge badge-blue">Medien ({{p.media.length}})</span>
-                        </button>
-                        <button (click)="activeTab = 'citations'; isExpertMode.set(true)"
-                            class="flex flex-col items-center justify-center !p-8 glass-card hover:bg-white/5 transition-all group shadow-2xl">
-                            <span
-                                class="text-2xl mb-2 group-hover:scale-110 transition-transform grayscale group-hover:grayscale-0">📚</span>
-                            <span class="badge badge-amber">Quellen ({{p.citations.length}})</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> <!-- End Simple Mode Content -->
-    <!-- EXPERT MODE CONTENT -->
-    <div *ngIf="isExpertMode()" class="space-y-8 animate-in fade-in duration-500 pb-20">
+    <div class="space-y-8 animate-in fade-in duration-500 pb-20">
 
         <!-- Tab: Basics -->
         <div *ngIf="activeTab === 'basics'" class="space-y-6">
-            <app-card>
-                <div class="p-6 space-y-8">
-                    <div>
-                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
-                            <span class="w-2 h-6 bg-brand-500 rounded-full"></span> Basisdaten
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="form-group mb-0">
-                                <label class="form-label">Geschlecht</label>
-                                <select [(ngModel)]="p.gender" class="form-input !py-2.5">
-                                    <option value="M">Männlich</option>
-                                    <option value="F">Weiblich</option>
-                                    <option value="X">Divers</option>
-                                    <option value="U">Unbekannt</option>
-                                </select>
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="form-label">Lebend</label>
-                                <select [(ngModel)]="p.isLiving" class="form-input !py-2.5">
-                                    <option [ngValue]="true">Ja</option>
-                                    <option [ngValue]="false">Nein</option>
-                                </select>
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="form-label">Datenschutz</label>
-                                <select [(ngModel)]="p.privacyLevel" class="form-input !py-2.5">
-                                    <option value="PUBLIC">Öffentlich</option>
-                                    <option value="FAMILY">Familie</option>
-                                    <option value="PRIVATE">Privat</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="border-t border-white/5 pt-8">
-                        <h3 class="text-lg font-semibold mb-4 text-white">Name</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="form-group mb-0">
-                                <label class="form-label">Vorname</label>
-                                <input type="text" [(ngModel)]="p.firstName" class="form-input">
-                            </div>
-                            <div class="form-group mb-0">
-                                <label class="form-label">Nachname</label>
-                                <input type="text" [(ngModel)]="p.lastName" class="form-input">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </app-card>
+            <app-person-expert-basics-tab [person]="p" (changed)="markDirty(); savePerson()"
+                (deleteRequested)="openDeleteModal()"></app-person-expert-basics-tab>
         </div>
 
-        <!-- TIMELINE TAB (Merged Events + Facts) -->
+        <!-- TIMELINE TAB -->
         <div *ngIf="activeTab === 'timeline'" class="space-y-6">
-            <app-card>
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-xl font-semibold text-white">Lebenslauf</h2>
-                        <button (click)="addTimelineItem()" class="btn-primary !w-auto !py-2">
-                            + Ereignis/Fakt hinzufügen
-                        </button>
-                    </div>
-
-                    <div
-                        class="relative pl-8 space-y-8 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-white/10">
-                        <div *ngFor="let item of timeline(); let i = index" class="relative group/item">
-                            <!-- Dot -->
-                            <div
-                                class="absolute -left-[26px] top-1.5 w-4 h-4 rounded-full bg-brand-500 border-4 border-slate-900 z-10 transition-transform group-hover/item:scale-125">
-                            </div>
-
-                            <div class="glass-card !bg-white/5 !rounded-2xl transition-all shadow-sm"
-                                [class.ring-2]="item.editing" [class.ring-brand-500/50]="item.editing">
-                                <!-- READ ONLY VIEW -->
-                                <div *ngIf="!item.editing" class="space-y-4">
-                                    <div class="flex justify-between items-start">
-                                        <div class="space-y-1">
-                                            <div class="text-[10px] font-bold text-brand-400 uppercase tracking-widest">
-                                                {{ getTagLabel(item.tag) }}</div>
-                                            <div class="text-lg font-semibold text-white">{{ item.date || 'Kein Datum'
-                                                }}</div>
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <button (click)="editTimelineItem(i)"
-                                                class="p-2 rounded-xl bg-white/5 text-slate-400 hover:bg-brand-500/10 hover:text-brand-400 transition-all"
-                                                title="Ereignis bearbeiten">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <path
-                                                        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7">
-                                                    </path>
-                                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z">
-                                                    </path>
-                                                </svg>
-                                            </button>
-                                            <button (click)="removeTimelineItem(i)"
-                                                class="p-2 rounded-xl bg-rose-500/5 text-rose-500/50 hover:bg-rose-500/10 hover:text-rose-500 transition-all">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                                    <path
-                                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                                    </path>
-                                                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                                                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2" *ngIf="item.place">
-                                        <span
-                                            class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 text-slate-400 text-sm border border-white/5">
-                                            <span class="text-xs">📍</span> {{ item.place }}
-                                        </span>
-                                    </div>
-                                    <div class="text-sm text-white leading-relaxed glass-card !bg-white/5 !rounded-2xl"
-                                        *ngIf="item.value || item.description">
-                                        {{ item.value || item.description }}
-                                    </div>
-
-                                    <!-- Media Previews -->
-                                    <div class="flex flex-wrap gap-3" *ngIf="item.media?.length">
-                                        <div *ngFor="let med of item.media" (click)="openViewer(med)"
-                                            class="w-16 h-16 rounded-xl overflow-hidden cursor-pointer ring-1 ring-white/10 hover:ring-brand-500 transition-all hover:scale-105 active:scale-95">
-                                            <img [src]="getMediaUrl(med.url)" [alt]="med.title"
-                                                class="w-full h-full object-cover">
-                                        </div>
-                                    </div>
-
-                                    <!-- Meta Badges -->
-                                    <div class="flex flex-wrap gap-2">
-                                        <span *ngIf="item.media?.length" class="badge badge-blue">🖼 {{
-                                            item.media?.length }}</span>
-                                        <span *ngIf="item.citations?.length" class="badge badge-emerald">📖 {{
-                                            item.citations?.length }}</span>
-                                        <span *ngIf="item.notes?.length" class="badge badge-amber">📝 {{
-                                            item.notes?.length }}</span>
-                                    </div>
-                                </div>
-
-                                <!-- EDITING VIEW -->
-                                <div *ngIf="item.editing" class="space-y-6">
-                                    <div class="flex justify-between items-center pb-4 border-b border-white/10">
-                                        <select [(ngModel)]="item.tag" class="form-input !w-auto !py-2">
-                                            <optgroup label="Lebensereignisse">
-                                                <option value="BIRT">Geburt</option>
-                                                <option value="CHR">Taufe</option>
-                                                <option value="DEAT">Tod</option>
-                                                <option value="BURI">Begräbnis</option>
-                                                <option value="CREM">Einäscherung</option>
-                                                <option value="EMIG">Auswanderung</option>
-                                                <option value="IMMI">Einwanderung</option>
-                                            </optgroup>
-                                            <optgroup label="Eigenschaften & Fakten">
-                                                <option value="OCCU">Beruf</option>
-                                                <option value="RELI">Religion</option>
-                                                <option value="EDUC">Bildung</option>
-                                                <option value="RESI">Wohnsitz</option>
-                                                <option value="TITL">Titel</option>
-                                                <option value="NATI">Nationalität/Herkunft</option>
-                                                <option value="DSCR">Körperl. Merkmale</option>
-                                                <option value="FACT">Anderer Fakt</option>
-                                            </optgroup>
-                                        </select>
-                                        <button (click)="removeTimelineItem(i)"
-                                            class="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-all">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                                stroke-linecap="round" stroke-linejoin="round">
-                                                <polyline points="3 6 5 6 21 6"></polyline>
-                                                <path
-                                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                                </path>
-                                                <line x1="10" y1="11" x2="10" y2="17"></line>
-                                                <line x1="14" y1="11" x2="14" y2="17"></line>
-                                            </svg>
-                                        </button>
-                                    </div>
-
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div class="form-group mb-0">
-                                            <label class="form-label">Datum / Zeitraum</label>
-                                            <input type="text" [(ngModel)]="item.date" placeholder="z.B. 1980-04-11"
-                                                class="form-input">
-                                        </div>
-                                        <div class="form-group mb-0 relative">
-                                            <label class="form-label">Ort</label>
-                                            <div class="flex gap-2">
-                                                <input type="text" [(ngModel)]="item.place"
-                                                    (input)="searchPlaces(i, item.place!)"
-                                                    (focus)="searchPlaces(i, item.place!)"
-                                                    placeholder="z.B. Lichtenfels" class="form-input">
-                                                <button (click)="openPlaceModal(i)"
-                                                    class="btn-secondary !w-auto !py-2 !px-3 !text-[10px]">Neu</button>
-                                            </div>
-                                            <!-- ... (autocomplete div) ... -->
-                                        </div>
-                                        <div class="md:col-span-2 form-group mb-0">
-                                            <label class="form-label">Beschreibung / Wert</label>
-                                            <input
-                                                *ngIf="['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(item.tag)"
-                                                type="text" [(ngModel)]="item.value" placeholder="z.B. Beruf, Titel..."
-                                                class="form-input">
-                                            <input
-                                                *ngIf="!['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(item.tag)"
-                                                type="text" [(ngModel)]="item.description"
-                                                placeholder="Zusätzliche Notiz" class="form-input">
-                                        </div>
-                                    </div>
-
-                                    <div class="space-y-4 pt-4 border-t border-white/5">
-                                        <button (click)="toggleExpand(i)"
-                                            class="text-[10px] font-bold text-slate-400 hover:text-white uppercase tracking-widest transition-colors flex items-center gap-1.5">
-                                            <span class="text-xs">{{ item.expanded ? '▼' : '▶' }}</span>
-                                            {{ item.expanded ? 'Weniger anzeigen' : 'Erweitert (Quellen, Medien,
-                                            Notizen)...' }}
-                                        </button>
-
-                                        <div *ngIf="item.expanded"
-                                            class="space-y-8 animate-in fade-in slide-in-from-top-2 duration-300">
-                                            <!-- Medien -->
-                                            <div class="space-y-4">
-                                                <div class="flex justify-between items-center">
-                                                    <h4 class="text-sm font-semibold text-slate-300">Medien zum Ereignis
-                                                    </h4>
-                                                    <div class="flex gap-2">
-                                                        <button (click)="openMediaAddModal(i)"
-                                                            class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase rounded-lg border border-white/5 transition-all">+
-                                                            Upload</button>
-                                                        <button (click)="openMediaSelector(i)"
-                                                            class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase rounded-lg border border-white/5 transition-all">Galerie</button>
-                                                    </div>
-                                                </div>
-                                                <div *ngIf="item.media && item.media.length > 0"
-                                                    class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                                    <div *ngFor="let med of item.media; let mIndex = index"
-                                                        class="relative group/media glass-card !bg-black/20 !rounded-xl overflow-hidden">
-                                                        <div (click)="openViewer(med)"
-                                                            class="aspect-square cursor-pointer">
-                                                            <img [src]="getMediaUrl(med.url)" [alt]="med.title"
-                                                                class="w-full h-full object-cover">
-                                                        </div>
-                                                        <div class="p-2 space-y-2">
-                                                            <input type="text" [(ngModel)]="med.title"
-                                                                placeholder="Titel..."
-                                                                class="w-full bg-white/5 border border-white/5 rounded px-2 py-1 text-[10px] text-white focus:outline-none">
-                                                            <button (click)="removeEventMedia(i, mIndex)"
-                                                                class="w-full py-1 text-[9px] font-bold text-rose-400 bg-rose-500/5 hover:bg-rose-500/10 rounded transition-colors uppercase">Entfernen</button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Quellen -->
-                                            <div class="space-y-4">
-                                                <div class="flex justify-between items-center">
-                                                    <h4 class="text-sm font-semibold text-slate-300">Quellen (Citations)
-                                                    </h4>
-                                                    <button (click)="addEventCitation(i)"
-                                                        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase rounded-lg border border-white/5 transition-all">+
-                                                        Quelle</button>
-                                                </div>
-                                                <div *ngIf="item.citations && item.citations.length > 0"
-                                                    class="space-y-4">
-                                                    <div *ngFor="let cit of item.citations; let cIndex = index"
-                                                        class="glass-card !bg-black/20 !rounded-2xl space-y-3">
-                                                        <div class="flex gap-3">
-                                                            <input type="text" [(ngModel)]="cit.source"
-                                                                placeholder="Quelle..."
-                                                                class="flex-1 bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-xs text-white">
-                                                            <select [(ngModel)]="cit.quality"
-                                                                class="bg-white/5 border border-white/5 rounded-xl px-2 py-2 text-xs text-white">
-                                                                <option value="0">Unzuverlässig</option>
-                                                                <option value="1">Fragwürdig</option>
-                                                                <option value="2">Sekundär</option>
-                                                                <option value="3">Primär</option>
-                                                            </select>
-                                                            <button (click)="removeEventCitation(i, cIndex)"
-                                                                class="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg">✕</button>
-                                                        </div>
-                                                        <div class="grid grid-cols-2 gap-3">
-                                                            <input type="text" [(ngModel)]="cit.page"
-                                                                placeholder="Seite..."
-                                                                class="bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-xs text-white">
-                                                            <input type="text" [(ngModel)]="cit.text"
-                                                                placeholder="Zitierter Text..."
-                                                                class="bg-white/5 border border-white/5 rounded-xl px-3 py-2 text-xs text-white">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Notizen -->
-                                            <div class="space-y-4">
-                                                <div class="flex justify-between items-center">
-                                                    <h4 class="text-sm font-semibold text-slate-300">Notizen</h4>
-                                                    <button (click)="addEventNote(i)"
-                                                        class="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase rounded-lg border border-white/5 transition-all">+
-                                                        Notiz</button>
-                                                </div>
-                                                <div *ngFor="let note of item.notes; let nIndex = index; trackBy: trackByIndex"
-                                                    class="flex gap-2">
-                                                    <textarea [ngModel]="note"
-                                                        (ngModelChange)="updateEventNote(i, nIndex, $event)"
-                                                        placeholder="Anmerkung..."
-                                                        class="flex-1 min-h-[80px] bg-white/5 border border-white/5 rounded-xl p-3 text-xs text-white focus:ring-1 focus:ring-brand-500/50 outline-none"></textarea>
-                                                    <button (click)="removeEventNote(i, nIndex)"
-                                                        class="p-2 text-rose-500 self-start">✕</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex justify-end pt-4 border-t border-white/10">
-                                        <button (click)="saveTimelineItem(i)"
-                                            class="px-6 py-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all">
-                                            Speichern
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div *ngIf="timeline().length === 0"
-                        class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-3xl text-slate-500">
-                        <span class="text-4xl mb-3 opacity-20">📅</span>
-                        <p class="font-medium">Keine Einträge im Lebenslauf vorhanden.</p>
-                    </div>
-                </div>
-            </app-card>
+            <app-person-expert-timeline-tab [ctx]="self"></app-person-expert-timeline-tab>
         </div>
 
         <!-- RELATIONS TAB -->
         <div *ngIf="activeTab === 'relations'" class="space-y-6">
-            <app-card>
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-8">
-                        <div>
-                            <h2 class="text-xl font-semibold text-white">Familie & Beziehungen</h2>
-                            <p class="text-sm text-slate-400 mt-1">Verwalte Ehepartner, Eltern und Kinder.</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button (click)="toggleFamilyEdit()" [class.bg-brand-500]="isEditingFamily()"
-                                [class.text-white]="isEditingFamily()" [class.bg-white/5]="!isEditingFamily()"
-                                [class.text-slate-400]="!isEditingFamily()"
-                                class="p-2.5 rounded-xl transition-all hover:bg-brand-500/20" title="Bearbeiten">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                            </button>
-                            <button (click)="addRelation()" class="btn-primary !w-auto !py-2">
-                                + Beziehung hinzufügen
-                            </button>
-                        </div>
-                    </div>
-
-                    <div *ngIf="relations().length > 0" class="space-y-3">
-                        <div *ngFor="let rel of relations(); let i = index"
-                            (click)="!isEditingFamily() && rel.personId && goToPerson(rel.personId)"
-                            [class.cursor-pointer]="rel.personId && !isEditingFamily()"
-                            class="group relative glass-card !p-4 flex items-center gap-4 hover:bg-white/10 transition-all border-l-4"
-                            [class.border-l-brand-500]="rel.type === 'SPOUSE'"
-                            [class.border-l-indigo-500]="rel.type === 'FATHER' || rel.type === 'MOTHER'"
-                            [class.border-l-emerald-500]="rel.type === 'CHILD'">
-
-                            <div *ngIf="isEditingFamily(); else relRead"
-                                class="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1">
-                                <select [(ngModel)]="rel.type" class="form-input !w-32 !py-2">
-                                    <option value="SPOUSE">Partner</option>
-                                    <option value="FATHER">Vater</option>
-                                    <option value="MOTHER">Mutter</option>
-                                    <option value="CHILD">Kind</option>
-                                </select>
-
-                                <div class="relative flex-1 group/search">
-                                    <input type="text" [(ngModel)]="rel.personName"
-                                        (input)="searchIndividuals(i, rel.personName!)"
-                                        (focus)="searchIndividuals(i, rel.personName!)" placeholder="Person suchen..."
-                                        class="form-input !py-2">
-
-                                    <div class="absolute top-full left-0 w-full mt-2 bg-slate-900 border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
-                                        *ngIf="showIndividualResults() === i && individualSearchResults().length > 0">
-                                        <div *ngFor="let ind of individualSearchResults()"
-                                            (click)="selectIndividual(i, ind)"
-                                            class="px-4 py-2.5 text-sm text-slate-300 hover:bg-brand-500/20 hover:text-white cursor-pointer border-b border-white/5 last:border-0 transition-colors">
-                                            👤 {{ ind.firstName }} {{ ind.lastName }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div *ngIf="rel.type === 'SPOUSE'" class="flex gap-2 flex-1 md:max-w-xs">
-                                    <input type="text" class="form-input !py-2 !text-xs"
-                                        [ngModel]="getFamilyWeddingDate(rel.familyId)"
-                                        (ngModelChange)="updateFamilyWeddingByFamilyId(rel.familyId, 'date', $event)"
-                                        placeholder="💍 Datum">
-                                    <input type="text" class="form-input !py-2 !text-xs"
-                                        [ngModel]="getFamilyWeddingPlace(rel.familyId)"
-                                        (ngModelChange)="updateFamilyWeddingByFamilyId(rel.familyId, 'place', $event)"
-                                        placeholder="📍 Ort">
-                                </div>
-
-                                <button (click)="removeRelation(i)"
-                                    class="p-2 ml-auto text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors">✕</button>
-                            </div>
-
-                            <ng-template #relRead>
-                                <div class="w-24 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                    {{ getRelationLabel(rel.type) }}
-                                </div>
-                                <div class="flex-1">
-                                    <div
-                                        class="text-sm font-semibold text-white mb-1 group-hover:text-brand-400 transition-colors">
-                                        {{ rel.personName }}</div>
-                                    <div *ngIf="rel.type === 'SPOUSE' && getFamilyWedding(rel.familyId)"
-                                        class="text-[10px] text-slate-400 flex items-center gap-1.5">
-                                        <span class="text-xs">💍</span> {{ getFamilyWedding(rel.familyId) }}
-                                    </div>
-                                </div>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    class="text-slate-600 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
-                                    <polyline points="9 18 15 12 9 6"></polyline>
-                                </svg>
-                            </ng-template>
-                        </div>
-                    </div>
-
-                    <div *ngIf="relations().length === 0"
-                        class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-3xl text-slate-500">
-                        <span class="text-4xl mb-3 opacity-20">👨‍👩‍👧‍👦</span>
-                        <p class="font-medium">Keine familiären Beziehungen hinterlegt.</p>
-                    </div>
-                </div>
-            </app-card>
-        </div>
-
-        <!-- MEDIA TAB -->
-        <div *ngIf="activeTab === 'media'" class="space-y-6">
-            <app-card>
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-8">
-                        <div>
-                            <h2 class="text-xl font-semibold text-white">Medien & Galerie</h2>
-                            <p class="text-sm text-slate-400 mt-1">Bilder und Dokumente der Person.</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button (click)="openMediaAddModal()" class="btn-primary !w-auto !py-2">
-                                + Upload
-                            </button>
-                            <button (click)="openMediaSelector()" class="btn-secondary !w-auto !py-2">
-                                Galerie
-                            </button>
-                            <button (click)="addPersonMedia()" class="btn-ghost !w-auto !p-2" title="URL verlinken">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div *ngIf="p.media && p.media.length > 0" class="grid grid-cols-1 gap-4">
-                        <div *ngFor="let m of p.media; let i = index"
-                            class="glass-card !p-0 overflow-hidden flex h-24 hover:bg-white/10 transition-all group">
-                            <!-- Thumbnail -->
-                            <div (click)="openViewer(m)"
-                                class="w-32 bg-black/40 flex items-center justify-center cursor-pointer relative overflow-hidden">
-                                <img *ngIf="isImage(m) && getMediaUrlExt(m.url)" [src]="getMediaUrlExt(m.url)"
-                                    class="w-full h-full object-cover transition-transform group-hover:scale-110"
-                                    alt="Vorschau" />
-                                <div *ngIf="!isImage(m) || !getMediaUrlExt(m.url)" class="text-slate-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                                        <polyline points="13 2 13 9 20 9"></polyline>
-                                    </svg>
-                                </div>
-                                <div *ngIf="m.isPrimary"
-                                    class="absolute top-1 left-1 bg-brand-500 text-white p-1 rounded-md shadow-lg"
-                                    title="Hauptbild">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
-                                        fill="currentColor">
-                                        <polygon
-                                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                                        </polygon>
-                                    </svg>
-                                </div>
-                            </div>
-
-                            <!-- Details -->
-                            <div class="flex-1 p-4 flex flex-col justify-center gap-2">
-                                <div class="flex items-center gap-3">
-                                    <input type="text" [(ngModel)]="m.title" placeholder="Titel..."
-                                        class="flex-1 bg-transparent border-none p-0 text-sm font-semibold text-white focus:ring-0 placeholder:text-slate-600">
-                                    <button (click)="setPrimaryMedia(i)" [class.text-brand-400]="m.isPrimary"
-                                        [class.text-slate-600]="!m.isPrimary"
-                                        class="badge badge-slate hover:badge-blue cursor-pointer">
-                                        <span class="text-xs">{{ m.isPrimary ? '★' : '☆' }}</span> Profilbild
-                                    </button>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        class="text-[10px] font-mono text-slate-600 select-all truncate max-w-[200px]">{{
-                                        m.url }}</span>
-                                    <input type="text" [(ngModel)]="m.url" class="hidden">
-                                    <!-- Keep binding for logic if needed, but visually hidden -->
-                                </div>
-                            </div>
-
-                            <!-- Delete -->
-                            <button (click)="removePersonMedia(i)"
-                                class="w-12 flex items-center justify-center text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 transition-all border-l border-white/5">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path
-                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                    </path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div *ngIf="!p.media || p.media.length === 0"
-                        class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-3xl text-slate-500">
-                        <span class="text-4xl mb-3 opacity-20">🖼️</span>
-                        <p class="font-medium">Keine Medien vorhanden.</p>
-                    </div>
-                </div>
-            </app-card>
-        </div>
-
-        <!-- NOTES TAB -->
-        <div *ngIf="activeTab === 'notes'" class="space-y-6">
-            <app-card>
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-xl font-semibold text-white">Persönliche Notizen</h2>
-                        <button (click)="addPersonNote()"
-                            class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-brand-500/20 active:scale-95">
-                            + Notiz hinzufügen
-                        </button>
-                    </div>
-
-                    <div *ngIf="p.notes && p.notes.length > 0" class="space-y-4">
-                        <div *ngFor="let note of p.notes; let i = index; trackBy: trackByIndex"
-                            class="flex gap-4 group">
-                            <textarea [ngModel]="note" (ngModelChange)="updatePersonNote(i, $event)"
-                                placeholder="Schreibe eine Notiz..."
-                                class="flex-1 min-h-[140px] bg-black/40 border border-white/20 rounded-[2rem] p-6 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none transition-all placeholder:text-slate-600 shadow-inner"></textarea>
-                            <button (click)="removePersonNote(i)"
-                                class="p-3 self-start text-rose-500 hover:bg-rose-500/10 rounded-2xl transition-colors opacity-0 group-hover:opacity-100">✕</button>
-                        </div>
-                    </div>
-
-                    <div *ngIf="!p.notes || p.notes.length === 0"
-                        class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-3xl text-slate-500">
-                        <span class="text-4xl mb-3 opacity-20">📝</span>
-                        <p class="font-medium">Keine Notizen vorhanden.</p>
-                    </div>
-                </div>
-            </app-card>
-        </div>
-
-        <!-- CITATIONS TAB -->
-        <div *ngIf="activeTab === 'citations'" class="space-y-6">
-            <app-card>
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-xl font-semibold text-white">Referenzen & Quellen</h2>
-                        <button (click)="addPersonCitation()"
-                            class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-brand-500/20 active:scale-95">
-                            + Quelle hinzufügen
-                        </button>
-                    </div>
-
-                    <div *ngIf="p.citations && p.citations.length > 0" class="space-y-4">
-                        <div *ngFor="let cit of p.citations; let i = index"
-                            class="!p-5 glass-card !bg-white/5 !rounded-2xl space-y-4 group relative">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="md:col-span-2">
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Quelle
-                                        (Titel / ID)</label>
-                                    <input type="text" [(ngModel)]="cit.sourceTitle"
-                                        placeholder="z.B. Kirchenbuch Lichtenfels..."
-                                        class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                </div>
-                                <div>
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Qualität</label>
-                                    <select [(ngModel)]="cit.quality"
-                                        class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                        <option value="0">Unzuverlässig</option>
-                                        <option value="1">Fragwürdig</option>
-                                        <option value="2">Sekundär</option>
-                                        <option value="3">Primär / Sicher</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Seite
-                                        / Position</label>
-                                    <input type="text" [(ngModel)]="cit.whereInSource"
-                                        placeholder="z.B. Seite 42, Nr. 12"
-                                        class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                </div>
-                                <div>
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Zitierter
-                                        Text</label>
-                                    <input type="text" [(ngModel)]="cit.text"
-                                        placeholder="Wörtliches Zitat oder Bemerkung"
-                                        class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                </div>
-                            </div>
-                            <button (click)="removePersonCitation(i)"
-                                class="absolute top-4 right-4 p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">✕</button>
-                        </div>
-                    </div>
-
-                    <div *ngIf="!p.citations || p.citations.length === 0"
-                        class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-3xl text-slate-500">
-                        <span class="text-4xl mb-3 opacity-20">📖</span>
-                        <p class="font-medium">Keine allgemeinen Quellen vorhanden.</p>
-                    </div>
-                </div>
-            </app-card>
+            <app-person-expert-relations-tab [ctx]="self"></app-person-expert-relations-tab>
         </div>
 
         <!-- NAMES TAB -->
         <div *ngIf="activeTab === 'names'" class="space-y-6">
-            <app-card>
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-xl font-semibold text-white">Namen</h2>
-                        <button (click)="addName()"
-                            class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-brand-500/20 active:scale-95">
-                            + Name hinzufügen
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div *ngFor="let n of p.names; let i = index"
-                            class="!p-5 glass-card !bg-white/5 !rounded-2xl space-y-4 group relative">
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                                <div class="md:col-span-1">
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Vorname</label>
-                                    <input type="text" [(ngModel)]="n.given" placeholder="Vorname"
-                                        class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                </div>
-                                <div class="md:col-span-1">
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Nachname</label>
-                                    <input type="text" [(ngModel)]="n.surname" placeholder="Nachname"
-                                        class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                </div>
-                                <div class="md:col-span-1">
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Typ</label>
-                                    <select [(ngModel)]="n.type"
-                                        class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                        <option value="BIRTH">Geburtsname</option>
-                                        <option value="MARRIED">Ehename</option>
-                                        <option value="AKA">Alias / AKA</option>
-                                    </select>
-                                </div>
-                                <div class="md:col-span-1 flex items-center h-10 px-2 gap-2">
-                                    <label
-                                        class="flex items-center gap-2 cursor-pointer text-xs text-slate-400 hover:text-white transition-colors">
-                                        <input type="radio" name="primaryName" [checked]="n.isPrimary"
-                                            (change)="setPrimaryName(i)"
-                                            class="w-4 h-4 rounded-full border-white/10 bg-slate-900 text-brand-500 focus:ring-brand-500 focus:ring-offset-slate-900">
-                                        Primär
-                                    </label>
-                                </div>
-                            </div>
-                            <button (click)="removeName(i)"
-                                class="absolute top-4 right-4 p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">✕</button>
-                        </div>
-                    </div>
-                </div>
-            </app-card>
+            <app-person-tab-names [person]="p" (changed)="markDirty(); savePerson()"></app-person-tab-names>
         </div>
 
         <!-- ASSOCIATIONS TAB -->
         <div *ngIf="activeTab === 'associations'" class="space-y-6">
-            <app-card>
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-xl font-semibold text-white">Assoziationen</h2>
-                        <button (click)="addAssociation()"
-                            class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-brand-500/20 active:scale-95">
-                            + Assoziation
-                        </button>
-                    </div>
-
-                    <div class="space-y-4">
-                        <div *ngFor="let a of p.associations; let i = index"
-                            class="!p-5 glass-card !bg-white/5 !rounded-2xl space-y-4 group relative">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                                <div>
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Rolle</label>
-                                    <select [(ngModel)]="a.role"
-                                        class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                        <option value="FRIEND">Freund/in</option>
-                                        <option value="WITNESS">Zuge/in</option>
-                                        <option value="GODPARENT">Pate / Patin</option>
-                                        <option value="OTHER">Sonstige</option>
-                                    </select>
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Zugeordnete
-                                        Person (ID)</label>
-                                    <div class="flex items-center gap-3">
-                                        <input type="text" [(ngModel)]="a.associatedPersonId" placeholder="z.B. @I2@"
-                                            class="flex-1 bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                        <button *ngIf="a.associatedPersonId" (click)="goToPerson(a.associatedPersonId)"
-                                            class="p-2 bg-brand-500/10 text-brand-400 rounded-xl hover:bg-brand-500/20 transition-all">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6">
-                                                </path>
-                                                <polyline points="15 3 21 3 21 9"></polyline>
-                                                <line x1="10" y1="14" x2="21" y2="3"></line>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div>
-                                <label
-                                    class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Beschreibung</label>
-                                <input type="text" [(ngModel)]="a.relationText"
-                                    placeholder="Zusätzliche Infos zur Beziehung..."
-                                    class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                            </div>
-                            <button (click)="removeAssociation(i)"
-                                class="absolute top-4 right-4 p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">✕</button>
-                        </div>
-                    </div>
-                </div>
-            </app-card>
+            <app-person-tab-associations [person]="p" [allPersonsOptions]="allPersonsOptions()"
+                (changed)="markDirty(); savePerson()"></app-person-tab-associations>
         </div>
 
-        <!-- DNA MATCHES TAB -->
+        <!-- DNA TAB -->
         <div *ngIf="activeTab === 'dna'" class="space-y-6">
-            <app-card>
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-xl font-semibold text-white">DNA-Matches</h2>
-                        <button (click)="addDnaMatch()"
-                            class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-brand-500/20 active:scale-95">
-                            + Match hinzufügen
-                        </button>
-                    </div>
-
-                    <div class="space-y-6">
-                        <div *ngFor="let m of p.dnaMatches; let i = index"
-                            class="!p-6 glass-card !bg-white/5 !rounded-2xl space-y-6 group relative">
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                                <div>
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Provider</label>
-                                    <select [(ngModel)]="m.provider"
-                                        class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                        <option value="">Wählen...</option>
-                                        <option value="ANCESTRY">Ancestry</option>
-                                        <option value="MYHERITAGE">MyHeritage</option>
-                                        <option value="GEDMATCH">GEDmatch</option>
-                                        <option value="FAMILY_TREE_DNA">FTDNA</option>
-                                    </select>
-                                </div>
-                                <div class="md:col-span-2 space-y-1">
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">Match
-                                        Person (ID)</label>
-                                    <div class="flex items-center gap-3">
-                                        <input type="text" [(ngModel)]="m.matchPersonId" placeholder="ID suchen..."
-                                            (click)="goToPerson(m.matchPersonId)"
-                                            class="flex-1 bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                        <span class="text-lg font-bold text-brand-400 whitespace-nowrap">{{ m.totalCm }}
-                                            cM</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label
-                                        class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block pl-1">cM
-                                        Wert</label>
-                                    <input type="number" [(ngModel)]="m.totalCm"
-                                        class="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-brand-500/50 outline-none">
-                                </div>
-                            </div>
-
-                            <div class="space-y-4 p-4 bg-black/20 rounded-xl">
-                                <div class="flex justify-between items-center">
-                                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Segmente</h4>
-                                    <button (click)="addDnaSegment(i)"
-                                        class="text-[10px] font-bold text-brand-400 hover:text-brand-300 uppercase">+
-                                        Segment</button>
-                                </div>
-                                <div class="grid grid-cols-1 gap-2">
-                                    <div *ngFor="let s of m.segments; let si = index"
-                                        class="grid grid-cols-5 gap-2 items-center">
-                                        <input type="text" [(ngModel)]="s.chromosome" placeholder="Chr"
-                                            class="bg-slate-900 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-center text-white">
-                                        <input type="number" [(ngModel)]="s.startPosition" placeholder="Start"
-                                            class="bg-slate-900 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white">
-                                        <input type="number" [(ngModel)]="s.endPosition" placeholder="Ende"
-                                            class="bg-slate-900 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white">
-                                        <input type="number" [(ngModel)]="s.cm" placeholder="cM"
-                                            class="bg-slate-900 border border-white/5 rounded-lg px-2 py-1.5 text-xs text-white text-center">
-                                        <button (click)="removeDnaSegment(i, si)"
-                                            class="text-rose-500 hover:bg-rose-500/10 rounded p-1">✕</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <button (click)="removeDnaMatch(i)"
-                                class="absolute top-4 right-4 p-1.5 text-rose-500 hover:bg-rose-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">✕</button>
-                        </div>
-                    </div>
-                </div>
-            </app-card>
+            <app-person-tab-dna [person]="p" (changed)="markDirty(); savePerson()"></app-person-tab-dna>
         </div>
 
-    </div> <!-- End Expert Mode Content -->
+        <!-- MEDIA TAB -->
+        <div *ngIf="activeTab === 'media'" class="space-y-6">
+            <app-person-tab-media [person]="p" [treeId]="treeData()?.meta?.treeId || ''"
+                (changed)="markDirty(); savePerson()"></app-person-tab-media>
+        </div>
 
-    <app-media-selector [visible]="showMediaSelector" (selected)="onMediaSelected($event)"
-        (closed)="showMediaSelector = false">
-    </app-media-selector>
+        <!-- NOTES TAB -->
+        <div *ngIf="activeTab === 'notes'" class="space-y-6">
+            <app-person-tab-notes [person]="p" (changed)="markDirty(); savePerson()"></app-person-tab-notes>
+        </div>
 
+        <!-- CITATIONS TAB -->
+        <div *ngIf="activeTab === 'citations'" class="space-y-6">
+            <app-person-tab-citations [person]="p" [availableSources]="availableSources()"
+                (changed)="markDirty(); savePerson()"></app-person-tab-citations>
+        </div>
+
+    </div>
+
+    <!-- PLACE MODAL (global – used by timeline tab) -->
     <app-place-modal [visible]="showPlaceModal" [mode]="placeModalMode" [initialData]="selectedPlaceForModal"
         (saved)="onPlaceModalSaved($event)" (closed)="showPlaceModal = false">
     </app-place-modal>
 
-    <app-image-viewer [url]="viewerUrl()" [title]="viewerTitle()" (closed)="viewerUrl.set(null)">
-    </app-image-viewer>
     <app-person-create-modal [visible]="showRelationModal()"
         [title]="(relationModalType === 'child' ? 'Kind' : relationModalType === 'partner' ? 'Partner/in' : relationModalType === 'father' ? 'Vater' : 'Mutter') + ' hinzufügen'"
         [initialLastName]="newPersonData().lastName" (created)="onPersonCreated($event)"
@@ -1092,40 +100,185 @@
     </app-person-create-modal>
 
     <!-- DELETE MODAL -->
-    <div *ngIf="showDeleteModal()" (click)="closeDeleteModal()"
-        class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
-        <div (click)="$event.stopPropagation()"
-            class="glass-card !bg-slate-900 !rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-300">
-            <div class="p-6 border-b border-white/5 flex justify-between items-center">
-                <h3 class="text-xl font-semibold text-white">Person löschen</h3>
-                <button (click)="closeDeleteModal()"
-                    class="text-slate-500 hover:text-white transition-colors text-2xl">&times;</button>
+    <app-modal-shell [visible]="showDeleteModal()" title="Person löschen" icon="🗑️" size="sm" [showSave]="false"
+        [showDelete]="true" [deleteText]="isDeleting ? 'Lösche...' : 'Ja, löschen'" [loading]="isDeleting"
+        (close)="closeDeleteModal()" (delete)="confirmDeletePerson()">
+        <div class="p-4 text-neutral-300 text-center">
+            <div
+                class="w-16 h-16 bg-accent-danger-500/10 text-accent-danger-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 6h18"></path>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
             </div>
-            <div class="p-8 text-slate-300 text-center">
-                <div
-                    class="w-16 h-16 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 6h18"></path>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </div>
-                <p>Möchten Sie diese Person wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</p>
+            <p>Möchten Sie diese Person wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.</p>
+        </div>
+    </app-modal-shell>
+
+    <!-- RELATION CREATE MODAL (global – used by relations tab via ctx) -->
+    <app-modal-shell [visible]="showRelationCreateModal()" title="Beziehung hinzufügen" icon="👨‍👩‍👧‍👦" size="md"
+        [showSave]="true" saveText="Beziehung hinzufügen" [showDelete]="false" (close)="closeRelationCreateModal()"
+        (save)="confirmAddRelation()">
+        <div class="space-y-4">
+            <div class="form-group mb-0">
+                <label class="form-label">Beziehungstyp</label>
+                <select [ngModel]="newRelationDraft().type"
+                    (ngModelChange)="newRelationDraft.update(v => ({ ...v, type: $event }))" class="form-input !py-2.5">
+                    <option value="SPOUSE">Partner/in</option>
+                    <option value="FATHER">Vater</option>
+                    <option value="MOTHER">Mutter</option>
+                    <option value="CHILD">Kind</option>
+                </select>
             </div>
-            <div class="p-6 bg-white/5 flex justify-end gap-3">
-                <button (click)="closeDeleteModal()" [disabled]="isDeleting"
-                    class="px-6 py-2.5 bg-white/5 hover:bg-white/10 text-white text-sm font-semibold rounded-xl transition-all disabled:opacity-50">
-                    Abbrechen
-                </button>
-                <button (click)="confirmDeletePerson()" [disabled]="isDeleting"
-                    class="px-6 py-2.5 bg-rose-500 hover:bg-rose-600 text-white text-sm font-semibold rounded-xl transition-all shadow-lg shadow-rose-500/20 active:scale-95 disabled:opacity-50">
-                    {{ isDeleting ? 'Lösche...' : 'Ja, löschen' }}
-                </button>
+            <div class="form-group mb-0">
+                <label class="form-label">Person</label>
+                <input type="text" [ngModel]="newRelationDraft().personInput"
+                    (ngModelChange)="newRelationDraft.update(v => ({ ...v, personInput: $event }))"
+                    list="relation-person-list" class="form-input" placeholder="Person auswählen...">
+                <datalist id="relation-person-list">
+                    <option *ngFor="let opt of allPersonsOptions()" [value]="opt.displayName"></option>
+                </datalist>
             </div>
         </div>
-    </div>
-    <app-media-add-modal [visible]="showMediaAddModal()" [treeId]="treeData()?.meta?.treeId || ''"
-        [defaultFirstName]="person()?.firstName || ''" [defaultLastName]="person()?.lastName || ''"
-        (closed)="showMediaAddModal.set(false)" (uploaded)="onMediaAddUploaded($event)">
-    </app-media-add-modal>
+    </app-modal-shell>
+
+    <!-- TIMELINE MODALS (global – used by timeline tab via ctx) -->
+    <app-modal-shell [visible]="showTimelineCreateModal()" title="Ereignis/Fakt hinzufügen" icon="📌" size="md"
+        [showSave]="true" saveText="Hinzufügen" [showDelete]="false" (close)="closeTimelineCreateModal()"
+        (save)="confirmAddTimelineItem()">
+        <div class="space-y-4">
+            <div class="form-group mb-0">
+                <label class="form-label">Typ</label>
+                <select [ngModel]="newTimelineDraft().itemKind"
+                    (ngModelChange)="newTimelineDraft.update(v => ({ ...v, itemKind: $event, tag: $event === 'fact' ? 'FACT' : 'DEAT' }))"
+                    class="form-input !py-2.5">
+                    <option value="event">Ereignis</option>
+                    <option value="fact">Fakt</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-0">
+                <label class="form-label">Kategorie</label>
+                <select [ngModel]="newTimelineDraft().tag"
+                    (ngModelChange)="newTimelineDraft.update(v => ({ ...v, tag: $event }))" class="form-input !py-2.5">
+                    <ng-container *ngIf="newTimelineDraft().itemKind === 'event'; else factTags">
+                        <option value="BIRT">Geburt</option>
+                        <option value="CHR">Taufe</option>
+                        <option value="DEAT">Tod</option>
+                        <option value="BURI">Begräbnis</option>
+                        <option value="CREM">Einäscherung</option>
+                        <option value="EMIG">Auswanderung</option>
+                        <option value="IMMI">Einwanderung</option>
+                        <option value="MARR">Heirat</option>
+                    </ng-container>
+                    <ng-template #factTags>
+                        <option value="OCCU">Beruf</option>
+                        <option value="RELI">Religion</option>
+                        <option value="EDUC">Bildung</option>
+                        <option value="RESI">Wohnsitz</option>
+                        <option value="TITL">Titel</option>
+                        <option value="NATI">Nationalität/Herkunft</option>
+                        <option value="DSCR">Körperl. Merkmale</option>
+                        <option value="FACT">Anderer Fakt</option>
+                    </ng-template>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group mb-0">
+                    <label class="form-label">Datum</label>
+                    <input type="text" [ngModel]="newTimelineDraft().date"
+                        (ngModelChange)="newTimelineDraft.update(v => ({ ...v, date: $event }))" class="form-input"
+                        placeholder="z.B. 12 MAR 1890">
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label">Ort</label>
+                    <input type="text" [ngModel]="newTimelineDraft().place"
+                        (ngModelChange)="newTimelineDraft.update(v => ({ ...v, place: $event }))" class="form-input"
+                        placeholder="z.B. München">
+                </div>
+            </div>
+
+            <div class="form-group mb-0">
+                <label class="form-label">{{ newTimelineDraft().itemKind === 'fact' ? 'Wert' : 'Beschreibung' }}</label>
+                <input type="text" [ngModel]="newTimelineDraft().description"
+                    (ngModelChange)="newTimelineDraft.update(v => ({ ...v, description: $event }))" class="form-input"
+                    placeholder="Optional">
+            </div>
+        </div>
+    </app-modal-shell>
+
+    <app-modal-shell [visible]="showTimelineItemModal()"
+        [title]="activeTimelineItem() ? (getTagLabel(activeTimelineItem()!.tag) + ' bearbeiten') : 'Ereignis bearbeiten'"
+        icon="📅" size="md" [showSave]="true" saveText="Speichern"
+        [showDelete]="!!activeTimelineItem() && !isTimelineItemLocked(activeTimelineItem()!)" deleteText="Löschen"
+        (close)="closeTimelineItemModal()" (save)="saveTimelineItemModal()" (delete)="removeTimelineItemModal()">
+        <div *ngIf="activeTimelineItem() as item" class="space-y-4">
+            <div *ngIf="isTimelineItemLocked(item)"
+                class="text-xs text-neutral-300 bg-canvas-white/5 border border-canvas-white/10 rounded-xl px-3 py-2 flex items-center justify-between gap-3">
+                <span>Dieses Ereignis ist abgeleitet/familienbasiert und hier nur lesbar.</span>
+                <button *ngIf="hasTimelineItemSource(item)" (click)="goToTimelineItemSource(item)"
+                    class="btn-secondary !w-auto !py-1.5 !px-2.5 !text-[10px]">
+                    {{ getTimelineItemSourceLabel(item) }}
+                </button>
+            </div>
+
+            <div class="form-group mb-0">
+                <label class="form-label">Kategorie</label>
+                <select [(ngModel)]="item.tag" (ngModelChange)="markDirty()" [disabled]="isTimelineItemLocked(item)"
+                    class="form-input !py-2.5 disabled:opacity-60 disabled:cursor-not-allowed">
+                    <optgroup label="Lebensereignisse">
+                        <option value="BIRT">Geburt</option>
+                        <option value="CHR">Taufe</option>
+                        <option value="DEAT">Tod</option>
+                        <option value="BURI">Begräbnis</option>
+                        <option value="CREM">Einäscherung</option>
+                        <option value="EMIG">Auswanderung</option>
+                        <option value="IMMI">Einwanderung</option>
+                        <option value="MARR">Heirat</option>
+                    </optgroup>
+                    <optgroup label="Eigenschaften &amp; Fakten">
+                        <option value="OCCU">Beruf</option>
+                        <option value="RELI">Religion</option>
+                        <option value="EDUC">Bildung</option>
+                        <option value="RESI">Wohnsitz</option>
+                        <option value="TITL">Titel</option>
+                        <option value="NATI">Nationalität/Herkunft</option>
+                        <option value="DSCR">Körperl. Merkmale</option>
+                        <option value="FACT">Anderer Fakt</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group mb-0">
+                    <label class="form-label">Datum</label>
+                    <input type="text" [(ngModel)]="item.date" (ngModelChange)="markDirty()"
+                        [disabled]="isTimelineItemLocked(item)"
+                        class="form-input disabled:opacity-60 disabled:cursor-not-allowed"
+                        placeholder="z.B. 12 MAR 1890">
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label">Ort</label>
+                    <input type="text" [(ngModel)]="item.place" (ngModelChange)="markDirty()"
+                        [disabled]="isTimelineItemLocked(item)"
+                        class="form-input disabled:opacity-60 disabled:cursor-not-allowed" placeholder="z.B. München">
+                </div>
+            </div>
+
+            <div class="form-group mb-0">
+                <label class="form-label">Beschreibung / Wert</label>
+                <input *ngIf="['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(item.tag)"
+                    type="text" [(ngModel)]="item.value" (ngModelChange)="markDirty()"
+                    [disabled]="isTimelineItemLocked(item)"
+                    class="form-input disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Optional">
+                <input *ngIf="!['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(item.tag)"
+                    type="text" [(ngModel)]="item.description" (ngModelChange)="markDirty()"
+                    [disabled]="isTimelineItemLocked(item)"
+                    class="form-input disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Optional">
+            </div>
+        </div>
+    </app-modal-shell>
+
 </app-page-container>
