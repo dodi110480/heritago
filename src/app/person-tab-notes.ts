@@ -1,15 +1,15 @@
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AppCardComponent } from './ui/app-card';
+
 import { AppModalShell } from './ui/app-modal-shell';
 
 @Component({
     selector: 'app-person-tab-notes',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppCardComponent, AppModalShell],
+    imports: [CommonModule, FormsModule, AppModalShell],
     template: `
-        <app-card [contentClass]="'p-0'">
+        <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold text-neutral-900">Persönliche Notizen</h2>
@@ -40,7 +40,7 @@ import { AppModalShell } from './ui/app-modal-shell';
                     <p class="font-medium">Keine Notizen vorhanden.</p>
                 </div>
             </div>
-        </app-card>
+        </div>
 
         <!-- NOTE CREATE MODAL -->
         <app-modal-shell [visible]="showNoteCreateModal()" title="Notiz hinzufügen" icon="📝" size="md" [showSave]="true"

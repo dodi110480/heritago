@@ -1,14 +1,14 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AppCardComponent } from './ui/app-card';
+
 
 @Component({
     selector: 'app-person-expert-timeline-tab',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppCardComponent],
+    imports: [CommonModule, FormsModule],
     template: `
-        <app-card [contentClass]="'p-0'">
+        <div class="glass-card shadow-sm flex flex-col">
             <div class="!p-4 md:!p-5">
                 <div class="flex justify-between items-center mb-5">
                     <h2 class="text-xl font-semibold text-neutral-950">Lebenslauf</h2>
@@ -288,7 +288,7 @@ import { AppCardComponent } from './ui/app-card';
                     <p class="font-medium">Keine Einträge im Lebenslauf vorhanden.</p>
                 </div>
             </div>
-        </app-card>
+        </div>
     `
 })
 export class PersonExpertTimelineTabComponent {

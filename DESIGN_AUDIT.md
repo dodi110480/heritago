@@ -129,7 +129,9 @@ Hier ist eine Übersicht über die dedizierten, wiederverwendbaren Custom-Compon
 
 Die Detailanalyse der im Projekt eingesetzten UI-Komponenten hat konkrete Überschneidungen und Ähnlichkeiten offengelegt. Um die Code-Basis weiter zu entschlacken und einheitlicher zu gestalten, ergeben sich folgende Handlungsfelder:
 
-### 1. `app-card` vs. `app-section-card` vs. `glass-card` (Wrapper-Redundanz)
+### ✅ 1. `app-card` vs. `app-section-card` vs. `glass-card` (Wrapper-Redundanz)
+    - [x] Konsolidierung auf native `div` mit `.glass-card` (Abgeschlossen am 06.03.2026)
+    - [x] Entfernung der obsoleten `app-card.ts` Komponente.
 - **Das Problem:** Es existieren aktuell zwei sehr ähnliche Angular-Wrapper (`app-card` und `app-section-card`), deren einziger echter Unterschied die Formatierung ihres optionalen Headers (`h2` = "Standard-Card" vs. kleines `h3` uppercase = "Section-Card") ist. Beide nutzen intern einfach die CSS-Klasse `.glass-card`. Gleichzeitig nutzen stark angepasste Seiten häufig einfach direkt ein `div` mit der Klasse `glass-card`.
 - **Lösung:** Man sollte einen Entschluss für **einen** Weg fassen. Eine saubere Lösung wäre es, beide Angular-Komponenten (`app-card` und `app-section-card`) zu **entfernen** und stattdessen überall direkt strukturiertes HTML mit der Klasse `.glass-card` und standardisierten Text-Klassen für den Header zu verwenden. Alternativ: Beide in eine neu überarbeitete, hochflexible `<app-card>` vereinen, die ein `headerVariant="large" | "small"` Property besitzt.
 

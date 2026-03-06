@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AppCardComponent } from './ui/app-card';
+
 import { AppModalShell } from './ui/app-modal-shell';
 import { MediaSelector } from './media-selector';
 import { ImageViewer } from './image-viewer';
@@ -12,9 +12,9 @@ import { inject } from '@angular/core';
 @Component({
     selector: 'app-person-tab-media',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppCardComponent, AppModalShell, MediaSelector, ImageViewer, MediaAddModal],
+    imports: [CommonModule, FormsModule, AppModalShell, MediaSelector, ImageViewer, MediaAddModal],
     template: `
-        <app-card [contentClass]="'p-0'">
+        <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">
                 <div class="flex justify-between items-center mb-8">
                     <div>
@@ -113,7 +113,7 @@ import { inject } from '@angular/core';
                     <p class="font-medium">Keine Medien vorhanden.</p>
                 </div>
             </div>
-        </app-card>
+        </div>
 
         <!-- MEDIA DELETE CONFIRM MODAL -->
         <app-modal-shell [visible]="mediaDeletePendingIndex() !== null" title="Medium löschen" icon="🗑️" size="sm"

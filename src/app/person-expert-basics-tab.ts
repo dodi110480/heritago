@@ -1,15 +1,15 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AppCardComponent } from './ui/app-card';
+
 import { AppModalShell } from './ui/app-modal-shell';
 
 @Component({
     selector: 'app-person-expert-basics-tab',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppCardComponent, AppModalShell],
+    imports: [CommonModule, FormsModule, AppModalShell],
     template: `
-        <app-card [contentClass]="'p-0'">
+        <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0 space-y-6">
                 <div class="glass-card !bg-canvas-white/3 !rounded-2xl !p-5 cursor-pointer hover:bg-canvas-white/5 transition-all"
                     (click)="openBasicsModal()">
@@ -82,7 +82,7 @@ import { AppModalShell } from './ui/app-modal-shell';
                     </button>
                 </div>
             </div>
-        </app-card>
+        </div>
 
         <app-modal-shell [visible]="showBasicsModal" title="Basisdaten bearbeiten" icon="🧾" size="md"
             [showSave]="true" saveText="Speichern" [showDelete]="false"

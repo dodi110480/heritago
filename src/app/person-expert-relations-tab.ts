@@ -1,14 +1,14 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AppCardComponent } from './ui/app-card';
+
 
 @Component({
     selector: 'app-person-expert-relations-tab',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppCardComponent],
+    imports: [CommonModule, FormsModule],
     template: `
-        <app-card [contentClass]="'p-0'">
+        <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">
                 <div class="flex justify-between items-center mb-8">
                     <div>
@@ -111,7 +111,7 @@ import { AppCardComponent } from './ui/app-card';
                     <p class="font-medium">Keine familiären Beziehungen hinterlegt.</p>
                 </div>
             </div>
-        </app-card>
+        </div>
     `
 })
 export class PersonExpertRelationsTabComponent {

@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
 import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppPageHeaderComponent } from './ui/app-page-header';
-import { AppCardComponent } from './ui/app-card';
+
 import { AppModalShell } from './ui/app-modal-shell';
 import { FamilyEventCardComponent } from './family-event-card';
 
@@ -21,7 +21,6 @@ import { FamilyEventCardComponent } from './family-event-card';
         RouterLink,
         AppPageContainerComponent,
         AppPageHeaderComponent,
-        AppCardComponent,
         AppModalShell,
         FamilyEventCardComponent
     ],

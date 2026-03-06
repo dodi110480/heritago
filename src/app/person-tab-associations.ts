@@ -1,15 +1,15 @@
 import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AppCardComponent } from './ui/app-card';
+
 import { AppModalShell } from './ui/app-modal-shell';
 
 @Component({
     selector: 'app-person-tab-associations',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppCardComponent, AppModalShell],
+    imports: [CommonModule, FormsModule, AppModalShell],
     template: `
-        <app-card [contentClass]="'p-0'">
+        <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">
                 <div class="flex justify-between items-center mb-6">
                     <div>
@@ -70,7 +70,7 @@ import { AppModalShell } from './ui/app-modal-shell';
                     <p class="text-sm mt-1">z.B. Taufpaten, Trauzeugen, Arbeitgeber</p>
                 </div>
             </div>
-        </app-card>
+        </div>
 
         <!-- ASSOCIATION CREATE MODAL -->
         <app-modal-shell [visible]="showAssociationCreateModal()" title="Assoziation hinzufügen" icon="🤝" size="md"
