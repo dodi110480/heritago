@@ -2,7 +2,7 @@
 
 ## Zusammenfassung
 Das gesamte Fronend-Projekt wurde erfolgreich auf das neue semantische Design-System umgestellt. 
-**Es existieren keine alten Hintergrund- oder Fehlerfarben (`bg-surface-dark`, `text-state-error` etc.) mehr in den HTML-Dateien.** Alle Sektionen nutzen konsequent `glass-card`, `AppCardComponent` oder die passenden semantischen Tokens (`bg-ui-panel`, `text-accent-danger-500` etc.).
+**Es existieren keine alten Hintergrund- oder Fehlerfarben (`bg-surface-dark`, `text-state-error` etc.) mehr in den HTML-Dateien.** Alle Sektionen nutzen konsequent `glass-card` (oder spezialisierte Entitäts-Karten) und die passenden semantischen Tokens (`bg-ui-panel`, `text-accent-danger-500` etc.).
 
 ## Legende
 - ✅ = voll konform (semantische Tokens, AppCard/glass-card, btn-* Utilities)
