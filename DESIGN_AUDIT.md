@@ -137,9 +137,9 @@ Die Detailanalyse der im Projekt eingesetzten UI-Komponenten hat konkrete Übers
 - **Das Problem:** Bei Listenansichten wie Person-List, Family-List und Source-List existiert oft keine tiefe Container-Kapselung; stattdessen werden `app-entity-card`s direkt mit `*ngFor` auf eine leere Seite ("glass-card") oder in Custom-Grids gerendert. 
 - **Lösung:** Zur Bereinigung könnte eine eigene `<app-list-view>` (oder `<app-grid-view>`) Architektur-Komponente eingeführt werden, die standardmäßig das Such-Feld, die Sortierung, Pagination und Empty-States mit kapselt.
 
-### 3. Veraltete Formular-Wrapper (`app-button` und `app-input`)
+### 3. Veraltete Formular-Wrapper (`app-button` und `app-input`) ✅
 - **Das Problem:** Tailwind CSS-Utility-Klassen (`.btn-primary`, `.form-input`) existieren nun funktionsgleich parallel zu den dedizierten Angular-Komponenten (`<app-button>`, `<app-input>`). Der Einsatz von nativen HTML-Inputs mit Utility-Klassen macht die Arbeit mit Angular Reactive Forms leichter, performanter und weniger fehleranfällig als eine zusätzliche Wrapper-Komponente.
-- **Lösung:** Die Komponenten `app-button` und `app-input` komplett aus dem Projekt (`src/app/ui/*`) löschen und alle verbleibenden Verwendungen systematisch durch die nativen Tags mit CSS-Klassen (`<button class="btn-primary">`, `<input class="form-input">`) ersetzen.
+- **Lösung (Erledigt):** Die Komponenten `app-button` und `app-input` wurden komplett aus dem Projekt (`src/app/ui/*`) gelöscht, da sie in den HTML-Templates nicht mehr referenziert wurden.
 
 ### 4. Inkonsistente Verwendung von Seiten-Shells
 - **Das Problem:** Zwar nutzen die meisten Seiten erfolgreich `app-page-container` plus `app-page-header`, aber bei Detail-Ansichten mit Tabs (z.B. Person-Detail, Family-Detail) oder Sonderseiten (`repository-list`, `timeline`) bricht dieses Konstrukt zum Teil leicht aus oder wird weggelassen.
