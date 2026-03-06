@@ -5,7 +5,7 @@
     <div class="flex flex-col gap-6 max-h-[75vh] overflow-y-auto px-1 custom-scrollbar">
       <!-- Upload Zone -->
       <label
-        class="group relative flex flex-col items-center justify-center p-12 border-2 border-dashed border-canvas-white/10 rounded-[32px] bg-canvas-black/20 hover:bg-canvas-black/40 hover:border-brand-500/50 transition-all cursor-pointer overflow-hidden">
+        class="group relative flex flex-col items-center justify-center p-12 border-2 border-dashed border-canvas-white/10 rounded-[32px] bg-neutral-black/20 hover:bg-neutral-black/40 hover:border-brand-500/50 transition-all cursor-pointer overflow-hidden">
         <input type="file" accept="image/*,application/pdf" (change)="onFilePicked($event)" hidden>
         <div class="bg-brand-500/10 p-4 rounded-2xl text-brand-400 mb-4 group-hover:scale-110 transition-transform">
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
@@ -16,7 +16,7 @@
           </svg>
         </div>
         <span class="text-neutral-300 font-bold tracking-tight">Datei wählen</span>
-        <span class="text-neutral-500 text-xs mt-1">Bilder oder PDF-Dokumente</span>
+        <span class="text-neutral-950 text-xs mt-1">Bilder oder PDF-Dokumente</span>
       </label>
 
       <div class="flex flex-col gap-5" *ngIf="selectedFile() as file">
@@ -48,8 +48,8 @@
         <div class="form-group mb-0">
           <label class="form-label">Kategorie</label>
           <select [ngModel]="mediaType()" (ngModelChange)="mediaType.set($event)"
-            class="form-input appearance-none bg-canvas-black/40">
-            <option *ngFor="let type of mediaTypeOptions" [value]="type" class="bg-ui-input">{{ type }}</option>
+            class="form-input appearance-none bg-neutral-black/40">
+            <option *ngFor="let type of mediaTypeOptions" [value]="type" class="bg-neutral-100">{{ type }}</option>
           </select>
         </div>
       </div>

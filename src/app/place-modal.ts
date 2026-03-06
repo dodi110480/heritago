@@ -1,9 +1,11 @@
 import { Component, inject, signal, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
 import { AppModalShell } from './ui/app-modal-shell';
+import { PlaceDisplayPipe } from './place-display.pipe';
 
 declare const L: any;
 
@@ -16,6 +18,7 @@ declare const L: any;
 export class PlaceModal implements OnInit {
     private gedcomService = inject(GedcomService);
     private authService = inject(AuthService);
+    private router = inject(Router);
 
     @ViewChild('mapContainer') mapContainer?: ElementRef<HTMLDivElement>;
 
@@ -25,6 +28,8 @@ export class PlaceModal implements OnInit {
 
     @Output() saved = new EventEmitter<any>();
     @Output() closed = new EventEmitter<void>();
+    @Output() deleted = new EventEmitter<void>();
+    @Output() merged = new EventEmitter<void>();
 
     isSaving = signal(false);
     errorMessage = signal<string | null>(null);
@@ -42,10 +47,27 @@ export class PlaceModal implements OnInit {
         parentId: '',
         old_name: '',
         latitude: '',
-        longitude: ''
+        longitude: '',
+        // Neue Felder aus dem Schema
+        form: '',
+        phrase: '',
+        level: 'CITY',
+        lang: '',
+        formTemplate: '',
+        translations: [] as any[],
+        identifiers: [] as any[],
+        notes: [] as string[]
     };
 
+    placeLevels = [
+        'BUILDING', 'STREET', 'DISTRICT', 'CITY', 'MUNICIPALITY', 'REGION', 'STATE', 'COUNTRY', 'CONTINENT'
+    ];
+
+    usage = signal<any>(null);
+
     locationLabel = signal('');
+    mergeTargetId = signal<string>('');
+    reassignTargetId = signal<string>('');
 
     ngOnInit() {
         const tree = this.authService.currentTree();
@@ -75,6 +97,24 @@ export class PlaceModal implements OnInit {
                         : '';
                     this.modalData.parentId = this.initialData.parentId || '';
                     this.modalData.old_name = this.initialData.name || '';
+                    this.modalData.form = this.initialData.form || '';
+                    this.modalData.phrase = this.initialData.phrase || '';
+                    this.modalData.level = this.initialData.level || 'CITY';
+                    this.modalData.lang = this.initialData.lang || '';
+                    this.modalData.formTemplate = this.initialData.formTemplate || '';
+                    this.modalData.translations = Array.isArray(this.initialData.translations)
+                        ? this.initialData.translations.map((t: any) => ({
+                            ...t,
+                            dateStart: t.dateStart ? new Date(t.dateStart).toISOString().split('T')[0] : '',
+                            dateEnd: t.dateEnd ? new Date(t.dateEnd).toISOString().split('T')[0] : ''
+                        }))
+                        : [];
+                    this.modalData.identifiers = Array.isArray(this.initialData.identifiers) ? [...this.initialData.identifiers] : [];
+                    this.modalData.notes = Array.isArray(this.initialData.notes) ? [...this.initialData.notes] : [];
+
+                    if (this.mode === 'edit' && this.initialData.id) {
+                        this.loadUsage(this.initialData.id);
+                    }
                 }
             }
             setTimeout(() => this.initMap(), 50);
@@ -108,10 +148,21 @@ export class PlaceModal implements OnInit {
             parentId: '',
             old_name: '',
             latitude: '',
-            longitude: ''
+            longitude: '',
+            form: '',
+            phrase: '',
+            level: 'CITY',
+            lang: '',
+            formTemplate: '',
+            translations: [],
+            identifiers: [],
+            notes: []
         };
+        this.usage.set(null);
         this.errorMessage.set(null);
         this.locationLabel.set('');
+        this.mergeTargetId.set('');
+        this.reassignTargetId.set('');
     }
 
     closeModal() {
@@ -131,6 +182,39 @@ export class PlaceModal implements OnInit {
     parentOptions() {
         const selfId = this.initialData?.id;
         return this.availableParents().filter((p: any) => !selfId || p.id !== selfId);
+    }
+
+    addTranslation() {
+        this.modalData.translations.push({ name: '', lang: '', form: '' });
+    }
+
+    removeTranslation(index: number) {
+        this.modalData.translations.splice(index, 1);
+    }
+
+    addIdentifier() {
+        this.modalData.identifiers.push({ value: '', type: '' });
+    }
+
+    removeIdentifier(index: number) {
+        this.modalData.identifiers.splice(index, 1);
+    }
+
+    addNote() {
+        this.modalData.notes.push('');
+    }
+
+    removeNote(index: number) {
+        this.modalData.notes.splice(index, 1);
+    }
+
+    private loadUsage(id: string) {
+        const tree = this.currentTree();
+        if (!tree) return;
+        this.gedcomService.getPlaceUsage(tree, id).subscribe({
+            next: (res) => this.usage.set(res),
+            error: () => this.usage.set(null)
+        });
     }
 
     save() {
@@ -157,7 +241,16 @@ export class PlaceModal implements OnInit {
             jurisdiction: this.modalData.jurisdiction || null,
             historicNames: this.modalData.historicNames,
             latitude: this.modalData.latitude,
-            longitude: this.modalData.longitude
+            longitude: this.modalData.longitude,
+            // Neue Felder
+            form: this.modalData.form || null,
+            phrase: this.modalData.phrase || null,
+            level: this.modalData.level,
+            lang: this.modalData.lang || null,
+            formTemplate: this.modalData.formTemplate || null,
+            translations: this.modalData.translations,
+            identifiers: this.modalData.identifiers,
+            notes: this.modalData.notes
         };
 
         this.isSaving.set(true);
@@ -261,5 +354,57 @@ export class PlaceModal implements OnInit {
         } catch {
             // ignore reverse geocode failures, manual description still possible
         }
+    }
+
+    deletePlace() {
+        if (!confirm(`Möchten Sie den Ort "${this.initialData?.name}" wirklich löschen?`)) return;
+
+        const tree = this.currentTree();
+        if (!tree || !this.initialData?.id) return;
+
+        const payload: any = { mode: 'delete', id: this.initialData.id, name: this.initialData.name };
+        if (this.reassignTargetId()) payload.reassignToId = this.reassignTargetId();
+
+        this.gedcomService.savePlace(tree, payload).subscribe({
+            next: (res: any) => {
+                if (res.success) {
+                    this.deleted.emit();
+                } else {
+                    this.errorMessage.set('Fehler beim Löschen: ' + res.message);
+                }
+            },
+            error: (err: any) => {
+                const usage = err.error?.usage;
+                const msg = usage
+                    ? `${err.error?.message}\nVerknüpfungen: ${usage.totalLinks}, Unterorte: ${usage.childCount}\nWähle einen Zielort zum Umhängen oder merge zuerst.`
+                    : (err.error?.message || 'Unbekannter Fehler');
+                this.errorMessage.set('Fehler beim Löschen: ' + msg);
+            }
+        });
+    }
+
+    mergeSelected() {
+        const sourceId = this.initialData?.id;
+        const targetId = this.mergeTargetId();
+        const tree = this.currentTree();
+        if (!sourceId || !targetId || !tree) return;
+        if (!confirm(`Ort "${this.initialData.name}" in Zielort zusammenführen?`)) return;
+
+        this.gedcomService.mergePlaces(tree, sourceId, targetId).subscribe({
+            next: (res: any) => {
+                if (res.success) {
+                    this.merged.emit();
+                } else {
+                    this.errorMessage.set('Merge fehlgeschlagen: ' + (res.message || 'Unbekannter Fehler'));
+                }
+            },
+            error: (err: any) => this.errorMessage.set('Merge fehlgeschlagen: ' + (err.error?.message || 'Unbekannter Fehler'))
+        });
+    }
+
+    openPersonProfile(personId?: string | null) {
+        if (!personId) return;
+        this.router.navigate(['/person', personId]);
+        this.closeModal();
     }
 }

@@ -18,8 +18,8 @@ import { inject } from '@angular/core';
             <div class="p-0">
                 <div class="flex justify-between items-center mb-8">
                     <div>
-                        <h2 class="text-xl font-semibold text-ui-text">Medien &amp; Galerie</h2>
-                        <p class="text-sm text-ui-textMuted mt-1">Bilder und Dokumente der Person.</p>
+                        <h2 class="text-xl font-semibold text-neutral-900">Medien &amp; Galerie</h2>
+                        <p class="text-sm text-neutral-950 mt-1">Bilder und Dokumente der Person.</p>
                     </div>
                     <div class="flex gap-2">
                         <button (click)="openMediaAddModal()" class="btn-primary !w-auto !py-2">
@@ -41,10 +41,10 @@ import { inject } from '@angular/core';
 
                 <div *ngIf="person?.media && person.media.length > 0" class="grid grid-cols-1 gap-4">
                     <div *ngFor="let m of person.media; let i = index"
-                        class="glass-card !p-0 overflow-hidden flex h-24 hover:bg-ui-cardHover transition-all group">
+                        class="glass-card !p-0 overflow-hidden flex h-24 hover:bg-neutral-100 transition-all group">
                         <!-- Thumbnail -->
                         <div (click)="openViewer(m)"
-                            class="w-32 bg-ui-panel flex items-center justify-center cursor-pointer relative overflow-hidden">
+                            class="w-32 bg-brand-100 flex items-center justify-center cursor-pointer relative overflow-hidden">
                             <img *ngIf="isImage(m) && getMediaUrlExt(m.url)" [src]="getMediaUrlExt(m.url)"
                                 class="w-full h-full object-cover transition-transform group-hover:scale-110"
                                 alt="Vorschau" />
@@ -71,7 +71,7 @@ import { inject } from '@angular/core';
                         <div class="flex-1 p-4 flex flex-col justify-center gap-2 cursor-pointer transition-colors"
                             (click)="openMediaEditModal(i)">
                             <div class="flex items-center gap-3">
-                                <h3 class="font-bold text-sm text-ui-text flex-1">{{ m.title || 'Ohne Titel' }}</h3>
+                                <h3 class="font-bold text-sm text-neutral-900 flex-1">{{ m.title || 'Ohne Titel' }}</h3>
                                 <button (click)="$event.stopPropagation(); setPrimaryMedia(i)"
                                     [class.text-brand-400]="m.isPrimary" [class.text-neutral-600]="!m.isPrimary"
                                     class="badge badge-neutral hover:badge-primary cursor-pointer transition-colors">
@@ -83,18 +83,18 @@ import { inject } from '@angular/core';
                                     'DOCUMENT' ? 'Dokument' : m.role === 'CERTIFICATE' ? 'Urkunde' : m.role ===
                                     'GRAVESTONE' ? 'Grabstein' : m.role === 'SIGNATURE' ? 'Unterschrift' : m.role
                                     === 'OTHER' ? 'Sonstiges' : 'Medium' }}</span>
-                                <span *ngIf="m.caption" class="text-ui-textSoft truncate">{{ m.caption }}</span>
+                                <span *ngIf="m.caption" class="text-neutral-700 truncate">{{ m.caption }}</span>
                             </div>
                             <div class="flex items-center gap-2 mt-1">
                                 <span
-                                    class="text-[10px] font-mono text-ui-textMuted select-all truncate max-w-[200px]">{{
+                                    class="text-[10px] font-mono text-neutral-950 select-all truncate max-w-[200px]">{{
                                     m.url }}</span>
                             </div>
                         </div>
 
                         <!-- Delete -->
                         <button (click)="requestDeletePersonMedia(i)"
-                            class="w-12 flex items-center justify-center text-ui-textMuted hover:text-accent-danger-500 hover:bg-accent-danger-500/10 transition-all border-l border-ui-border/60">
+                            class="w-12 flex items-center justify-center text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 transition-all border-l border-neutral-300/60">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                                 stroke-linejoin="round">
@@ -108,7 +108,7 @@ import { inject } from '@angular/core';
                 </div>
 
                 <div *ngIf="!person?.media || person.media.length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-ui-border/60 rounded-3xl text-ui-textMuted">
+                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-neutral-300/60 rounded-3xl text-neutral-950">
                     <span class="text-4xl mb-3 opacity-20">🖼️</span>
                     <p class="font-medium">Keine Medien vorhanden.</p>
                 </div>
@@ -119,7 +119,7 @@ import { inject } from '@angular/core';
         <app-modal-shell [visible]="mediaDeletePendingIndex() !== null" title="Medium löschen" icon="🗑️" size="sm"
             [showSave]="false" [showDelete]="true" deleteText="Ja, löschen" (close)="cancelDeletePersonMedia()"
             (delete)="confirmDeletePersonMedia()">
-            <div class="p-4 text-neutral-500 text-center">
+            <div class="p-4 text-neutral-950 text-center">
                 <div
                     class="w-14 h-14 bg-accent-danger-500/10 text-accent-danger-500 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
@@ -179,7 +179,7 @@ import { inject } from '@angular/core';
                     class="flex items-center gap-2 cursor-pointer text-sm text-neutral-300 pt-2 border-t border-canvas-white/10">
                     <input type="checkbox" [ngModel]="editMediaDraft()?.isPrimary"
                         (ngModelChange)="editMediaDraft.set({ ...editMediaDraft(), isPrimary: $event })"
-                        class="w-4 h-4 rounded border-canvas-white/10 bg-ui-surfaceDark text-brand-500 focus:ring-brand-500 focus:ring-offset-neutral-900">
+                        class="w-4 h-4 rounded border-canvas-white/10 bg-brand-900 text-brand-500 focus:ring-brand-500 focus:ring-offset-neutral-900">
                     Als Profilbild verwenden
                 </label>
             </div>

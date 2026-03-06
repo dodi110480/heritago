@@ -1,36 +1,7 @@
 <app-page-container [wide]="true">
     <app-page-header [title]="'Willkommen zurück, ' + (authService.currentUser()?.username || '')"
         [description]="funStat()">
-        <div actions class="shrink-0 transition-all duration-300" *ngIf="treeName()" (dragover)="onDragOver($event)"
-            (drop)="onDrop($event)"
-            [ngClass]="{'border-brand-500 bg-brand-500/10 scale-105 shadow-glow-gold': isDragging()}"
-            (click)="toggleSwitcher()" title="Klicken oder Stammbaum hierher ziehen zum Wechseln">
-            <div
-                class="relative glass-card w-[480px] max-w-full h-[240px] flex items-center justify-center overflow-hidden cursor-pointer group transition-all duration-300">
-                <svg #miniTree class="absolute inset-0 w-full h-full opacity-60"></svg>
-                <div
-                    class="relative z-10 bg-ui-surfaceDark/60 backdrop-blur-sm py-5 px-8 rounded-2xl border border-canvas-white/10 flex items-center gap-6 shadow-xl">
-                    <div class="flex -mr-2.5">
-                        <div
-                            class="w-11 h-11 rounded-full border-2 border-canvas-white/20 -ml-4 first:ml-0 shadow-lg animate-pulse-photo anim-delay-0 bg-gradient-to-br from-ui-surfaceLight to-ui-surface">
-                        </div>
-                        <div
-                            class="w-11 h-11 rounded-full border-2 border-canvas-white/20 -ml-4 shadow-lg animate-pulse-photo anim-delay-1 bg-gradient-to-br from-ui-surfaceLighter to-ui-surfaceLight">
-                        </div>
-                        <div
-                            class="w-11 h-11 rounded-full border-2 border-canvas-white/20 -ml-4 shadow-lg animate-pulse-photo anim-delay-2 bg-gradient-to-br from-ui-surface to-ui-surfaceDark">
-                        </div>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-meta uppercase text-canvas-white/40 tracking-wider mb-0.5">Aktiver Stammbaum</span>
-                        <span class="text-xl font-bold text-canvas-white tracking-tight">{{ authService.currentTree()?.title ||
-                            treeName() }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
     </app-page-header>
-
     <div class="relative z-20 pb-20">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-10" *ngIf="!loading()">
             <app-stat-card [value]="stats()?.counts?.individuals || 0" label="Personen" icon="👥" accent="brand">
@@ -56,7 +27,8 @@
                 </div>
                 <div>
                     <h3 class="text-3xl font-bold mb-2 text-canvas-white">Stammbaum ansehen</h3>
-                    <p class="text-canvas-white/50 text-base leading-relaxed">Erforsche deine Ahnen in der interaktiven Ansicht
+                    <p class="text-canvas-white/50 text-base leading-relaxed">Erforsche deine Ahnen in der interaktiven
+                        Ansicht
                     </p>
                 </div>
                 <div
@@ -90,7 +62,7 @@
         </div>
 
         <div
-            class="flex flex-wrap justify-center gap-3 glass-card !p-3 !rounded-2xl border border-canvas-white/5 mb-16 max-w-fit mx-auto">
+            class="flex flex-wrap justify-center gap-3 glass-card !p-3 !rounded-2xl border border-ui-border/20 mb-16 max-w-fit mx-auto bg-ui-bgSoft/5">
             <a routerLink="/map" title="Karte"
                 class="flex items-center gap-2.5 px-5 py-2.5 rounded-btn text-canvas-white/50 hover:text-brand-400 hover:bg-brand-500/10 hover:-translate-y-0.5 hover:border-brand-500/20 border border-transparent transition-all">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none"
@@ -144,9 +116,9 @@
         </div>
     </div>
 
-    <div class="fixed inset-0 bg-ui-surfaceDark/80 backdrop-blur-md flex justify-center items-center z-modal"
+    <div class="fixed inset-0 bg-ui-bg/90 backdrop-blur-md flex justify-center items-center z-modal"
         *ngIf="showTreeSwitcher()" (click)="$event.stopPropagation(); toggleSwitcher()">
-        <div class="glass-card !rounded-modal border border-brand-500/15 shadow-modal max-w-lg w-full mx-4"
+        <div class="glass-card !rounded-modal border border-ui-border/20 shadow-modal max-w-lg w-full mx-4"
             (click)="$event.stopPropagation()">
             <h2 class="text-2xl font-bold text-canvas-white mb-6">Stammbaum wählen</h2>
             <div class="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2">
@@ -155,7 +127,7 @@
                     [ngClass]="{'border-brand-500 bg-brand-500/10': tree.name === treeName()}" draggable="true"
                     (dragstart)="onDragStart($event, tree)" (dragend)="onDragEnd()" (click)="selectTree(tree)">
                     <div
-                        class="w-10 h-10 shrink-0 bg-ui-surfaceDark/50 rounded-xl flex items-center justify-center border border-canvas-white/10">
+                        class="w-10 h-10 shrink-0 bg-ui-bgSoft/20 rounded-xl flex items-center justify-center border border-ui-border/10">
                         <img src="/favicon.svg" alt="Tree" class="w-6 h-6" />
                     </div>
                     <div class="flex flex-col">

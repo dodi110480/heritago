@@ -6,11 +6,11 @@ import { CommonModule } from '@angular/common';
     standalone: true,
     imports: [CommonModule],
     template: `
-        <div class="fixed inset-0 z-modal flex items-end md:items-center justify-center bg-surface-darkest/80 backdrop-blur-md md:p-4"
+        <div class="fixed inset-0 z-modal flex items-end md:items-center justify-center bg-ui-bgSoft/40 backdrop-blur-xl md:p-4"
              *ngIf="visible" (click)="close.emit()">
             
             <!-- Modal Window -->
-            <div class="w-full flex flex-col bg-surface border-t md:border border-brand-500/15 shadow-modal overflow-hidden transition-all duration-300
+            <div class="w-full flex flex-col bg-ui-bg border-t md:border border-brand-500/15 shadow-modal overflow-hidden transition-all duration-300
                         h-[95vh] rounded-t-modal md:h-auto md:max-h-[90vh] md:rounded-modal"
                  [ngClass]="{
                      'md:max-w-xl': size === 'sm',
@@ -21,7 +21,7 @@ import { CommonModule } from '@angular/common';
                  (click)="$event.stopPropagation()">
                  
                 <!-- Header -->
-                <div class="flex justify-between items-center p-4 md:p-6 border-b border-brand-500/10 bg-surface-dark/50 flex-shrink-0">
+                <div class="flex justify-between items-center p-4 md:p-6 border-b border-brand-500/10 bg-ui-bgSoft/20 flex-shrink-0">
                     <h2 class="text-xl md:text-2xl font-bold text-canvas-white m-0 flex items-center gap-3">
                         <span *ngIf="icon" class="text-2xl">{{ icon }}</span>
                         {{ title }}
@@ -36,12 +36,12 @@ import { CommonModule } from '@angular/common';
                 </div>
 
                 <!-- Body (Scrollable Content Projection) -->
-                <div class="p-4 md:p-6 overflow-y-auto custom-scrollbar flex-1 relative bg-surface-darkest/30">
+                <div class="p-4 md:p-6 overflow-y-auto custom-scrollbar flex-1 relative bg-ui-bgSoft/10">
                     <ng-content></ng-content>
                 </div>
 
                 <!-- Footer (Actions) -->
-                <div *ngIf="showFooter" class="flex flex-col-reverse md:flex-row justify-between items-stretch md:items-center gap-3 p-4 md:p-6 border-t border-brand-500/10 bg-surface-dark/50 flex-shrink-0">
+                <div *ngIf="showFooter" class="flex flex-col-reverse md:flex-row justify-between items-stretch md:items-center gap-3 p-4 md:p-6 border-t border-brand-500/10 bg-ui-bgSoft/20 flex-shrink-0">
                     <!-- Optionale Löschen-Aktion auf der linken Seite -->
                     <div class="w-full md:w-auto">
                         <button *ngIf="showDelete" class="btn-danger w-full md:w-auto !px-4 !py-3 md:!py-2.5 flex items-center justify-center gap-2" 

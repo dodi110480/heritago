@@ -17,10 +17,10 @@
 
             <!-- Sortierung -->
             <select [ngModel]="sortMode()" (ngModelChange)="sortMode.set($event)"
-                class="glass-card !px-3 !py-2.5 !rounded-xl text-ui-text min-w-[200px] w-full md:w-auto outline-none focus:ring-2 focus:ring-brand-500/30">
-                <option value="date_desc" class="bg-ui-input text-ui-text">Neueste Hochzeiten</option>
-                <option value="children_desc" class="bg-ui-input text-ui-text">Meiste Kinder</option>
-                <option value="names_asc" class="bg-ui-input text-ui-text">Name Partner (A-Z)</option>
+                class="glass-card !px-3 !py-2.5 !rounded-xl text-neutral-900 min-w-[200px] w-full md:w-auto outline-none focus:ring-2 focus:ring-brand-500/30">
+                <option value="date_desc" class="bg-neutral-100 text-neutral-900">Neueste Hochzeiten</option>
+                <option value="children_desc" class="bg-neutral-100 text-neutral-900">Meiste Kinder</option>
+                <option value="names_asc" class="bg-neutral-100 text-neutral-900">Name Partner (A-Z)</option>
             </select>
         </div>
     </app-page-header>
@@ -35,12 +35,12 @@
         </div>
 
         <div *ngIf="!loading() && filteredFamilies().length === 0"
-            class="py-32 flex flex-col items-center justify-center text-ui-textMuted glass-card">
-            <div class="w-20 h-20 bg-ui-panel rounded-full flex items-center justify-center mb-6 text-4xl opacity-50">
+            class="py-32 flex flex-col items-center justify-center text-neutral-950 glass-card">
+            <div class="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center mb-6 text-4xl opacity-50">
                 👨‍👩‍👧‍👦
             </div>
-            <h3 class="text-xl font-bold text-ui-text mb-2">Keine Familien gefunden</h3>
-            <p class="text-ui-textMuted">Probiere es mit einem anderen Suchbegriff.</p>
+            <h3 class="text-xl font-bold text-neutral-900 mb-2">Keine Familien gefunden</h3>
+            <p class="text-neutral-950">Probiere es mit einem anderen Suchbegriff.</p>
         </div>
 
         <div *ngIf="!loading()"
@@ -52,7 +52,7 @@
                     badgeText="Familie" badgeColor="highlight" [routerLink]="['/family', fam.id]">
 
                     <div actions *ngIf="fam.children?.length"
-                        class="text-xs px-2.5 py-1 rounded bg-ui-panel/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap"
+                        class="text-xs px-2.5 py-1 rounded bg-brand-100/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap"
                         [title]="getChildrenTooltip(fam)">
                         {{ fam.children.length }} Kinder
                     </div>

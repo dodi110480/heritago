@@ -15,19 +15,19 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="fixed inset-0 bg-ui-overlay backdrop-blur-md flex items-center justify-center z-[3000]" (click)="cancel.emit()">
+    <div class="fixed inset-0 bg-neutral-900/20 backdrop-blur-md flex items-center justify-center z-[3000]" (click)="cancel.emit()">
       <div class="modal-glass w-[90vw] max-w-[1200px] h-[85vh] flex flex-col overflow-hidden shadow-2xl" (click)="$event.stopPropagation()">
 
-        <div class="p-6 bg-ui-panel border-b border-ui-border flex items-center justify-between">
-          <h3 class="text-xl font-bold text-ui-text">Bild zuschneiden</h3>
+        <div class="p-6 bg-brand-100 border-b border-neutral-300 flex items-center justify-between">
+          <h3 class="text-xl font-bold text-neutral-900">Bild zuschneiden</h3>
           <div class="flex gap-2">
-            <button class="btn-ghost !w-auto !px-4 !py-2 border border-ui-border" (click)="setAspect('free')">Frei</button>
-            <button class="btn-ghost !w-auto !px-4 !py-2 border border-ui-border" (click)="setAspect(1)">1:1</button>
-            <button class="btn-ghost !w-auto !px-4 !py-2 border border-ui-border" (click)="useFullImage()">Ganzes Bild</button>
+            <button class="btn-ghost !w-auto !px-4 !py-2 border border-neutral-300" (click)="setAspect('free')">Frei</button>
+            <button class="btn-ghost !w-auto !px-4 !py-2 border border-neutral-300" (click)="setAspect(1)">1:1</button>
+            <button class="btn-ghost !w-auto !px-4 !py-2 border border-neutral-300" (click)="useFullImage()">Ganzes Bild</button>
           </div>
         </div>
 
-        <div class="flex-1 flex items-center justify-center bg-ui-panel overflow-hidden">
+        <div class="flex-1 flex items-center justify-center bg-brand-100 overflow-hidden">
           <canvas #canvas
             class="max-w-full max-h-full touch-none rounded-xl"
             (pointerdown)="onPointerDown($event)"
@@ -38,7 +38,7 @@ import { CommonModule } from '@angular/common';
           ></canvas>
         </div>
 
-        <div class="p-6 bg-ui-panel border-t border-ui-border flex justify-end gap-3">
+        <div class="p-6 bg-brand-100 border-t border-neutral-300 flex justify-end gap-3">
           <button class="btn-secondary !w-auto !py-2.5 !px-6" (click)="cancel.emit()">Abbrechen</button>
           <button class="btn-primary !w-auto !py-2.5 !px-8" (click)="crop()">Übernehmen</button>
         </div>

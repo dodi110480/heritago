@@ -18,7 +18,7 @@ import { Navbar } from './navbar';
 
 
       <!-- Simple Footer -->
-      <footer class="py-12 border-t border-canvas-white/5 text-center text-neutral-500 text-sm">
+      <footer class="py-12 border-t border-canvas-white/5 text-center text-neutral-950 text-sm">
         <p>&copy; 2026 Heritago - Gedächtnis der Generationen</p>
       </footer>
     </div>

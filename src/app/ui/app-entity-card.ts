@@ -33,7 +33,7 @@ export type EntityBadgeColor = 'primary' | 'highlight' | 'success' | 'danger' | 
                         <div *ngIf="badgeText" class="text-[8px] font-bold uppercase tracking-wider mb-0.5 leading-none" [ngClass]="getTextColorClass()">
                             {{ badgeText }}
                         </div>
-                        <h3 class="text-sm font-bold text-ui-text truncate leading-tight group-hover:text-brand-700 transition-colors">
+                        <h3 class="text-sm font-bold text-neutral-900 truncate leading-tight group-hover:text-brand-700 transition-colors">
                             {{ title }}
                         </h3>
                     </div>
@@ -44,11 +44,11 @@ export type EntityBadgeColor = 'primary' | 'highlight' | 'success' | 'danger' | 
                     </div>
                 </div>
                 
-                <div *ngIf="subtitle" class="text-meta leading-tight text-ui-textSoft truncate mt-0.5">
+                <div *ngIf="subtitle" class="text-meta leading-tight text-neutral-700 truncate mt-0.5">
                     {{ subtitle }}
                 </div>
                 
-                <div *ngIf="meta" class="text-meta leading-tight text-ui-textMuted truncate mt-0.5">
+                <div *ngIf="meta" class="text-meta leading-tight text-neutral-500 truncate mt-0.5">
                     {{ meta }}
                 </div>
             </div>
@@ -87,7 +87,7 @@ export class AppEntityCard {
             'highlight': 'bg-accent-highlight-500/10 text-accent-highlight-400',
             'success': 'bg-accent-success-500/10 text-accent-success-400',
             'danger': 'bg-accent-danger-500/10 text-accent-danger-400',
-            'neutral': 'bg-ui-panel text-ui-textSoft',
+            'neutral': 'bg-ui-bgSoft/20 text-neutral-700',
         };
         return map[this.badgeColor] || map['neutral'];
     }
@@ -98,7 +98,7 @@ export class AppEntityCard {
             'highlight': 'text-accent-highlight-500',
             'success': 'text-accent-success-500',
             'danger': 'text-accent-danger-500',
-            'neutral': 'text-ui-textMuted',
+            'neutral': 'text-neutral-900',
         };
         return map[this.badgeColor] || map['neutral'];
     }

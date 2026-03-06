@@ -1,6 +1,6 @@
 <app-page-container>
     <div class="max-w-3xl mx-auto py-12">
-        <div *ngIf="loading()" class="py-20 flex flex-col items-center gap-4 text-neutral-500">
+        <div *ngIf="loading()" class="py-20 flex flex-col items-center gap-4 text-neutral-950">
             <div class="w-10 h-10 border-4 border-canvas-white/5 border-l-brand-500 rounded-full animate-spin"></div>
             <p class="font-bold uppercase tracking-widest text-xs">Lebenslauf wird geladen...</p>
         </div>
@@ -33,15 +33,15 @@
                         [ngClass]="{'md:flex-row-reverse': i % 2 !== 0}">
 
                         <!-- Timeline Dot/Icon -->
-                        <div class="absolute left-6 md:left-1/2 w-12 h-12 bg-ui-panel border-4 border-neutral-950 rounded-full -translate-x-1/2 z-20 flex items-center justify-center text-xl shadow-2xl transition-all duration-300 group-hover:scale-125 group-hover:border-brand-500/50"
-                            [ngClass]="i % 2 === 0 ? 'md:ring-4 md:ring-ui-panel/50' : 'md:ring-4 md:ring-ui-panel/50'">
+                        <div class="absolute left-6 md:left-1/2 w-12 h-12 bg-brand-100 border-4 border-neutral-950 rounded-full -translate-x-1/2 z-20 flex items-center justify-center text-xl shadow-2xl transition-all duration-300 group-hover:scale-125 group-hover:border-brand-500/50"
+                            [ngClass]="i % 2 === 0 ? 'md:ring-4 md:ring-brand-100/50' : 'md:ring-4 md:ring-brand-100/50'">
                             {{ getIcon(event.fact_type) }}
                         </div>
 
                         <!-- Content Card -->
                         <div class="w-full md:w-[45%] pl-10 md:pl-0" [ngClass]="i % 2 === 0 ? 'md:pr-10' : 'md:pl-10'">
                             <div
-                                class="bg-ui-panel/40 backdrop-blur-xl border border-canvas-white/5 rounded-[32px] p-6 transition-all duration-500 hover:bg-ui-panel/60 hover:border-brand-500/30 hover:-translate-y-1 shadow-2xl group/card relative overflow-hidden">
+                                class="bg-brand-100/40 backdrop-blur-xl border border-canvas-white/5 rounded-[32px] p-6 transition-all duration-500 hover:bg-brand-100/60 hover:border-brand-500/30 hover:-translate-y-1 shadow-2xl group/card relative overflow-hidden">
                                 <div
                                     class="absolute top-0 right-0 p-8 modal-glow-blue opacity-10 group-hover/card:opacity-30 transition-opacity">
                                 </div>
@@ -55,7 +55,7 @@
                                     <p class="text-neutral-400 text-sm leading-relaxed mb-4" *ngIf="event.description">
                                         {{
                                         event.description }}</p>
-                                    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-canvas-white/5 border border-canvas-white/5 rounded-xl text-neutral-500 text-[10px] font-bold uppercase tracking-widest"
+                                    <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-canvas-white/5 border border-canvas-white/5 rounded-xl text-neutral-950 text-[10px] font-bold uppercase tracking-widest"
                                         *ngIf="event.place">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
                                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -72,7 +72,7 @@
 
                     <div class="relative py-12 flex flex-col items-center gap-4 bg-canvas-white/5 border-2 border-dashed border-canvas-white/5 rounded-[40px]"
                         *ngIf="timelineData().events.length === 0">
-                        <p class="text-neutral-500 font-bold uppercase tracking-widest text-xs">Keine Ereignisse
+                        <p class="text-neutral-950 font-bold uppercase tracking-widest text-xs">Keine Ereignisse
                             verfügbar.
                         </p>
                     </div>

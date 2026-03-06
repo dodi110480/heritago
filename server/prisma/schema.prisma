@@ -99,12 +99,12 @@ enum DnaTestProvider {
 }
 
 enum NameType {
-  BIRTH          // Geburtsname
-  MARRIED        // Ehename
-  ALSO_KNOWN_AS  // Alias / Künstlername
-  IMMIGRANT      // Name nach Einwanderung
-  MAIDEN         // Mädchenname
-  OTHER          // Sonstiges
+  BIRTH // Geburtsname
+  MARRIED // Ehename
+  ALSO_KNOWN_AS // Alias / Künstlername
+  IMMIGRANT // Name nach Einwanderung
+  MAIDEN // Mädchenname
+  OTHER // Sonstiges
 }
 
 enum RestrictionNotice {
@@ -140,45 +140,44 @@ enum EntityType {
 }
 
 enum EventType {
-  BIRT    // Geburt
-  CHR     // Taufe (religiös)
-  BAPM    // Taufe (nicht-religiös)
-  DEAT    // Tod
-  BURI    // Beerdigung
-  CREM    // Einäscherung
-  MARR    // Heirat
-  DIV     // Scheidung
-  ANUL    // Annulierung
-  ENGA    // Verlobung
-  ADOP    // Adoption
-  BARM    // Bar Mitzvah
-  BASM    // Bas Mitzvah
-  BLES    // Segen
-  CHRA    // Erwachsentaufe
-  CONF    // Firmung/Konfirmation
-  FCOM    // Erste Kommunion
-  ORDN    // Ordination
-  NATU    // Einbürgerung
-  EMIG    // Auswanderung
-  IMMI    // Einwanderung
-  CENS    // Volkszählung
-  PROB    // Testamentseröffnung
-  WILL    // Testament
-  GRAD    // Abschluss
-  RETI    // Ruhestand
-  EVEN    // Allgemeines Ereignis
-  BAPL    // LDS-Taufe (für Verstorbene)
-  CONL    // LDS-Bestätigung
-  ENDL    // LDS-Investitur (ersetzt ENDO)
-  SLGC    // LDS-Kindersiegelung
-  SLGS    // LDS-Stellvertreter-Siegelung
-  RESI    // Wohnsitz
-  MILI    // Militärdienst
-  CAST    // Kaste
-  DSCR    // Körperliche Beschreibung
-  OTHER   // Sonstiges (für _CUSTOM)
+  BIRT // Geburt
+  CHR // Taufe (religiös)
+  BAPM // Taufe (nicht-religiös)
+  DEAT // Tod
+  BURI // Beerdigung
+  CREM // Einäscherung
+  MARR // Heirat
+  DIV // Scheidung
+  ANUL // Annulierung
+  ENGA // Verlobung
+  ADOP // Adoption
+  BARM // Bar Mitzvah
+  BASM // Bas Mitzvah
+  BLES // Segen
+  CHRA // Erwachsentaufe
+  CONF // Firmung/Konfirmation
+  FCOM // Erste Kommunion
+  ORDN // Ordination
+  NATU // Einbürgerung
+  EMIG // Auswanderung
+  IMMI // Einwanderung
+  CENS // Volkszählung
+  PROB // Testamentseröffnung
+  WILL // Testament
+  GRAD // Abschluss
+  RETI // Ruhestand
+  EVEN // Allgemeines Ereignis
+  BAPL // LDS-Taufe (für Verstorbene)
+  CONL // LDS-Bestätigung
+  ENDL // LDS-Investitur (ersetzt ENDO)
+  SLGC // LDS-Kindersiegelung
+  SLGS // LDS-Stellvertreter-Siegelung
+  RESI // Wohnsitz
+  MILI // Militärdienst
+  CAST // Kaste
+  DSCR // Körperliche Beschreibung
+  OTHER // Sonstiges (für _CUSTOM)
 }
-
 
 enum FactType {
   OCCUPATION
@@ -191,6 +190,19 @@ enum FactType {
   MILITARY_SERVICE
   DESCRIPTION
   OTHER
+}
+
+enum PlaceLevel {
+  // Von kleinster zu größter Einheit
+  BUILDING    // Gebäude (z. B. "Rathaus München")
+  STREET      // Straße (z. B. "Marienplatz")
+  DISTRICT    // Stadtviertel/Bezirk (z. B. "Altstadt-Lehel")
+  CITY        // Stadt/Gemeinde (z. B. "München")
+  MUNICIPALITY // Gemeindeverband (z. B. "Landkreis München")
+  REGION      // Region (z. B. "Oberbayern")
+  STATE       // Bundesland (z. B. "Bayern")
+  COUNTRY     // Land (z. B. "Deutschland")
+  CONTINENT   // Kontinent (z. B. "Europa")
 }
 
 //////////////////////////////////////////////////
@@ -218,16 +230,16 @@ model Tree {
   placForm       String?
 
   // Additional Header attributes
-  exportDate   DateTime?   // HEAD.DATE + TIME
-  fileName     String?     // HEAD.FILE
-  destination  String?     // HEAD.DEST
-  sourceName   String?     // HEAD.SOUR.NAME
-  sourceVers   String?     // HEAD.SOUR.VERS
-  sourceData   String?     // HEAD.SOUR.DATA
+  exportDate  DateTime? // HEAD.DATE + TIME
+  fileName    String? // HEAD.FILE
+  destination String? // HEAD.DEST
+  sourceName  String? // HEAD.SOUR.NAME
+  sourceVers  String? // HEAD.SOUR.VERS
+  sourceData  String? // HEAD.SOUR.DATA
 
   // Custom Extensions (SCHMA, _CUSTOM)
-  extensions     Json?
-  schemaExtensions Json?   // SCHMA-Definition
+  extensions       Json?
+  schemaExtensions Json? // SCHMA-Definition
 
   headerMedia MediaLink[] @relation("TreeHeaderMedia") // HEAD.OBJE
 
@@ -251,8 +263,12 @@ model Tree {
   changeLogs   ChangeLog[]
   permissions  TreePermission[]
   imports      Import[]
-  submitters   Submitter[]
-  identifiers  Identifier[]
+
+  submissions    Submission[]
+  communications Communication[]
+
+  submitters  Submitter[]
+  identifiers Identifier[]
 
   @@index([isPublic])
 }
@@ -271,6 +287,10 @@ model User {
   permissions  TreePermission[]
   researchLogs ResearchLog[]
   changeLogs   ChangeLog[]
+
+  // Neue Relationen für Communication
+  sentCommunications     Communication[] @relation("SentCommunications")
+  receivedCommunications Communication[] @relation("ReceivedCommunications")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -295,16 +315,19 @@ model TreePermission {
 //////////////////////////////////////////////////
 
 model Person {
-  id           String       @id @default(uuid())
-  gedcomId     String?
-  sex          Sex?
+  id                String            @id @default(uuid())
+  gedcomId          String?
+  sex               Sex?
   isLiving          Boolean           @default(false)
   privacyLevel      PrivacyLevel      @default(PRIVATE)
   restrictionNotice RestrictionNotice @default(NONE)
   exid              String?
   www               String[]
-  religion      String?
-  addresses     Address[]
+  religion          String?
+  notes             SharedNote[]
+  addresses         Address[]
+
+  submissions Submission[]
 
   treeId String
   tree   Tree   @relation(fields: [treeId], references: [id], onDelete: Cascade)
@@ -364,14 +387,14 @@ model Family {
   eventsLdsFamc Event[]        @relation("LdsFamilyEvents") // LDS relation
   facts         Fact[]         @relation("FamilyFacts")
 
-  mediaLinks MediaLink[]
-  noteLinks  NoteLink[]
-  citations  Citation[]
+  mediaLinks  MediaLink[]
+  noteLinks   NoteLink[]
+  citations   Citation[]
   identifiers Identifier[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  chanDate  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  chanDate   DateTime?
   extensions Json?
 
   @@unique([treeId, gedcomId])
@@ -422,8 +445,8 @@ model Name {
   suffix    String?
   type      NameType?
   religion  String?
-  isPrimary Boolean @default(true)
-  sortOrder Int     @default(0)
+  isPrimary Boolean   @default(true)
+  sortOrder Int       @default(0)
 
   validity NameValidity[]
 
@@ -466,8 +489,8 @@ model Event {
   ldsFamcId   String?
   ldsFamc     Family? @relation("LdsFamilyEvents", fields: [ldsFamcId], references: [id], onDelete: SetNull)
 
-  minDate     DateTime? // Hilfsfeld für Sortierung/Filterung
-  maxDate     DateTime? // Hilfsfeld für Sortierung/Filterung
+  minDate DateTime? // Hilfsfeld für Sortierung/Filterung
+  maxDate DateTime? // Hilfsfeld für Sortierung/Filterung
 
   personId String?
   person   Person? @relation("PersonEvents", fields: [personId], references: [id], onDelete: SetNull)
@@ -476,8 +499,8 @@ model Event {
   family   Family? @relation("FamilyEvents", fields: [familyId], references: [id], onDelete: SetNull)
 
   // LDS-Specific fields (Optional)
-  ldsTemple    String?     // TEMP – Temple-Code
-  ldsStatus    String?     // STAT – z. B. Completed, Child
+  ldsTemple String? // TEMP – Temple-Code
+  ldsStatus String? // STAT – z. B. Completed, Child
   // ldsFamcId    String?     // FAMC – Family für Sealing - This was duplicated, removed.
   // ldsFamc      Family?     @relation("FamilyLdsSealing", fields: [ldsFamcId], references: [id], onDelete: SetNull) - This was duplicated, removed.
 
@@ -487,6 +510,7 @@ model Event {
   associations Association[]
   participants EventParticipant[]
   extensions   Json?
+  sourceEvents SourceEvent[]
 
   @@index([treeId])
   @@index([treeId, sortDate])
@@ -511,11 +535,11 @@ model Fact {
   dateEnd   DateTime?
   dateType  DatePrecision?
 
-  sortOrder Int @default(0)
+  sortOrder  Int     @default(0)
   customType String? // Für nicht-standardisierte GEDCOM-Tags
 
-  minDate     DateTime? // Hilfsfeld für Sortierung/Filterung
-  maxDate     DateTime? // Hilfsfeld für Sortierung/Filterung
+  minDate DateTime? // Hilfsfeld für Sortierung/Filterung
+  maxDate DateTime? // Hilfsfeld für Sortierung/Filterung
 
   placeId String?
   place   Place?  @relation(fields: [placeId], references: [id], onDelete: SetNull)
@@ -526,7 +550,7 @@ model Fact {
   familyId String?
   family   Family? @relation("FamilyFacts", fields: [familyId], references: [id], onDelete: SetNull)
 
-  citations Citation[]
+  citations  Citation[]
   extensions Json?
 
   @@index([treeId])
@@ -546,17 +570,17 @@ model Place {
   jurisdiction  String? // dein bestehendes Feld – kann mit FORM harmonisiert werden
   historicNames String[] // dein Array – gut als Fallback
 
-  importId      String?
-  import        Import? @relation(fields: [importId], references: [id], onDelete: SetNull)
+  importId String?
+  import   Import? @relation(fields: [importId], references: [id], onDelete: SetNull)
 
-  latitude      Float?
-  longitude     Float?
-  parentId      String?
-  parent        Place?   @relation("PlaceHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
-  children      Place[]  @relation("PlaceHierarchy")
-  phrase        String? // PHRASE – z. B. "historisch: Monachium"
-  level         Int?     @default(0) // 0 = kleinste Einheit, steigt bei parentId
-
+  latitude  Float?
+  longitude Float?
+  parentId  String?
+  parent    Place?  @relation("PlaceHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Place[] @relation("PlaceHierarchy")
+  phrase    String? // PHRASE – z. B. "historisch: Monachium"
+  level PlaceLevel @default(CITY) // Standardmäßig "Stadt"
+  
   // ── GEDCOM 7.0 Ergänzungen ───────────────────────────────────────────────────
   lang String? // Sprache des name (ISO 639)
 
@@ -572,12 +596,13 @@ model Place {
   events       Event[]
   facts        Fact[]
   associations Association[]
+  sourceEvents SourceEvent[]
 
   formTemplate String? // z. B. "$CITY, $STAE, $CTRY"
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  chanDate  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  chanDate   DateTime?
   extensions Json?
 
   @@unique([treeId, name, parentId]) // dein Unique bleibt
@@ -587,44 +612,45 @@ model Place {
 }
 
 model PlaceTranslation {
-  id      String  @id @default(uuid())
-  placeId String
-  place   Place   @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  name    String
-  form    String?
-  lang    String
-  dateStart DateTime?  // Gültig ab
-  dateEnd   DateTime?  // Gültig bis
+  id        String         @id @default(uuid())
+  placeId   String
+  place     Place          @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  name      String
+  form      String?
+  lang      String
+  dateStart DateTime? // Gültig ab
+  dateEnd   DateTime? // Gültig bis
   dateType  DatePrecision? // Präzision
+
   @@index([placeId])
 }
 
 model Identifier {
-  id        String     @id @default(uuid())
-  treeId    String
-  tree      Tree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  id         String     @id @default(uuid())
+  treeId     String
+  tree       Tree       @relation(fields: [treeId], references: [id], onDelete: Cascade)
   entityType EntityType
-  entityId   String     // Verweis auf Person, Place, etc. (lose Verknüpfung)
-  value      String     // Der eigentliche Identifier-Wert
-  type       String?    // Typ des Identifiers (z.B. "wikidata", "social_security")
+  entityId   String // Verweis auf Person, Place, etc. (lose Verknüpfung)
+  value      String // Der eigentliche Identifier-Wert
+  type       String? // Typ des Identifiers (z.B. "wikidata", "social_security")
 
   // Optionale Relationen für Prisma-Navigation (vorteilhaft für Queries)
-  personId   String?
-  person     Person?    @relation(fields: [personId], references: [id], onDelete: Cascade)
-  placeId    String?
-  place      Place?     @relation(fields: [placeId], references: [id], onDelete: Cascade)
-  sourceId   String?
-  source     Source?    @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  citationId String?
-  citation   Citation?  @relation(fields: [citationId], references: [id], onDelete: Cascade)
-  familyId   String?
-  family     Family?    @relation(fields: [familyId], references: [id], onDelete: Cascade)
-  mediaId    String?
-  media      Media?     @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  personId     String?
+  person       Person?     @relation(fields: [personId], references: [id], onDelete: Cascade)
+  placeId      String?
+  place        Place?      @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  sourceId     String?
+  source       Source?     @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  citationId   String?
+  citation     Citation?   @relation(fields: [citationId], references: [id], onDelete: Cascade)
+  familyId     String?
+  family       Family?     @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  mediaId      String?
+  media        Media?      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
   repositoryId String?
-  repository Repository? @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  submitterId String?
-  submitter  Submitter?  @relation(fields: [submitterId], references: [id], onDelete: Cascade)
+  repository   Repository? @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  submitterId  String?
+  submitter    Submitter?  @relation(fields: [submitterId], references: [id], onDelete: Cascade)
 
   @@index([treeId])
   @@index([entityId])
@@ -658,10 +684,11 @@ model Source {
   noteLinks   NoteLink[]
   identifiers Identifier[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  chanDate  DateTime?
-  extensions Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  chanDate     DateTime?
+  extensions   Json?
+  sourceEvents SourceEvent[]
 
   @@unique([treeId, gedcomId])
   @@index([treeId])
@@ -686,13 +713,13 @@ model Repository {
   phone   String?
   email   String?
   website String?
-  
+
   sources Source[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  chanDate  DateTime?
-  extensions Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  chanDate    DateTime?
+  extensions  Json?
   identifiers Identifier[]
 
   @@index([treeId])
@@ -724,15 +751,15 @@ model Media {
 
   sortOrder Int @default(0)
 
-  links     MediaLink[]
-  citations Citation[]
-  noteLinks NoteLink[]
-  variants  MediaVariant[]
+  links       MediaLink[]
+  citations   Citation[]
+  noteLinks   NoteLink[]
+  variants    MediaVariant[]
   identifiers Identifier[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  chanDate  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  chanDate   DateTime?
   extensions Json?
 
   fileFormat String? // z. B. "jpg", "pdf", "tiff"
@@ -767,8 +794,8 @@ model Citation {
   dataDateEnd   DateTime?
   dataDateType  DatePrecision? // optional: Präzision für dataDateText
 
-  minDate     DateTime? // Hilfsfeld für Sortierung/Filterung
-  maxDate     DateTime? // Hilfsfeld für Sortierung/Filterung
+  minDate DateTime? // Hilfsfeld für Sortierung/Filterung
+  maxDate DateTime? // Hilfsfeld für Sortierung/Filterung
 
   // EVEN Block (welches Ereignis deckt die Quelle ab?)
   evenType       String? // EVEN (z. B. "BIRT", "CENS", "OCCU", "MARR" ...)
@@ -812,9 +839,9 @@ model Citation {
   association   Association? @relation(fields: [associationId], references: [id], onDelete: SetNull)
 
   // ── Zeitstempel (wie bei dir) ──────────────────────────────────────────────────
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  chanDate  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  chanDate   DateTime?
   extensions Json?
 
   // ── Deine ursprünglichen Indizes – 1:1 übernommen ──────────────────────────────
@@ -843,22 +870,21 @@ model CitationText {
   @@index([citationId])
 }
 
-
 //////////////////////////////////////////////////
 // SHARED NOTE
 //////////////////////////////////////////////////
 
 model SharedNote {
-  id             String         @id @default(uuid())
-  gedcomId       String?
-  treeId         String
-  tree           Tree           @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  id       String  @id @default(uuid())
+  gedcomId String?
+  treeId   String
+  tree     Tree    @relation(fields: [treeId], references: [id], onDelete: Cascade)
 
-  importId       String?
-  import         Import? @relation(fields: [importId], references: [id], onDelete: SetNull)
+  importId String?
+  import   Import? @relation(fields: [importId], references: [id], onDelete: SetNull)
 
   text           String
-  lines          String[]       // CONT-Zeilen für mehrzeilige Notes / formatiert
+  lines          String[] // CONT-Zeilen für mehrzeilige Notes / formatiert
   mime           String?
   noteType       String?
   privacyLevel   PrivacyLevel   @default(PRIVATE)
@@ -869,10 +895,12 @@ model SharedNote {
   citations  Citation[]
   mediaLinks MediaLink[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  chanDate  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  chanDate   DateTime?
   extensions Json?
+  person     Person?   @relation(fields: [personId], references: [id])
+  personId   String?
 
   @@index([treeId])
   @@index([treeId, researchStatus])
@@ -893,18 +921,18 @@ model NoteLink {
   noteId String
   note   SharedNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
-  personId String?
-  familyId String?
-  eventId  String?
-  sourceId String?
-  mediaId  String?
+  personId    String?
+  familyId    String?
+  eventId     String?
+  sourceId    String?
+  mediaId     String?
   submitterId String? // NEU
 
-  person Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
-  family Family? @relation(fields: [familyId], references: [id], onDelete: SetNull)
-  event  Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
-  source Source? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
-  media  Media?  @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  person    Person?    @relation(fields: [personId], references: [id], onDelete: SetNull)
+  family    Family?    @relation(fields: [familyId], references: [id], onDelete: SetNull)
+  event     Event?     @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  source    Source?    @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  media     Media?     @relation(fields: [mediaId], references: [id], onDelete: SetNull)
   submitter Submitter? @relation(fields: [submitterId], references: [id], onDelete: SetNull) // NEU
 
   context    String?
@@ -935,26 +963,28 @@ model MediaLink {
   id     String @id @default(uuid())
   treeId String
   tree   Tree   @relation(fields: [treeId], references: [id], onDelete: Cascade)
-  
+
   headerTreeId String?
-  headerTree   Tree?    @relation("TreeHeaderMedia", fields: [headerTreeId], references: [id], onDelete: SetNull)
+  headerTree   Tree?   @relation("TreeHeaderMedia", fields: [headerTreeId], references: [id], onDelete: SetNull)
 
   mediaId String
   media   Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
 
-  personId String?
-  familyId String?
-  eventId  String?
-  sourceId String?
-  noteId   String?
-  submitterId String? // NEU
+  personId        String?
+  familyId        String?
+  eventId         String?
+  sourceId        String?
+  noteId          String?
+  submitterId     String?
+  communicationId String?
 
-  person Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
-  family Family? @relation(fields: [familyId], references: [id], onDelete: SetNull)
-  event  Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
-  source Source? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
-  note   SharedNote? @relation(fields: [noteId], references: [id], onDelete: SetNull)
-  submitter Submitter? @relation(fields: [submitterId], references: [id], onDelete: SetNull) // NEU
+  person        Person?        @relation(fields: [personId], references: [id], onDelete: SetNull)
+  family        Family?        @relation(fields: [familyId], references: [id], onDelete: SetNull)
+  event         Event?         @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  source        Source?        @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  note          SharedNote?    @relation(fields: [noteId], references: [id], onDelete: SetNull)
+  communication Communication? @relation(fields: [communicationId], references: [id], onDelete: SetNull)
+  submitter     Submitter?     @relation(fields: [submitterId], references: [id], onDelete: SetNull) // NEU
 
   role      String?
   caption   String?
@@ -1137,8 +1167,8 @@ model NameValidity {
   dateEnd   DateTime?
   dateType  DatePrecision?
 
-  minDate     DateTime? // Hilfsfeld für Sortierung/Filterung
-  maxDate     DateTime? // Hilfsfeld für Sortierung/Filterung
+  minDate DateTime? // Hilfsfeld für Sortierung/Filterung
+  maxDate DateTime? // Hilfsfeld für Sortierung/Filterung
 
   @@index([nameId])
 }
@@ -1158,7 +1188,6 @@ model EventParticipant {
   @@index([personId])
 }
 
-
 //////////////////////////////////////////////////
 // SUBMITTER
 //////////////////////////////////////////////////
@@ -1167,34 +1196,35 @@ model Submitter {
   id       String  @id @default(uuid())
   gedcomId String?
 
-  treeId   String
-  tree     Tree    @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  treeId String
+  tree   Tree   @relation(fields: [treeId], references: [id], onDelete: Cascade)
 
-  name         String
-  
+  name String
+
   // Vollständige Adresse (GEDCOM ADDR)
-  addrStreet   String?
-  addrCity     String?
-  addrState    String?
-  addrPostal   String?
-  addrCountry  String?
-  
-  phone        String[]
-  email        String[]
-  fax          String[]
-  www          String[]
-  
-  language     String?
-  
-  chanDate     DateTime?
-  noteLinks    NoteLink[]   // für Notizen am Submitter
-  addresses    Address[]
-  mediaLinks   MediaLink[]  // falls SUBM Objekte hat
-  extensions   Json?
-  identifiers  Identifier[]
+  addrStreet  String?
+  addrCity    String?
+  addrState   String?
+  addrPostal  String?
+  addrCountry String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  phone String[]
+  email String[]
+  fax   String[]
+  www   String[]
+
+  language String?
+
+  chanDate    DateTime?
+  noteLinks   NoteLink[] // für Notizen am Submitter
+  addresses   Address[]
+  mediaLinks  MediaLink[] // falls SUBM Objekte hat
+  extensions  Json?
+  identifiers Identifier[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  submissions Submission[]
 
   @@index([treeId])
   @@index([gedcomId])
@@ -1210,7 +1240,6 @@ model MediaVariant {
   mimeType String?
   variant  String? // thumbnail, preview, ocr, etc.
 
-
   @@index([mediaId])
 }
 
@@ -1219,13 +1248,13 @@ model MediaVariant {
 //////////////////////////////////////////////////
 
 model Import {
-  id        String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  treeId    String
-  tree      Tree     @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  treeId String
+  tree   Tree   @relation(fields: [treeId], references: [id], onDelete: Cascade)
 
-  filename  String
-  source    String?  // e.g. "GEDCOM", "CSV", "API"
+  filename String
+  source   String? // e.g. "GEDCOM", "CSV", "API"
 
   personCount Int?
   familyCount Int?
@@ -1233,37 +1262,37 @@ model Import {
 
   createdAt DateTime @default(now())
 
-  persons       Person[]
-  families      Family[]
-  events        Event[]
-  places        Place[]
-  sources       Source[]
-  repositories  Repository[]
-  media         Media[]
-  sharedNotes   SharedNote[]
-  importPersons   ImportPerson[]
-  importFamilies  ImportFamily[]
-  importEvents    ImportEvent[]
-  importSources   ImportSource[]
-  importSubmitters ImportSubmitter[]
+  persons            Person[]
+  families           Family[]
+  events             Event[]
+  places             Place[]
+  sources            Source[]
+  repositories       Repository[]
+  media              Media[]
+  sharedNotes        SharedNote[]
+  importPersons      ImportPerson[]
+  importFamilies     ImportFamily[]
+  importEvents       ImportEvent[]
+  importSources      ImportSource[]
+  importSubmitters   ImportSubmitter[]
   importRepositories ImportRepository[]
-  importMedia      ImportMedia[]
-  importSharedNotes ImportSharedNote[]
+  importMedia        ImportMedia[]
+  importSharedNotes  ImportSharedNote[]
 
   @@index([treeId])
 }
 
 model ImportPerson {
-  id         String   @id @default(uuid())
-  treeId     String
-  
-  importId   String?
-  import     Import?  @relation(fields: [importId], references: [id], onDelete: Cascade)
-  
+  id     String @id @default(uuid())
+  treeId String
+
+  importId String?
+  import   Import? @relation(fields: [importId], references: [id], onDelete: Cascade)
+
   gedcomXref String
   rawJson    Json
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([treeId])
   @@index([importId])
@@ -1271,16 +1300,16 @@ model ImportPerson {
 }
 
 model ImportFamily {
-  id         String   @id @default(uuid())
-  treeId     String
+  id     String @id @default(uuid())
+  treeId String
 
-  importId   String?
-  import     Import?  @relation(fields: [importId], references: [id], onDelete: Cascade)
+  importId String?
+  import   Import? @relation(fields: [importId], references: [id], onDelete: Cascade)
 
   gedcomXref String
   rawJson    Json
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([treeId])
   @@index([importId])
@@ -1288,16 +1317,16 @@ model ImportFamily {
 }
 
 model ImportEvent {
-  id         String   @id @default(uuid())
-  treeId     String
+  id     String @id @default(uuid())
+  treeId String
 
-  importId   String?
-  import     Import?  @relation(fields: [importId], references: [id], onDelete: Cascade)
+  importId String?
+  import   Import? @relation(fields: [importId], references: [id], onDelete: Cascade)
 
   gedcomXref String
   rawJson    Json
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([treeId])
   @@index([importId])
@@ -1305,16 +1334,16 @@ model ImportEvent {
 }
 
 model ImportSource {
-  id         String   @id @default(uuid())
-  treeId     String
+  id     String @id @default(uuid())
+  treeId String
 
-  importId   String?
-  import     Import?  @relation(fields: [importId], references: [id], onDelete: Cascade)
+  importId String?
+  import   Import? @relation(fields: [importId], references: [id], onDelete: Cascade)
 
   gedcomXref String
   rawJson    Json
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([treeId])
   @@index([importId])
@@ -1322,16 +1351,16 @@ model ImportSource {
 }
 
 model ImportSubmitter {
-  id         String   @id @default(uuid())
-  treeId     String
+  id     String @id @default(uuid())
+  treeId String
 
-  importId   String?
-  import     Import?  @relation(fields: [importId], references: [id], onDelete: Cascade)
+  importId String?
+  import   Import? @relation(fields: [importId], references: [id], onDelete: Cascade)
 
   gedcomXref String
   rawJson    Json
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([treeId])
   @@index([importId])
@@ -1339,16 +1368,16 @@ model ImportSubmitter {
 }
 
 model ImportRepository {
-  id         String   @id @default(uuid())
-  treeId     String
+  id     String @id @default(uuid())
+  treeId String
 
-  importId   String?
-  import     Import?  @relation(fields: [importId], references: [id], onDelete: Cascade)
+  importId String?
+  import   Import? @relation(fields: [importId], references: [id], onDelete: Cascade)
 
   gedcomXref String
   rawJson    Json
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([treeId])
   @@index([importId])
@@ -1356,16 +1385,16 @@ model ImportRepository {
 }
 
 model ImportMedia {
-  id         String   @id @default(uuid())
-  treeId     String
+  id     String @id @default(uuid())
+  treeId String
 
-  importId   String?
-  import     Import?  @relation(fields: [importId], references: [id], onDelete: Cascade)
+  importId String?
+  import   Import? @relation(fields: [importId], references: [id], onDelete: Cascade)
 
   gedcomXref String
   rawJson    Json
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([treeId])
   @@index([importId])
@@ -1373,16 +1402,16 @@ model ImportMedia {
 }
 
 model ImportSharedNote {
-  id         String   @id @default(uuid())
-  treeId     String
+  id     String @id @default(uuid())
+  treeId String
 
-  importId   String?
-  import     Import?  @relation(fields: [importId], references: [id], onDelete: Cascade)
+  importId String?
+  import   Import? @relation(fields: [importId], references: [id], onDelete: Cascade)
 
   gedcomXref String
   rawJson    Json
 
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([treeId])
   @@index([importId])
@@ -1426,27 +1455,29 @@ model Address {
 }
 
 model Submission {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   treeId      String
-  tree        Tree     @relation(fields: [treeId], references: [id])
+  tree        Tree      @relation(fields: [treeId], references: [id])
   submitterId String
   submitter   Submitter @relation(fields: [submitterId], references: [id])
   date        DateTime
   notes       String?
   extensions  Json?
+  person      Person?   @relation(fields: [personId], references: [id])
+  personId    String?
 
   @@index([treeId])
   @@index([submitterId])
 }
 
 model Communication {
-  id          String   @id @default(uuid())
+  id          String      @id @default(uuid())
   treeId      String
-  tree        Tree     @relation(fields: [treeId], references: [id])
+  tree        Tree        @relation(fields: [treeId], references: [id])
   senderId    String
-  sender      User     @relation(fields: [senderId], references: [id])
+  sender      User        @relation("SentCommunications", fields: [senderId], references: [id])
   recipientId String?
-  recipient   User?    @relation(fields: [recipientId], references: [id])
+  recipient   User?       @relation("ReceivedCommunications", fields: [recipientId], references: [id])
   subject     String
   body        String
   date        DateTime
@@ -1459,13 +1490,14 @@ model Communication {
 
 model SourceEvent {
   sourceId String
-  source   Source @relation(fields: [sourceId], references: [id])
+  source   Source  @relation(fields: [sourceId], references: [id])
   eventId  String
-  event    Event  @relation(fields: [eventId], references: [id])
+  event    Event   @relation(fields: [eventId], references: [id])
   role     String? // z. B. "CHIL", "HUSB"
+  place    Place?  @relation(fields: [placeId], references: [id])
+  placeId  String?
 
   @@id([sourceId, eventId])
   @@index([sourceId])
   @@index([eventId])
 }
-

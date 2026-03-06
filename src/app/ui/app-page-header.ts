@@ -9,10 +9,10 @@ import { CommonModule } from '@angular/common';
     <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div class="flex-1">
         <ng-content select="[breadcrumbs]"></ng-content>
-        <h1 class="text-3xl font-bold text-ui-text tracking-tight transition-all">
+        <h1 class="text-3xl font-bold text-neutral-900 tracking-tight transition-all">
           {{ title }}
         </h1>
-        <p *ngIf="description" class="mt-1 text-ui-textMuted text-sm">
+        <p *ngIf="description" class="mt-1 text-neutral-950 text-sm">
           {{ description }}
         </p>
       </div>

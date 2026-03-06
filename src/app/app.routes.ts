@@ -90,10 +90,6 @@ export const routes: Routes = [
                 loadComponent: () => import('./diagnostics').then(m => m.Diagnostics),
             },
             {
-                path: 'testo',
-                loadComponent: () => import('./testo').then(m => m.TestoComponent)
-            },
-            {
                 path: '',
                 loadComponent: () => import('./dashboard').then(m => m.Dashboard),
             }

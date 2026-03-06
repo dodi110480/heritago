@@ -23,8 +23,10 @@
         </div>
 
         <div *ngIf="!loading() && places().length === 0"
-            class="py-32 flex flex-col items-center justify-center text-neutral-500 glass-card">
-            <div class="w-20 h-20 bg-canvas-white/5 rounded-full flex items-center justify-center mb-6 text-4xl opacity-20">📍
+            class="py-32 flex flex-col items-center justify-center text-neutral-950 glass-card">
+            <div
+                class="w-20 h-20 bg-canvas-white/5 rounded-full flex items-center justify-center mb-6 text-4xl opacity-20">
+                📍
             </div>
             <h3 class="text-xl font-bold text-canvas-white mb-2">Keine Orte gefunden</h3>
             <p class="text-neutral-400">Lege deinen ersten Ort an, um zu beginnen.</p>
@@ -33,20 +35,20 @@
         <div *ngIf="!loading()"
             class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <ng-container *ngFor="let place of flattenHierarchy(hierarchy())">
-                <app-entity-card [title]="place.name"
-                    [subtitle]="place.parentName ? 'Teil von: ' + place.parentName : (place.jurisdiction ? 'Jurisdiktion: ' + place.jurisdiction : 'Hauptort / Root')"
-                    [meta]="(place.latitude && place.longitude) ? 'Koord: ' + place.latitude + ', ' + place.longitude : 'Keine Koordinaten'"
+                <app-entity-card [title]="place.phrase || (place.name | placeDisplay:'short')"
+                    [subtitle]="place.phrase ? (place.name | placeDisplay:'short') : (place.parentName ? 'Teil von: ' + place.parentName : 'Hauptort / Root')"
+                    [meta]="(place.lang || place.level) ? '[' + (place.lang || '--') + '] ' + place.level : ((place.latitude && place.longitude) ? 'Koord: ' + place.latitude + ', ' + place.longitude : 'Ort')"
                     icon="📍" [style.margin-left.px]="(place.depth || 0) * 16" badgeText="Ort" badgeColor="success"
-                    [isFocused]="selectedPlace()?.id === place.id" (onClick)="selectPlace(place)">
+                    [isFocused]="isModalOpen && selectedPlaceData?.id === place.id" (onClick)="openEditModal(place)">
 
                     <div actions class="flex gap-1 items-center">
                         <span *ngIf="place.usage?.total > 0"
-                            class="text-[10px] px-2 py-0.5 rounded bg-ui-surfaceDarkest/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap mr-1"
+                            class="text-[10px] px-2 py-0.5 rounded bg-neutral-400/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap mr-1"
                             [title]="'Events: ' + place.usage?.eventCount + ', Fakten: ' + place.usage?.factCount + ', Ass.: ' + place.usage?.associationCount">
                             {{ place.usage.total }} Verkn.
                         </span>
                         <button
-                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-ui-surfaceDarkest/50 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/10 transition-all border border-canvas-white/5 hover:border-brand-500/20"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-400/50 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/10 transition-all border border-canvas-white/5 hover:border-brand-500/20"
                             (click)="$event.stopPropagation(); openEditModal(place)" title="Bearbeiten">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2">
@@ -61,112 +63,8 @@
     </div>
 </app-page-container>
 
-<!-- Details Modal via app-modal-shell -->
-<app-modal-shell [visible]="detailsOpen() && !!selectedPlace()"
-    [title]="'Ort-Details: ' + (selectedPlace()?.name || '')" icon="📍" size="lg" saveText="Bearbeiten"
-    [showDelete]="true" deleteText="Löschen" (close)="closeDetailsModal()" (save)="openEditModal(selectedPlace())"
-    (delete)="deletePlace(selectedPlace())">
 
-    <ng-container *ngIf="selectedPlace() as sp">
-        <div class="space-y-6">
-            <!-- Data Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="glass-card !p-4 !rounded-xl">
-                    <label
-                        class="block text-neutral-400 text-[10px] font-bold uppercase tracking-widest mb-1">Unterorte</label>
-                    <div class="text-canvas-white font-semibold">{{ sp.childrenCount || 0 }}</div>
-                </div>
-                <div class="glass-card !p-4 !rounded-xl">
-                    <label
-                        class="block text-neutral-400 text-[10px] font-bold uppercase tracking-widest mb-1">Verknüpfungen</label>
-                    <div class="text-canvas-white font-semibold">{{ sp.usage?.total || 0 }}</div>
-                </div>
-                <div class="glass-card !p-4 !rounded-xl md:col-span-2">
-                    <label class="block text-neutral-400 text-[10px] font-bold uppercase tracking-widest mb-3">Merge in
-                        Zielort</label>
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <select class="form-input flex-1 !py-2.5" [ngModel]="mergeTargetId()"
-                            (ngModelChange)="mergeTargetId.set($event)">
-                            <option value="">Zielort wählen...</option>
-                            <option *ngFor="let p of places()" [value]="p.id" [disabled]="p.id === sp.id">{{ p.name
-                                }}</option>
-                        </select>
-                        <button class="btn-primary !w-auto !py-2.5" [disabled]="!mergeTargetId()"
-                            (click)="mergeSelected()">Merge</button>
-                    </div>
-                </div>
-                <div class="glass-card !p-4 !rounded-xl md:col-span-2">
-                    <label class="block text-neutral-400 text-[10px] font-bold uppercase tracking-widest mb-3">Beim
-                        Löschen umhängen</label>
-                    <select class="form-input w-full !py-2.5" [ngModel]="reassignTargetId()"
-                        (ngModelChange)="reassignTargetId.set($event)">
-                        <option value="">Kein Ziel (Daten werden gelöscht)</option>
-                        <option *ngFor="let p of places()" [value]="p.id" [disabled]="p.id === sp.id">{{ p.name }}
-                        </option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Usage Details -->
-            <div class="mt-6">
-                <h4
-                    class="text-xs font-bold text-neutral-500 uppercase tracking-widest border-b border-canvas-white/5 pb-2 mb-4">
-                    Konkrete Verwendung
-                </h4>
-                <div *ngIf="loadingUsage()" class="text-neutral-500 italic text-sm">Lade Verwendungsdaten...</div>
-                <div *ngIf="!loadingUsage() && selectedUsage() as u" class="space-y-6">
-                    <div *ngIf="u.events?.length">
-                        <p class="text-canvas-white font-bold text-sm mb-3">Ereignisse ({{ u.events.length }})</p>
-                        <div class="space-y-2">
-                            <div *ngFor="let e of u.events" class="flex items-center gap-2 text-sm text-neutral-400">
-                                <span class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
-                                <span class="font-medium text-neutral-300">{{ e.type }}</span>
-                                <span *ngIf="e.dateText" class="text-neutral-500">({{ e.dateText }})</span>
-                                <button *ngIf="e.personName"
-                                    class="text-brand-400 hover:text-brand-300 transition-colors ml-auto"
-                                    (click)="openPersonProfile(e.personId)">{{ e.personName }}</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div *ngIf="u.facts?.length">
-                        <p class="text-canvas-white font-bold text-sm mb-3">Fakten ({{ u.facts.length }})</p>
-                        <div class="space-y-2">
-                            <div *ngFor="let f of u.facts" class="flex items-center gap-2 text-sm text-neutral-400">
-                                <span class="w-1.5 h-1.5 rounded-full bg-accent-highlight-500"></span>
-                                <span class="font-medium text-neutral-300">{{ f.type }}</span>
-                                <span *ngIf="f.value" class="text-neutral-500">: {{ f.value }}</span>
-                                <button *ngIf="f.personName"
-                                    class="text-brand-400 hover:text-brand-300 transition-colors ml-auto"
-                                    (click)="openPersonProfile(f.personId)">{{ f.personName }}</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div *ngIf="u.associations?.length">
-                        <p class="text-canvas-white font-bold text-sm mb-3">Assoziationen ({{ u.associations.length }})</p>
-                        <div class="space-y-2">
-                            <div *ngFor="let a of u.associations"
-                                class="flex flex-wrap items-center gap-2 text-sm text-neutral-400">
-                                <span class="w-1.5 h-1.5 rounded-full bg-accent-success-500"></span>
-                                <span class="font-medium text-neutral-300">{{ a.role }}</span>
-                                <button *ngIf="a.personName"
-                                    class="text-brand-400 hover:text-brand-300 transition-colors"
-                                    (click)="openPersonProfile(a.personId)">{{ a.personName }}</button>
-                                <span class="text-neutral-600">↔</span>
-                                <button *ngIf="a.associatedPersonName"
-                                    class="text-brand-400 hover:text-brand-300 transition-colors"
-                                    (click)="openPersonProfile(a.associatedPersonId)">{{ a.associatedPersonName
-                                    }}</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </ng-container>
-</app-modal-shell>
 
 <app-place-modal [visible]="isModalOpen" [mode]="modalMode" [initialData]="selectedPlaceData" (saved)="onPlaceSaved()"
-    (closed)="closeModal()">
+    (closed)="closeModal()" (deleted)="onPlaceDeleted()" (merged)="onPlaceMerged()">
 </app-place-modal>

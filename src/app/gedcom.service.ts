@@ -111,7 +111,14 @@ export class GedcomService {
         return this.http.delete<any>(`${environment.apiUrl}/media/${id}`, { withCredentials: true });
     }
 
-    updateMedia(id: string, data: { title?: string, mediaType?: string }): Observable<any> {
+    updateMedia(id: string, data: {
+        title?: string,
+        mediaType?: string,
+        gedcomId?: string,
+        dimensions?: string,
+        fileFormat?: string,
+        identifiers?: any[]
+    }): Observable<any> {
         return this.http.put<any>(`${environment.apiUrl}/media/${id}`, data, { withCredentials: true });
     }
 

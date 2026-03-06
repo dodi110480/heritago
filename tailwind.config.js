@@ -8,10 +8,15 @@ export default {
         // default palette. ALL colors must be defined here – no native
         // Tailwind color names (slate, red, white, …) available in templates.
         colors: {
+            // ── ESSENTIALS ───────────────────────────────────────────────
+            transparent: 'transparent',
+            white: '#ffffff',
+            black: '#000000',
+
             // ── PRIMITIVES ────────────────────────────────────────────────
             // Use these only when a semantic token doesn't fit.
             canvas: {
-                white: '#1100ffff',
+                white: '#ffffff',
                 black: '#000000',
                 transparent: 'transparent',
             },
@@ -25,6 +30,7 @@ export default {
                 400: '#94a3b8',  // slate-400
                 500: '#64748b',  // slate-500
                 600: '#475569',  // slate-600
+                700: '#334155',  // slate-700
                 800: '#1e293b',  // slate-800
                 900: '#0f172a',  // slate-900
                 950: '#020617',  // slate-950
@@ -33,30 +39,25 @@ export default {
             // ── UI SURFACE & SEMANTIC TOKENS ─────────────────────────────
             ui: {
                 // Backgrounds
-                bg: '#1b5983ff',
-                bgSoft: '#ccd3daff',
+                bg: '#bcdfb6ff',
+                bgSoft: '#6abe59ff',
                 // Cards & Panels
-                card: '#f8fbff',
-                cardHover: '#ffffff',
+                card: '#dee7dcff',
+                cardHover: '#d6f0d0ff',
                 panel: '#eef6ff',
                 // Borders
                 border: '#d8dadbff',
                 borderStrong: '#757070ff',
                 // Text
-                text: '#0f172a',
                 textSoft: '#334155',
-                textMuted: '#64748b',
-                // Inputs
-                input: '#f3f3f3ff',
+                textInputExample: '#cacacaff',
                 // Overlays
                 overlay: '#0f172a33',
                 // Surface depth scale (formerly surface.*)
                 surfaceLightest: '#ffffff',
-                surfaceLighter: '#f8fbff',
-                surfaceLight: '#eef6ff',
                 surface: '#dfeeff',
                 surfaceDark: '#2c4a9bff',
-                surfaceDarkest: '#e7e7e7ff',
+                surfaceDarkest: '#b6b0b0ff',
             },
 
             // ── BRAND (Primary Color Scale) ───────────────────────────────

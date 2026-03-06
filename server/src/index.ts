@@ -343,7 +343,7 @@ export class GedcomManager {
                 if (e.place) {
                     let place = await prisma.place.findFirst({ where: { treeId, name: e.place, parentId: null } });
                     if (!place) {
-                        place = await prisma.place.create({ data: { treeId, name: e.place, historicNames: [] } });
+                        place = await prisma.place.create({ data: { treeId, name: e.place, historicNames: [], level: 'CITY' } });
                     }
                     placeId = place.id;
                 }
@@ -409,7 +409,7 @@ export class GedcomManager {
                 if (f.place) {
                     let place = await prisma.place.findFirst({ where: { treeId, name: f.place, parentId: null } });
                     if (!place) {
-                        place = await prisma.place.create({ data: { treeId, name: f.place, historicNames: [] } });
+                        place = await prisma.place.create({ data: { treeId, name: f.place, historicNames: [], level: 'CITY' } });
                     }
                     placeId = place.id;
                 }
@@ -1582,7 +1582,7 @@ export class GedcomManager {
                             let p = await prisma.place.findFirst({ where: { treeId, name: placeNode.value, parentId: null } });
                             if (!p) {
                                 p = await prisma.place.create({
-                                    data: { treeId, name: placeNode.value, historicNames: [], latitude: lat, longitude: lon }
+                                    data: { treeId, name: placeNode.value, historicNames: [], latitude: lat, longitude: lon, level: 'CITY' }
                                 });
                             } else if ((lat !== null || lon !== null) && (p.latitude === null || p.longitude === null)) {
                                 p = await prisma.place.update({
@@ -1680,7 +1680,7 @@ export class GedcomManager {
                             let p = await prisma.place.findFirst({ where: { treeId, name: placeNode.value, parentId: null } });
                             if (!p) {
                                 p = await prisma.place.create({
-                                    data: { treeId, name: placeNode.value, historicNames: [], latitude: lat, longitude: lon }
+                                    data: { treeId, name: placeNode.value, historicNames: [], latitude: lat, longitude: lon, level: 'CITY' }
                                 });
                             } else if ((lat !== null || lon !== null) && (p.latitude === null || p.longitude === null)) {
                                 p = await prisma.place.update({
@@ -2309,7 +2309,16 @@ app.post('/api/tree/:tree/place', async (req, res) => {
         jurisdiction,
         historicNames,
         parentId,
-        reassignToId
+        reassignToId,
+        // Neue Felder
+        form,
+        phrase,
+        level,
+        lang,
+        formTemplate,
+        translations,
+        identifiers,
+        notes
     } = req.body;
 
     const tree = await prisma.tree.findUnique({ where: { name: treeName } });
@@ -2409,7 +2418,12 @@ app.post('/api/tree/:tree/place', async (req, res) => {
                     longitude: lng,
                     jurisdiction: jurisdiction || null,
                     historicNames: normalizedHistoricNames,
-                    parentId: normalizedParentId
+                    parentId: normalizedParentId,
+                    form: form || null,
+                    phrase: phrase || null,
+                    level: level || 'CITY',
+                    lang: lang || null,
+                    formTemplate: formTemplate || null
                 }
             });
             targetPlaceId = p.id;
@@ -2426,7 +2440,12 @@ app.post('/api/tree/:tree/place', async (req, res) => {
                         latitude: lat,
                         longitude: lng,
                         jurisdiction: jurisdiction || null,
-                        historicNames: normalizedHistoricNames
+                        historicNames: normalizedHistoricNames,
+                        form: form || null,
+                        phrase: phrase || null,
+                        level: level || 'CITY',
+                        lang: lang || null,
+                        formTemplate: formTemplate || null
                     }
                 });
                 targetPlaceId = p.id;
@@ -2444,7 +2463,12 @@ app.post('/api/tree/:tree/place', async (req, res) => {
                         latitude: lat,
                         longitude: lng,
                         jurisdiction: jurisdiction || null,
-                        historicNames: normalizedHistoricNames
+                        historicNames: normalizedHistoricNames,
+                        form: form || null,
+                        phrase: phrase || null,
+                        level: level || 'CITY',
+                        lang: lang || null,
+                        formTemplate: formTemplate || null
                     }
                 });
                 targetPlaceId = p.id;
@@ -2458,11 +2482,73 @@ app.post('/api/tree/:tree/place', async (req, res) => {
                         jurisdiction: jurisdiction || null,
                         parentId: normalizedParentId,
                         latitude: lat,
-                        longitude: lng
+                        longitude: lng,
+                        form: form || null,
+                        phrase: phrase || null,
+                        level: level || 'CITY',
+                        lang: lang || null,
+                        formTemplate: formTemplate || null
                     }
                 });
                 targetPlaceId = p.id;
                 action = 'CREATE';
+            }
+        }
+        if (targetPlaceId) {
+            // Relations synchronisieren
+            if (translations && Array.isArray(translations)) {
+                await prisma.placeTranslation.deleteMany({ where: { placeId: targetPlaceId } });
+                for (const tr of translations) {
+                    if (!tr.name) continue;
+                    await prisma.placeTranslation.create({
+                        data: {
+                            placeId: targetPlaceId,
+                            name: tr.name,
+                            lang: tr.lang || '',
+                            form: tr.form || null,
+                            dateStart: tr.dateStart ? new Date(tr.dateStart) : null,
+                            dateEnd: tr.dateEnd ? new Date(tr.dateEnd) : null,
+                            dateType: tr.dateType || 'EXACT'
+                        }
+                    });
+                }
+            }
+
+            if (identifiers && Array.isArray(identifiers)) {
+                await prisma.identifier.deleteMany({ where: { placeId: targetPlaceId } });
+                for (const iden of identifiers) {
+                    if (!iden.value) continue;
+                    await prisma.identifier.create({
+                        data: {
+                            treeId: tree.id,
+                            placeId: targetPlaceId, // Direkte Relation nutzen wenn möglich
+                            entityType: 'PLACE',
+                            entityId: targetPlaceId,
+                            value: iden.value,
+                            type: iden.type || 'OTHER'
+                        }
+                    });
+                }
+            }
+
+            if (notes && Array.isArray(notes)) {
+                await prisma.noteLink.deleteMany({ where: { placeId: targetPlaceId } });
+                for (const noteText of notes) {
+                    if (typeof noteText !== 'string' || !noteText.trim()) continue;
+                    const sharedNote = await prisma.sharedNote.create({
+                        data: {
+                            treeId: tree.id,
+                            text: noteText.trim()
+                        }
+                    });
+                    await prisma.noteLink.create({
+                        data: {
+                            treeId: tree.id,
+                            placeId: targetPlaceId,
+                            noteId: sharedNote.id
+                        }
+                    });
+                }
             }
         }
 
@@ -2987,37 +3073,57 @@ app.get('/api/media', async (req, res) => {
         // --- Helper for filename extraction ---
         const getFileName = (m: any) => {
             if (m.filePath) return m.filePath;
+            if (m.remoteUrl && !m.remoteUrl.startsWith('http') && !m.remoteUrl.startsWith('/')) {
+                // Potential legacy or Windows path in remoteUrl
+                return path.basename(m.remoteUrl);
+            }
             return null;
         };
 
         // --- Sync/Pruning Logic ---
         const validMedia = [];
-        const orphanedIds = [];
+        const orphanedIds: string[] = [];
 
         for (const item of media) {
             let fileFound = true;
             const fname = getFileName(item);
 
-            if (fname) {
+            if (fname && fname !== 'Unbenannt') {
                 const fullPath = path.join(UPLOADS_DIR, fname);
                 if (!fs.existsSync(fullPath)) {
                     fileFound = false;
                 }
+            } else if (!item.remoteUrl || item.remoteUrl === 'Unbenannt') {
+                // No file path and no remote URL -> definitely a ghost if it has no content
+                fileFound = false;
             }
 
             if (fileFound) {
                 validMedia.push(item);
             } else {
-                console.log(`[server]: Pruning orphaned media entry: ${item.id} (Filename: ${fname})`);
+                console.log(`[server]: Identified ghost media entry: ${item.id} (Filename: ${fname})`);
                 orphanedIds.push(item.id);
             }
         }
 
-        if (orphanedIds.length > 0) {
+        // We only delete if they are both missing AND have no links (safe pruning)
+        const deadIds = media
+            .filter(m => orphanedIds.includes(m.id) && (!m.links || m.links.length === 0))
+            .map(m => m.id);
+
+        if (deadIds.length > 0) {
+            console.log(`[server]: Pruning ${deadIds.length} dead media entries (missing file & unlinked)`);
             await prisma.media.deleteMany({
-                where: { id: { in: orphanedIds } }
+                where: { id: { in: deadIds } }
             });
         }
+
+        // The remaining orphaned ones (missing but linked) are kept but flagged
+        const finalMedia = validMedia.concat(
+            media
+                .filter(m => orphanedIds.includes(m.id) && !deadIds.includes(m.id))
+                .map(m => ({ ...m, fileMissing: true }))
+        );
 
         let orphanFiles: any[] = [];
         if (type === 'UNLINKED') {
@@ -3063,7 +3169,7 @@ app.get('/api/media', async (req, res) => {
                 });
         }
 
-        res.json({ success: true, media: [...validMedia, ...orphanFiles] });
+        res.json({ success: true, media: [...finalMedia, ...orphanFiles] });
     } catch (error: any) {
         console.error('Fetch media error:', error);
         res.status(500).json({ success: false, message: error.message });

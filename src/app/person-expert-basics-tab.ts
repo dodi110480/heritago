@@ -17,37 +17,37 @@ import { AppModalShell } from './ui/app-modal-shell';
                         <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-canvas-white">
                             <span class="w-2 h-6 bg-brand-500 rounded-full"></span> Basisdaten
                         </h3>
-                        <span class="text-[10px] uppercase tracking-widest text-neutral-500">Klick zum Bearbeiten</span>
+                        <span class="text-[10px] uppercase tracking-widest text-neutral-950">Klick zum Bearbeiten</span>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Vorname</div>
+                            <div class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mb-1">Vorname</div>
                             <div class="text-sm text-canvas-white">{{ person?.firstName || '-' }}</div>
                         </div>
                         <div>
-                            <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Nachname</div>
+                            <div class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mb-1">Nachname</div>
                             <div class="text-sm text-canvas-white">{{ person?.lastName || '-' }}</div>
                         </div>
                         <div>
-                            <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Geschlecht</div>
+                            <div class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mb-1">Geschlecht</div>
                             <div class="text-sm text-canvas-white">{{ genderLabel(person?.gender) }}</div>
                         </div>
                         <div>
-                            <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Status</div>
+                            <div class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mb-1">Status</div>
                             <div class="text-sm text-canvas-white">{{ person?.isLiving ? 'Lebend' : 'Verstorben' }}</div>
                         </div>
                         <div>
-                            <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1">Datenschutz</div>
+                            <div class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mb-1">Datenschutz</div>
                             <div class="text-sm text-canvas-white">{{ privacyLabel(person?.privacyLevel) }}</div>
                         </div>
                     </div>
 
                     <div class="mt-8 border-t border-canvas-white/5 pt-8">
                         <h3 class="text-sm font-semibold mb-3 flex items-center gap-2 text-canvas-white">
-                            <span class="w-1.5 h-4 bg-ui-surfaceLightest rounded-full"></span> System-Info
+                            <span class="w-1.5 h-4 bg-canvas-white rounded-full"></span> System-Info
                         </h3>
-                        <div class="glass-card !bg-canvas-black/20 p-4 space-y-3 !rounded-xl border !border-canvas-white/5 max-w-2xl">
+                        <div class="glass-card !bg-neutral-black/20 p-4 space-y-3 !rounded-xl border !border-canvas-white/5 max-w-2xl">
                             <div class="space-y-2 text-xs text-neutral-400">
                                 <div class="flex justify-between items-center" *ngIf="person.createdAt">
                                     <span>Erstellt:</span>

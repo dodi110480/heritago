@@ -26,7 +26,7 @@
     <!-- Tab Navigation -->
     <div class="flex gap-8 mb-8 border-b border-canvas-white/5 overflow-x-auto no-scrollbar">
         <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
-            [class.text-brand-400]="activeTab() === 'sources'" [class.text-neutral-500]="activeTab() !== 'sources'"
+            [class.text-brand-400]="activeTab() === 'sources'" [class.text-neutral-950]="activeTab() !== 'sources'"
             (click)="activeTab.set('sources')">
             Quellen
             <div *ngIf="activeTab() === 'sources'"
@@ -34,7 +34,7 @@
         </button>
         <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
             [class.text-brand-400]="activeTab() === 'repositories'"
-            [class.text-neutral-500]="activeTab() !== 'repositories'" (click)="activeTab.set('repositories')">
+            [class.text-neutral-950]="activeTab() !== 'repositories'" (click)="activeTab.set('repositories')">
             Archive
             <div *ngIf="activeTab() === 'repositories'"
                 class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
@@ -67,7 +67,7 @@
                 </div>
 
                 <div *ngIf="filteredSources.length === 0"
-                    class="py-32 flex flex-col items-center justify-center text-neutral-500 glass-card">
+                    class="py-32 flex flex-col items-center justify-center text-neutral-950 glass-card">
                     <div
                         class="w-20 h-20 bg-canvas-white/5 rounded-full flex items-center justify-center mb-6 text-4xl opacity-20">
                         📚
@@ -85,7 +85,7 @@
                             badgeText="Quelle" badgeColor="success" (onClick)="openEditModal(source)">
 
                             <div actions *ngIf="source.usageCount > 0"
-                                class="text-xs px-2.5 py-1 rounded bg-ui-panel/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
+                                class="text-xs px-2.5 py-1 rounded bg-brand-100/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
                                 {{ source.usageCount }} Zitate
                             </div>
                         </app-entity-card>

@@ -7,11 +7,12 @@ import { MediaAddModal } from './media-add-modal';
 import { AppEntityCard } from './ui/app-entity-card';
 import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppPageContainerComponent } from './ui/app-page-container';
+import { AppModalShell } from './ui/app-modal-shell';
 
 @Component({
     selector: 'app-media-gallery',
     standalone: true,
-    imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent],
+    imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent, AppModalShell],
     templateUrl: './media-gallery.html'
 })
 export class MediaGallery implements OnInit {
@@ -33,7 +34,10 @@ export class MediaGallery implements OnInit {
     linkPersonId = signal('');
     linkPersonQuery = signal('');
     linkFamilyId = signal('');
+    linkFamilyQuery = signal('');
     linkSourceId = signal('');
+    linkSourceQuery = signal('');
+    sourceOptions = signal<{ id: string; title: string; author?: string }[]>([]);
     mediaTypeOptions: Array<'PHOTO' | 'DOCUMENT' | 'RECORD' | 'OTHER'> = ['PHOTO', 'DOCUMENT', 'RECORD', 'OTHER'];
 
     stats = computed(() => {
@@ -55,9 +59,25 @@ export class MediaGallery implements OnInit {
 
     filteredPersonOptions = computed(() => {
         const q = this.linkPersonQuery().trim().toLowerCase();
-        if (!q) return this.personOptions().slice(0, 12);
+        if (q.length < 2) return [];
         return this.personOptions()
             .filter(p => `${p.name} ${p.birthYear || ''} ${p.id}`.toLowerCase().includes(q))
+            .slice(0, 12);
+    });
+
+    filteredFamilyOptions = computed(() => {
+        const q = this.linkFamilyQuery().trim().toLowerCase();
+        if (q.length < 2) return [];
+        return this.familyOptions()
+            .filter(f => f.label.toLowerCase().includes(q) || f.id.toLowerCase().includes(q))
+            .slice(0, 12);
+    });
+
+    filteredSourceOptions = computed(() => {
+        const q = this.linkSourceQuery().trim().toLowerCase();
+        if (q.length < 2) return [];
+        return this.sourceOptions()
+            .filter(s => (s.title || '').toLowerCase().includes(q) || (s.author || '').toLowerCase().includes(q) || s.id.toLowerCase().includes(q))
             .slice(0, 12);
     });
 
@@ -102,15 +122,46 @@ export class MediaGallery implements OnInit {
                 name: p.name || p.id,
                 birthYear: this.extractYear(p.birthDate || p.birth || p.dateOfBirth || '')
             })));
-            this.familyOptions.set((data.families || []).map((f: any) => ({
-                id: f.id,
-                label: `${f.id} (${f.husband || '-'} + ${f.wife || '-'})`
-            })));
+            this.familyOptions.set((data.families || []).map((f: any) => {
+                const hName = this.personOptions().find(p => p.id === f.husband)?.name || f.husband || '-';
+                const wName = this.personOptions().find(p => p.id === f.wife)?.name || f.wife || '-';
+                return {
+                    id: f.id,
+                    label: `${f.id} (${hName} + ${wName})`
+                };
+            }));
+        });
+
+        this.gedcomService.getSources(tree.name).subscribe((res: any) => {
+            if (res.success && res.sources) {
+                this.sourceOptions.set(res.sources.map((s: any) => ({
+                    id: s.id,
+                    title: s.title || 'Unbenannte Quelle',
+                    author: s.author
+                })));
+            }
         });
     }
 
+
+    chooseFamily(f: any) {
+        this.linkFamilyId.set(f.id);
+        this.linkFamilyQuery.set(f.label);
+    }
+
+    chooseSource(s: any) {
+        this.linkSourceId.set(s.id);
+        this.linkSourceQuery.set(s.title);
+    }
+
     openDetails(item: any) {
-        this.selected.set({ ...item });
+        this.selected.set({
+            ...item,
+            identifiers: Array.isArray(item.identifiers) ? [...item.identifiers] : [],
+            notes: Array.isArray(item.notes) ? [...item.notes] : [],
+            citations: Array.isArray(item.citations) ? [...item.citations] : [],
+            variants: Array.isArray(item.variants) ? [...item.variants] : []
+        });
     }
 
     closeDetails() {
@@ -118,15 +169,73 @@ export class MediaGallery implements OnInit {
         this.linkPersonId.set('');
         this.linkPersonQuery.set('');
         this.linkFamilyId.set('');
+        this.linkFamilyQuery.set('');
         this.linkSourceId.set('');
+        this.linkSourceQuery.set('');
     }
 
-    saveTitle() {
+    addIdentifier() {
+        const current = this.selected();
+        if (!current) return;
+        current.identifiers = [...(current.identifiers || []), { type: '', value: '' }];
+        this.selected.set({ ...current });
+    }
+
+    removeIdentifier(index: number) {
+        const current = this.selected();
+        if (!current || !current.identifiers) return;
+        current.identifiers.splice(index, 1);
+        this.selected.set({ ...current });
+    }
+
+    addNote() {
+        const current = this.selected();
+        if (!current) return;
+        current.notes = [...(current.notes || []), ''];
+        this.selected.set({ ...current });
+    }
+
+    removeNote(index: number) {
+        const current = this.selected();
+        if (!current || !current.notes) return;
+        current.notes.splice(index, 1);
+        this.selected.set({ ...current });
+    }
+
+    addCitation() {
+        const current = this.selected();
+        if (!current) return;
+        current.citations = [...(current.citations || []), { sourceId: '', page: '' }];
+        this.selected.set({ ...current });
+    }
+
+    removeCitation(index: number) {
+        const current = this.selected();
+        if (!current || !current.citations) return;
+        current.citations.splice(index, 1);
+        this.selected.set({ ...current });
+    }
+
+    saveMediaDetails() {
         const current = this.selected();
         if (!current) return;
 
-        this.gedcomService.updateMedia(current.id, { title: current.title, mediaType: current.mediaType }).subscribe({
-            next: () => this.loadMedia()
+        this.gedcomService.updateMedia(current.id, {
+            title: current.title,
+            mediaType: current.mediaType,
+            gedcomId: current.gedcomId,
+            dimensions: current.dimensions,
+            fileFormat: current.fileFormat,
+            identifiers: current.identifiers,
+            // @ts-ignore
+            notes: current.notes,
+            // @ts-ignore
+            citations: current.citations
+        }).subscribe({
+            next: () => {
+                this.loadMedia();
+                this.closeDetails();
+            }
         });
     }
 
@@ -146,6 +255,14 @@ export class MediaGallery implements OnInit {
                 const selectedId = media.id;
                 const refreshed = this.mediaItems().find(i => i.id === selectedId);
                 if (refreshed) this.selected.set({ ...refreshed });
+
+                // Reset link state
+                this.linkPersonId.set('');
+                this.linkPersonQuery.set('');
+                this.linkFamilyId.set('');
+                this.linkFamilyQuery.set('');
+                this.linkSourceId.set('');
+                this.linkSourceQuery.set('');
             }
         });
     }

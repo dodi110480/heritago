@@ -12,7 +12,7 @@ import { AppModalShell } from './ui/app-modal-shell';
         <app-card [contentClass]="'p-0'">
             <div class="p-0">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-semibold text-ui-text">Persönliche Notizen</h2>
+                    <h2 class="text-xl font-semibold text-neutral-900">Persönliche Notizen</h2>
                     <button (click)="addPersonNote()" class="btn-primary !w-auto !py-2">
                         + Notiz
                     </button>
@@ -20,14 +20,14 @@ import { AppModalShell } from './ui/app-modal-shell';
 
                 <div *ngIf="person?.notes && person.notes.length > 0" class="space-y-3">
                     <ng-container *ngFor="let note of person.notes; let i = index">
-                        <div class="glass-card !bg-ui-card !rounded-2xl !p-4 space-y-3 cursor-pointer hover:bg-ui-cardHover transition-all"
+                        <div class="glass-card !bg-brand-50 !rounded-2xl !p-4 space-y-3 cursor-pointer hover:bg-neutral-100 transition-all"
                             (click)="openPersonNoteModal(i)">
                             <div class="flex items-center gap-2 flex-wrap">
                                 <span class="badge badge-primary">{{ getNoteTypeLabel(note.noteType) }}</span>
                                 <span class="badge badge-highlight">{{ note.researchStatus || 'OPEN' }}</span>
                                 <span class="badge badge-neutral">{{ note.privacyLevel || 'PRIVATE' }}</span>
                             </div>
-                            <p class="text-sm text-ui-textSoft leading-relaxed line-clamp-4">
+                            <p class="text-sm text-neutral-700 leading-relaxed line-clamp-4">
                                 {{ note.text || 'Leere Notiz' }}
                             </p>
                         </div>
@@ -35,7 +35,7 @@ import { AppModalShell } from './ui/app-modal-shell';
                 </div>
 
                 <div *ngIf="!person?.notes || person.notes.length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-ui-border/60 rounded-3xl text-ui-textMuted">
+                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-neutral-300/60 rounded-3xl text-neutral-950">
                     <span class="text-4xl mb-3 opacity-20">📝</span>
                     <p class="font-medium">Keine Notizen vorhanden.</p>
                 </div>

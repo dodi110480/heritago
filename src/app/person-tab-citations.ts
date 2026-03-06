@@ -13,8 +13,8 @@ import { AppModalShell } from './ui/app-modal-shell';
             <div class="p-0">
                 <div class="flex justify-between items-center mb-8">
                     <div>
-                        <h2 class="text-xl font-semibold text-ui-text">Personenebene Quellen</h2>
-                        <p class="text-xs text-ui-textMuted mt-1">Allgemeine Quellenbelege zur Person
+                        <h2 class="text-xl font-semibold text-neutral-900">Personenebene Quellen</h2>
+                        <p class="text-xs text-neutral-950 mt-1">Allgemeine Quellenbelege zur Person
                             (nicht ereignis-spezifisch). Ereignis-Belege werden direkt am Ereignis gesetzt.</p>
                     </div>
                     <button (click)="addPersonCitation()" class="btn-primary !w-auto !py-2">
@@ -24,19 +24,19 @@ import { AppModalShell } from './ui/app-modal-shell';
 
                 <div *ngIf="person?.citations && person.citations.length > 0" class="space-y-3">
                     <div *ngFor="let cit of person.citations; let i = index"
-                        class="!p-4 glass-card !bg-ui-card !rounded-2xl space-y-3 cursor-pointer hover:bg-ui-cardHover transition-all"
+                        class="!p-4 glass-card !bg-brand-50 !rounded-2xl space-y-3 cursor-pointer hover:bg-neutral-100 transition-all"
                         (click)="openPersonCitationModal(i)">
                         <div class="flex items-center justify-between gap-3">
-                            <div class="text-sm font-semibold text-ui-text truncate">{{ getSourceTitle(cit.sourceId) }}</div>
+                            <div class="text-sm font-semibold text-neutral-900 truncate">{{ getSourceTitle(cit.sourceId) }}</div>
                             <span class="badge {{ getConfidenceColorClass(cit.confidence) }} text-xs">{{
                                 getConfidenceLabel(cit.confidence) }}</span>
                         </div>
-                        <div class="text-xs text-ui-textMuted">Fundstelle: {{ cit.page || '-' }}</div>
+                        <div class="text-xs text-neutral-950">Fundstelle: {{ cit.page || '-' }}</div>
                     </div>
                 </div>
 
                 <div *ngIf="!person?.citations || person.citations.length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-ui-border/60 rounded-3xl text-ui-textMuted">
+                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-neutral-300/60 rounded-3xl text-neutral-950">
                     <span class="text-4xl mb-3 opacity-20">📖</span>
                     <p class="font-medium">Keine allgemeinen Quellen vorhanden.</p>
                     <p class="text-xs mt-1 text-neutral-600">Ereignis-spezifische Belege findest du direkt in der Timeline.</p>
@@ -166,7 +166,7 @@ export class PersonTabCitationsComponent {
             case 'LIKELY': return 'badge-highlight';
             case 'POSSIBLE': return 'badge-warn';
             case 'UNLIKELY': return 'badge-danger';
-            default: return 'bg-neutral-500/10 text-neutral-400';
+            default: return 'bg-neutral-950/10 text-neutral-400';
         }
     }
 

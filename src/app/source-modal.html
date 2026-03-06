@@ -39,7 +39,7 @@
         <div class="space-y-1.5">
             <label class="form-label">
                 Archiv / Repositorium
-                <span class="text-ui-textMuted font-normal">(optional)</span>
+                <span class="text-neutral-950 font-normal">(optional)</span>
             </label>
             <select [ngModel]="repositoryId()" (ngModelChange)="repositoryId.set($event)" class="form-input">
                 <option value="">— Kein Archiv —</option>
@@ -47,7 +47,7 @@
                     {{ r.name }}{{ r.address ? ' · ' + r.address : '' }}
                 </option>
             </select>
-            <p class="text-xs text-neutral-500" *ngIf="repositories().length === 0">
+            <p class="text-xs text-neutral-950" *ngIf="repositories().length === 0">
                 Noch keine Archive angelegt. Erstelle zuerst ein Archiv unter "Archive".
             </p>
         </div>
@@ -57,10 +57,10 @@
             <div class="mt-6 border-t border-canvas-white/10 pt-6 space-y-6">
 
                 <!-- Merge Section -->
-                <div class="bg-ui-panel/50 p-4 rounded-xl border border-ui-border/30 space-y-3">
+                <div class="bg-brand-100/50 p-4 rounded-xl border border-neutral-300/30 space-y-3">
                     <div>
-                        <h4 class="text-sm font-semibold text-ui-text">In andere Quelle zusammenführen</h4>
-                        <p class="text-xs text-ui-textMuted mt-1">Überträgt alle Zitate dieser Quelle auf eine andere
+                        <h4 class="text-sm font-semibold text-neutral-900">In andere Quelle zusammenführen</h4>
+                        <p class="text-xs text-neutral-950 mt-1">Überträgt alle Zitate dieser Quelle auf eine andere
                             und
                             löscht diese hier.</p>
                     </div>

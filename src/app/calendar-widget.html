@@ -1,4 +1,4 @@
-<div class="group relative bg-ui-surfaceDark/40 backdrop-blur-xl border border-canvas-white/10 rounded-[32px] p-6 transition-all duration-500 hover:bg-ui-surface/60 hover:border-brand-500/30 shadow-2xl overflow-hidden"
+<div class="group relative bg-brand-900/40 backdrop-blur-xl border border-canvas-white/10 rounded-[32px] p-6 transition-all duration-500 hover:bg-brand-200/60 hover:border-brand-500/30 shadow-2xl overflow-hidden"
     *ngIf="hasTree()">
     <!-- Decorative Glow -->
     <div class="modal-glow-brand opacity-20 group-hover:opacity-40 transition-opacity"></div>
@@ -12,13 +12,13 @@
         </div>
 
         <div *ngIf="loading()"
-            class="py-8 flex justify-center text-neutral-500 uppercase tracking-widest text-[10px] font-bold">
+            class="py-8 flex justify-center text-neutral-950 uppercase tracking-widest text-[10px] font-bold">
             <div class="w-4 h-4 border-2 border-canvas-white/10 border-l-brand-500 rounded-full animate-spin mr-2"></div>
             Laden...
         </div>
 
         <div *ngIf="!loading() && events().length === 0"
-            class="py-8 text-center text-neutral-500 text-sm font-medium italic">
+            class="py-8 text-center text-neutral-950 text-sm font-medium italic">
             Keine Ereignisse heute.
         </div>
 
@@ -29,7 +29,7 @@
                 <div class="w-12 h-12 shrink-0 flex items-center justify-center text-xl rounded-xl border transition-all group-hover/item:scale-110"
                     [ngClass]="{
                         'bg-accent-danger-500/10 border-accent-danger-500/20 text-accent-danger-400': event.type === 'BIRT',
-                        'bg-ui-surfaceLightest/10 border-ui-surfaceLighter/20 text-neutral-400': event.type === 'DEAT',
+                        'bg-canvas-white/10 border-brand-50/20 text-neutral-400': event.type === 'DEAT',
                         'bg-accent-highlight-500/10 border-accent-highlight-500/20 text-accent-highlight-400': event.type === 'MARR'
                     }">
                     <span *ngIf="event.type === 'BIRT'">🎂</span>
@@ -39,7 +39,7 @@
 
                 <div class="flex flex-col min-w-0">
                     <span class="text-neutral-200 font-bold truncate tracking-tight">{{ event.name }}</span>
-                    <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mt-0.5">
+                    <span class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mt-0.5">
                         {{ event.years }} Jahre
                         <span class="text-brand-400/70" *ngIf="event.type === 'BIRT'">her</span>
                         <span class="text-accent-highlight-400/70" *ngIf="event.type === 'MARR'">verheiratet</span>

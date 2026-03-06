@@ -1,52 +1,346 @@
 <app-modal-shell [visible]="visible" [title]="mode === 'add' ? 'Neuen Ort anlegen' : 'Ort bearbeiten'" icon="📍"
-    size="lg" [loading]="isSaving()" [disabledSave]="modalData.latitude === '' || modalData.longitude === ''"
+    size="2xl" [loading]="isSaving()" [disabledSave]="modalData.latitude === '' || modalData.longitude === ''"
     (close)="closeModal()" (save)="save()">
 
-    <div class="flex flex-col gap-5">
-        <div class="bg-accent-danger-500/10 border border-accent-danger-500/20 text-accent-danger-500 p-4 rounded-xl text-sm"
-            *ngIf="errorMessage()">
-            {{ errorMessage() }}
+    <!-- Fehler-Anzeige -->
+    <div class="bg-accent-danger-500/10 border border-accent-danger-500/20 text-accent-danger-500 p-4 rounded-xl text-sm mb-6"
+        *ngIf="errorMessage()">
+        {{ errorMessage() }}
+    </div>
+
+    <!-- 3-Spalten Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pr-2 custom-scrollbar">
+
+        <!-- SPALTE 1: Basis, Struktur, IDs -->
+        <div class="space-y-6">
+            <!-- Basis Info -->
+            <div class="glass-card !p-5 !rounded-2xl space-y-4">
+                <h3
+                    class="text-xs font-bold text-neutral-950 uppercase tracking-widest border-b border-ui-border/10 pb-2 mb-2">
+                    Basis-Informationen</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1.5 md:col-span-2">
+                        <label class="block text-sm font-medium text-neutral-400">Beschreibung (Lokalität)</label>
+                        <input type="text" [(ngModel)]="modalData.description" class="form-input"
+                            placeholder="z.B. Krankenhaus, Haus, Rathaus, Kirche">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-neutral-400">Sprachcode (ISO)</label>
+                        <input type="text" [(ngModel)]="modalData.lang" class="form-input" placeholder="z.B. de, en">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-neutral-400">Hierarchie-Level</label>
+                        <select [(ngModel)]="modalData.level" class="form-input">
+                            <option *ngFor="let lvl of placeLevels" [value]="lvl">{{ lvl }}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Struktur & Hierarchie -->
+            <div class="glass-card !p-5 !rounded-2xl space-y-4">
+                <h3
+                    class="text-xs font-bold text-neutral-950 uppercase tracking-widest border-b border-ui-border/10 pb-2 mb-2">
+                    Struktur & Hierarchie</h3>
+                <div class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-neutral-400">Übergeordneter Ort</label>
+                        <select class="form-input" [(ngModel)]="modalData.parentId">
+                            <option value="">Kein übergeordneter Ort</option>
+                            <option *ngFor="let p of parentOptions()" [value]="p.id">{{ p.name }}</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-neutral-400">Ort-Struktur (Form)</label>
+                        <input type="text" [(ngModel)]="modalData.form" class="form-input"
+                            placeholder="z.B. Stadt, Land">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-neutral-400">Phrase (Zusatzinfo)</label>
+                        <input type="text" [(ngModel)]="modalData.phrase" class="form-input"
+                            placeholder="historische Erwähnung...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historisch & IDs -->
+            <div class="glass-card !p-5 !rounded-2xl space-y-4">
+                <h3
+                    class="text-xs font-bold text-neutral-950 uppercase tracking-widest border-b border-ui-border/10 pb-2 mb-2">
+                    Namen & Identifikatoren</h3>
+                <div class="space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-medium text-neutral-400">Historische Namen</label>
+                        <input type="text" [(ngModel)]="modalData.historicNames" class="form-input"
+                            placeholder="Kommagetrennt, z.B. Kronach, Crana">
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-sm font-medium text-neutral-400">Identifikatoren (EXID)</label>
+                            <button (click)="addIdentifier()"
+                                class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+
+                                Hinzufügen</button>
+                        </div>
+                        <div *ngFor="let id of modalData.identifiers; let i = index"
+                            class="flex gap-2 items-center bg-ui-bgSoft/10 p-2 rounded-lg border border-ui-border/10">
+                            <input type="text" [(ngModel)]="id.type" placeholder="Typ (z.B. wikidata)"
+                                class="form-input !py-1.5 !text-xs flex-1">
+                            <input type="text" [(ngModel)]="id.value" placeholder="ID Wert"
+                                class="form-input !py-1.5 !text-xs flex-1">
+                            <button (click)="removeIdentifier(i)"
+                                class="text-accent-danger-500 hover:scale-110 transition-transform">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2">
+                                    <path
+                                        d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Beschreibung des Ortes</label>
-            <input type="text" [(ngModel)]="modalData.description" class="form-input"
-                placeholder="z.B. Krankenhaus, Haus, Rathaus, Kirche">
+        <!-- SPALTE 2: Karte & Notizen -->
+        <div class="space-y-6 flex flex-col h-full">
+            <div class="glass-card !p-5 !rounded-2xl space-y-4 flex flex-col min-h-[400px]">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-xs font-bold text-neutral-950 uppercase tracking-widest">Geografische Position</h3>
+                    <button
+                        class="text-brand-400 hover:text-brand-300 text-[10px] font-bold uppercase transition-colors"
+                        (click)="useMyLocation()">Standort</button>
+                </div>
+
+                <div class="space-y-1.5" *ngIf="locationLabel()">
+                    <label class="block text-[10px] font-bold text-neutral-950 uppercase tracking-widest">Erkannt aus
+                        Koordinaten</label>
+                    <div
+                        class="text-brand-400 font-semibold text-sm bg-brand-500/10 p-2 rounded-lg border border-brand-500/20">
+                        {{ locationLabel() }}</div>
+                </div>
+
+                <div class="flex-1 w-full rounded-xl overflow-hidden border border-canvas-white/10 shadow-inner min-h-[250px]"
+                    #mapContainer></div>
+
+                <div class="flex gap-2 text-[10px] text-neutral-950 font-mono justify-center pt-2">
+                    <div class="bg-ui-bgSoft/20 px-2 py-1 rounded border border-ui-border/10">LAT: {{
+                        modalData.latitude || '---' }}</div>
+                    <div class="bg-ui-bgSoft/20 px-2 py-1 rounded border border-ui-border/10">LNG: {{
+                        modalData.longitude || '---' }}</div>
+                </div>
+
+                <p class="text-[10px] text-neutral-950 text-center italic mt-2">Klicken oder Marker ziehen zum
+                    Verfeinern.</p>
+            </div>
+
+            <!-- Notizen -->
+            <div class="glass-card !p-5 !rounded-2xl space-y-4">
+                <div class="flex justify-between items-center border-b border-ui-border/10 pb-2 mb-2">
+                    <h3 class="text-xs font-bold text-neutral-950 uppercase tracking-widest">Notizen</h3>
+                    <button (click)="addNote()"
+                        class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+
+                        Hinzufügen</button>
+                </div>
+                <div *ngFor="let note of modalData.notes; let i = index" class="relative group">
+                    <textarea [(ngModel)]="modalData.notes[i]" class="form-input !py-2 !text-sm min-h-[60px]"
+                        placeholder="Interne Notiz zum Ort..."></textarea>
+                    <button (click)="removeNote(i)"
+                        class="absolute top-2 right-2 text-neutral-600 hover:text-accent-danger-500 opacity-0 group-hover:opacity-100 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path
+                                d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                    </button>
+                </div>
+                <p *ngIf="!modalData.notes.length" class="text-xs text-neutral-600 italic text-center">Keine Notizen
+                    vorhanden.</p>
+            </div>
         </div>
 
-        <div class="space-y-1.5" *ngIf="locationLabel()">
-            <label class="block text-sm font-medium text-neutral-400">Automatisch erkannt</label>
-            <input type="text" class="form-input opacity-80" [value]="locationLabel()" readonly>
+        <!-- SPALTE 3: Übersetzungen, Usage, Management -->
+        <div class="space-y-6 flex flex-col h-full">
+
+            <!-- Übersetzungen -->
+            <div class="glass-card !p-5 !rounded-2xl space-y-4 h-max">
+                <div class="flex justify-between items-center border-b border-ui-border/10 pb-2 mb-2">
+                    <h3 class="text-xs font-bold text-neutral-950 uppercase tracking-widest">Mehrsprachige Namen (TRAN)
+                    </h3>
+                    <button (click)="addTranslation()"
+                        class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+
+                        Hinzufügen</button>
+                </div>
+                <div *ngFor="let tr of modalData.translations; let i = index"
+                    class="space-y-3 bg-ui-bgSoft/10 p-3 rounded-xl border border-ui-border/10 relative group">
+                    <button (click)="removeTranslation(i)"
+                        class="absolute top-2 right-2 text-neutral-600 hover:text-accent-danger-500 opacity-0 group-hover:opacity-100 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path
+                                d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                    </button>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-2">
+                            <label class="text-[10px] uppercase font-bold text-neutral-950 mb-1 block">Name</label>
+                            <input type="text" [(ngModel)]="tr.name" class="form-input !py-1.5 !text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-neutral-950 mb-1 block">Sprache
+                                (ISO)</label>
+                            <input type="text" [(ngModel)]="tr.lang" placeholder="z.B. en"
+                                class="form-input !py-1.5 !text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-neutral-950 mb-1 block">Struktur
+                                (Form)</label>
+                            <input type="text" [(ngModel)]="tr.form" class="form-input !py-1.5 !text-sm">
+                        </div>
+                        <div class="col-span-1">
+                            <label class="text-[10px] uppercase font-bold text-neutral-950 mb-1 block">Gültig
+                                von</label>
+                            <input type="date" [(ngModel)]="tr.dateStart" class="form-input !py-1.5 !text-sm">
+                        </div>
+                        <div class="col-span-1">
+                            <label class="text-[10px] uppercase font-bold text-neutral-950 mb-1 block">Gültig
+                                bis</label>
+                            <input type="date" [(ngModel)]="tr.dateEnd" class="form-input !py-1.5 !text-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verknüpfungen (Usage) -->
+            <div class="glass-card !p-5 !rounded-2xl space-y-4" *ngIf="mode === 'edit' && usage()">
+                <h3
+                    class="text-xs font-bold text-neutral-950 uppercase tracking-widest border-b border-canvas-white/5 pb-2 mb-2">
+                    Konkrete Verwendung (Usage)
+                </h3>
+                <div
+                    class="space-y-4 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 absolute inset-x-5 top-14 bottom-5">
+
+                    <!-- Events -->
+                    <div *ngIf="usage().events?.length">
+                        <label
+                            class="text-[10px] font-bold text-brand-400 uppercase tracking-tighter mb-1 block">Ereignisse
+                            ({{ usage().events.length }})</label>
+                        <div class="space-y-1">
+                            <div *ngFor="let ev of usage().events"
+                                class="text-xs text-neutral-400 bg-ui-bgSoft/10 p-2 rounded border border-ui-border/10">
+                                <span class="w-1.5 h-1.5 inline-block rounded-full bg-brand-500 mr-1"></span>
+                                <span class="font-medium text-neutral-300">{{ ev.type }}</span>
+                                <span *ngIf="ev.date || ev.dateText" class="text-neutral-950 ml-1">({{ ev.date ||
+                                    ev.dateText }})</span>
+                                <div *ngIf="ev.personName" class="mt-1 flex justify-end">
+                                    <button class="text-brand-400 hover:text-brand-300 transition-colors"
+                                        (click)="openPersonProfile(ev.personId)">
+                                        {{ ev.personName }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Facts -->
+                    <div *ngIf="usage().facts?.length">
+                        <label
+                            class="text-[10px] font-bold text-accent-highlight-500 uppercase tracking-tighter mb-1 block">Fakten
+                            ({{ usage().facts.length }})</label>
+                        <div class="space-y-1">
+                            <div *ngFor="let f of usage().facts"
+                                class="text-xs text-neutral-400 bg-ui-bgSoft/10 p-2 rounded border border-ui-border/10">
+                                <span class="w-1.5 h-1.5 inline-block rounded-full bg-accent-highlight-500 mr-1"></span>
+                                <span class="font-medium text-neutral-300">{{ f.type }}</span>
+                                <span *ngIf="f.value" class="text-neutral-950 ml-1">: {{ f.value }}</span>
+                                <div *ngIf="f.personName" class="mt-1 flex justify-end">
+                                    <button class="text-brand-400 hover:text-brand-300 transition-colors"
+                                        (click)="openPersonProfile(f.personId)">
+                                        {{ f.personName }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Associations -->
+                    <div *ngIf="usage().associations?.length">
+                        <label
+                            class="text-[10px] font-bold text-accent-success-500 uppercase tracking-tighter mb-1 block">Assoziationen
+                            ({{ usage().associations.length }})</label>
+                        <div class="space-y-1">
+                            <div *ngFor="let a of usage().associations"
+                                class="text-xs text-neutral-400 bg-ui-bgSoft/10 p-2 rounded border border-ui-border/10">
+                                <span class="w-1.5 h-1.5 inline-block rounded-full bg-accent-success-500 mr-1"></span>
+                                <span class="font-medium text-neutral-300">{{ a.role }}</span>
+                                <div class="mt-1 flex flex-wrap justify-end gap-1 items-center">
+                                    <button *ngIf="a.personName"
+                                        class="text-brand-400 hover:text-brand-300 transition-colors"
+                                        (click)="openPersonProfile(a.personId)">{{ a.personName }}</button>
+                                    <span class="text-neutral-600">↔</span>
+                                    <button *ngIf="a.associatedPersonName"
+                                        class="text-brand-400 hover:text-brand-300 transition-colors"
+                                        (click)="openPersonProfile(a.associatedPersonId)">{{ a.associatedPersonName
+                                        }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Media -->
+                    <div *ngIf="usage().media?.length">
+                        <label class="text-[10px] font-bold text-brand-400 uppercase tracking-tighter mb-1 block">Medien
+                            ({{ usage().media.length }})</label>
+                        <div class="flex flex-wrap gap-2">
+                            <div *ngFor="let m of usage().media"
+                                class="w-10 h-10 rounded border border-canvas-white/10 overflow-hidden"
+                                [title]="m.title">
+                                <img [src]="m.url" class="w-full h-full object-cover">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Management / Gefahrenzone -->
+            <div class="glass-card !p-5 !rounded-2xl space-y-4" *ngIf="mode === 'edit'">
+                <h3
+                    class="text-xs font-bold text-accent-danger-500 uppercase tracking-widest border-b border-accent-danger-500/20 pb-2 mb-2">
+                    Ort verwalten (Merge / Reassign)
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] text-neutral-400 font-bold uppercase tracking-widest">Zusammenführen
+                            mit...</label>
+                        <select class="form-input !py-1.5 !text-sm" [ngModel]="mergeTargetId()"
+                            (ngModelChange)="mergeTargetId.set($event)">
+                            <option value="">Zielort auswählen...</option>
+                            <option *ngFor="let p of availableParents()" [value]="p.id"
+                                [disabled]="p.id === initialData?.id">{{ p.name }}</option>
+                        </select>
+                        <button class="btn-primary !py-1.5 !text-sm" [disabled]="!mergeTargetId()"
+                            (click)="mergeSelected()">Orte vereinen (Merge)</button>
+                    </div>
+
+                    <div class="w-full h-px bg-ui-border/10 my-2"></div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] text-neutral-400 font-bold uppercase tracking-widest">Beim Löschen
+                            umhängen auf...</label>
+                        <select class="form-input !py-1.5 !text-sm" [ngModel]="reassignTargetId()"
+                            (ngModelChange)="reassignTargetId.set($event)">
+                            <option value="">Kein Ziel (Alles löschen)</option>
+                            <option *ngFor="let p of availableParents()" [value]="p.id"
+                                [disabled]="p.id === initialData?.id">{{ p.name }}</option>
+                        </select>
+                        <button
+                            class="bg-accent-danger-500/20 text-accent-danger-500 hover:bg-accent-danger-500/30 transition-colors rounded-xl font-bold !py-1.5 !text-sm border border-accent-danger-500/20"
+                            (click)="deletePlace()">Ort löschen</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Übergeordneter Ort (optional)</label>
-            <select class="form-input" [(ngModel)]="modalData.parentId">
-                <option value="">Kein übergeordneter Ort</option>
-                <option *ngFor="let p of parentOptions()" [value]="p.id">{{ p.name }}</option>
-            </select>
-        </div>
-
-        <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Jurisdiktion (optional)</label>
-            <input type="text" [(ngModel)]="modalData.jurisdiction" class="form-input"
-                placeholder="z.B. Standesamt Coburg">
-        </div>
-
-        <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Historische Namen (optional)</label>
-            <input type="text" [(ngModel)]="modalData.historicNames" class="form-input"
-                placeholder="Kommagetrennt, z.B. Kronach, Crana">
-        </div>
-
-        <div class="flex justify-between items-center gap-3 mt-2">
-            <button class="btn-secondary !w-auto !py-1.5 !px-3 !text-sm" (click)="useMyLocation()"
-                type="button">Aktuelle Position verwenden</button>
-            <small class="text-neutral-400 text-xs text-right pr-2">Karte anklicken oder Marker ziehen.</small>
-        </div>
-
-        <div class="w-full h-[350px] md:h-[400px] rounded-xl overflow-hidden border border-canvas-white/10"
-            #mapContainer>
-        </div>
     </div>
 </app-modal-shell>

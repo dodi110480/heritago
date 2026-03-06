@@ -4,9 +4,9 @@
         <!-- Modal Content (Flex Column) -->
         <div class="flex flex-col gap-6 flex-1 min-h-0">
             <!-- Search Bar -->
-            <div class="flex gap-4 items-center bg-canvas-black/40 border border-canvas-white/5 p-2 rounded-2xl">
+            <div class="flex gap-4 items-center bg-neutral-black/40 border border-canvas-white/5 p-2 rounded-2xl">
                 <div class="flex-1 relative">
-                    <div class="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-500">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-950">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="8"></circle>
@@ -22,7 +22,7 @@
 
             <!-- Scrollable Media Area -->
             <div class="flex-1 overflow-y-auto min-h-0 custom-scrollbar pr-2">
-                <div *ngIf="loading()" class="py-20 flex flex-col items-center gap-4 text-neutral-500">
+                <div *ngIf="loading()" class="py-20 flex flex-col items-center gap-4 text-neutral-950">
                     <div class="w-8 h-8 border-2 border-canvas-white/10 border-l-brand-500 rounded-full animate-spin">
                     </div>
                     <span class="text-sm font-bold uppercase tracking-widest">Lade Medien...</span>
@@ -38,7 +38,7 @@
                             <line x1="15" y1="9" x2="9" y2="15"></line>
                         </svg>
                     </div>
-                    <p class="text-neutral-500 max-w-xs mx-auto text-sm leading-relaxed">
+                    <p class="text-neutral-950 max-w-xs mx-auto text-sm leading-relaxed">
                         Keine Medien gefunden. Lade zunächst Dateien in der Galerie hoch!
                     </p>
                 </div>
@@ -46,7 +46,7 @@
                 <div *ngIf="!loading() && mediaItems().length > 0"
                     class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     <div *ngFor="let item of mediaItems()" (click)="selectItem(item)"
-                        class="group relative aspect-square bg-ui-surfaceDarkest rounded-2xl border border-canvas-white/5 overflow-hidden cursor-pointer transition-all hover:scale-[1.03] hover:border-brand-500/50 hover:shadow-2xl hover:shadow-brand-sm">
+                        class="group relative aspect-square bg-neutral-400 rounded-2xl border border-canvas-white/5 overflow-hidden cursor-pointer transition-all hover:scale-[1.03] hover:border-brand-500/50 hover:shadow-2xl hover:shadow-brand-sm">
                         <img [src]="item.url" [alt]="item.title" class="w-full h-full object-cover">
 
                         <!-- Overlay Title -->
@@ -72,7 +72,7 @@
             </div>
         </div>
         <div class="flex justify-between items-center px-1 pt-4 border-t border-canvas-white/5">
-            <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+            <span class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest">
                 {{ mediaItems().length }} Medien gefunden
             </span>
             <button (click)="close()"

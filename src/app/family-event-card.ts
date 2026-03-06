@@ -46,7 +46,7 @@ import { AppCardComponent } from './ui/app-card';
                 </div>
                 <div class="flex justify-end lg:col-span-1">
                     <button
-                        class="p-2 text-ui-textMuted hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-xl transition-colors"
+                        class="p-2 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-xl transition-colors"
                         (click)="removeRequested.emit()" title="Ereignis löschen">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -58,20 +58,20 @@ import { AppCardComponent } from './ui/app-card';
             </div>
 
             <!-- Expert Sections -->
-            <div class="flex flex-col gap-3 pt-3 border-t border-ui-border/30">
+            <div class="flex flex-col gap-3 pt-3 border-t border-neutral-300/30">
 
                 <!-- Medien -->
-                <div class="bg-ui-panel/50 border border-ui-border/30 rounded-xl p-3 md:p-4">
+                <div class="bg-brand-100/50 border border-neutral-300/30 rounded-xl p-3 md:p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <strong class="text-sm font-semibold text-ui-textSoft">🖼 Medien</strong>
+                        <strong class="text-sm font-semibold text-neutral-700">🖼 Medien</strong>
                         <button class="btn-ghost !w-auto !py-1 text-xs" (click)="addMedia()">+ Medium</button>
                     </div>
                     <div *ngIf="event.media && event.media.length > 0" class="flex flex-col gap-3">
                         <div *ngFor="let med of event.media; let mIndex = index"
                             class="grid grid-cols-1 md:grid-cols-[64px_1fr_1fr_auto] gap-3 items-center">
-                            <div class="w-full md:w-16 h-24 md:h-12 bg-ui-panel rounded-lg border border-ui-border overflow-hidden flex items-center justify-center shrink-0">
+                            <div class="w-full md:w-16 h-24 md:h-12 bg-brand-100 rounded-lg border border-neutral-300 overflow-hidden flex items-center justify-center shrink-0">
                                 <img *ngIf="isImageUrl(med.url)" [src]="med.url" class="w-full h-full object-cover" alt="">
-                                <svg *ngIf="!isImageUrl(med.url)" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-ui-textMuted">
+                                <svg *ngIf="!isImageUrl(med.url)" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-neutral-950">
                                     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                                     <polyline points="13 2 13 9 20 9"></polyline>
                                 </svg>
@@ -80,17 +80,17 @@ import { AppCardComponent } from './ui/app-card';
                                 placeholder="Titel" class="form-input form-input-sm">
                             <input type="text" [(ngModel)]="med.url" (ngModelChange)="change()"
                                 placeholder="URL / Dateipfad" class="form-input form-input-sm">
-                            <button class="p-2 text-ui-textMuted hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-colors place-self-end md:place-self-auto"
+                            <button class="p-2 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-colors place-self-end md:place-self-auto"
                                 (click)="removeMedia(mIndex)">&times;</button>
                         </div>
                     </div>
-                    <p *ngIf="!event.media || event.media.length === 0" class="text-xs text-ui-textMuted italic">Keine Medien.</p>
+                    <p *ngIf="!event.media || event.media.length === 0" class="text-xs text-neutral-950 italic">Keine Medien.</p>
                 </div>
 
                 <!-- Notizen -->
-                <div class="bg-ui-panel/50 border border-ui-border/30 rounded-xl p-3 md:p-4">
+                <div class="bg-brand-100/50 border border-neutral-300/30 rounded-xl p-3 md:p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <strong class="text-sm font-semibold text-ui-textSoft">📝 Notizen</strong>
+                        <strong class="text-sm font-semibold text-neutral-700">📝 Notizen</strong>
                         <button class="btn-ghost !w-auto !py-1 text-xs" (click)="addNote()">+ Notiz</button>
                     </div>
                     <div *ngIf="event.notes && event.notes.length > 0" class="flex flex-col gap-3">
@@ -98,17 +98,17 @@ import { AppCardComponent } from './ui/app-card';
                             class="grid grid-cols-[1fr_auto] gap-3 items-start">
                             <textarea [ngModel]="note" (ngModelChange)="updateNote(nIndex, $event)"
                                 class="form-input form-input-sm min-h-[60px]" placeholder="Notiz zum Ereignis"></textarea>
-                            <button class="p-2 text-ui-textMuted hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-colors"
+                            <button class="p-2 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-colors"
                                 (click)="removeNote(nIndex)">&times;</button>
                         </div>
                     </div>
-                    <p *ngIf="!event.notes || event.notes.length === 0" class="text-xs text-ui-textMuted italic">Keine Notizen.</p>
+                    <p *ngIf="!event.notes || event.notes.length === 0" class="text-xs text-neutral-950 italic">Keine Notizen.</p>
                 </div>
 
                 <!-- Quellenbelege -->
-                <div class="bg-ui-panel/50 border border-ui-border/30 rounded-xl p-3 md:p-4">
+                <div class="bg-brand-100/50 border border-neutral-300/30 rounded-xl p-3 md:p-4">
                     <div class="flex items-center justify-between mb-3">
-                        <strong class="text-sm font-semibold text-ui-textSoft flex items-center gap-1.5">
+                        <strong class="text-sm font-semibold text-neutral-700 flex items-center gap-1.5">
                             📖 Quellenbelege
                             <span *ngIf="event.citations?.length"
                                 class="text-xs bg-brand-500/20 text-brand-300 px-1.5 py-0.5 rounded-full">
@@ -117,10 +117,10 @@ import { AppCardComponent } from './ui/app-card';
                         </strong>
                         <button class="btn-ghost !w-auto !py-1 text-xs" (click)="addCitation()">+ Beleg</button>
                     </div>
-                    <p *ngIf="!event.citations?.length" class="text-xs text-ui-textMuted italic">Noch kein Quellbeleg.</p>
+                    <p *ngIf="!event.citations?.length" class="text-xs text-neutral-950 italic">Noch kein Quellbeleg.</p>
                     <div *ngIf="event.citations && event.citations.length > 0" class="flex flex-col gap-2">
                         <div *ngFor="let cit of event.citations; let cIndex = index"
-                            class="bg-ui-card/50 border border-ui-border/20 rounded-xl p-3 space-y-2">
+                            class="bg-brand-50/50 border border-neutral-300/20 rounded-xl p-3 space-y-2">
                             <div class="flex gap-2 items-center">
                                 <select [(ngModel)]="cit.sourceId" (ngModelChange)="change()"
                                     class="form-input form-input-sm flex-1 min-w-0">
@@ -129,7 +129,7 @@ import { AppCardComponent } from './ui/app-card';
                                         {{ s.title }}{{ s.author ? ' · ' + s.author : '' }}
                                     </option>
                                 </select>
-                                <button class="p-1.5 text-ui-textMuted hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-all shrink-0"
+                                <button class="p-1.5 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-all shrink-0"
                                     (click)="removeCitation(cIndex)" title="Beleg entfernen">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                         <line x1="18" y1="6" x2="6" y2="18"></line>

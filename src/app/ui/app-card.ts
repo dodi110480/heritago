@@ -10,8 +10,8 @@ import { CommonModule } from '@angular/common';
       class="glass-card shadow-2xl transition-all duration-300 overflow-hidden"
       [ngClass]="customClass"
     >
-      <div *ngIf="title" class="px-8 pt-8 pb-4 border-b border-ui-border/50">
-        <h2 class="text-xl font-bold text-ui-text">{{ title }}</h2>
+      <div *ngIf="title" class="px-8 pt-8 pb-4 border-b border-neutral-300/50">
+        <h2 class="text-xl font-bold text-neutral-900">{{ title }}</h2>
       </div>
       <div [ngClass]="contentClass">
         <ng-content></ng-content>

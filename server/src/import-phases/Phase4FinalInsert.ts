@@ -94,7 +94,7 @@ export class Phase4FinalInsert {
                     id,
                     treeId: this.treeId,
                     gedcomId: r.gedcomXref,
-                    name: node.value || 'Unknown Repository',
+                    name: this.getFullValue(this.findChild(node, 'NAME')) || 'Unknown Repository',
                     address: this.getFullValue(addrNode),
                     phone: this.findChild(node, 'PHON')?.value,
                     email: this.findChild(node, 'EMAIL')?.value,
@@ -120,9 +120,9 @@ export class Phase4FinalInsert {
                     id,
                     treeId: this.treeId,
                     gedcomId: r.gedcomXref,
-                    title: node.value || 'Untitled Source',
-                    publication: this.findChild(node, 'PUBL')?.value,
-                    author: this.findChild(node, 'AUTH')?.value,
+                    title: this.getFullValue(this.findChild(node, 'TITL')) || 'Untitled Source',
+                    author: this.getFullValue(this.findChild(node, 'AUTH')) || null,
+                    publication: this.getFullValue(this.findChild(node, 'PUBL')) || null,
                 }
             });
 
@@ -139,14 +139,19 @@ export class Phase4FinalInsert {
             if (!id) continue;
 
             const fileNode = this.findChild(node, 'FILE');
+            const filePathRaw = fileNode?.value || '';
+            // If it's a local Windows path, we just take the filename
+            const fileName = filePathRaw.includes('\\') ? filePathRaw.split('\\').pop() : filePathRaw.split('/').pop();
 
             await this.prisma.media.create({
                 data: {
                     id,
                     treeId: this.treeId,
                     gedcomId: r.gedcomXref,
-                    title: this.findChild(node, 'TITL')?.value,
-                    mediaType: this.findChild(fileNode, 'FORM')?.value,
+                    title: this.findChild(node, 'TITL')?.value || fileName || 'Unbenannt',
+                    mediaType: this.findChild(fileNode, 'FORM')?.value || (fileName?.toLowerCase().endsWith('.pdf') ? 'DOCUMENT' : 'PHOTO'),
+                    filePath: fileName || null,
+                    remoteUrl: filePathRaw || null,
                 }
             });
 
@@ -247,7 +252,7 @@ export class Phase4FinalInsert {
                         });
                         if (!place) {
                             place = await this.prisma.place.create({
-                                data: { treeId: this.treeId, name: placNode.value }
+                                data: { treeId: this.treeId, name: placNode.value, historicNames: [], level: 'CITY' } as any
                             });
                         }
                         placeId = place.id;
@@ -291,6 +296,17 @@ export class Phase4FinalInsert {
                             minDate: min,
                             maxDate: max,
                         }
+                    });
+                }
+            }
+
+            // Media Links am Ende hinzufügen
+            for (const objeNode of this.findChildren(node, 'OBJE')) {
+                const mediaXref = objeNode.value?.startsWith('@') ? objeNode.value : this.findChild(objeNode, 'OBJE')?.value;
+                const mediaId = this.getResolvedId(mediaXref, EntityType.MEDIA);
+                if (mediaId) {
+                    await this.prisma.mediaLink.create({
+                        data: { treeId: this.treeId, personId: id, mediaId, isPrimary: false }
                     });
                 }
             }
@@ -363,7 +379,7 @@ export class Phase4FinalInsert {
                     });
                     if (!place) {
                         place = await this.prisma.place.create({
-                            data: { treeId: this.treeId, name: placNode.value }
+                            data: { treeId: this.treeId, name: placNode.value, historicNames: [], level: 'CITY' } as any
                         });
                     }
                     placeId = place.id;
@@ -387,6 +403,17 @@ export class Phase4FinalInsert {
                         age: this.findChild(eveNode, 'AGE')?.value,
                     }
                 });
+            }
+
+            // Media Links am Ende der Familie hinzufügen
+            for (const objeNode of this.findChildren(node, 'OBJE')) {
+                const mediaXref = objeNode.value?.startsWith('@') ? objeNode.value : this.findChild(objeNode, 'OBJE')?.value;
+                const mediaId = this.getResolvedId(mediaXref, EntityType.MEDIA);
+                if (mediaId) {
+                    await this.prisma.mediaLink.create({
+                        data: { treeId: this.treeId, familyId: id, mediaId, isPrimary: false }
+                    });
+                }
             }
         }
     }

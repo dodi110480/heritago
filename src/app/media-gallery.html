@@ -29,6 +29,30 @@
     </div>
   </app-page-header>
 
+  <!-- Statistics Row -->
+  <section
+    class="glass-card mb-8 !py-4 flex flex-wrap items-center justify-around gap-6 border-brand-500/10 bg-ui-card/40 backdrop-blur-md">
+    <div class="flex flex-col items-center gap-1">
+      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Gesamt</span>
+      <strong class="text-2xl text-canvas-white font-black tracking-tight">{{ stats().total }}</strong>
+    </div>
+    <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
+    <div class="flex flex-col items-center gap-1">
+      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Fotos</span>
+      <strong class="text-2xl text-brand-400 font-black tracking-tight">{{ stats().fotos }}</strong>
+    </div>
+    <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
+    <div class="flex flex-col items-center gap-1">
+      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Dokumente</span>
+      <strong class="text-2xl text-accent-success-400 font-black tracking-tight">{{ stats().docs }}</strong>
+    </div>
+    <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
+    <div class="flex flex-col items-center gap-1">
+      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Unverknüpft</span>
+      <strong class="text-2xl text-accent-danger-400 font-black tracking-tight">{{ stats().unlinked }}</strong>
+    </div>
+  </section>
+
   <!-- Tabs Integration -->
   <div class="flex gap-8 mb-6 border-b border-canvas-white/5 overflow-x-auto no-scrollbar">
     <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
@@ -43,7 +67,8 @@
       (click)="filterType.set('FOTOS'); loadMedia()">
       Fotos
       <div *ngIf="filterType() === 'FOTOS'"
-        class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
+        class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow">
+      </div>
     </button>
     <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
       [class.text-brand-400]="filterType() === 'DOKUMENTE'" [class.text-neutral-500]="filterType() !== 'DOKUMENTE'"
@@ -60,30 +85,6 @@
         class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
     </button>
   </div>
-
-  <!-- Statistics Row -->
-  <section
-    class="glass-card mb-8 !py-4 flex flex-wrap items-center justify-around gap-6 border-brand-500/10 bg-ui-panel/40">
-    <div class="flex flex-col items-center gap-1">
-      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Gesamt</span>
-      <strong class="text-2xl text-canvas-white font-black tracking-tight">{{ stats().total }}</strong>
-    </div>
-    <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
-    <div class="flex flex-col items-center gap-1">
-      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Fotos</span>
-      <strong class="text-2xl text-brand-400 font-black tracking-tight">{{ stats().fotos }}</strong>
-    </div>
-    <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
-    <div class="flex flex-col items-center gap-1">
-      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Dokumente</span>
-      <strong class="text-2xl text-accent-emerald-400 font-black tracking-tight">{{ stats().docs }}</strong>
-    </div>
-    <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
-    <div class="flex flex-col items-center gap-1">
-      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Unverknüpft</span>
-      <strong class="text-2xl text-accent-rose-400 font-black tracking-tight">{{ stats().unlinked }}</strong>
-    </div>
-  </section>
 
   <!-- CONTENT -->
   <div class="relative w-full">
@@ -112,25 +113,30 @@
           [avatarUrl]="isImage(item) ? item.previewUrl : undefined"
           [icon]="!isImage(item) ? (isPdf(item) ? '📄' : '📎') : undefined"
           [badgeText]="item.mediaType === 'PHOTO' ? 'Foto' : (item.mediaType === 'DOCUMENT' ? 'Dokument' : 'Medium')"
-          [badgeColor]="item.mediaType === 'PHOTO' ? 'blue' : (item.mediaType === 'DOCUMENT' ? 'emerald' : 'slate')"
+          [badgeColor]="item.mediaType === 'PHOTO' ? 'blue' : (item.mediaType === 'DOCUMENT' ? 'success' : 'neutral')"
           [class.ring-2]="selected()?.id === item.id" [class.ring-brand-500]="selected()?.id === item.id"
-          [class.rounded-3xl]="selected()?.id === item.id" (onClick)="openDetails(item)">
+          [class.rounded-3xl]="selected()?.id === item.id" (click)="openDetails(item)">
 
           <div actions class="flex flex-col items-end gap-1.5">
             <span *ngIf="item.links?.length; else noLinksSpan"
-              class="text-[10px] px-2 py-0.5 rounded bg-ui-panel/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
+              class="text-[10px] px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
               {{ item.links.length }} Link{{ item.links.length !== 1 ? 's' : '' }}
             </span>
             <ng-template #noLinksSpan>
               <span
-                class="text-[9px] px-2 py-0.5 rounded bg-accent-rose-500/10 text-accent-rose-400 font-black border border-accent-rose-500/20 whitespace-nowrap uppercase">
+                class="text-[9px] px-2 py-0.5 rounded bg-accent-danger-500/10 text-accent-danger-400 font-black border border-accent-danger-500/20 whitespace-nowrap uppercase">
                 Unlinked
               </span>
             </ng-template>
 
             <span *ngIf="item.orphanFile"
-              class="text-[9px] px-1.5 py-0.5 rounded bg-accent-rose-500/20 text-accent-rose-400 font-bold whitespace-nowrap uppercase">
+              class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500/20 text-accent-danger-400 font-bold whitespace-nowrap uppercase">
               Orphan
+            </span>
+
+            <span *ngIf="item.fileMissing"
+              class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500 text-canvas-white font-black whitespace-nowrap uppercase shadow-sm">
+              Datei fehlt
             </span>
           </div>
         </app-entity-card>
@@ -139,171 +145,272 @@
   </div>
 </app-page-container>
 
-<!-- Details Modal Overlay -->
-<div
-  class="fixed inset-0 bg-ui-canvasDark/90 backdrop-blur-xl z-[2000] flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300"
-  *ngIf="selected()" (click)="closeDetails()">
-  <div
-    class="w-full max-w-[1200px] h-full max-h-[90vh] glass-card !p-0 !rounded-3xl flex flex-col md:flex-row overflow-hidden shadow-2xl border-canvas-white/5 animate-in zoom-in-95 duration-300"
-    (click)="$event.stopPropagation()">
+<!-- Details Modal -->
+<app-modal-shell [visible]="selected() !== null" [title]="selected()?.title || 'Medium Details'" icon="🖼️" size="xl"
+  [showFooter]="true" (close)="closeDetails()" (save)="saveMediaDetails()">
 
-    <!-- Left: Preview Area -->
-    <div
-      class="w-full md:w-2/3 h-[45vh] md:h-full bg-canvas-black/40 relative flex items-center justify-center border-b md:border-b-0 md:border-r border-canvas-white/5">
-      <img *ngIf="isImage(selected())" [src]="selected()?.previewUrl" class="w-full h-full object-contain p-4 md:p-8">
-      <iframe *ngIf="isPdf(selected())" [src]="pdfUrl(selected())" class="w-full h-full border-0"></iframe>
+  <!-- 3-Spalten Layout (wie place-modal) -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pr-2 custom-scrollbar">
 
-      <div *ngIf="!isImage(selected()) && !isPdf(selected())"
-        class="flex flex-col items-center justify-center gap-6 text-neutral-500 text-center p-10">
-        <div class="w-20 h-20 rounded-full bg-canvas-white/5 flex items-center justify-center text-4xl">📎</div>
-        <div class="space-y-2">
-          <p class="text-canvas-white font-bold">Keine Vorschau verfügbar</p>
-          <p class="text-sm max-w-xs">Für diesen Dateityp kann keine Inline-Vorschau angezeigt werden.</p>
+    <!-- SPALTE 1: Vorschau & Basis -->
+    <div class="space-y-6 lg:col-span-2">
+      <!-- Media Preview Card -->
+      <div class="glass-card !p-5 !rounded-2xl space-y-4">
+        <img *ngIf="isImage(selected())" [src]="selected()?.previewUrl"
+          class="max-w-full max-h-[60vh] object-contain rounded-2xl">
+        <iframe *ngIf="isPdf(selected())" [src]="pdfUrl(selected())"
+          class="w-full h-[60vh] border-0 rounded-2xl"></iframe>
+        <div *ngIf="!isImage(selected()) && !isPdf(selected())" class="p-20 text-center space-y-4">
+          <div class="text-4xl">📎</div>
+          <p class="text-neutral-400 text-sm">Keine Inline-Vorschau verfügbar.</p>
+          <a class="btn-secondary !w-auto !py-3 inline-block" [href]="selected()?.previewUrl" target="_blank">Datei
+            extern öffnen</a>
         </div>
-        <a class="btn-secondary !w-auto !py-3" [href]="selected()?.previewUrl" target="_blank" rel="noopener">Datei
-          extern öffnen</a>
       </div>
 
-      <button
-        class="md:hidden absolute top-6 right-6 w-10 h-10 bg-canvas-black/50 hover:bg-canvas-black/80 text-canvas-white rounded-full flex items-center justify-center backdrop-blur-md border border-canvas-white/10"
-        (click)="closeDetails()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
-
-    <!-- Right: Meta Panel -->
-    <div class="w-full md:w-1/3 bg-ui-panel/30 flex flex-col h-full overflow-hidden">
-
-      <div class="p-6 md:p-8 flex items-center justify-between border-b border-canvas-white/5">
-        <h3 class="text-xl font-black text-canvas-white tracking-tight">Details</h3>
-        <button
-          class="hidden md:flex w-10 h-10 hover:bg-canvas-white/10 text-neutral-500 hover:text-canvas-white rounded-xl items-center justify-center transition-all border border-transparent hover:border-canvas-white/10"
-          (click)="closeDetails()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8 space-y-8">
-        <!-- Meta Info -->
-        <div *ngIf="!selected()?.orphanFile" class="space-y-5">
-          <div class="space-y-2">
-            <label class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Titel</label>
-            <input [ngModel]="selected()?.title" (ngModelChange)="selected()!.title = $event"
-              class="form-input w-full !py-3 text-sm" placeholder="Titel eingeben...">
+      <!-- Basis Metadaten -->
+      <div class="glass-card !p-5 !rounded-2xl space-y-4" *ngIf="!selected()?.orphanFile">
+        <h3 class="text-xs font-bold text-neutral-950 uppercase tracking-widest border-b border-ui-border/10 pb-2 mb-2">
+          Basis-Informationen</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-1.5 md:col-span-2">
+            <label class="block text-sm font-medium text-neutral-400">Titel</label>
+            <input type="text" [(ngModel)]="selected()!.title" class="form-input" placeholder="Titel des Mediums...">
           </div>
-
-          <div class="space-y-2">
-            <label class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Medientyp</label>
-            <select [ngModel]="selected()?.mediaType" (ngModelChange)="selected()!.mediaType = $event"
-              class="form-input w-full !py-3 text-sm">
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-neutral-400">Medientyp</label>
+            <select [(ngModel)]="selected()!.mediaType" class="form-input">
               <option *ngFor="let type of mediaTypeOptions" [value]="type">{{ type }}</option>
             </select>
           </div>
-
-          <button class="btn-primary w-full !py-3 font-bold" (click)="saveTitle()">Speichern</button>
-        </div>
-
-        <div *ngIf="selected()?.orphanFile"
-          class="bg-accent-rose-500/5 border border-accent-rose-500/10 rounded-2xl p-5 text-accent-rose-400 text-sm leading-relaxed">
-          <p class="font-bold mb-2 uppercase tracking-wider text-[10px]">Orphan File</p>
-          Diese Datei existiert im Dateisystem, ist aber noch nicht in der Heritago-Datenbank registriert.
-        </div>
-
-        <!-- Current Links -->
-        <div class="space-y-4" *ngIf="!selected()?.orphanFile">
-          <h4 class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Verknüpfungen</h4>
-
-          <div class="space-y-2.5" *ngIf="selected()?.links?.length; else noLinks">
-            <div *ngFor="let link of selected()?.links"
-              class="flex items-center justify-between glass-card !p-3.5 !rounded-xl bg-canvas-white/2 border-canvas-white/5">
-              <span class="text-sm text-neutral-200 font-bold truncate pr-3" [title]="linkLabel(link)">{{
-                linkLabel(link) }}</span>
-              <button
-                class="text-[10px] font-black uppercase text-accent-rose-500 hover:text-accent-rose-400 transition-colors"
-                (click)="unlinkMedia(link.id)">Lösen</button>
-            </div>
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-neutral-400">GEDCOM-ID</label>
+            <input type="text" [(ngModel)]="selected()!.gedcomId" class="form-input" placeholder="@M123@">
           </div>
-          <ng-template #noLinks>
-            <div
-              class="text-sm text-neutral-600 italic p-6 bg-canvas-white/2 rounded-2xl border border-dashed border-canvas-white/5 text-center">
-              Keine Zuweisungen</div>
-          </ng-template>
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-neutral-400">Format</label>
+            <input type="text" [(ngModel)]="selected()!.fileFormat" class="form-input" placeholder="jpg, pdf, tiff...">
+          </div>
+          <div class="space-y-1.5">
+            <label class="block text-sm font-medium text-neutral-400">Dimensionen</label>
+            <input type="text" [(ngModel)]="selected()!.dimensions" class="form-input" placeholder="z.B. 3000x2000">
+          </div>
+        </div>
+      </div>
+
+      <!-- Notizen -->
+      <div class="glass-card !p-5 !rounded-2xl space-y-4" *ngIf="!selected()?.orphanFile">
+        <div class="flex justify-between items-center border-b border-ui-border/10 pb-2 mb-2">
+          <h3 class="text-xs font-bold text-neutral-950 uppercase tracking-widest">Notizen</h3>
+          <button (click)="addNote()"
+            class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+
+            Hinzufügen</button>
+        </div>
+        <div class="space-y-4">
+          <div *ngFor="let note of selected()?.notes; let i = index" class="relative group">
+            <textarea [(ngModel)]="selected()!.notes[i]"
+              class="form-input w-full min-h-[100px] !text-sm custom-scrollbar" placeholder="Deine Notiz..."></textarea>
+            <button (click)="removeNote(i)"
+              class="absolute top-2 right-2 text-accent-danger-500 hover:scale-110 transition-transform p-1.5 bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            </button>
+          </div>
+          <p *ngIf="!selected()?.notes?.length" class="text-xs text-neutral-500 italic text-center py-4">Keine Notizen
+            zu diesem Medium.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SPALTE 2: Zuordnungen & EXID -->
+    <div class="space-y-6">
+
+      <!-- Missing File Warning -->
+      <div *ngIf="selected()?.fileMissing" class="glass-card !p-5 !rounded-2xl space-y-4">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-2xl animate-pulse">⚠️</span>
+          <h3 class="font-black uppercase tracking-widest text-sm">Datei fehlt!</h3>
+        </div>
+        <p class="text-xs leading-relaxed opacity-95">
+          Der Datenbank-Eintrag verweist auf <strong>{{ selected()?.filePath || selected()?.remoteUrl }}</strong>,
+          aber die Datei wurde nicht auf dem Server gefunden.
+        </p>
+      </div>
+
+      <!-- Identifikatoren (EXID) -->
+      <div class="glass-card !p-5 !rounded-2xl space-y-4" *ngIf="!selected()?.orphanFile">
+        <div class="flex justify-between items-center border-b border-ui-border/10 pb-2 mb-2">
+          <h3 class="text-xs font-bold text-neutral-950 uppercase tracking-widest">Identifikatoren (EXID)</h3>
+          <button (click)="addIdentifier()"
+            class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+ NEU</button>
+        </div>
+        <div class="space-y-3">
+          <div *ngFor="let id of selected()?.identifiers; let i = index"
+            class="flex gap-2 items-center bg-ui-bgSoft/10 p-2.5 rounded-xl border border-ui-border/10">
+            <input type="text" [(ngModel)]="id.type" placeholder="wikidata"
+              class="form-input !py-1.5 !text-[11px] flex-1">
+            <input type="text" [(ngModel)]="id.value" placeholder="ID Wert"
+              class="form-input !py-1.5 !text-[11px] flex-1">
+            <button (click)="removeIdentifier(i)" class="text-accent-danger-500 hover:scale-110 transition-transform">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            </button>
+          </div>
+          <p *ngIf="!selected()?.identifiers?.length" class="text-xs text-neutral-500 italic text-center p-2">Keine IDs.
+          </p>
+        </div>
+      </div>
+
+      <!-- Verknüpfungen / Links -->
+      <div class="glass-card !p-5 !rounded-2xl space-y-4" *ngIf="!selected()?.orphanFile">
+        <h3 class="text-xs font-bold text-neutral-950 uppercase tracking-widest border-b border-ui-border/10 pb-2 mb-2">
+          Verknüpfungen</h3>
+        <div class="space-y-2.5 max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
+          <div *ngFor="let link of selected()?.links"
+            class="flex items-center justify-between bg-ui-bgSoft/10 !p-3.5 !rounded-xl border border-ui-border/10 group">
+            <div class="flex flex-col min-w-0">
+              <span class="text-xs font-black text-brand-400 uppercase tracking-tighter opacity-70 mb-0.5">{{
+                link.person ? 'Person' : (link.familyId ? 'Familie' : 'Quelle') }}</span>
+              <span class="text-sm text-neutral-800 font-bold truncate" [title]="linkLabel(link)">{{ linkLabel(link)
+                }}</span>
+            </div>
+            <button
+              class="text-[10px] font-black uppercase text-accent-danger-500 hover:scale-105 transition-all opacity-0 group-hover:opacity-100"
+              (click)="unlinkMedia(link.id)">Lösen</button>
+          </div>
+          <p *ngIf="!selected()?.links?.length" class="text-xs text-neutral-500 italic p-4 text-center">Keine
+            Zuweisungen.</p>
         </div>
 
-        <!-- Add Link -->
-        <div class="space-y-4 pt-4" *ngIf="!selected()?.orphanFile">
-          <h4 class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Neue Zuweisung</h4>
-
-          <select [ngModel]="linkMode()" (ngModelChange)="linkMode.set($event)" class="form-input w-full !py-3 text-sm">
+        <!-- Neu verknüpfen -->
+        <div class="pt-4 space-y-3 border-t border-ui-border/10">
+          <h4 class="text-[10px] font-black text-brand-400 uppercase tracking-widest">Neu verknüpfen</h4>
+          <select [ngModel]="linkMode()" (ngModelChange)="linkMode.set($event)" class="form-input w-full !text-m !py-2">
             <option value="person">Person</option>
             <option value="family">Familie</option>
             <option value="source">Quelle</option>
           </select>
 
-          <!-- Person Picker -->
           <div *ngIf="linkMode() === 'person'" class="relative">
-            <input class="form-input w-full !py-3 text-sm" [ngModel]="linkPersonQuery()"
-              (ngModelChange)="linkPersonQuery.set($event); linkPersonId.set('')" placeholder="Name oder ID suchen...">
-
+            <input class="form-input w-full !py-2 !text-m" [ngModel]="linkPersonQuery()"
+              (ngModelChange)="linkPersonQuery.set($event); linkPersonId.set('')" placeholder="Suchen...">
             <div
-              class="max-h-[200px] overflow-y-auto bg-ui-panel border border-canvas-white/10 rounded-2xl custom-scrollbar absolute top-full left-0 right-0 z-50 mt-2 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200"
+              class="max-h-[180px] overflow-y-auto bg-ui-card border border-ui-border/20 rounded-xl custom-scrollbar absolute top-full left-0 right-0 z-50 mt-1 shadow-2xl"
               *ngIf="filteredPersonOptions().length && !linkPersonId()">
               <button type="button"
-                class="w-full text-left px-4 py-3 text-sm text-neutral-300 hover:bg-brand-500/10 hover:text-brand-400 border-b border-canvas-white/5 last:border-0 transition-colors"
+                class="w-full text-left px-3 py-2.5 text-[11px] text-neutral-800 hover:bg-brand-500/10 border-b border-ui-border/5"
                 *ngFor="let p of filteredPersonOptions()" (click)="choosePerson(p)">
                 <span class="font-bold">{{ p.name }}</span>
-                <span class="text-neutral-600 text-[10px] ml-2 font-mono">({{ p.birthYear ? ('* ' + p.birthYear) : p.id
-                  }})</span>
+                <span class="text-neutral-500 ml-1">({{ p.birthYear || p.id }})</span>
               </button>
             </div>
           </div>
 
-          <!-- Family Picker -->
-          <select *ngIf="linkMode() === 'family'" [ngModel]="linkFamilyId()" (ngModelChange)="linkFamilyId.set($event)"
-            class="form-input w-full !py-3 text-sm">
-            <option value="">Familie wählen...</option>
-            <option *ngFor="let f of familyOptions()" [value]="f.id">{{ f.label }}</option>
-          </select>
+          <div *ngIf="linkMode() === 'family'" class="relative">
+            <input class="form-input w-full !py-2 !text-m" [ngModel]="linkFamilyQuery()"
+              (ngModelChange)="linkFamilyQuery.set($event); linkFamilyId.set('')" placeholder="Familie suchen...">
+            <div
+              class="max-h-[180px] overflow-y-auto bg-ui-card border border-ui-border/20 rounded-xl custom-scrollbar absolute top-full left-0 right-0 z-50 mt-1 shadow-2xl"
+              *ngIf="filteredFamilyOptions().length && !linkFamilyId()">
+              <button type="button"
+                class="w-full text-left px-3 py-2.5 text-[11px] text-neutral-800 hover:bg-brand-500/10 border-b border-ui-border/5"
+                *ngFor="let f of filteredFamilyOptions()" (click)="chooseFamily(f)">
+                <span class="font-bold text-brand-400 mr-2">{{ f.id }}</span>
+                <span class="text-neutral-800">{{ f.label }}</span>
+              </button>
+            </div>
+          </div>
 
-          <!-- Source ID Input -->
-          <input *ngIf="linkMode() === 'source'" [ngModel]="linkSourceId()" (ngModelChange)="linkSourceId.set($event)"
-            placeholder="Quelle ID eingeben..." class="form-input w-full !py-3 text-sm">
+          <div *ngIf="linkMode() === 'source'" class="relative">
+            <input class="form-input w-full !py-2 !text-m" [ngModel]="linkSourceQuery()"
+              (ngModelChange)="linkSourceQuery.set($event); linkSourceId.set('')" placeholder="Quelle suchen...">
+            <div
+              class="max-h-[180px] overflow-y-auto bg-ui-card border border-ui-border/20 rounded-xl custom-scrollbar absolute top-full left-0 right-0 z-50 mt-1 shadow-2xl"
+              *ngIf="filteredSourceOptions().length && !linkSourceId()">
+              <button type="button"
+                class="w-full text-left px-3 py-2.5 text-[11px] text-neutral-800 hover:bg-brand-500/10 border-b border-ui-border/5"
+                *ngFor="let s of filteredSourceOptions()" (click)="chooseSource(s)">
+                <div class="flex flex-col">
+                  <span class="font-bold">{{ s.title }}</span>
+                  <span class="text-[9px] text-neutral-500 uppercase tracking-tighter" *ngIf="s.author">{{ s.author
+                    }}</span>
+                </div>
+              </button>
+            </div>
+          </div>
 
-          <button class="btn-primary w-full !py-3 font-bold" (click)="addLink()"
-            [disabled]="(linkMode() === 'person' && !linkPersonId()) || (linkMode() === 'family' && !linkFamilyId()) || (linkMode() === 'source' && !linkSourceId())">
-            Link hinzufügen
-          </button>
+          <button class="btn-primary !w-full !py-2.5 !text-xs font-bold" (click)="addLink()"
+            [disabled]="!linkPersonId() && !linkFamilyId() && !linkSourceId()">Zuordnen</button>
         </div>
       </div>
 
-      <!-- Bottom Actions -->
-      <div class="p-6 md:p-8 bg-canvas-black/20 border-t border-canvas-white/5 space-y-4">
-        <div class="grid grid-cols-2 gap-4" *ngIf="!selected()?.orphanFile">
-          <a class="btn-secondary flex-1 !py-3" [href]="selected()?.previewUrl" download>Download</a>
-          <button class="btn-danger flex-1 !py-3" (click)="deleteMedia(selected())">Löschen</button>
+      <!-- Belege / Citations -->
+      <div class="glass-card !p-5 !rounded-2xl space-y-4" *ngIf="!selected()?.orphanFile">
+        <div class="flex justify-between items-center border-b border-ui-border/10 pb-2 mb-2">
+          <h3 class="text-xs font-bold text-neutral-950 uppercase tracking-widest">Belege (Citations)</h3>
+          <button (click)="addCitation()"
+            class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+
+            Hinzufügen</button>
         </div>
+        <div class="space-y-3">
+          <div *ngFor="let cit of selected()?.citations; let i = index"
+            class="p-3 bg-ui-bgSoft/10 rounded-xl border border-ui-border/10 space-y-2 relative group">
+            <input type="text" [(ngModel)]="cit.sourceId" placeholder="Quellen-ID..."
+              class="form-input !py-1.5 !text-xs w-full">
+            <input type="text" [(ngModel)]="cit.page" placeholder="Seite/Fundstelle..."
+              class="form-input !py-1.5 !text-xs w-full">
+            <button (click)="removeCitation(i)"
+              class="absolute -top-1 -right-1 text-accent-danger-500 bg-ui-card rounded-full p-1 border border-ui-border/10 shadow-lg opacity-0 group-hover:opacity-100 scale-90 hover:scale-100 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            </button>
+          </div>
+          <p *ngIf="!selected()?.citations?.length" class="text-xs text-neutral-500 italic text-center py-2">Keine
+            Belege für dieses Medium.</p>
+        </div>
+      </div>
 
-        <div class="space-y-3" *ngIf="selected()?.orphanFile">
-          <button
-            class="w-full py-3 bg-accent-emerald-500 hover:bg-accent-emerald-600 text-canvas-white rounded-xl font-bold transition-all shadow-lg shadow-accent-emerald-500/10"
-            (click)="adoptOrphan(selected())">In Datenbank aufnehmen</button>
-          <button
-            class="w-full py-3 bg-accent-rose-500/10 border border-accent-rose-500/20 text-accent-rose-500 hover:bg-accent-rose-500/20 rounded-xl font-bold transition-all"
-            (click)="deleteOrphan(selected())">Datei physisch löschen</button>
+      <!-- Gefahrenzone / Management -->
+      <div class="glass-card !p-5 !rounded-2xl space-y-4 border-accent-danger-500/10">
+        <h3
+          class="text-xs font-bold text-accent-danger-400 uppercase tracking-widest border-b border-accent-danger-500/10 pb-2 mb-2">
+          Gefahrenzone</h3>
+        <div class="flex flex-col gap-2.5">
+          <a [href]="selected()?.previewUrl" download
+            class="btn-secondary !w-full !justify-center flex items-center gap-2 !py-2.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>Herunterladen</span>
+          </a>
+
+          <ng-container *ngIf="selected()?.orphanFile">
+            <button
+              class="w-full py-3 bg-accent-success-500/10 text-accent-success-400 border border-accent-success-500/20 hover:bg-accent-success-500/20 rounded-xl font-bold transition-all"
+              (click)="adoptOrphan(selected())">Medium registrieren</button>
+            <button
+              class="w-full py-3 bg-accent-danger-500/10 text-accent-danger-500 border border-accent-danger-500/20 hover:bg-accent-danger-500/20 rounded-xl font-bold transition-all"
+              (click)="deleteOrphan(selected())">Physisch löschen</button>
+          </ng-container>
+
+          <button *ngIf="!selected()?.orphanFile" class="btn-danger !w-full !justify-center !py-2.5 font-bold"
+            (click)="deleteMedia(selected())">Medium löschen</button>
         </div>
       </div>
 
     </div>
   </div>
-</div>
+
+</app-modal-shell>
 
 <app-media-add-modal [visible]="showAddModal()" [treeId]="tree?.id || ''" (closed)="showAddModal.set(false)"
   (uploaded)="loadMedia()">

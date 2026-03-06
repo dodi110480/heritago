@@ -4,15 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { PlaceModal } from './place-modal';
+import { PlaceDisplayPipe } from './place-display.pipe';
 import { AppEntityCard } from './ui/app-entity-card';
-import { AppModalShell } from './ui/app-modal-shell';
 import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppPageContainerComponent } from './ui/app-page-container';
 
 @Component({
     selector: 'app-place-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, PlaceModal, AppEntityCard, AppModalShell, AppPageHeaderComponent, AppPageContainerComponent],
+    imports: [CommonModule, FormsModule, PlaceModal, PlaceDisplayPipe, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent],
     templateUrl: './place-list.html',
     encapsulation: ViewEncapsulation.None
 })
@@ -26,12 +26,6 @@ export class PlaceList implements OnInit {
     isSaving = signal(false);
     currentTree = signal<string | null>(null);
     errorMessage = signal<string | null>(null);
-    selectedPlace = signal<any | null>(null);
-    selectedUsage = signal<any | null>(null);
-    loadingUsage = signal(false);
-    mergeTargetId = signal<string>('');
-    reassignTargetId = signal<string>('');
-    detailsOpen = signal(false);
 
     // Modal State
     isModalOpen = false;
@@ -64,11 +58,14 @@ export class PlaceList implements OnInit {
                 this.places.set(items);
                 this.hierarchy.set(this.buildHierarchy(items));
                 this.loading.set(false);
-                const sel = this.selectedPlace();
-                if (sel) {
-                    const refreshed = items.find((p: any) => p.id === sel.id) || null;
-                    this.selectedPlace.set(refreshed);
-                    if (refreshed) this.loadUsage(refreshed.id);
+                // Refresh current modal data if open
+                if (this.isModalOpen && this.selectedPlaceData?.id) {
+                    const refreshed = items.find((p: any) => p.id === this.selectedPlaceData.id) || null;
+                    if (refreshed) {
+                        this.selectedPlaceData = refreshed;
+                    } else {
+                        this.closeModal();
+                    }
                 }
             },
             error: () => this.loading.set(false)
@@ -101,30 +98,6 @@ export class PlaceList implements OnInit {
         return out;
     }
 
-    selectPlace(place: any) {
-        this.selectedPlace.set(place);
-        this.mergeTargetId.set('');
-        this.reassignTargetId.set('');
-        this.detailsOpen.set(true);
-        this.loadUsage(place.id);
-    }
-
-    loadUsage(placeId: string) {
-        const tree = this.currentTree();
-        if (!tree) return;
-        this.loadingUsage.set(true);
-        this.gedcomService.getPlaceUsage(tree, placeId).subscribe({
-            next: (res: any) => {
-                this.selectedUsage.set(res?.usage || null);
-                this.loadingUsage.set(false);
-            },
-            error: () => {
-                this.selectedUsage.set(null);
-                this.loadingUsage.set(false);
-            }
-        });
-    }
-
     openAddModal() {
         this.modalMode = 'add';
         this.selectedPlaceData = null;
@@ -141,72 +114,18 @@ export class PlaceList implements OnInit {
         this.isModalOpen = false;
     }
 
-    closeDetailsModal() {
-        this.detailsOpen.set(false);
-    }
-
     onPlaceSaved() {
         this.refreshList();
         this.closeModal();
     }
 
-    deletePlace(place: any) {
-        if (!confirm(`Möchten Sie den Ort "${place.name}" wirklich aus diesem Stammbaum entfernen?\nDies löscht auch den Ortsnamen aus allen verknüpften Personen und Familien!`)) return;
-
-        const tree = this.currentTree();
-        if (!tree) return;
-
-        const payload: any = { mode: 'delete', id: place.id, name: place.name };
-        if (this.reassignTargetId()) payload.reassignToId = this.reassignTargetId();
-
-        this.gedcomService.savePlace(tree, payload).subscribe({
-            next: (res: any) => {
-                if (res.success) {
-                    if (this.selectedPlace()?.id === place.id) {
-                        this.selectedPlace.set(null);
-                        this.selectedUsage.set(null);
-                        this.detailsOpen.set(false);
-                    }
-                    this.refreshList();
-                } else {
-                    alert('Fehler beim Löschen: ' + res.message);
-                }
-            },
-            error: (err: any) => {
-                const usage = err.error?.usage;
-                const msg = usage
-                    ? `${err.error?.message}\nVerknüpfungen: ${usage.totalLinks}, Unterorte: ${usage.childCount}\nWähle einen Zielort zum Umhängen oder merge zuerst.`
-                    : (err.error?.message || 'Unbekannter Fehler');
-                alert('Fehler beim Löschen: ' + msg);
-            }
-        });
+    onPlaceDeleted() {
+        this.refreshList();
+        this.closeModal();
     }
 
-    mergeSelected() {
-        const source = this.selectedPlace();
-        const targetId = this.mergeTargetId();
-        const tree = this.currentTree();
-        if (!source || !targetId || !tree) return;
-        if (!confirm(`Ort "${source.name}" in Zielort zusammenführen?`)) return;
-
-        this.gedcomService.mergePlaces(tree, source.id, targetId).subscribe({
-            next: (res: any) => {
-                if (res.success) {
-                    this.selectedPlace.set(null);
-                    this.selectedUsage.set(null);
-                    this.mergeTargetId.set('');
-                    this.detailsOpen.set(false);
-                    this.refreshList();
-                } else {
-                    alert('Merge fehlgeschlagen: ' + (res.message || 'Unbekannter Fehler'));
-                }
-            },
-            error: (err: any) => alert('Merge fehlgeschlagen: ' + (err.error?.message || 'Unbekannter Fehler'))
-        });
-    }
-
-    openPersonProfile(personId?: string | null) {
-        if (!personId) return;
-        this.router.navigate(['/person', personId]);
+    onPlaceMerged() {
+        this.refreshList();
+        this.closeModal();
     }
 }

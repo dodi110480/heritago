@@ -158,7 +158,7 @@ import { AppCardComponent } from './ui/app-card';
                                             <div *ngIf="item.media && item.media.length > 0"
                                                 class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                                 <div *ngFor="let med of item.media; let mIndex = index"
-                                                    class="relative group/media glass-card !bg-canvas-black/20 !rounded-xl overflow-hidden flex flex-col">
+                                                    class="relative group/media glass-card !bg-neutral-black/20 !rounded-xl overflow-hidden flex flex-col">
                                                     <div (click)="openViewer(med)" class="aspect-square cursor-pointer shrink-0">
                                                         <img [src]="getMediaUrl(med.url)" [alt]="med.title"
                                                             class="w-full h-full object-cover">
@@ -204,7 +204,7 @@ import { AppCardComponent } from './ui/app-card';
                                                 </button>
                                             </div>
 
-                                            <p *ngIf="!item.citations?.length" class="text-xs text-neutral-500 italic">
+                                            <p *ngIf="!item.citations?.length" class="text-xs text-neutral-950 italic">
                                                 Noch kein Quellbeleg für dieses Ereignis.
                                             </p>
 
@@ -220,7 +220,7 @@ import { AppCardComponent } from './ui/app-card';
                                                             </option>
                                                         </select>
                                                         <button (click)="removeEventCitation(i, cIndex)"
-                                                            class="p-1.5 text-neutral-500 hover:text-accent-danger-400 hover:bg-accent-danger-500/10 rounded-lg transition-all shrink-0"
+                                                            class="p-1.5 text-neutral-950 hover:text-accent-danger-400 hover:bg-accent-danger-500/10 rounded-lg transition-all shrink-0"
                                                             title="Beleg entfernen">
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="14"
                                                                 height="14" viewBox="0 0 24 24" fill="none"
@@ -233,7 +233,7 @@ import { AppCardComponent } from './ui/app-card';
                                                     <div class="grid grid-cols-2 gap-2">
                                                         <input type="text" [(ngModel)]="cit.page"
                                                             placeholder="Fundstelle / Seite / Nr."
-                                                            class="bg-surface-dark border border-surface-light rounded-lg px-2.5 py-1.5 text-xs text-canvas-white placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                                            class="bg-surface-dark border border-surface-light rounded-lg px-2.5 py-1.5 text-xs text-canvas-white placeholder-neutral-950 focus:outline-none focus:ring-1 focus:ring-brand-500">
                                                         <select [(ngModel)]="cit.confidence"
                                                             class="bg-surface-dark border border-surface-light rounded-lg px-2.5 py-1.5 text-xs text-canvas-white focus:outline-none focus:ring-1 focus:ring-brand-500">
                                                             <option value="">Konfidenz wählen</option>
@@ -246,7 +246,7 @@ import { AppCardComponent } from './ui/app-card';
                                                     </div>
                                                     <input type="text" [(ngModel)]="cit.text"
                                                         placeholder="Zitierter Ausschnitt (optional)..."
-                                                        class="w-full bg-surface-dark border border-surface-light rounded-lg px-2.5 py-1.5 text-xs text-canvas-white placeholder-neutral-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                                        class="w-full bg-surface-dark border border-surface-light rounded-lg px-2.5 py-1.5 text-xs text-canvas-white placeholder-neutral-950 focus:outline-none focus:ring-1 focus:ring-brand-500">
                                                 </div>
                                             </div>
                                         </div>
@@ -283,7 +283,7 @@ import { AppCardComponent } from './ui/app-card';
                 </div>
 
                 <div *ngIf="timeline().length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-canvas-white/5 rounded-3xl text-neutral-500">
+                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-canvas-white/5 rounded-3xl text-neutral-950">
                     <span class="text-4xl mb-3 opacity-20">📅</span>
                     <p class="font-medium">Keine Einträge im Lebenslauf vorhanden.</p>
                 </div>

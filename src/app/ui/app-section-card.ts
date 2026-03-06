@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
         <section class="glass-card shadow-xl" [ngClass]="containerClass">
             <header *ngIf="title || subtitle" class="mb-4 flex items-center justify-between gap-3" [ngClass]="headerClass">
                 <div class="min-w-0">
-                    <h3 *ngIf="title" class="text-[10px] font-black uppercase tracking-[.22em] text-neutral-500 truncate">
+                    <h3 *ngIf="title" class="text-[10px] font-black uppercase tracking-[.22em] text-neutral-950 truncate">
                         <span *ngIf="icon" class="mr-2">{{ icon }}</span>{{ title }}
                     </h3>
                     <p *ngIf="subtitle" class="text-xs text-neutral-400 mt-1 truncate">{{ subtitle }}</p>

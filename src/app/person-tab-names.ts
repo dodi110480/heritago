@@ -12,7 +12,7 @@ import { AppModalShell } from './ui/app-modal-shell';
         <app-card [contentClass]="'p-0'">
             <div class="p-0">
                 <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-xl font-semibold text-ui-text">Namen</h2>
+                    <h2 class="text-xl font-semibold text-neutral-900">Namen</h2>
                     <button (click)="openNameModal()" class="btn-primary !w-auto !py-2">
                         + Name hinzufügen
                     </button>
@@ -20,21 +20,21 @@ import { AppModalShell } from './ui/app-modal-shell';
 
                 <div class="space-y-4">
                     <div *ngFor="let n of person?.names; let i = index"
-                        class="!p-5 glass-card !bg-ui-card !rounded-2xl space-y-4 group relative cursor-pointer hover:bg-ui-cardHover transition-colors"
+                        class="!p-5 glass-card !bg-brand-50 !rounded-2xl space-y-4 group relative cursor-pointer hover:bg-neutral-100 transition-colors"
                         (click)="openNameEditModal(i)">
                         <div class="flex justify-between items-start">
                             <div>
                                 <div class="flex items-center gap-2 mb-1">
-                                    <h3 class="font-bold text-lg text-ui-text">{{ n.given }} {{ n.surname }}</h3>
+                                    <h3 class="font-bold text-lg text-neutral-900">{{ n.given }} {{ n.surname }}</h3>
                                     <span *ngIf="n.isPrimary" class="badge badge-primary text-[10px] py-0.5 px-2">Primär</span>
                                 </div>
-                                <p class="text-sm text-ui-textMuted flex items-center gap-1">
-                                    <span class="text-xs font-mono bg-ui-panel px-1.5 py-0.5 rounded text-neutral-500">{{
+                                <p class="text-sm text-neutral-950 flex items-center gap-1">
+                                    <span class="text-xs font-mono bg-brand-100 px-1.5 py-0.5 rounded text-neutral-950">{{
                                         n.type === 'BIRTH' ? 'Geburtsname' : n.type === 'MARRIED' ? 'Ehename' : 'Alias' }}</span>
                                 </p>
                             </div>
                             <button (click)="$event.stopPropagation(); removeName(i)"
-                                class="p-1.5 text-ui-textMuted hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                                class="p-1.5 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M3 6h18"></path>
@@ -45,7 +45,7 @@ import { AppModalShell } from './ui/app-modal-shell';
                     </div>
 
                     <div *ngIf="!person?.names || person.names.length === 0"
-                        class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-ui-border/60 rounded-3xl text-ui-textMuted">
+                        class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-neutral-300/60 rounded-3xl text-neutral-950">
                         <span class="text-4xl mb-3 opacity-20">🧾</span>
                         <p class="font-medium">Keine weiteren Namen erfasst.</p>
                     </div>
@@ -85,7 +85,7 @@ import { AppModalShell } from './ui/app-modal-shell';
                 <label class="flex items-center gap-2 cursor-pointer text-sm text-neutral-300">
                     <input type="checkbox" [ngModel]="newNameDraft().isPrimary"
                         (ngModelChange)="newNameDraft.update(v => ({ ...v, isPrimary: $event }))"
-                        class="w-4 h-4 rounded border-canvas-white/10 bg-ui-surfaceDark text-brand-500 focus:ring-brand-500 focus:ring-offset-neutral-900">
+                        class="w-4 h-4 rounded border-canvas-white/10 bg-brand-900 text-brand-500 focus:ring-brand-500 focus:ring-offset-neutral-900">
                     Als Primärname setzen
                 </label>
             </div>
@@ -124,7 +124,7 @@ import { AppModalShell } from './ui/app-modal-shell';
                 <label class="flex items-center gap-2 cursor-pointer text-sm text-neutral-300">
                     <input type="checkbox" [ngModel]="editNameDraft()?.isPrimary"
                         (ngModelChange)="editNameDraft.set({ ...editNameDraft(), isPrimary: $event })"
-                        class="w-4 h-4 rounded border-canvas-white/10 bg-ui-surfaceDark text-brand-500 focus:ring-brand-500 focus:ring-offset-neutral-900">
+                        class="w-4 h-4 rounded border-canvas-white/10 bg-brand-900 text-brand-500 focus:ring-brand-500 focus:ring-offset-neutral-900">
                     Als Primärname setzen
                 </label>
             </div>

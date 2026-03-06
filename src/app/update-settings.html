@@ -30,12 +30,12 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="p-4 bg-canvas-white/5 rounded-2xl border border-canvas-white/5">
                             <span
-                                class="block text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1">Node.js</span>
+                                class="block text-[10px] uppercase tracking-widest text-neutral-950 font-bold mb-1">Node.js</span>
                             <span class="text-neutral-200 font-medium">{{ systemInfo?.nodeVersion || '...' }}</span>
                         </div>
                         <div class="p-4 bg-canvas-white/5 rounded-2xl border border-canvas-white/5">
                             <span
-                                class="block text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1">Platform</span>
+                                class="block text-[10px] uppercase tracking-widest text-neutral-950 font-bold mb-1">Platform</span>
                             <span class="text-neutral-200 font-medium">{{ systemInfo?.platform || '...' }}</span>
                         </div>
                     </div>
@@ -115,7 +115,7 @@
                     <div class="flex flex-col md:flex-row items-center gap-8 justify-center py-6">
                         <div class="flex flex-col items-center gap-2 glass-card min-w-[160px]">
                             <span
-                                class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Installiert</span>
+                                class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest">Installiert</span>
                             <span class="text-2xl font-black text-neutral-300">{{ updateStatus.currentVersion }}</span>
                         </div>
 
@@ -138,12 +138,12 @@
 
                     <div *ngIf="updateStatus.releaseName"
                         class="mt-8 pt-6 border-t border-emerald-500/10 flex items-center gap-3">
-                        <span class="text-neutral-500 font-bold text-sm uppercase">Release:</span>
+                        <span class="text-neutral-950 font-bold text-sm uppercase">Release:</span>
                         <span class="text-emerald-300 font-semibold">{{ updateStatus.releaseName }}</span>
                     </div>
 
                     <div *ngIf="updateStatus.details"
-                        class="mt-6 p-6 bg-canvas-black/40 rounded-2xl border border-canvas-white/5 font-mono text-sm text-neutral-400 overflow-x-auto max-h-[300px]">
+                        class="mt-6 p-6 bg-neutral-black/40 rounded-2xl border border-canvas-white/5 font-mono text-sm text-neutral-400 overflow-x-auto max-h-[300px]">
                         <pre class="whitespace-pre-wrap">{{ updateStatus.details }}</pre>
                     </div>
                 </div>
@@ -174,7 +174,7 @@
                         <h4 class="text-xl font-bold text-canvas-white">{{ updateResult.message }}</h4>
                     </div>
                     <div *ngIf="updateResult.output"
-                        class="p-6 bg-canvas-black/40 rounded-2xl border border-canvas-white/5 font-mono text-xs text-emerald-400/80 overflow-x-auto max-h-[400px]">
+                        class="p-6 bg-neutral-black/40 rounded-2xl border border-canvas-white/5 font-mono text-xs text-emerald-400/80 overflow-x-auto max-h-[400px]">
                         <pre>{{ updateResult.output }}</pre>
                     </div>
                 </div>

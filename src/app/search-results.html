@@ -7,20 +7,20 @@
         <!-- LOADING -->
         <div *ngIf="loading()" class="flex flex-col items-center justify-center py-32 animate-in fade-in">
             <div
-                class="w-12 h-12 border-4 border-ui-border/40 border-l-brand-500 rounded-full animate-spin shadow-brand-glow mb-6">
+                class="w-12 h-12 border-4 border-neutral-300/40 border-l-brand-500 rounded-full animate-spin shadow-brand-glow mb-6">
             </div>
-            <p class="text-xs font-black text-neutral-500 uppercase tracking-widest">Suche läuft...</p>
+            <p class="text-xs font-black text-neutral-950 uppercase tracking-widest">Suche läuft...</p>
         </div>
 
         <!-- NO RESULTS -->
         <div *ngIf="!loading() && results().length === 0"
             class="flex flex-col items-center justify-center py-32 text-center animate-in zoom-in-95 duration-700">
             <div
-                class="w-24 h-24 bg-ui-panel rounded-[32px] flex items-center justify-center text-4xl mb-8 border border-ui-border/60 shadow-xl">
+                class="w-24 h-24 bg-brand-100 rounded-[32px] flex items-center justify-center text-4xl mb-8 border border-neutral-300/60 shadow-xl">
                 🔎
             </div>
-            <h2 class="text-2xl font-black text-ui-text tracking-tight mb-2">Keine Ergebnisse gefunden</h2>
-            <p class="text-ui-textMuted max-w-xs leading-relaxed">Bitte versuche es mit einem anderen Suchbegriff oder
+            <h2 class="text-2xl font-black text-neutral-900 tracking-tight mb-2">Keine Ergebnisse gefunden</h2>
+            <p class="text-neutral-950 max-w-xs leading-relaxed">Bitte versuche es mit einem anderen Suchbegriff oder
                 prüfe die Schreibweise.</p>
         </div>
 

@@ -13,8 +13,8 @@ import { AppModalShell } from './ui/app-modal-shell';
             <div class="p-0">
                 <div class="flex justify-between items-center mb-6">
                     <div>
-                        <h2 class="text-xl font-semibold text-ui-text">Assoziationen</h2>
-                        <p class="text-xs text-ui-textMuted mt-1">Soziale Beziehungen wie Taufpaten, Zeugen, Arbeitgeber</p>
+                        <h2 class="text-xl font-semibold text-neutral-900">Assoziationen</h2>
+                        <p class="text-xs text-neutral-950 mt-1">Soziale Beziehungen wie Taufpaten, Zeugen, Arbeitgeber</p>
                     </div>
                     <button (click)="addAssociation()" class="btn-primary !w-auto !py-2">
                         + Assoziation
@@ -23,18 +23,18 @@ import { AppModalShell } from './ui/app-modal-shell';
 
                 <div class="space-y-4" *ngIf="person?.associations && person.associations.length > 0">
                     <div *ngFor="let a of person.associations; let i = index"
-                        class="glass-card !bg-ui-card !rounded-2xl !p-5 space-y-3 group relative cursor-pointer hover:bg-ui-cardHover transition-colors"
+                        class="glass-card !bg-brand-50 !rounded-2xl !p-5 space-y-3 group relative cursor-pointer hover:bg-neutral-100 transition-colors"
                         (click)="openAssociationEditModal(i)">
                         <div class="flex justify-between items-start">
                             <div>
-                                <h3 class="font-bold text-lg text-ui-text flex items-center gap-2">
+                                <h3 class="font-bold text-lg text-neutral-900 flex items-center gap-2">
                                     <span class="text-xl">{{ a.role === 'GODPARENT' ? '🕊️' : a.role === 'WITNESS' ?
                                         '📜' : a.role === 'CLERGY' ? '⛪' : a.role === 'EMPLOYER' ? '💼' : a.role ===
                                         'FRIEND' ? '🤝' : '👤' }}</span>
                                     <span *ngIf="a.associatedPersonName">{{ a.associatedPersonName }}</span>
-                                    <span *ngIf="!a.associatedPersonName" class="text-ui-textMuted italic">Unbekannte Person</span>
+                                    <span *ngIf="!a.associatedPersonName" class="text-neutral-950 italic">Unbekannte Person</span>
                                 </h3>
-                                <p class="text-sm text-ui-textMuted mt-1">
+                                <p class="text-sm text-neutral-950 mt-1">
                                     <span class="font-semibold">{{ a.role === 'GODPARENT' ? 'Taufpate/in' : a.role ===
                                         'WITNESS' ? 'Zeuge/in' : a.role === 'CLERGY' ? 'Geistliche/r' : a.role ===
                                         'EMPLOYER' ? 'Arbeitgeber' : a.role === 'FRIEND' ? 'Freund/in' :
@@ -44,7 +44,7 @@ import { AppModalShell } from './ui/app-modal-shell';
                                 </p>
                             </div>
                             <button (click)="$event.stopPropagation(); removeAssociation(i)"
-                                class="p-1.5 text-ui-textMuted hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                                class="p-1.5 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M3 6h18"></path>
@@ -53,10 +53,10 @@ import { AppModalShell } from './ui/app-modal-shell';
                             </button>
                         </div>
                         <div *ngIf="a.notes"
-                            class="mt-2 text-xs text-ui-textSoft bg-ui-panel/50 p-2 rounded-lg border border-ui-border/30">
+                            class="mt-2 text-xs text-neutral-700 bg-brand-100/50 p-2 rounded-lg border border-neutral-300/30">
                             📝 {{ a.notes }}
                         </div>
-                        <div *ngIf="a.confidence" class="mt-1 flex items-center gap-1 text-[10px] text-neutral-500">
+                        <div *ngIf="a.confidence" class="mt-1 flex items-center gap-1 text-[10px] text-neutral-950">
                             <span class="uppercase tracking-widest font-bold">Konfidenz:</span>
                             <span>{{ getConfidenceLabel(a.confidence) }}</span>
                         </div>
@@ -64,7 +64,7 @@ import { AppModalShell } from './ui/app-modal-shell';
                 </div>
 
                 <div *ngIf="!person?.associations || person.associations.length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-ui-border/60 rounded-3xl text-ui-textMuted">
+                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-neutral-300/60 rounded-3xl text-neutral-950">
                     <span class="text-4xl mb-3 opacity-20">🤝</span>
                     <p class="font-medium">Keine Assoziationen erfasst.</p>
                     <p class="text-sm mt-1">z.B. Taufpaten, Trauzeugen, Arbeitgeber</p>

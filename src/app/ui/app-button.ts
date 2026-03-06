@@ -18,8 +18,8 @@ import { CommonModule } from '@angular/common';
         'bg-brand-500 hover:bg-brand-400 text-canvas-white shadow-lg shadow-brand-500/20': variant === 'primary',
         'bg-surface-light hover:bg-surface-lighter text-canvas-white/80 border border-brand-500/20': variant === 'secondary',
         'bg-accent-purple-500 hover:bg-accent-purple-400 text-canvas-white shadow-lg shadow-accent-purple-500/20': variant === 'accent',
-        'bg-canvas-transparent hover:bg-canvas-white/5 text-canvas-white/40 hover:text-canvas-white/90 border border-canvas-white/5': variant === 'ghost',
-        'bg-canvas-transparent border-2 border-brand-500/50 hover:border-brand-500 text-brand-400 hover:bg-brand-500/5': variant === 'outline'
+        'bg-transparent hover:bg-canvas-white/5 text-canvas-white/40 hover:text-canvas-white/90 border border-canvas-white/5': variant === 'ghost',
+        'bg-transparent border-2 border-brand-500/50 hover:border-brand-500 text-brand-400 hover:bg-brand-500/5': variant === 'outline'
       }"
     >
       <ng-content></ng-content>

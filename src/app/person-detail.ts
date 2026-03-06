@@ -1412,7 +1412,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             case 'LIKELY': return 'badge-highlight';
             case 'POSSIBLE': return 'badge-warn';
             case 'UNLIKELY': return 'badge-danger';
-            default: return 'bg-neutral-500/10 text-neutral-400';
+            default: return 'bg-neutral-950/10 text-neutral-400';
         }
     }
 

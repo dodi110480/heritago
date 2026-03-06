@@ -83,7 +83,7 @@ import { AppCardComponent } from './ui/app-card';
                         </div>
 
                         <ng-template #relRead>
-                            <div class="w-24 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">
+                            <div class="w-24 text-[10px] font-bold text-neutral-950 uppercase tracking-widest">
                                 {{ getRelationLabel(rel.type) }}
                             </div>
                             <div class="flex-1">
@@ -106,7 +106,7 @@ import { AppCardComponent } from './ui/app-card';
                 </div>
 
                 <div *ngIf="relations().length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-canvas-white/5 rounded-3xl text-neutral-500">
+                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-canvas-white/5 rounded-3xl text-neutral-950">
                     <span class="text-4xl mb-3 opacity-20">👨‍👩‍👧‍👦</span>
                     <p class="font-medium">Keine familiären Beziehungen hinterlegt.</p>
                 </div>
