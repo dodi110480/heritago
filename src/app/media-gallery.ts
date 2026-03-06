@@ -8,11 +8,12 @@ import { AppEntityCard } from './ui/app-entity-card';
 import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppModalShell } from './ui/app-modal-shell';
+import { AppListViewComponent } from './ui/app-list-view';
 
 @Component({
     selector: 'app-media-gallery',
     standalone: true,
-    imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent, AppModalShell],
+    imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent, AppModalShell, AppListViewComponent],
     templateUrl: './media-gallery.html'
 })
 export class MediaGallery implements OnInit {

@@ -87,62 +87,51 @@
   </div>
 
   <!-- CONTENT -->
-  <div class="relative w-full">
-    <div *ngIf="loading()" class="py-20 flex flex-col items-center justify-center gap-4 text-brand-400">
-      <div
-        class="w-12 h-12 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin shadow-brand-glow">
-      </div>
-      <p class="font-bold tracking-widest uppercase text-xs animate-pulse">Lade Medien...</p>
-    </div>
-
-    <div *ngIf="!loading() && filteredItems().length === 0"
-      class="py-32 flex flex-col items-center justify-center text-neutral-500 glass-card">
-      <div class="w-20 h-20 bg-canvas-white/5 rounded-full flex items-center justify-center mb-6 text-4xl opacity-20">
-        🖼️
-      </div>
-      <h3 class="text-xl font-bold text-canvas-white mb-2">Keine Medien gefunden</h3>
-      <p class="text-neutral-400">Lade dein erstes Foto oder Dokument hoch.</p>
-    </div>
+  <app-list-view
+    [isLoading]="loading()"
+    [isEmpty]="filteredItems().length === 0"
+    loadingText="Lade Medien..."
+    emptyIcon="🖼️"
+    emptyTitle="Keine Medien gefunden"
+    emptySubtitle="Lade dein erstes Foto oder Dokument hoch.">
 
     <!-- Media Grid -->
-    <section *ngIf="!loading()"
-      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <ng-container *ngFor="let item of filteredItems()">
-        <app-entity-card [title]="item.title || item.filePath || 'Unbenannt'"
-          [subtitle]="item.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'" [meta]="formatSize(item.fileSize)"
-          [avatarUrl]="isImage(item) ? item.previewUrl : undefined"
-          [icon]="!isImage(item) ? (isPdf(item) ? '📄' : '📎') : undefined"
-          [badgeText]="item.mediaType === 'PHOTO' ? 'Foto' : (item.mediaType === 'DOCUMENT' ? 'Dokument' : 'Medium')"
-          [badgeColor]="item.mediaType === 'PHOTO' ? 'blue' : (item.mediaType === 'DOCUMENT' ? 'success' : 'neutral')"
-          [class.ring-2]="selected()?.id === item.id" [class.ring-brand-500]="selected()?.id === item.id"
-          [class.rounded-3xl]="selected()?.id === item.id" (click)="openDetails(item)">
+    <ng-container *ngFor="let item of filteredItems()">
+      <app-entity-card [title]="item.title || item.filePath || 'Unbenannt'"
+        [subtitle]="item.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'" [meta]="formatSize(item.fileSize)"
+        [avatarUrl]="isImage(item) ? item.previewUrl : undefined"
+        [icon]="!isImage(item) ? (isPdf(item) ? '📄' : '📎') : undefined"
+        [badgeText]="item.mediaType === 'PHOTO' ? 'Foto' : (item.mediaType === 'DOCUMENT' ? 'Dokument' : 'Medium')"
+        [badgeColor]="item.mediaType === 'PHOTO' ? 'blue' : (item.mediaType === 'DOCUMENT' ? 'success' : 'neutral')"
+        [class.ring-2]="selected()?.id === item.id" [class.ring-brand-500]="selected()?.id === item.id"
+        [class.rounded-3xl]="selected()?.id === item.id" (click)="openDetails(item)">
 
-          <div actions class="flex flex-col items-end gap-1.5">
-            <span *ngIf="item.links?.length; else noLinksSpan"
-              class="text-[10px] px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
-              {{ item.links.length }} Link{{ item.links.length !== 1 ? 's' : '' }}
+        <div actions class="flex flex-col items-end gap-1.5">
+          <span *ngIf="item.links?.length; else noLinksSpan"
+            class="text-[10px] px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
+            {{ item.links.length }} Link{{ item.links.length !== 1 ? 's' : '' }}
+          </span>
+          <ng-template #noLinksSpan>
+            <span
+              class="text-[9px] px-2 py-0.5 rounded bg-accent-danger-500/10 text-accent-danger-400 font-black border border-accent-danger-500/20 whitespace-nowrap uppercase">
+              Unlinked
             </span>
-            <ng-template #noLinksSpan>
-              <span
-                class="text-[9px] px-2 py-0.5 rounded bg-accent-danger-500/10 text-accent-danger-400 font-black border border-accent-danger-500/20 whitespace-nowrap uppercase">
-                Unlinked
-              </span>
-            </ng-template>
+          </ng-template>
 
-            <span *ngIf="item.orphanFile"
-              class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500/20 text-accent-danger-400 font-bold whitespace-nowrap uppercase">
-              Orphan
-            </span>
+          <span *ngIf="item.orphanFile"
+            class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500/20 text-accent-danger-400 font-bold whitespace-nowrap uppercase">
+            Orphan
+          </span>
 
-            <span *ngIf="item.fileMissing"
-              class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500 text-canvas-white font-black whitespace-nowrap uppercase shadow-sm">
-              Datei fehlt
-            </span>
-          </div>
-        </app-entity-card>
-      </ng-container>
-    </section>
-  </div>
+          <span *ngIf="item.fileMissing"
+            class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500 text-canvas-white font-black whitespace-nowrap uppercase shadow-sm">
+            Datei fehlt
+          </span>
+        </div>
+      </app-entity-card>
+    </ng-container>
+
+  </app-list-view>
 </app-page-container>
 
 <!-- Details Modal -->

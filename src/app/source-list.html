@@ -45,53 +45,42 @@
     <div class="relative w-full">
         <!-- Sources Tab -->
         <ng-container *ngIf="activeTab() === 'sources'">
-            <div *ngIf="loading()" class="py-20 flex flex-col items-center justify-center gap-4 text-brand-400">
-                <div
-                    class="w-12 h-12 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin shadow-brand-glow">
+            
+            <!-- Search Bar (always visible when sources tab active) -->
+            <div class="search-wrapper w-full !max-w-none mb-4">
+                <div class="search-icon-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
                 </div>
-                <p class="font-bold tracking-widest uppercase text-xs animate-pulse">Lade Quellen...</p>
+                <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+                    placeholder="Quellen durchsuchen..." class="search-input w-full">
             </div>
 
-            <div *ngIf="!loading()">
-                <!-- Search Bar -->
-                <div class="search-wrapper w-full !max-w-none mb-8">
-                    <div class="search-icon-wrapper">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                    </div>
-                    <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-                        placeholder="Quellen durchsuchen..." class="search-input w-full">
-                </div>
+            <app-list-view
+                [isLoading]="loading()"
+                [isEmpty]="filteredSources.length === 0"
+                loadingText="Lade Quellen..."
+                emptyIcon="📚"
+                emptyTitle="Keine Quellen gefunden"
+                emptySubtitle="Probiere es mit einem anderen Suchbegriff.">
 
-                <div *ngIf="filteredSources.length === 0"
-                    class="py-32 flex flex-col items-center justify-center text-neutral-950 glass-card">
-                    <div
-                        class="w-20 h-20 bg-canvas-white/5 rounded-full flex items-center justify-center mb-6 text-4xl opacity-20">
-                        📚
-                    </div>
-                    <h3 class="text-xl font-bold text-canvas-white mb-2">Keine Quellen gefunden</h3>
-                    <p class="text-neutral-400">Probiere es mit einem anderen Suchbegriff.</p>
-                </div>
+                <ng-container *ngFor="let source of filteredSources">
+                    <app-entity-card [title]="source.title"
+                        [subtitle]="(source.author ? source.author : '') + (source.author && source.shortTitle ? ' • ' : '') + (source.shortTitle ? source.shortTitle : '')"
+                        [meta]="source.repositoryName ? '📍 ' + source.repositoryName : 'Kein Repositorium'"
+                        badgeText="Quelle" badgeColor="success" (onClick)="openEditModal(source)">
 
-                <div *ngIf="filteredSources.length > 0"
-                    class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <ng-container *ngFor="let source of filteredSources">
-                        <app-entity-card [title]="source.title"
-                            [subtitle]="(source.author ? source.author : '') + (source.author && source.shortTitle ? ' • ' : '') + (source.shortTitle ? source.shortTitle : '')"
-                            [meta]="source.repositoryName ? '📍 ' + source.repositoryName : 'Kein Repositorium'"
-                            badgeText="Quelle" badgeColor="success" (onClick)="openEditModal(source)">
+                        <div actions *ngIf="source.usageCount > 0"
+                            class="text-xs px-2.5 py-1 rounded bg-brand-100/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
+                            {{ source.usageCount }} Zitate
+                        </div>
+                    </app-entity-card>
+                </ng-container>
 
-                            <div actions *ngIf="source.usageCount > 0"
-                                class="text-xs px-2.5 py-1 rounded bg-brand-100/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
-                                {{ source.usageCount }} Zitate
-                            </div>
-                        </app-entity-card>
-                    </ng-container>
-                </div>
-            </div>
+            </app-list-view>
         </ng-container>
 
         <!-- Repositories Tab -->

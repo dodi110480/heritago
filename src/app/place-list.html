@@ -14,53 +14,41 @@
     </app-page-header>
 
     <!-- CONTENT -->
-    <div class="relative w-full">
-        <div *ngIf="loading()" class="py-20 flex flex-col items-center justify-center gap-4 text-brand-400">
-            <div
-                class="w-12 h-12 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin shadow-brand-glow">
-            </div>
-            <p class="font-bold tracking-widest uppercase text-xs animate-pulse">Lade Orte...</p>
-        </div>
+    <app-list-view
+        [isLoading]="loading()"
+        [isEmpty]="places().length === 0"
+        loadingText="Lade Orte..."
+        emptyIcon="📍"
+        emptyTitle="Keine Orte gefunden"
+        emptySubtitle="Lege deinen ersten Ort an, um zu beginnen.">
 
-        <div *ngIf="!loading() && places().length === 0"
-            class="py-32 flex flex-col items-center justify-center text-neutral-950 glass-card">
-            <div
-                class="w-20 h-20 bg-canvas-white/5 rounded-full flex items-center justify-center mb-6 text-4xl opacity-20">
-                📍
-            </div>
-            <h3 class="text-xl font-bold text-canvas-white mb-2">Keine Orte gefunden</h3>
-            <p class="text-neutral-400">Lege deinen ersten Ort an, um zu beginnen.</p>
-        </div>
+        <ng-container *ngFor="let place of flattenHierarchy(hierarchy())">
+            <app-entity-card [title]="place.phrase || (place.name | placeDisplay:'short')"
+                [subtitle]="place.phrase ? (place.name | placeDisplay:'short') : (place.parentName ? 'Teil von: ' + place.parentName : 'Hauptort / Root')"
+                [meta]="(place.lang || place.level) ? '[' + (place.lang || '--') + '] ' + place.level : ((place.latitude && place.longitude) ? 'Koord: ' + place.latitude + ', ' + place.longitude : 'Ort')"
+                icon="📍" [style.margin-left.px]="(place.depth || 0) * 16" badgeText="Ort" badgeColor="success"
+                [isFocused]="isModalOpen && selectedPlaceData?.id === place.id" (onClick)="openEditModal(place)">
 
-        <div *ngIf="!loading()"
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <ng-container *ngFor="let place of flattenHierarchy(hierarchy())">
-                <app-entity-card [title]="place.phrase || (place.name | placeDisplay:'short')"
-                    [subtitle]="place.phrase ? (place.name | placeDisplay:'short') : (place.parentName ? 'Teil von: ' + place.parentName : 'Hauptort / Root')"
-                    [meta]="(place.lang || place.level) ? '[' + (place.lang || '--') + '] ' + place.level : ((place.latitude && place.longitude) ? 'Koord: ' + place.latitude + ', ' + place.longitude : 'Ort')"
-                    icon="📍" [style.margin-left.px]="(place.depth || 0) * 16" badgeText="Ort" badgeColor="success"
-                    [isFocused]="isModalOpen && selectedPlaceData?.id === place.id" (onClick)="openEditModal(place)">
+                <div actions class="flex gap-1 items-center">
+                    <span *ngIf="place.usage?.total > 0"
+                        class="text-[10px] px-2 py-0.5 rounded bg-neutral-400/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap mr-1"
+                        [title]="'Events: ' + place.usage?.eventCount + ', Fakten: ' + place.usage?.factCount + ', Ass.: ' + place.usage?.associationCount">
+                        {{ place.usage.total }} Verkn.
+                    </span>
+                    <button
+                        class="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-400/50 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/10 transition-all border border-canvas-white/5 hover:border-brand-500/20"
+                        (click)="$event.stopPropagation(); openEditModal(place)" title="Bearbeiten">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </app-entity-card>
+        </ng-container>
 
-                    <div actions class="flex gap-1 items-center">
-                        <span *ngIf="place.usage?.total > 0"
-                            class="text-[10px] px-2 py-0.5 rounded bg-neutral-400/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap mr-1"
-                            [title]="'Events: ' + place.usage?.eventCount + ', Fakten: ' + place.usage?.factCount + ', Ass.: ' + place.usage?.associationCount">
-                            {{ place.usage.total }} Verkn.
-                        </span>
-                        <button
-                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-400/50 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/10 transition-all border border-canvas-white/5 hover:border-brand-500/20"
-                            (click)="$event.stopPropagation(); openEditModal(place)" title="Bearbeiten">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </app-entity-card>
-            </ng-container>
-        </div>
-    </div>
+    </app-list-view>
 </app-page-container>
 
 

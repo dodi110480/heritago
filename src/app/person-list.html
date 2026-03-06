@@ -59,49 +59,37 @@
     </app-page-header>
 
     <!-- CONTENT -->
-    <div class="relative w-full overflow-y-visible pb-10">
-        <div *ngIf="loading()" class="py-20 flex flex-col items-center justify-center gap-4 text-brand-400">
-            <div
-                class="w-12 h-12 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin shadow-brand-glow">
-            </div>
-            <p class="font-bold tracking-widest uppercase text-xs animate-pulse">Lade Personen-Archiv...</p>
-        </div>
+    <app-list-view 
+        [isLoading]="loading()" 
+        [isEmpty]="filteredIndividuals().length === 0"
+        loadingText="Lade Personen-Archiv..."
+        emptyIcon="👤"
+        emptyTitle="Keine Personen gefunden"
+        emptySubtitle="Probiere es mit einem anderen Suchbegriff oder lege eine neue Person an.">
+        
+        <ng-container *ngFor="let p of filteredIndividuals()">
+            <app-entity-card [title]="p.name" [subtitle]="getLifespan(p) | cleanDate"
+                [avatarUrl]="getProfileImage(p)" [isFocused]="p.id === focusedPersonId()"
+                [routerLink]="['/person', p.id]" badgeText="Person" badgeColor="primary" (click)="rememberFocus(p.id)">
 
-        <div *ngIf="!loading()"
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <ng-container *ngFor="let p of filteredIndividuals()">
-                <app-entity-card [title]="p.name" [subtitle]="getLifespan(p) | cleanDate"
-                    [avatarUrl]="getProfileImage(p)" [isFocused]="p.id === focusedPersonId()"
-                    [routerLink]="['/person', p.id]" badgeText="Person" badgeColor="primary" (click)="rememberFocus(p.id)">
+                <div badges class="flex flex-wrap gap-2">
+                    <span class="badge badge-neutral" [ngClass]="completionColorClass(completionFor(p).score)"
+                        [attr.title]="completionTooltip(p)">
+                        <span class="w-1.5 h-1.5 rounded-full" [ngClass]="completionDotClass(completionFor(p).score)"></span>
+                        {{ completionFor(p).score }}%
+                    </span>
+                </div>
 
-                    <div badges class="flex flex-wrap gap-2">
-                        <span class="badge badge-neutral" [ngClass]="completionColorClass(completionFor(p).score)"
-                            [attr.title]="completionTooltip(p)">
-                            <span class="w-1.5 h-1.5 rounded-full" [ngClass]="completionDotClass(completionFor(p).score)"></span>
-                            {{ completionFor(p).score }}%
-                        </span>
-                    </div>
-
-                    <div footer
-                        class="flex items-center justify-between text-[10px] text-neutral-950 uppercase tracking-widest font-bold">
-                        <span>{{ p.id }}</span>
-                        <span *ngIf="p.gender" class="opacity-50 text-xs">
-                            {{ p.gender === 'M' ? '♂' : (p.gender === 'F' ? '♀' : '⚧') }}
-                        </span>
-                    </div>
-                </app-entity-card>
-            </ng-container>
-        </div>
-
-        <!-- Leer-Zustand -->
-        <div *ngIf="!loading() && filteredIndividuals().length === 0"
-            class="py-32 flex flex-col items-center justify-center text-neutral-950 glass-card">
-            <div class="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center mb-6 text-4xl opacity-50">👤
-            </div>
-            <h3 class="text-xl font-bold text-neutral-900 mb-2">Keine Personen gefunden</h3>
-            <p class="text-neutral-950">Probiere es mit einem anderen Suchbegriff oder lege eine neue Person an.</p>
-        </div>
-    </div>
+                <div footer
+                    class="flex items-center justify-between text-[10px] text-neutral-950 uppercase tracking-widest font-bold">
+                    <span>{{ p.id }}</span>
+                    <span *ngIf="p.gender" class="opacity-50 text-xs">
+                        {{ p.gender === 'M' ? '♂' : (p.gender === 'F' ? '♀' : '⚧') }}
+                    </span>
+                </div>
+            </app-entity-card>
+        </ng-container>
+    </app-list-view>
 </app-page-container>
 
 <app-person-create-modal [visible]="showCreateModal()" (created)="onPersonCreated($event)"

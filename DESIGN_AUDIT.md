@@ -133,9 +133,10 @@ Die Detailanalyse der im Projekt eingesetzten UI-Komponenten hat konkrete Übers
 - **Das Problem:** Es existieren aktuell zwei sehr ähnliche Angular-Wrapper (`app-card` und `app-section-card`), deren einziger echter Unterschied die Formatierung ihres optionalen Headers (`h2` = "Standard-Card" vs. kleines `h3` uppercase = "Section-Card") ist. Beide nutzen intern einfach die CSS-Klasse `.glass-card`. Gleichzeitig nutzen stark angepasste Seiten häufig einfach direkt ein `div` mit der Klasse `glass-card`.
 - **Lösung:** Man sollte einen Entschluss für **einen** Weg fassen. Eine saubere Lösung wäre es, beide Angular-Komponenten (`app-card` und `app-section-card`) zu **entfernen** und stattdessen überall direkt strukturiertes HTML mit der Klasse `.glass-card` und standardisierten Text-Klassen für den Header zu verwenden. Alternativ: Beide in eine neu überarbeitete, hochflexible `<app-card>` vereinen, die ein `headerVariant="large" | "small"` Property besitzt.
 
-### 2. Tabellarische vs. Gekachelte Listen
-- **Das Problem:** Bei Listenansichten wie Person-List, Family-List und Source-List existiert oft keine tiefe Container-Kapselung; stattdessen werden `app-entity-card`s direkt mit `*ngFor` auf eine leere Seite ("glass-card") oder in Custom-Grids gerendert. 
-- **Lösung:** Zur Bereinigung könnte eine eigene `<app-list-view>` (oder `<app-grid-view>`) Architektur-Komponente eingeführt werden, die standardmäßig das Such-Feld, die Sortierung, Pagination und Empty-States mit kapselt.
+### ✅ 2. Tabellarische vs. Gekachelte Listen
+
+- **Problem:** Die Darstellung von Auflistungen variiert stark. Personen und Familien verwenden Grid-Layouts mit speziellen Cards (`app-entity-card`), während Archive und Quellen teilweise andere Ansätze verwenden. Auch die Suchleisten, "Empty States" und Header-Strukturen sind oft kopiert und minimal inkonsistent eingefügt.
+- **Lösung:** Es wurde eine zentrale `<app-list-view>` Architektur-Komponente eingeführt, die standardmäßig den Loading-State, das Empty-State Styling (`text-neutral-400` u. Icons) sowie den Grid-Wrapper (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3...`) kapselt. Diese Komponente wird nun von `person-list`, `family-list`, `place-list`, `source-list` und `media-gallery` einheitlich verwendet.
 
 ### 3. Veraltete Formular-Wrapper (`app-button` und `app-input`) ✅
 - **Das Problem:** Tailwind CSS-Utility-Klassen (`.btn-primary`, `.form-input`) existieren nun funktionsgleich parallel zu den dedizierten Angular-Komponenten (`<app-button>`, `<app-input>`). Der Einsatz von nativen HTML-Inputs mit Utility-Klassen macht die Arbeit mit Angular Reactive Forms leichter, performanter und weniger fehleranfällig als eine zusätzliche Wrapper-Komponente.

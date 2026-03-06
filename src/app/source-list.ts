@@ -8,11 +8,12 @@ import { AppEntityCard } from './ui/app-entity-card';
 import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppPageContainerComponent } from './ui/app-page-container';
 import { RepositoryList } from './repository-list';
+import { AppListViewComponent } from './ui/app-list-view';
 
 @Component({
     selector: 'app-source-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, SourceModal, AppEntityCard, RepositoryList, AppPageHeaderComponent, AppPageContainerComponent],
+    imports: [CommonModule, FormsModule, SourceModal, AppEntityCard, RepositoryList, AppPageHeaderComponent, AppPageContainerComponent, AppListViewComponent],
     templateUrl: './source-list.html',
     encapsulation: ViewEncapsulation.None
 })

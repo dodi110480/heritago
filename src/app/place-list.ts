@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, computed, inject, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -8,15 +8,16 @@ import { PlaceDisplayPipe } from './place-display.pipe';
 import { AppEntityCard } from './ui/app-entity-card';
 import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppPageContainerComponent } from './ui/app-page-container';
+import { AppListViewComponent } from './ui/app-list-view';
 
 @Component({
     selector: 'app-place-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, PlaceModal, PlaceDisplayPipe, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent],
+    imports: [CommonModule, FormsModule, PlaceModal, PlaceDisplayPipe, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent, AppListViewComponent],
     templateUrl: './place-list.html',
     encapsulation: ViewEncapsulation.None
 })
-export class PlaceList implements OnInit {
+export class PlaceList {
     private gedcomService = inject(GedcomService);
     private router = inject(Router);
 

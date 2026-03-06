@@ -9,11 +9,12 @@ import { PersonCreateModal } from './person-create-modal';
 import { AppEntityCard } from './ui/app-entity-card';
 import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppPageContainerComponent } from './ui/app-page-container';
+import { AppListViewComponent } from './ui/app-list-view';
 
 @Component({
     selector: 'app-person-list',
     standalone: true,
-    imports: [CommonModule, RouterLink, FormsModule, CleanDatePipe, PersonCreateModal, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent],
+    imports: [CommonModule, RouterLink, FormsModule, CleanDatePipe, PersonCreateModal, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent, AppListViewComponent],
     templateUrl: './person-list.html',
     encapsulation: ViewEncapsulation.None
 })

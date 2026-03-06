@@ -26,38 +26,28 @@
     </app-page-header>
 
     <!-- CONTENT -->
-    <div class="relative w-full">
-        <div *ngIf="loading()" class="py-20 flex flex-col items-center justify-center gap-4 text-brand-400">
-            <div
-                class="w-12 h-12 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin shadow-brand-glow">
-            </div>
-            <p class="font-bold tracking-widest uppercase text-xs animate-pulse">Lade Familien-Archiv...</p>
-        </div>
+    <!-- CONTENT -->
+    <app-list-view
+        [isLoading]="loading()"
+        [isEmpty]="filteredFamilies().length === 0"
+        loadingText="Lade Familien-Archiv..."
+        emptyIcon="👨‍👩‍👧‍👦"
+        emptyTitle="Keine Familien gefunden"
+        emptySubtitle="Probiere es mit einem anderen Suchbegriff.">
 
-        <div *ngIf="!loading() && filteredFamilies().length === 0"
-            class="py-32 flex flex-col items-center justify-center text-neutral-950 glass-card">
-            <div class="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center mb-6 text-4xl opacity-50">
-                👨‍👩‍👧‍👦
-            </div>
-            <h3 class="text-xl font-bold text-neutral-900 mb-2">Keine Familien gefunden</h3>
-            <p class="text-neutral-950">Probiere es mit einem anderen Suchbegriff.</p>
-        </div>
+        <ng-container *ngFor="let fam of filteredFamilies()">
+            <app-entity-card [title]="getPersonName(fam.husband) + ' & ' + getPersonName(fam.wife)"
+                [subtitle]="getFamilyStatusIcon(fam) + ' ' + (getMarriageInfo(fam) || 'Keine Daten')"
+                [meta]="getMarriageSubtypeLabels(fam).join(', ')" [avatarUrl]="getFamilyImage(fam)"
+                badgeText="Familie" badgeColor="highlight" [routerLink]="['/family', fam.id]">
 
-        <div *ngIf="!loading()"
-            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <ng-container *ngFor="let fam of filteredFamilies()">
-                <app-entity-card [title]="getPersonName(fam.husband) + ' & ' + getPersonName(fam.wife)"
-                    [subtitle]="getFamilyStatusIcon(fam) + ' ' + (getMarriageInfo(fam) || 'Keine Daten')"
-                    [meta]="getMarriageSubtypeLabels(fam).join(', ')" [avatarUrl]="getFamilyImage(fam)"
-                    badgeText="Familie" badgeColor="highlight" [routerLink]="['/family', fam.id]">
+                <div actions *ngIf="fam.children?.length"
+                    class="text-xs px-2.5 py-1 rounded bg-brand-100/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap"
+                    [title]="getChildrenTooltip(fam)">
+                    {{ fam.children.length }} Kinder
+                </div>
+            </app-entity-card>
+        </ng-container>
 
-                    <div actions *ngIf="fam.children?.length"
-                        class="text-xs px-2.5 py-1 rounded bg-brand-100/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap"
-                        [title]="getChildrenTooltip(fam)">
-                        {{ fam.children.length }} Kinder
-                    </div>
-                </app-entity-card>
-            </ng-container>
-        </div>
-    </div>
+    </app-list-view>
 </app-page-container>
