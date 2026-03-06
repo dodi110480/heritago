@@ -6,13 +6,12 @@ import { Individual, Family, TreeData } from './models';
 import { FormsModule } from '@angular/forms';
 import { AppEntityCard } from './ui/app-entity-card';
 import { AppPageHeaderComponent } from './ui/app-page-header';
-import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppListViewComponent } from './ui/app-list-view';
 
 @Component({
     selector: 'app-family-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent, AppListViewComponent],
+    imports: [CommonModule, FormsModule, RouterLink, AppEntityCard, AppPageHeaderComponent, AppListViewComponent],
     templateUrl: './family-list.html'
 })
 export class FamilyList implements OnInit {

@@ -3,13 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService, Tree } from './auth.service';
-import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppPageHeaderComponent } from './ui/app-page-header';
 
 @Component({
     selector: 'app-tree-management',
     standalone: true,
-    imports: [CommonModule, RouterModule, FormsModule, AppPageContainerComponent, AppPageHeaderComponent],
+    imports: [CommonModule, RouterModule, FormsModule, AppPageHeaderComponent],
     templateUrl: './tree-management.html'
 })
 export class TreeManagement implements OnInit {

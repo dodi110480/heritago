@@ -7,13 +7,12 @@ import { PlaceModal } from './place-modal';
 import { PlaceDisplayPipe } from './place-display.pipe';
 import { AppEntityCard } from './ui/app-entity-card';
 import { AppPageHeaderComponent } from './ui/app-page-header';
-import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppListViewComponent } from './ui/app-list-view';
 
 @Component({
     selector: 'app-place-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, PlaceModal, PlaceDisplayPipe, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent, AppListViewComponent],
+    imports: [CommonModule, FormsModule, PlaceModal, PlaceDisplayPipe, AppEntityCard, AppPageHeaderComponent, AppListViewComponent],
     templateUrl: './place-list.html',
     encapsulation: ViewEncapsulation.None
 })

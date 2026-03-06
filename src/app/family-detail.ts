@@ -6,7 +6,6 @@ import { Individual, Family } from './models';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
-import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppAvatarComponent } from './ui/app-avatar';
 
@@ -22,7 +21,6 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
         CommonModule,
         FormsModule,
         RouterLink,
-        AppPageContainerComponent,
         AppPageHeaderComponent,
         AppModalShell,
         FamilyEventCardComponent,

@@ -12,32 +12,51 @@ export default {
             white: '#ffffff',
             black: '#000000',
 
-            // ── CORE TOKENS (Design Guide Rev. 2026) ─────────────────────
+            // ── BRAND: HERITAGE INDIGO & GOLD ────────────────────────────
             brand: {
-                50: '#f2fbff',
-                100: '#def5ff',
-                200: '#b7eaff',
-                300: '#83d8ff',
-                400: '#4bc1ff',
-                500: '#1ea7ff', // Primary Action
-                600: '#0b87e6',
-                700: '#0e6bb8',
-                DEFAULT: '#1ea7ff',
+                50: '#f5f7ff',
+                100: '#ebf0fe',
+                200: '#dce3fd',
+                300: '#c2cdfa',
+                400: '#a3aff5',
+                500: '#6366f1', // Heritage Indigo (Modern Primary)
+                600: '#4f46e5',
+                700: '#4338ca',
+                DEFAULT: '#6366f1',
             },
+
+            // ── CANVAS: SOFT PAPER & MIDNIGHT ────────────────────────────
             canvas: {
-                DEFAULT: '#ffffff', // Light background
-                dark: '#0f172a',    // Dark background
+                DEFAULT: '#fcfcfb', // Soft warm off-white
+                dark: '#020617',    // Ultra-deep Midnight
                 white: '#ffffff',
                 black: '#000000',
             },
+
+            // ── GLASS: CRYSTAL SYSTEM ────────────────────────────────────
+            glass: {
+                bg: 'rgba(255, 255, 255, 0.65)',
+                border: 'rgba(0, 0, 0, 0.06)',
+                'bg-dark': 'rgba(15, 23, 42, 0.60)',
+                'border-dark': 'rgba(255, 255, 255, 0.08)',
+            },
+
+            // ── ACCENTS: GOLD, EMERALD, CRIMSON ──────────────────────────
             'accent-highlight': {
                 300: '#fbbf24',
-                500: '#d97706', // Focus/Selected
+                500: '#d97706', // Heritage Gold (Focus/Selected)
+                DEFAULT: '#d97706',
+            },
+            'accent-success': {
+                400: '#34d399',
+                500: '#10b981', // Nature Emerald
             },
             'accent-danger': {
                 400: '#fb7185',
-                500: '#f43f5e', // Errors/Delete
+                500: '#f43f5e', // Rose Crimson
             },
+
+            // ── NEUTRAL: SLATE SCALE ─────────────────────────────────────
             neutral: {
                 50: '#f8fafc',
                 100: '#f1f5f9',
@@ -52,21 +71,16 @@ export default {
                 950: '#020617',
             },
 
-            // Legacy/UI Support (Keep basic tokens for compatibility)
+            // Legacy/UI Support
             ui: {
-                bg: '#f8fafc',
+                bg: '#fcfcfb',
                 border: '#e2e8f0',
                 card: '#ffffff',
             },
 
-            state: {
-                error: '#f87171',
-                errorBg: '#ef4444',
-            },
-
             gender: {
-                male: '#4bc1ff',
-                female: '#f472b6',
+                male: '#1316f1ff',   // Adjusted to Brand
+                female: '#740d42ff',
                 neutral: '#94a3b8',
             },
         },
@@ -87,26 +101,22 @@ export default {
                 '3xl': ['2.25rem', { lineHeight: '1.2' }],
             },
 
-            // ── SHADOWS ──────────────────────────────────────────────────
+            // ── SHADOWS: PREMIUM DEPTH ───────────────────────────────────
             boxShadow: {
-                'card': '0 10px 28px rgba(20,55,95,0.16), inset 0 1px 0 rgba(255,255,255,0.75)',
-                'card-hover': '0 14px 34px rgba(20,55,95,0.22), inset 0 1px 0 rgba(255,255,255,0.90)',
-                'modal': '0 20px 56px rgba(20,55,95,0.22)',
-                'brand-glow': '0 0 20px rgba(30,167,255,0.25)',
-                'brand-sm': '0 4px 15px rgba(30,167,255,0.20)',
-                'danger-glow': '0 0 20px rgba(244,63,94,0.20)',
-                'inner-ui': 'inset 0 1px 0 rgba(255,255,255,0.85)',
+                'card': '0 8px 30px rgba(0,0,0,0.04), 0 4px 10px rgba(0,0,0,0.02)',
+                'card-hover': '0 20px 40px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.04)',
+                'modal': '0 30px 60px rgba(0,0,0,0.12)',
+                'brand-glow': '0 0 20px rgba(99,102,241,0.20)',
+                'brand-sm': '0 4px 15px rgba(99,102,241,0.15)',
+                'danger-glow': '0 0 20px rgba(244,63,94,0.15)',
             },
 
-            // ── BORDER RADIUS ─────────────────────────────────────────────
             borderRadius: {
-                'card': '12px',
-                'modal': '20px',
-                'btn': '8px',
-                '4xl': '2rem',
+                'card': '1.25rem',
+                'modal': '1.5rem',
+                'btn': '0.75rem',
             },
 
-            // ── Z-INDEX ───────────────────────────────────────────────────
             zIndex: {
                 'navbar': '100',
                 'dropdown': '200',
@@ -114,26 +124,17 @@ export default {
                 'toast': '2000',
             },
 
-            // ── ANIMATIONS ────────────────────────────────────────────────
-            backdropBlur: {
-                glass: '16px',
-            },
             animation: {
-                'pulse-photo': 'pulse-photo 4s infinite ease-in-out',
                 'fade-in': 'fadeIn 0.3s ease-out',
-                'slide-up': 'slideUp 0.3s ease-out',
+                'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
             },
             keyframes: {
-                'pulse-photo': {
-                    '0%, 100%': { transform: 'scale(1) translateY(0)', boxShadow: '0 0 0 rgba(30,167,255,0)' },
-                    '50%': { transform: 'scale(1.1) translateY(-5px)', boxShadow: '0 10px 20px rgba(30,167,255,0.2)' },
-                },
                 'fadeIn': {
                     '0%': { opacity: '0' },
                     '100%': { opacity: '1' },
                 },
                 'slideUp': {
-                    '0%': { opacity: '0', transform: 'translateY(12px)' },
+                    '0%': { opacity: '0', transform: 'translateY(16px)' },
                     '100%': { opacity: '1', transform: 'translateY(0)' },
                 },
             },

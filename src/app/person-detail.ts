@@ -11,7 +11,6 @@ import { PersonCreateModal } from './person-create-modal';
 import { CanComponentDeactivate } from './unsaved-changes.guard';
 import { forkJoin, of, switchMap } from 'rxjs';
 
-import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppModalShell } from './ui/app-modal-shell';
 import { PersonExpertBasicsTabComponent } from './person-expert-basics-tab';
@@ -52,7 +51,6 @@ interface TimelineItem {
         CleanDatePipe,
         PlaceModal,
         PersonCreateModal,
-        AppPageContainerComponent,
         AppPageHeaderComponent,
         AppModalShell,
         PersonExpertBasicsTabComponent,

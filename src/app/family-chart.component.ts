@@ -117,21 +117,21 @@ import 'family-chart/styles/family-chart.css';
   styles: [`
 
   .f3 {
-    --female-color: #f472b6;
-    --male-color: #60a5fa;
-    --genderless-color: #94a3b8;
+    --female-color: theme('colors.gender.female');
+    --male-color: theme('colors.gender.male');
+    --genderless-color: theme('colors.gender.neutral');
     --background-color: transparent;
-    --text-color: #1e293b;
-    --fc-primary: #bf953f;
-    --fc-surface: rgba(255, 255, 255, 0.7);
-    --fc-surface-2: rgba(255, 255, 255, 0.85);
-    --fc-border: rgba(255, 255, 255, 0.18);
-    --fc-text-muted: #64748b;
-    --fc-text-soft: #334155;
-    --fc-toolbar-bg: rgba(255, 255, 255, 0.7);
-    --fc-toolbar-border: rgba(255, 255, 255, 0.18);
+    --text-color: theme('colors.neutral.900');
+    --fc-primary: theme('colors.accent-highlight.500');
+    --fc-surface: theme('colors.glass.bg');
+    --fc-surface-2: theme('colors.glass.bg');
+    --fc-border: theme('colors.glass.border');
+    --fc-text-muted: theme('colors.neutral.500');
+    --fc-text-soft: theme('colors.neutral.700');
+    --fc-toolbar-bg: theme('colors.glass.bg');
+    --fc-toolbar-border: theme('colors.glass.border');
     --fc-overlay: rgba(0, 0, 0, 0.4);
-    font-family: 'Roboto', sans-serif;
+    font-family: theme('fontFamily.body');
 }
 
     .f3-literal-wrapper {
@@ -273,8 +273,8 @@ import 'family-chart/styles/family-chart.css';
       color: #fff;
   }
     /* Gender colors from /persons */
-    .f3-html-card.gender-F { border-color: #f472b6; }
-    .f3-html-card.gender-M { border-color: #60a5fa; }
+    .f3-html-card.gender-F { border-color: theme('colors.gender.female'); }
+    .f3-html-card.gender-M { border-color: theme('colors.gender.male'); }
 
     /* Default Avatar Styling */
     .f3 div.card-image-rect[style*="assets/avatars/"],
@@ -286,19 +286,19 @@ import 'family-chart/styles/family-chart.css';
 
     .f3-html-card.gender-M div.card-image-rect[style*="assets/avatars/"],
     .f3-html-card.gender-M div.card-image-circle[style*="assets/avatars/"] {
-        background-color: rgba(59, 130, 246, 0.15) !important;
+        background-color: theme('colors.brand.500 / 15%') !important;
     }
 
     .f3-html-card.gender-F div.card-image-rect[style*="assets/avatars/"],
     .f3-html-card.gender-F div.card-image-circle[style*="assets/avatars/"] {
-        background-color: rgba(236, 72, 153, 0.15) !important;
+        background-color: theme('colors.gender.female / 15%') !important;
     }
 
     .f3-html-card.gender-U div.card-image-rect[style*="assets/avatars/"],
     .f3-html-card.gender-U div.card-image-circle[style*="assets/avatars/"],
     .f3-html-card.gender-X div.card-image-rect[style*="assets/avatars/"],
     .f3-html-card.gender-X div.card-image-circle[style*="assets/avatars/"] {
-        background-color: rgba(148, 163, 184, 0.15) !important;
+        background-color: theme('colors.neutral.500 / 15%') !important;
     }
 
     .f3 * { transition: none !important; }

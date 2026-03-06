@@ -1,10 +1,10 @@
 import { Component, inject, ViewEncapsulation } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from './auth.service';
-import { Router } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { signal, effect } from '@angular/core';
+import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'app-navbar',
@@ -22,12 +22,20 @@ export class Navbar {
     isMobileMenuOpen = signal<boolean>(false);
 
     constructor() {
+        const router = inject(Router);
         // Automatically fetch diagnostics when tree might have changed
         effect(() => {
             const user = this.authService.currentUser();
             if (user) {
                 this.updateDiagnostics();
             }
+        });
+
+        // Close mobile menu on navigation
+        router.events.pipe(
+            filter(event => event instanceof NavigationEnd)
+        ).subscribe(() => {
+            this.isMobileMenuOpen.set(false);
         });
     }
 

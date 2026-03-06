@@ -6,13 +6,12 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from './environment';
 import { RouterLink } from '@angular/router';
-import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppPageHeaderComponent } from './ui/app-page-header';
 
 @Component({
     selector: 'app-gedcom-io',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, AppPageContainerComponent, AppPageHeaderComponent],
+    imports: [CommonModule, FormsModule, RouterLink, AppPageHeaderComponent],
     templateUrl: './gedcom-io.html'
 })
 export class GedcomIo {

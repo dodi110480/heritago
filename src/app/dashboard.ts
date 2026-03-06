@@ -5,7 +5,6 @@ import { AuthService } from './auth.service';
 import { CalendarWidget } from './calendar-widget';
 import { GedcomService } from './gedcom.service';
 import { DashboardFactService } from './dashboard-fact.service';
-import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppStatCardComponent } from './ui/app-stat-card';
 import * as d3 from 'd3';
