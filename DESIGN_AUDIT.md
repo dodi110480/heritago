@@ -44,7 +44,7 @@ Das gesamte Fronend-Projekt wurde erfolgreich auf das neue semantische Design-Sy
 | `dashboard` | 1x | 1x | - | - | 4x | - | - | - | 4x | **10** |
 | `diagnostics` | 1x | 1x | - | - | - | - | 1x | - | - | **3** |
 | `family-chart.component` | - | - | - | - | - | - | 1x | - | - | **1** |
-| `family-detail` | 1x | 1x | 4x | - | - | 2x | 5x | 2x | 3x | **18** |
+| `family-detail` | 1x | 1x | - | - | - | 2x | 5x | 2x | 7x | **18** |
 | `family-event-card` | - | - | - | - | - | - | 3x | 11x | 1x | **15** |
 | `family-list` | 1x | 1x | - | 1x | - | - | - | - | 2x | **5** |
 | `gedcom-io` | 1x | 1x | - | - | - | - | 2x | - | - | **4** |
@@ -56,16 +56,16 @@ Das gesamte Fronend-Projekt wurde erfolgreich auf das neue semantische Design-Sy
 | `media-selector` | - | - | - | - | - | 1x | 1x | - | - | **2** |
 | `person-create-modal` | - | - | - | - | - | 1x | 1x | 3x | 2x | **7** |
 | `person-detail` | 1x | 1x | - | - | - | 4x | 2x | 12x | - | **20** |
-| `person-expert-basics-tab` | - | - | 1x | - | - | 1x | - | 5x | 2x | **9** |
-| `person-expert-relations-tab` | - | - | 1x | - | - | - | 1x | 4x | 1x | **7** |
-| `person-expert-timeline-tab` | - | - | 1x | - | - | - | 2x | 6x | 2x | **11** |
+| `person-expert-basics-tab` | - | - | - | - | - | 1x | - | 5x | 3x | **9** |
+| `person-expert-relations-tab` | - | - | - | - | - | - | 1x | 4x | 2x | **7** |
+| `person-expert-timeline-tab` | - | - | - | - | - | - | 2x | 6x | 3x | **11** |
 | `person-list` | 1x | 1x | - | 1x | - | - | 1x | - | 3x | **7** |
-| `person-tab-associations` | - | - | 1x | - | - | 2x | 1x | 12x | 1x | **17** |
-| `person-tab-citations` | - | - | 1x | - | - | 2x | 1x | 7x | 1x | **12** |
-| `person-tab-dna` | - | - | 1x | - | - | 2x | 1x | 10x | 1x | **15** |
-| `person-tab-media` | - | - | 1x | - | - | 2x | 3x | 4x | 1x | **11** |
-| `person-tab-names` | - | - | 1x | - | - | 2x | 1x | 6x | 1x | **11** |
-| `person-tab-notes` | - | - | 1x | - | - | 2x | 1x | 8x | 1x | **13** |
+| `person-tab-associations` | - | - | - | - | - | 2x | 1x | 12x | 2x | **17** |
+| `person-tab-citations` | - | - | - | - | - | 2x | 1x | 7x | 2x | **12** |
+| `person-tab-dna` | - | - | - | - | - | 2x | 1x | 10x | 2x | **15** |
+| `person-tab-media` | - | - | - | - | - | 2x | 3x | 4x | 2x | **11** |
+| `person-tab-names` | - | - | - | - | - | 2x | 1x | 6x | 2x | **11** |
+| `person-tab-notes` | - | - | - | - | - | 2x | 1x | 8x | 2x | **13** |
 | `place-list` | 1x | 1x | - | 1x | - | - | 1x | - | 1x | **5** |
 | `place-modal` | - | - | - | - | - | 1x | 1x | 17x | 8x | **27** |
 | `repository-list` | - | - | - | 1x | - | 1x | 1x | 5x | 1x | **9** |
@@ -110,7 +110,8 @@ Hier ist eine Übersicht über die dedizierten, wiederverwendbaren Custom-Compon
 
 ### Cards & Container
 - **`glass-card` (CSS-Klasse)**: Das zentrale Design-Element für strukturierte Flächen. Erzeugt einen Hintergrund mit Glassmorphism-Effekt und leichten Rahmen (`border-ui-border`). Diese Utility-Klasse wird im gesamten Projekt genutzt, um Bereiche einheitlich im Karteikarten-Gefühl erscheinen zu lassen.
-- **`app-card`**: Eine generische Komponente, die direkt einen `glass-card`-Hintergrund samt Schlagschatten implementiert. Verfügt typischerweise über einen sichtbaren (und abgetrennten) Header-Bereich (`[title]`) und ein großzügiges Standard-Padding für den Content.
+- **`app-card` (@deprecated)**: Ursprüngliche Wrapper-Komponente. Wurde im März 2026 vollständig durch natives HTML mit der Klasse `.glass-card` ersetzt, um mehr Flexibilität in den Headern zu ermöglichen.
+- **`app-section-card` (@deprecated)**: Ähnlich wie `app-card`, ebenfalls entfernt und durch `.glass-card` ersetzt.
 
 ### Listen & Datenanzeige
 - **`app-entity-card`**: Die wichtigste Komponente zur Auflistung einzelner Datensätze (Person, Familie, Ort etc.). Sie liefert immer einen Titel, optional einen Avatar (oder Icon) auf der linken Seite sowie Untertitel (Subtitle und Meta). Die Entitäts-Karte wird hervorgehoben durch einen farbigen linken Rand (`badgeColor`), der semantische Stati oder Typen (`primary`, `highlight`, `success`, `danger`, `neutral`) visualisieren kann. Typischerweise leitet ein Klick via `routerLink` zum Detail-Datensatz weiter.
