@@ -96,40 +96,38 @@
     emptySubtitle="Lade dein erstes Foto oder Dokument hoch.">
 
     <!-- Media Grid -->
-    <ng-container *ngFor="let item of filteredItems()">
-      <app-entity-card [title]="item.title || item.filePath || 'Unbenannt'"
-        [subtitle]="item.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'" [meta]="formatSize(item.fileSize)"
-        [avatarUrl]="isImage(item) ? item.previewUrl : undefined"
-        [icon]="!isImage(item) ? (isPdf(item) ? '📄' : '📎') : undefined"
-        [badgeText]="item.mediaType === 'PHOTO' ? 'Foto' : (item.mediaType === 'DOCUMENT' ? 'Dokument' : 'Medium')"
-        [badgeColor]="item.mediaType === 'PHOTO' ? 'blue' : (item.mediaType === 'DOCUMENT' ? 'success' : 'neutral')"
-        [class.ring-2]="selected()?.id === item.id" [class.ring-brand-500]="selected()?.id === item.id"
-        [class.rounded-3xl]="selected()?.id === item.id" (click)="openDetails(item)">
+    <app-entity-card *ngFor="let item of filteredItems()" [title]="item.title || item.filePath || 'Unbenannt'"
+      [subtitle]="item.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'" [meta]="formatSize(item.fileSize)"
+      [avatarUrl]="isImage(item) ? item.previewUrl : undefined"
+      [icon]="!isImage(item) ? (isPdf(item) ? '📄' : '📎') : undefined"
+      [badgeText]="item.mediaType === 'PHOTO' ? 'Foto' : (item.mediaType === 'DOCUMENT' ? 'Dokument' : 'Medium')"
+      [badgeColor]="item.mediaType === 'PHOTO' ? 'blue' : (item.mediaType === 'DOCUMENT' ? 'success' : 'neutral')"
+      [class.ring-2]="selected()?.id === item.id" [class.ring-brand-500]="selected()?.id === item.id"
+      [class.rounded-3xl]="selected()?.id === item.id" (onClick)="openDetails(item)">
 
-        <div actions class="flex flex-col items-end gap-1.5">
-          <span *ngIf="item.links?.length; else noLinksSpan"
-            class="text-[10px] px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
-            {{ item.links.length }} Link{{ item.links.length !== 1 ? 's' : '' }}
+      <div actions class="flex flex-col items-end gap-1.5">
+        <span *ngIf="item.links?.length; else noLinksSpan"
+          class="text-[10px] px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
+          {{ item.links.length }} Link{{ item.links.length !== 1 ? 's' : '' }}
+        </span>
+        <ng-template #noLinksSpan>
+          <span
+            class="text-[9px] px-2 py-0.5 rounded bg-accent-danger-500/10 text-accent-danger-400 font-black border border-accent-danger-500/20 whitespace-nowrap uppercase">
+            Unlinked
           </span>
-          <ng-template #noLinksSpan>
-            <span
-              class="text-[9px] px-2 py-0.5 rounded bg-accent-danger-500/10 text-accent-danger-400 font-black border border-accent-danger-500/20 whitespace-nowrap uppercase">
-              Unlinked
-            </span>
-          </ng-template>
+        </ng-template>
 
-          <span *ngIf="item.orphanFile"
-            class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500/20 text-accent-danger-400 font-bold whitespace-nowrap uppercase">
-            Orphan
-          </span>
+        <span *ngIf="item.orphanFile"
+          class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500/20 text-accent-danger-400 font-bold whitespace-nowrap uppercase">
+          Orphan
+        </span>
 
-          <span *ngIf="item.fileMissing"
-            class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500 text-canvas-white font-black whitespace-nowrap uppercase shadow-sm">
-            Datei fehlt
-          </span>
-        </div>
-      </app-entity-card>
-    </ng-container>
+        <span *ngIf="item.fileMissing"
+          class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500 text-canvas-white font-black whitespace-nowrap uppercase shadow-sm">
+          Datei fehlt
+        </span>
+      </div>
+    </app-entity-card>
 
   </app-list-view>
 </app-page-container>

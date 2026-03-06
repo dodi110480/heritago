@@ -35,19 +35,18 @@
         emptyTitle="Keine Familien gefunden"
         emptySubtitle="Probiere es mit einem anderen Suchbegriff.">
 
-        <ng-container *ngFor="let fam of filteredFamilies()">
-            <app-entity-card [title]="getPersonName(fam.husband) + ' & ' + getPersonName(fam.wife)"
-                [subtitle]="getFamilyStatusIcon(fam) + ' ' + (getMarriageInfo(fam) || 'Keine Daten')"
-                [meta]="getMarriageSubtypeLabels(fam).join(', ')" [avatarUrl]="getFamilyImage(fam)"
-                badgeText="Familie" badgeColor="highlight" [routerLink]="['/family', fam.id]">
+        <app-entity-card *ngFor="let fam of filteredFamilies()"
+            [title]="getPersonName(fam.husband) + ' & ' + getPersonName(fam.wife)"
+            [subtitle]="getFamilyStatusIcon(fam) + ' ' + (getMarriageInfo(fam) || 'Keine Daten')"
+            [meta]="getMarriageSubtypeLabels(fam).join(', ')" [avatarUrl]="getFamilyImage(fam)"
+            badgeText="Familie" badgeColor="highlight" [routerLink]="['/family', fam.id]">
 
-                <div actions *ngIf="fam.children?.length"
-                    class="text-xs px-2.5 py-1 rounded bg-brand-100/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap"
-                    [title]="getChildrenTooltip(fam)">
-                    {{ fam.children.length }} Kinder
-                </div>
-            </app-entity-card>
-        </ng-container>
+            <div actions *ngIf="fam.children?.length"
+                class="text-xs px-2.5 py-1 rounded bg-brand-100/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap"
+                [title]="getChildrenTooltip(fam)">
+                {{ fam.children.length }} Kinder
+            </div>
+        </app-entity-card>
 
     </app-list-view>
 </app-page-container>

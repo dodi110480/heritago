@@ -67,28 +67,26 @@
         emptyTitle="Keine Personen gefunden"
         emptySubtitle="Probiere es mit einem anderen Suchbegriff oder lege eine neue Person an.">
         
-        <ng-container *ngFor="let p of filteredIndividuals()">
-            <app-entity-card [title]="p.name" [subtitle]="getLifespan(p) | cleanDate"
-                [avatarUrl]="getProfileImage(p)" [isFocused]="p.id === focusedPersonId()"
-                [routerLink]="['/person', p.id]" badgeText="Person" badgeColor="primary" (click)="rememberFocus(p.id)">
+        <app-entity-card *ngFor="let p of filteredIndividuals()" [title]="p.name" [subtitle]="getLifespan(p) | cleanDate"
+            [avatarUrl]="getProfileImage(p)" [isFocused]="p.id === focusedPersonId()"
+            [routerLink]="['/person', p.id]" badgeText="Person" badgeColor="primary" (onClick)="rememberFocus(p.id)">
 
-                <div badges class="flex flex-wrap gap-2">
-                    <span class="badge badge-neutral" [ngClass]="completionColorClass(completionFor(p).score)"
-                        [attr.title]="completionTooltip(p)">
-                        <span class="w-1.5 h-1.5 rounded-full" [ngClass]="completionDotClass(completionFor(p).score)"></span>
-                        {{ completionFor(p).score }}%
-                    </span>
-                </div>
+            <div badges class="flex flex-wrap gap-2">
+                <span class="badge badge-neutral" [ngClass]="completionColorClass(completionFor(p).score)"
+                    [attr.title]="completionTooltip(p)">
+                    <span class="w-1.5 h-1.5 rounded-full" [ngClass]="completionDotClass(completionFor(p).score)"></span>
+                    {{ completionFor(p).score }}%
+                </span>
+            </div>
 
-                <div footer
-                    class="flex items-center justify-between text-[10px] text-neutral-950 uppercase tracking-widest font-bold">
-                    <span>{{ p.id }}</span>
-                    <span *ngIf="p.gender" class="opacity-50 text-xs">
-                        {{ p.gender === 'M' ? '♂' : (p.gender === 'F' ? '♀' : '⚧') }}
-                    </span>
-                </div>
-            </app-entity-card>
-        </ng-container>
+            <div footer
+                class="flex items-center justify-between text-[10px] text-neutral-950 uppercase tracking-widest font-bold">
+                <span>{{ p.id }}</span>
+                <span *ngIf="p.gender" class="opacity-50 text-xs">
+                    {{ p.gender === 'M' ? '♂' : (p.gender === 'F' ? '♀' : '⚧') }}
+                </span>
+            </div>
+        </app-entity-card>
     </app-list-view>
 </app-page-container>
 

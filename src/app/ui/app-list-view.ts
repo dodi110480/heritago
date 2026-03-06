@@ -24,8 +24,8 @@ import { CommonModule } from '@angular/common';
       </div>
 
       <!-- Content Grid -->
-      <div *ngIf="!isLoading && !isEmpty" 
-           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div [style.display]="(isLoading || isEmpty) ? 'none' : ''" 
+           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         <ng-content></ng-content>
       </div>
     </div>
