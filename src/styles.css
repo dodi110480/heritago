@@ -60,7 +60,12 @@
     input,
     select,
     [role="button"] {
-        @apply transition-all duration-200 ease-in-out;
+        @apply transition-all duration-[180ms] ease-out min-h-[44px];
+    }
+
+    /* Focus visible standard */
+    :focus-visible {
+        @apply outline-none ring-2 ring-brand-500 ring-offset-2;
     }
 
     .leaflet-container {
@@ -106,15 +111,15 @@
     }
 
     .glass-card {
-        @apply bg-ui-card/95 backdrop-blur-xl border border-ui-border rounded-xl p-6 transition-all duration-300 ease-in-out;
-        @apply shadow-card;
+        @apply bg-canvas/70 backdrop-blur-[14px] border border-white/18 rounded-xl p-6 md:p-8 transition-all duration-[180ms] ease-out shadow-sm;
+    }
+
+    .dark .glass-card {
+        @apply bg-canvas-dark/75 border-black/14;
     }
 
     .glass-card:hover {
-        @apply -translate-y-1 border-ui-borderStrong;
-        @apply shadow-card-hover;
-        @apply bg-ui-cardHover;
-        /* Important to keep this explicit override! */
+        @apply scale-[1.02] brightness-105 border-neutral-400/30 shadow-md;
     }
 
     .page-header {
@@ -138,19 +143,19 @@
     }
 
     .btn-primary {
-        @apply w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-canvas-white rounded-btn font-semibold shadow-brand-glow hover-lift border border-brand-400/20 flex items-center justify-center gap-2;
+        @apply px-6 py-2.5 bg-brand-500 hover:brightness-105 active:scale-95 text-white rounded-btn font-semibold shadow-brand-glow flex items-center justify-center gap-2 transition-all duration-[180ms] ease-out;
     }
 
     .btn-secondary {
-        @apply w-full md:w-auto px-6 py-2.5 bg-ui-bgSoft/20 hover:bg-ui-bgSoft/30 text-neutral-900 rounded-btn font-medium shadow-md hover-lift border border-ui-border hover:border-ui-borderStrong flex items-center justify-center gap-2;
+        @apply px-6 py-2.5 bg-neutral-100 hover:bg-neutral-200 active:scale-95 text-neutral-900 rounded-btn font-medium shadow-sm border border-neutral-200 flex items-center justify-center gap-2 transition-all duration-[180ms] ease-out;
     }
 
     .btn-ghost {
-        @apply w-full md:w-auto px-4 py-2 bg-transparent hover:bg-brand-500/10 text-neutral-700 hover:text-neutral-900 rounded-btn font-semibold flex items-center justify-center gap-2;
+        @apply px-4 py-2 bg-transparent hover:bg-brand-500/10 active:scale-95 text-neutral-700 hover:text-neutral-900 rounded-btn font-semibold flex items-center justify-center gap-2 transition-all duration-[180ms] ease-out;
     }
 
     .btn-danger {
-        @apply w-full md:w-auto px-6 py-2.5 bg-gradient-to-r from-accent-danger-600 to-accent-danger-500 hover:from-accent-danger-500 hover:to-accent-danger-400 text-canvas-white rounded-btn font-semibold shadow-danger-glow hover-lift border border-accent-danger-400/20 flex items-center justify-center gap-2;
+        @apply px-6 py-2.5 bg-accent-danger-500 hover:brightness-105 active:scale-95 text-white rounded-btn font-semibold shadow-danger-glow flex items-center justify-center gap-2 transition-all duration-[180ms] ease-out;
     }
 
     .search-wrapper {
@@ -183,52 +188,44 @@
     }
 
     .form-label {
-        @apply block text-meta font-bold text-neutral-950 uppercase tracking-[0.25em] mb-2 px-1;
+        @apply block text-xs font-bold text-neutral-500 uppercase tracking-widest mb-2 px-1;
     }
 
     .form-input {
-        @apply w-full bg-ui-bgSoft/5 border border-ui-border rounded-xl px-5 py-3.5 text-neutral-900 placeholder-neutral-950 focus:outline-none focus:border-ui-borderStrong focus:ring-2 focus:ring-brand-500/30 transition-all duration-300;
+        @apply w-full bg-canvas/5 border border-neutral-300 rounded-xl px-5 py-3.5 text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition-all duration-[180ms] ease-out;
     }
 
     .form-select {
-        @apply w-full bg-ui-bgSoft/5 border border-ui-border rounded-xl px-4 py-2.5 text-neutral-900 focus:outline-none focus:border-ui-borderStrong focus:ring-2 focus:ring-brand-500/30 transition-all duration-300;
-    }
-
-    .form-input-sm {
-        @apply px-3 py-2 text-sm;
-    }
-
-    .form-input-xs {
-        @apply px-2 py-1.5 text-xs;
+        @apply w-full bg-canvas/5 border border-neutral-300 rounded-xl px-4 py-2.5 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30 transition-all duration-[180ms] ease-out;
     }
 
     .badge {
-        @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-meta font-bold uppercase tracking-wider border transition-all;
+        @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all duration-[180ms];
     }
 
-    /* Badge variants – named by semantic role, not by color */
+    /* Badge variants – Rev 2026 */
     .badge-primary {
-        @apply bg-brand-500/10 text-brand-400 border-brand-500/20;
+        @apply bg-brand-500/10 text-brand-600 border-brand-500/20;
     }
 
     .badge-highlight {
-        @apply bg-accent-highlight-500/10 text-accent-highlight-400 border-accent-highlight-500/20;
+        @apply bg-accent-highlight-500/10 text-accent-highlight-600 border-accent-highlight-500/20;
     }
 
     .badge-success {
-        @apply bg-accent-success-500/10 text-accent-success-400 border-accent-success-500/20;
+        @apply bg-accent-success-500/10 text-accent-success-600 border-accent-success-500/20;
     }
 
     .badge-danger {
-        @apply bg-accent-danger-500/10 text-accent-danger-400 border-accent-danger-500/20;
+        @apply bg-accent-danger-500/10 text-accent-danger-600 border-accent-danger-500/20;
     }
 
     .badge-neutral {
-        @apply bg-ui-bgSoft/20 text-neutral-700 border-ui-border;
+        @apply bg-neutral-100 text-neutral-600 border-neutral-200;
     }
 
     .form-error {
-        @apply bg-accent-danger-500/10 border border-accent-danger-500/20 text-accent-danger-400 p-4 rounded-card text-sm text-center mb-6;
+        @apply bg-accent-danger-500/10 border border-accent-danger-500/20 text-accent-danger-500 p-4 rounded-xl text-sm text-center mb-6;
     }
 
     .modal-glow-brand {

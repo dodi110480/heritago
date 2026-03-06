@@ -1,136 +1,133 @@
-<app-page-container [wide]="true">
-  <app-page-header title="Medien-Galerie" description="Zentral verwalten, bearbeiten und verknüpfen">
-
-    <div actions class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-      <!-- Suche -->
-      <div class="search-wrapper">
-        <div class="search-icon-wrapper">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-        </div>
-        <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-          (keyup.enter)="loadMedia()" placeholder="Name, ID..." class="search-input">
+<app-page-header title="Medien-Galerie" description="Zentral verwalten, bearbeiten und verknüpfen">
+  <div actions class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+    <!-- Suche -->
+    <div class="search-wrapper">
+      <div class="search-icon-wrapper">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
       </div>
+      <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+        (keyup.enter)="loadMedia()" placeholder="Name, ID..." class="search-input">
+    </div>
 
-      <div class="flex items-center gap-2 w-full md:w-auto">
-        <button class="btn-secondary flex-1 md:flex-none !py-2.5" (click)="loadMedia()">Aktualisieren</button>
-        <button class="btn-primary flex-1 md:flex-none !py-2.5" (click)="showAddModal.set(true)">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          <span>Medium</span>
-        </button>
-      </div>
+    <div class="flex items-center gap-2 w-full md:w-auto">
+      <button class="btn-secondary flex-1 md:flex-none !py-2.5" (click)="loadMedia()">Aktualisieren</button>
+      <button class="btn-primary flex-1 md:flex-none !py-2.5" (click)="showAddModal.set(true)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>Medium</span>
+      </button>
     </div>
-  </app-page-header>
-
-  <!-- Statistics Row -->
-  <section
-    class="glass-card mb-8 !py-4 flex flex-wrap items-center justify-around gap-6 border-brand-500/10 bg-ui-card/40 backdrop-blur-md">
-    <div class="flex flex-col items-center gap-1">
-      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Gesamt</span>
-      <strong class="text-2xl text-canvas-white font-black tracking-tight">{{ stats().total }}</strong>
-    </div>
-    <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
-    <div class="flex flex-col items-center gap-1">
-      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Fotos</span>
-      <strong class="text-2xl text-brand-400 font-black tracking-tight">{{ stats().fotos }}</strong>
-    </div>
-    <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
-    <div class="flex flex-col items-center gap-1">
-      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Dokumente</span>
-      <strong class="text-2xl text-accent-success-400 font-black tracking-tight">{{ stats().docs }}</strong>
-    </div>
-    <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
-    <div class="flex flex-col items-center gap-1">
-      <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Unverknüpft</span>
-      <strong class="text-2xl text-accent-danger-400 font-black tracking-tight">{{ stats().unlinked }}</strong>
-    </div>
-  </section>
-
-  <!-- Tabs Integration -->
-  <div class="flex gap-8 mb-6 border-b border-canvas-white/5 overflow-x-auto no-scrollbar">
-    <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
-      [class.text-brand-400]="filterType() === 'ALLE'" [class.text-neutral-500]="filterType() !== 'ALLE'"
-      (click)="filterType.set('ALLE'); loadMedia()">
-      Alle
-      <div *ngIf="filterType() === 'ALLE'" class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow">
-      </div>
-    </button>
-    <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
-      [class.text-brand-400]="filterType() === 'FOTOS'" [class.text-neutral-500]="filterType() !== 'FOTOS'"
-      (click)="filterType.set('FOTOS'); loadMedia()">
-      Fotos
-      <div *ngIf="filterType() === 'FOTOS'"
-        class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow">
-      </div>
-    </button>
-    <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
-      [class.text-brand-400]="filterType() === 'DOKUMENTE'" [class.text-neutral-500]="filterType() !== 'DOKUMENTE'"
-      (click)="filterType.set('DOKUMENTE'); loadMedia()">
-      Dokumente
-      <div *ngIf="filterType() === 'DOKUMENTE'"
-        class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
-    </button>
-    <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
-      [class.text-brand-400]="filterType() === 'UNLINKED'" [class.text-neutral-500]="filterType() !== 'UNLINKED'"
-      (click)="filterType.set('UNLINKED'); loadMedia()">
-      Ohne Zuordnung
-      <div *ngIf="filterType() === 'UNLINKED'"
-        class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
-    </button>
   </div>
+</app-page-header>
 
-  <!-- CONTENT -->
-  <app-list-view
-    [isLoading]="loading()"
-    [isEmpty]="filteredItems().length === 0"
-    loadingText="Lade Medien..."
-    emptyIcon="🖼️"
-    emptyTitle="Keine Medien gefunden"
-    emptySubtitle="Lade dein erstes Foto oder Dokument hoch.">
+<!-- Statistics Row -->
+<section
+  class="glass-card mb-8 !py-4 flex flex-wrap items-center justify-around gap-6 border-brand-500/10 bg-ui-card/40 backdrop-blur-md">
+  <div class="flex flex-col items-center gap-1">
+    <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Gesamt</span>
+    <strong class="text-2xl text-canvas-white font-black tracking-tight">{{ stats().total }}</strong>
+  </div>
+  <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
+  <div class="flex flex-col items-center gap-1">
+    <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Fotos</span>
+    <strong class="text-2xl text-brand-400 font-black tracking-tight">{{ stats().fotos }}</strong>
+  </div>
+  <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
+  <div class="flex flex-col items-center gap-1">
+    <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Dokumente</span>
+    <strong class="text-2xl text-accent-success-400 font-black tracking-tight">{{ stats().docs }}</strong>
+  </div>
+  <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
+  <div class="flex flex-col items-center gap-1">
+    <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Unverknüpft</span>
+    <strong class="text-2xl text-accent-danger-400 font-black tracking-tight">{{ stats().unlinked }}</strong>
+  </div>
+</section>
 
-    <!-- Media Grid -->
-    <app-entity-card *ngFor="let item of filteredItems()" [title]="item.title || item.filePath || 'Unbenannt'"
-      [subtitle]="item.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'" [meta]="formatSize(item.fileSize)"
-      [avatarUrl]="isImage(item) ? item.previewUrl : undefined"
-      [icon]="!isImage(item) ? (isPdf(item) ? '📄' : '📎') : undefined"
-      [badgeText]="item.mediaType === 'PHOTO' ? 'Foto' : (item.mediaType === 'DOCUMENT' ? 'Dokument' : 'Medium')"
-      [badgeColor]="item.mediaType === 'PHOTO' ? 'blue' : (item.mediaType === 'DOCUMENT' ? 'success' : 'neutral')"
-      [class.ring-2]="selected()?.id === item.id" [class.ring-brand-500]="selected()?.id === item.id"
-      [class.rounded-3xl]="selected()?.id === item.id" (onClick)="openDetails(item)">
+<!-- Tabs Integration -->
+<div class="flex gap-8 mb-6 border-b border-canvas-white/5 overflow-x-auto no-scrollbar">
+  <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
+    [class.text-brand-400]="filterType() === 'ALLE'" [class.text-neutral-500]="filterType() !== 'ALLE'"
+    (click)="filterType.set('ALLE'); loadMedia()">
+    Alle
+    <div *ngIf="filterType() === 'ALLE'" class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow">
+    </div>
+  </button>
+  <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
+    [class.text-brand-400]="filterType() === 'FOTOS'" [class.text-neutral-500]="filterType() !== 'FOTOS'"
+    (click)="filterType.set('FOTOS'); loadMedia()">
+    Fotos
+    <div *ngIf="filterType() === 'FOTOS'"
+      class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow">
+    </div>
+  </button>
+  <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
+    [class.text-brand-400]="filterType() === 'DOKUMENTE'" [class.text-neutral-500]="filterType() !== 'DOKUMENTE'"
+    (click)="filterType.set('DOKUMENTE'); loadMedia()">
+    Dokumente
+    <div *ngIf="filterType() === 'DOKUMENTE'"
+      class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
+  </button>
+  <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
+    [class.text-brand-400]="filterType() === 'UNLINKED'" [class.text-neutral-500]="filterType() !== 'UNLINKED'"
+    (click)="filterType.set('UNLINKED'); loadMedia()">
+    Ohne Zuordnung
+    <div *ngIf="filterType() === 'UNLINKED'"
+      class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
+  </button>
+</div>
 
-      <div actions class="flex flex-col items-end gap-1.5">
-        <span *ngIf="item.links?.length; else noLinksSpan"
-          class="text-[10px] px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
-          {{ item.links.length }} Link{{ item.links.length !== 1 ? 's' : '' }}
+<!-- CONTENT -->
+<app-list-view
+  [isLoading]="loading()"
+  [isEmpty]="filteredItems().length === 0"
+  loadingText="Lade Medien..."
+  emptyIcon="🖼️"
+  emptyTitle="Keine Medien gefunden"
+  emptySubtitle="Lade dein erstes Foto oder Dokument hoch.">
+
+  <!-- Media Grid -->
+  <app-entity-card *ngFor="let item of filteredItems()" [title]="item.title || item.filePath || 'Unbenannt'"
+    [subtitle]="item.mimeType?.split('/')[1]?.toUpperCase() || 'FILE'" [meta]="formatSize(item.fileSize)"
+    [avatarUrl]="isImage(item) ? item.previewUrl : undefined"
+    [icon]="!isImage(item) ? (isPdf(item) ? '📄' : '📎') : undefined"
+    [badgeText]="item.mediaType === 'PHOTO' ? 'Foto' : (item.mediaType === 'DOCUMENT' ? 'Dokument' : 'Medium')"
+    [badgeColor]="item.mediaType === 'PHOTO' ? 'blue' : (item.mediaType === 'DOCUMENT' ? 'success' : 'neutral')"
+    [class.ring-2]="selected()?.id === item.id" [class.ring-brand-500]="selected()?.id === item.id"
+    [class.rounded-3xl]="selected()?.id === item.id" (onClick)="openDetails(item)">
+
+    <div actions class="flex flex-col items-end gap-1.5">
+      <span *ngIf="item.links?.length; else noLinksSpan"
+        class="text-[10px] px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
+        {{ item.links.length }} Link{{ item.links.length !== 1 ? 's' : '' }}
+      </span>
+      <ng-template #noLinksSpan>
+        <span
+          class="text-[9px] px-2 py-0.5 rounded bg-accent-danger-500/10 text-accent-danger-400 font-black border border-accent-danger-500/20 whitespace-nowrap uppercase">
+          Unlinked
         </span>
-        <ng-template #noLinksSpan>
-          <span
-            class="text-[9px] px-2 py-0.5 rounded bg-accent-danger-500/10 text-accent-danger-400 font-black border border-accent-danger-500/20 whitespace-nowrap uppercase">
-            Unlinked
-          </span>
-        </ng-template>
+      </ng-template>
 
-        <span *ngIf="item.orphanFile"
-          class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500/20 text-accent-danger-400 font-bold whitespace-nowrap uppercase">
-          Orphan
-        </span>
+      <span *ngIf="item.orphanFile"
+        class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500/20 text-accent-danger-400 font-bold whitespace-nowrap uppercase">
+        Orphan
+      </span>
 
-        <span *ngIf="item.fileMissing"
-          class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500 text-canvas-white font-black whitespace-nowrap uppercase shadow-sm">
-          Datei fehlt
-        </span>
-      </div>
-    </app-entity-card>
+      <span *ngIf="item.fileMissing"
+        class="text-[9px] px-1.5 py-0.5 rounded bg-accent-danger-500 text-canvas-white font-black whitespace-nowrap uppercase shadow-sm">
+        Datei fehlt
+      </span>
+    </div>
+  </app-entity-card>
 
-  </app-list-view>
-</app-page-container>
+</app-list-view>
 
 <!-- Details Modal -->
 <app-modal-shell [visible]="selected() !== null" [title]="selected()?.title || 'Medium Details'" icon="🖼️" size="xl"
@@ -259,11 +256,18 @@
         <div class="space-y-2.5 max-h-[250px] overflow-y-auto custom-scrollbar pr-1">
           <div *ngFor="let link of selected()?.links"
             class="flex items-center justify-between bg-ui-bgSoft/10 !p-3.5 !rounded-xl border border-ui-border/10 group">
-            <div class="flex flex-col min-w-0">
-              <span class="text-xs font-black text-brand-400 uppercase tracking-tighter opacity-70 mb-0.5">{{
-                link.person ? 'Person' : (link.familyId ? 'Familie' : 'Quelle') }}</span>
-              <span class="text-sm text-neutral-800 font-bold truncate" [title]="linkLabel(link)">{{ linkLabel(link)
-                }}</span>
+            <div class="flex items-center gap-3 min-w-0">
+              <app-avatar *ngIf="link.person"
+                [imageUrl]="getLinkAvatarData(link).url" 
+                [gender]="getLinkAvatarData(link).gender" 
+                size="xs"
+                class="shrink-0"
+              ></app-avatar>
+              <div class="flex flex-col min-w-0">
+                <span class="text-xs font-black text-brand-400 uppercase tracking-tighter opacity-70 mb-0.5">{{
+                  link.person ? 'Person' : (link.familyId ? 'Familie' : 'Quelle') }}</span>
+                <span class="text-sm text-neutral-800 font-bold truncate" [title]="linkLabel(link)">{{ linkLabel(link) }}</span>
+              </div>
             </div>
             <button
               class="text-[10px] font-black uppercase text-accent-danger-500 hover:scale-105 transition-all opacity-0 group-hover:opacity-100"

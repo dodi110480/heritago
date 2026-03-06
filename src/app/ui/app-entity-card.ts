@@ -1,13 +1,14 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { AppAvatarComponent } from './app-avatar';
 
 export type EntityBadgeColor = 'primary' | 'highlight' | 'success' | 'danger' | 'neutral';
 
 @Component({
     selector: 'app-entity-card',
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, AppAvatarComponent],
     template: `
         <div class="glass-card !p-3 flex items-start gap-3 hover:bg-ui-cardHover transition-all cursor-pointer group border-l-[3px]"
              [ngClass]="getBorderColorClass()"
@@ -16,14 +17,23 @@ export type EntityBadgeColor = 'primary' | 'highlight' | 'success' | 'danger' | 
              (click)="onClick.emit($event)">
              
             <!-- Avatar / Icon Area -->
-            <div class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center overflow-hidden border border-ui-border"
-                 [ngClass]="getIconBgClass()">
+            <div class="shrink-0">
+                <app-avatar 
+                    *ngIf="avatarUrl || !icon"
+                    [imageUrl]="avatarUrl" 
+                    [gender]="gender" 
+                    size="sm"
+                    [circular]="false"
+                    class="group-hover:scale-105 transition-transform duration-500"
+                ></app-avatar>
                 
-                <img *ngIf="avatarUrl" [src]="avatarUrl" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="Avatar">
-                
-                <span *ngIf="!avatarUrl && icon" class="text-xl group-hover:scale-110 transition-transform duration-300">
-                    {{ icon }}
-                </span>
+                <div *ngIf="!avatarUrl && icon" 
+                     class="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center overflow-hidden border border-ui-border"
+                     [ngClass]="getIconBgClass()">
+                    <span class="text-xl group-hover:scale-110 transition-transform duration-300">
+                        {{ icon }}
+                    </span>
+                </div>
             </div>
 
             <!-- Content Area -->
@@ -60,7 +70,8 @@ export class AppEntityCard {
     @Input() subtitle?: string;
     @Input() meta?: string;
     @Input() avatarUrl?: string | null;
-    @Input() icon: string = '📄';
+    @Input() gender?: 'M' | 'F' | 'X' | 'U' | string;
+    @Input() icon?: string;
     @Input() badgeText?: string;
     @Input() badgeColor: EntityBadgeColor = 'neutral';
     @Input() routerLink?: any[] | string;

@@ -38,13 +38,13 @@ Das gesamte Fronend-Projekt wurde erfolgreich auf das neue semantische Design-Sy
 
 ## Komponenten-Einsatz pro Seite (Inkl. Häufigkeit)
 
-| Seite/Feature | `app-page-container` | `app-page-header` | `app-card` | `app-entity-card` | `app-stat-card` | `app-modal-shell` | `btn-*` | `form-input` | `glass-card` | Gesamt |
-|---|---|---|---|---|---|---|---|---|---|---|
+| Seite/Feature | `app-page-header` | `app-section-header` | `app-empty-state` | `app-entity-card` | `app-modal-shell` | `btn-*` | `form-input` | `glass-card` | Gesamt |
+|---|---|---|---|---|---|---|---|---|---|
 | `activity-feed` | - | - | - | - | - | - | - | - | 3x | **3** |
 | `dashboard` | 1x | 1x | - | - | 4x | - | - | - | 4x | **10** |
 | `diagnostics` | 1x | 1x | - | - | - | - | 1x | - | - | **3** |
 | `family-chart.component` | - | - | - | - | - | - | 1x | - | - | **1** |
-| `family-detail` | 1x | 1x | - | - | - | 2x | 5x | 2x | 7x | **18** |
+| `family-detail` | 1x | 4x | 3x | - | 2x | 5x | 2x | 7x | **24** |
 | `family-event-card` | - | - | - | - | - | - | 3x | 11x | 1x | **15** |
 | `family-list` | 1x | 1x | - | 1x | - | - | - | - | 2x | **5** |
 | `gedcom-io` | 1x | 1x | - | - | - | - | 2x | - | - | **4** |
@@ -56,16 +56,16 @@ Das gesamte Fronend-Projekt wurde erfolgreich auf das neue semantische Design-Sy
 | `media-selector` | - | - | - | - | - | 1x | 1x | - | - | **2** |
 | `person-create-modal` | - | - | - | - | - | 1x | 1x | 3x | 2x | **7** |
 | `person-detail` | 1x | 1x | - | - | - | 4x | 2x | 12x | - | **20** |
-| `person-expert-basics-tab` | - | - | - | - | - | 1x | - | 5x | 3x | **9** |
-| `person-expert-relations-tab` | - | - | - | - | - | - | 1x | 4x | 2x | **7** |
-| `person-expert-timeline-tab` | - | - | - | - | - | - | 2x | 6x | 3x | **11** |
+| `person-expert-basics-tab` | - | 1x | - | - | 1x | - | 5x | 2x | **9** |
+| `person-expert-relations-tab` | - | 1x | 1x | - | - | 1x | 4x | 1x | **8** |
+| `person-expert-timeline-tab` | - | 1x | 1x | - | - | 2x | 6x | 1x | **11** |
 | `person-list` | 1x | 1x | - | 1x | - | - | 1x | - | 3x | **7** |
-| `person-tab-associations` | - | - | - | - | - | 2x | 1x | 12x | 2x | **17** |
-| `person-tab-citations` | - | - | - | - | - | 2x | 1x | 7x | 2x | **12** |
-| `person-tab-dna` | - | - | - | - | - | 2x | 1x | 10x | 2x | **15** |
-| `person-tab-media` | - | - | - | - | - | 2x | 3x | 4x | 2x | **11** |
-| `person-tab-names` | - | - | - | - | - | 2x | 1x | 6x | 2x | **11** |
-| `person-tab-notes` | - | - | - | - | - | 2x | 1x | 8x | 2x | **13** |
+| `person-tab-associations` | - | 1x | 1x | - | 2x | 1x | 12x | 1x | **18** |
+| `person-tab-citations` | - | 1x | 1x | - | 2x | 1x | 7x | 1x | **13** |
+| `person-tab-dna` | - | 1x | 1x | - | 2x | 1x | 10x | 1x | **16** |
+| `person-tab-media` | - | 1x | 1x | - | 2x | 3x | 4x | 1x | **12** |
+| `person-tab-names` | - | 1x | 1x | - | 2x | 1x | 6x | 1x | **12** |
+| `person-tab-notes` | - | 1x | 1x | - | 2x | 1x | 8x | 1x | **14** |
 | `place-list` | 1x | 1x | - | 1x | - | - | 1x | - | 1x | **5** |
 | `place-modal` | - | - | - | - | - | 1x | 1x | 17x | 8x | **27** |
 | `repository-list` | - | - | - | 1x | - | 1x | 1x | 5x | 1x | **9** |
@@ -84,19 +84,20 @@ Das gesamte Fronend-Projekt wurde erfolgreich auf das neue semantische Design-Sy
 ## Verbliebene strukturelle Inkonsistenzen (Architektur)
 Diese Punkte betreffen nicht die Farb-Tokens, sondern das grundsätzliche HTML-Layout und können bei zukünftigen Überarbeitungen der jeweiligen Seiten angegangen werden:
 
-| Problem | Betroffene Seiten | Empfehlung |
+| Problem | Betroffene Seiten | Status |
 |---|---|---|
-| Struktur ohne cards | `settings.html` | Einstellungs-Sektionen langfristig in `app-card` wrappen |
-| Fehlt `app-page-header` | `timeline.html` | `app-page-header` einfügen |
-| Fehlt `app-page-container` | `repository-list.html` | Seiten-Shell angleichen |
-| Empty States leicht variabel | diverse Listen | Einheitliches Empty-State-Pattern (Icon + Text + optionaler CTA) als eigene Komponente (`<app-empty-state>`) auslagern |
+| Struktur ohne cards | `settings.html` | Langfristig in `app-card` wrappen |
+| Fehlt `app-page-header` | `timeline.html` | ✅ (Hinzugefügt) |
+| Fehlt `app-page-container` | Global | ✅ (Zentralisiert in Shell am 06.03.2026) |
+| Empty States leicht variabel | diverse Listen | ✅ (Einheitliche Komponente `<app-empty-state>`) |
 
 ---
 
-## Fazit: Ziel erreicht 🎯
-- Erfolgreicher Abschluss der UI-Standardisierung 
-- Alle Legacy-Klassen (`bg-surface-*`, `text-state-*`) aus den HTML-Templates entfernt
-- Konsistente Anwendung von Glassmorphism und den Tailwing-Theme Farben (`ui-*`, `brand-*`, `accent-*`)
+## Fazit: Ziel erreicht 🎯 — Update 06.03.2026
+- **Shell-Zentralisierung**: Der `<app-page-container>` wird nun zentral von der `AppShellComponent` verwaltet.
+- **Cleanup**: Redundante Wrapper wurden aus allen 15+ HTML-Templates entfernt.
+- **Design-Guide**: Ein umfassender [DESIGN_GUIDE.md](file:///home/dominik/Dokumente/Programmieren/Antigravity/Webanwendungen/Heritago/DESIGN_GUIDE.md) wurde erstellt.
+- **Komponenten-Standard**: Alle Seiten nutzen nun konsequent die semantischen Komponenten und Tailwind-Tokens.
 
 ---
 
@@ -116,6 +117,9 @@ Hier ist eine Übersicht über die dedizierten, wiederverwendbaren Custom-Compon
 ### Listen & Datenanzeige
 - **`app-entity-card`**: Die wichtigste Komponente zur Auflistung einzelner Datensätze (Person, Familie, Ort etc.). Sie liefert immer einen Titel, optional einen Avatar (oder Icon) auf der linken Seite sowie Untertitel (Subtitle und Meta). Die Entitäts-Karte wird hervorgehoben durch einen farbigen linken Rand (`badgeColor`), der semantische Stati oder Typen (`primary`, `highlight`, `success`, `danger`, `neutral`) visualisieren kann. Typischerweise leitet ein Klick via `routerLink` zum Detail-Datensatz weiter.
 - **`app-stat-card`**: Wird auf Dashboards und Übersichten (z.B. Statistics) verwendet. Sie zeigt eine große Zahl (`value`) mit einem kleinen Label (z.B. "Personen" oder "Medien") an. Durch ein dezent gehaltenes Hintergrund-Icon sowie Hover-Effekte mit spezifischen Akzentfarben (`accent`: brand, emerald, amber, purple) wird sie optisch zu einem Blickfang gemacht.
+- **`app-avatar`**: Die zentrale Komponente für alle Personen-Bilder. Sie kapselt die Logik für Bild-Fallbacks basierend auf dem Geschlecht (`M`, `F`, `X`, `U`) und stellt standardisierte Größen (`xs` bis `xl`) bereit. Sie ersetzt manuelle Bild-URL-Konvertierungen und CSS-Hintergrund-Hacks.
+- **`app-empty-state`**: Standardisierte Anzeige für leere Zustände. Akzeptiert `icon`, `title` und `message`. Bietet einen `<ng-content select="[actions]">` Slot für Call-to-Action Buttons. Wird in allen Tabs und via `app-list-view` in allen Listen eingesetzt.
+- **`app-section-header`**: Einheitlicher Header für Inhalts-Sektionen. Unterstützt `title`, `description`, `icon` und eine farbige Akzent-Leiste (`accent`). Verfügt über einen `actions`-Slot für Buttons auf der rechten Seite. Ersetzt manuelle `h2`/`h3` Konstruktionen in Detailansichten.
 
 ### Overlays & Interaktion
 - **`app-modal-shell`**: Das Grundgerüst für alle Dialoge/Modals (etwa "Person bearbeiten", "Medium löschen"). Diese Shell liefert automatisch den abgedunkelten, weichgezeichneten Hintergrund (`backdrop-blur-xl`), die weiße Modal-Karte inklusive Header (Titel und "X" zum Schließen) und ein Fußfenster mit den standardisierten Buttons ("Abbrechen", "Speichern", oder optional "Löschen"). Unterstützt Modal-Größen von `sm` bis `xl`.
@@ -136,15 +140,16 @@ Die Detailanalyse der im Projekt eingesetzten UI-Komponenten hat konkrete Übers
 - **Das Problem:** Es existieren aktuell zwei sehr ähnliche Angular-Wrapper (`app-card` und `app-section-card`), deren einziger echter Unterschied die Formatierung ihres optionalen Headers (`h2` = "Standard-Card" vs. kleines `h3` uppercase = "Section-Card") ist. Beide nutzen intern einfach die CSS-Klasse `.glass-card`. Gleichzeitig nutzen stark angepasste Seiten häufig einfach direkt ein `div` mit der Klasse `glass-card`.
 - **Lösung:** Man sollte einen Entschluss für **einen** Weg fassen. Eine saubere Lösung wäre es, beide Angular-Komponenten (`app-card` und `app-section-card`) zu **entfernen** und stattdessen überall direkt strukturiertes HTML mit der Klasse `.glass-card` und standardisierten Text-Klassen für den Header zu verwenden. Alternativ: Beide in eine neu überarbeitete, hochflexible `<app-card>` vereinen, die ein `headerVariant="large" | "small"` Property besitzt.
 
-### ✅ 2. Tabellarische vs. Gekachelte Listen
+- **Lösung:** Es wurde eine zentrale `<app-list-view>` Architektur-Komponente eingeführt, die standardmäßig den Loading-State, das Empty-State Styling (`text-neutral-400` u. Icons) sowie den Grid-Wrapper (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3...`) kapselt. Diese Komponente wird nun von `person-list`, `family-list`, `place-list`, `source-list` and `media-gallery` einheitlich verwendet.
 
-- **Problem:** Die Darstellung von Auflistungen variiert stark. Personen und Familien verwenden Grid-Layouts mit speziellen Cards (`app-entity-card`), während Archive und Quellen teilweise andere Ansätze verwenden. Auch die Suchleisten, "Empty States" und Header-Strukturen sind oft kopiert und minimal inkonsistent eingefügt.
-- **Lösung:** Es wurde eine zentrale `<app-list-view>` Architektur-Komponente eingeführt, die standardmäßig den Loading-State, das Empty-State Styling (`text-neutral-400` u. Icons) sowie den Grid-Wrapper (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3...`) kapselt. Diese Komponente wird nun von `person-list`, `family-list`, `place-list`, `source-list` und `media-gallery` einheitlich verwendet.
+### ✅ 5. Zentralisierung der Avatar-Logik (`app-avatar`)
+- **Das Problem:** Bild-Logik (Prüfung auf Vorhandensein, Fallback auf `male.svg`/`female.svg` etc.) war über mehrere Komponenten (`PersonList`, `FamilyList`, `FamilyDetail`, `AppEntityCard`) verteilt.
+- **Lösung (Abgeschlossen am 06.03.2026):** Einführung der `<app-avatar>` Komponente. Alle manuellen Bild-Helper wurden entfernt. Die Komponente steuert nun zentral das Loading-Verhalten, die Rundung und die geschlechtsspezifischen Platzhalter.
 
 ### 3. Veraltete Formular-Wrapper (`app-button` und `app-input`) ✅
 - **Das Problem:** Tailwind CSS-Utility-Klassen (`.btn-primary`, `.form-input`) existieren nun funktionsgleich parallel zu den dedizierten Angular-Komponenten (`<app-button>`, `<app-input>`). Der Einsatz von nativen HTML-Inputs mit Utility-Klassen macht die Arbeit mit Angular Reactive Forms leichter, performanter und weniger fehleranfällig als eine zusätzliche Wrapper-Komponente.
 - **Lösung (Erledigt):** Die Komponenten `app-button` und `app-input` wurden komplett aus dem Projekt (`src/app/ui/*`) gelöscht, da sie in den HTML-Templates nicht mehr referenziert wurden.
 
-### 4. Inkonsistente Verwendung von Seiten-Shells
-- **Das Problem:** Zwar nutzen die meisten Seiten erfolgreich `app-page-container` plus `app-page-header`, aber bei Detail-Ansichten mit Tabs (z.B. Person-Detail, Family-Detail) oder Sonderseiten (`repository-list`, `timeline`) bricht dieses Konstrukt zum Teil leicht aus oder wird weggelassen.
-- **Lösung:** Ein globaler Master-Layout-Container (z.B. in der `app.component.html`), der den Page-Container und Router-Outlet strikt umschließt, würde die absolute Pflicht zum Einbinden des Wrappers auf Inhaltsseiten-Ebene beseitigen.
+### 4. Inkonsistente Verwendung von Seiten-Shells ✅
+- **Das Problem:** Manuelle Einbindung von `app-page-container` führte zu Redundanz und potenziellen Fehlern bei der Breiten-Steuerung.
+- **Lösung (Abgeschlossen am 06.03.2026):** Zentraler Master-Layout-Container in der `AppShellComponent`. Die Steuerung der Breite erfolgt automatisch via Route-Data (`wide: true`). Alle manuellen Wrapper wurden entfernt.

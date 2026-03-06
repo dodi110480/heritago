@@ -13,7 +13,7 @@ import * as d3 from 'd3';
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, RouterLink, CalendarWidget, AppPageContainerComponent, AppPageHeaderComponent, AppStatCardComponent],
+    imports: [CommonModule, RouterLink, CalendarWidget, AppPageHeaderComponent, AppStatCardComponent],
     templateUrl: './dashboard.html',
     encapsulation: ViewEncapsulation.None
 })
@@ -184,7 +184,7 @@ export class Dashboard implements AfterViewInit {
                 return `M${d.source.x},${d.source.y} C${d.source.x},${(d.source.y + d.target.y) / 2} ${d.target.x},${(d.source.y + d.target.y) / 2} ${d.target.x},${d.target.y}`;
             })
             .style('fill', 'none')
-            .style('stroke', 'rgba(96, 165, 250, 0.3)')
+            .style('stroke', 'rgba(191, 149, 63, 0.25)') // Brand-500/25
             .style('stroke-width', '1.5px');
 
         // 4. Render Nodes
@@ -206,8 +206,8 @@ export class Dashboard implements AfterViewInit {
             .attr('text-anchor', 'middle')
             .text((d: any) => d.data.name)
             .style('font-size', '8px')
-            .style('fill', '#94a3b8')
-            .style('font-weight', '500');
+            .style('fill', '#64748b') // Neutral-500
+            .style('font-weight', '600');
     }
 
     discoverAncestor() {

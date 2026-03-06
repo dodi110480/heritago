@@ -95,16 +95,7 @@ export class PersonList {
         return `${birth} - ${death}`.trim();
     }
 
-    getProfileImage(person: Individual): string {
-        if (person.media && person.media.length > 0) {
-            const primary = person.media.find(m => m.isPrimary) || person.media[0];
-            if (primary?.url) return this.gedcomService.getMediaUrl(primary.url);
-        }
 
-        // Fallback to centralized SVGs
-        const gender = person.gender === 'M' ? 'male' : (person.gender === 'F' ? 'female' : 'unknown');
-        return `assets/avatars/${gender}.svg`;
-    }
 
     rememberFocus(id: string) {
         this.focusedPersonId.set(id);

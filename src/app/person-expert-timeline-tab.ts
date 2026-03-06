@@ -1,21 +1,22 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AppEmptyStateComponent } from './ui/app-empty-state';
+import { AppSectionHeaderComponent } from './ui/app-section-header';
 
 
 @Component({
     selector: 'app-person-expert-timeline-tab',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, AppEmptyStateComponent, AppSectionHeaderComponent],
     template: `
         <div class="glass-card shadow-sm flex flex-col">
             <div class="!p-4 md:!p-5">
-                <div class="flex justify-between items-center mb-5">
-                    <h2 class="text-xl font-semibold text-neutral-950">Lebenslauf</h2>
-                    <button (click)="addTimelineItem()" class="btn-primary !w-auto !py-1.5 !px-3 text-xs">
-                        + Ereignis/Fakt hinzufügen
+                <app-section-header title="Lebenslauf" icon="⏳">
+                    <button actions (click)="addTimelineItem()" class="btn-primary !w-auto !py-1.5 !px-3 text-xs">
+                        + Ereignis/Fakt
                     </button>
-                </div>
+                </app-section-header>
 
                 <div
                     class="relative pl-6 space-y-4 before:absolute before:left-2 before:top-1 before:bottom-1 before:w-0.5 before:bg-canvas-white/10">
@@ -282,11 +283,12 @@ import { FormsModule } from '@angular/forms';
                     </div>
                 </div>
 
-                <div *ngIf="timeline().length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-canvas-white/5 rounded-3xl text-neutral-950">
-                    <span class="text-4xl mb-3 opacity-20">📅</span>
-                    <p class="font-medium">Keine Einträge im Lebenslauf vorhanden.</p>
-                </div>
+                <app-empty-state *ngIf="timeline().length === 0"
+                    icon="⏳" 
+                    title="Lebenslauf leer" 
+                    message="Anhand von Daten und Fakten entsteht ein Bild der Person. Füge das erste Ereignis hinzu.">
+                    <button actions (click)="addTimelineItem()" class="btn-secondary !py-2 !px-4 text-xs">Ereignis hinzufügen</button>
+                </app-empty-state>
             </div>
         </div>
     `

@@ -3,20 +3,21 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { AppModalShell } from './ui/app-modal-shell';
+import { AppEmptyStateComponent } from './ui/app-empty-state';
+import { AppSectionHeaderComponent } from './ui/app-section-header';
 
 @Component({
     selector: 'app-person-tab-notes',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell],
+    imports: [CommonModule, FormsModule, AppModalShell, AppEmptyStateComponent, AppSectionHeaderComponent],
     template: `
         <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-semibold text-neutral-900">Persönliche Notizen</h2>
-                    <button (click)="addPersonNote()" class="btn-primary !w-auto !py-2">
+                <app-section-header title="Persönliche Notizen" icon="📝">
+                    <button actions (click)="addPersonNote()" class="btn-primary !w-auto !py-2">
                         + Notiz
                     </button>
-                </div>
+                </app-section-header>
 
                 <div *ngIf="person?.notes && person.notes.length > 0" class="space-y-3">
                     <ng-container *ngFor="let note of person.notes; let i = index">
@@ -34,11 +35,12 @@ import { AppModalShell } from './ui/app-modal-shell';
                     </ng-container>
                 </div>
 
-                <div *ngIf="!person?.notes || person.notes.length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-neutral-300/60 rounded-3xl text-neutral-950">
-                    <span class="text-4xl mb-3 opacity-20">📝</span>
-                    <p class="font-medium">Keine Notizen vorhanden.</p>
-                </div>
+                <app-empty-state *ngIf="!person?.notes || person.notes.length === 0"
+                    icon="📝" 
+                    title="Keine Notizen" 
+                    message="Halte wichtige Details oder Forschungsergebnisse zu dieser Person in Notizen fest.">
+                    <button actions (click)="addPersonNote()" class="btn-secondary !py-2 !px-4 text-xs">Erste Notiz schreiben</button>
+                </app-empty-state>
             </div>
         </div>
 

@@ -3,20 +3,21 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { AppModalShell } from './ui/app-modal-shell';
+import { AppEmptyStateComponent } from './ui/app-empty-state';
+import { AppSectionHeaderComponent } from './ui/app-section-header';
 
 @Component({
     selector: 'app-person-tab-dna',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell],
+    imports: [CommonModule, FormsModule, AppModalShell, AppEmptyStateComponent, AppSectionHeaderComponent],
     template: `
         <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-xl font-semibold text-neutral-900">DNA-Matches</h2>
-                    <button (click)="addDnaMatch()" class="btn-primary !w-auto !py-2">
-                        + Match hinzufügen
+                <app-section-header title="DNA-Matches" icon="🧬">
+                    <button actions (click)="addDnaMatch()" class="btn-primary !w-auto !py-2">
+                        + Match
                     </button>
-                </div>
+                </app-section-header>
 
                 <div class="space-y-6" *ngIf="person?.dnaMatches && person.dnaMatches.length > 0">
                     <div *ngFor="let m of person.dnaMatches; let i = index"
@@ -57,11 +58,12 @@ import { AppModalShell } from './ui/app-modal-shell';
                     </div>
                 </div>
 
-                <div *ngIf="!person?.dnaMatches || person.dnaMatches.length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-neutral-300/60 rounded-3xl text-neutral-950">
-                    <span class="text-4xl mb-3 opacity-20">🧬</span>
-                    <p class="font-medium">Keine DNA-Matches erfasst.</p>
-                </div>
+                <app-empty-state *ngIf="!person?.dnaMatches || person.dnaMatches.length === 0"
+                    icon="🧬" 
+                    title="Keine DNA-Matches" 
+                    message="Verknüpfe DNA-Testergebnisse von Anbietern wie Ancestry oder MyHeritage, um verwandtschaftliche Beziehungen genetisch zu belegen.">
+                    <button actions (click)="addDnaMatch()" class="btn-secondary !py-2 !px-4 text-xs">Match hinzufügen</button>
+                </app-empty-state>
             </div>
         </div>
 

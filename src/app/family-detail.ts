@@ -8,9 +8,12 @@ import { Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
 import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppAvatarComponent } from './ui/app-avatar';
 
 import { AppModalShell } from './ui/app-modal-shell';
 import { FamilyEventCardComponent } from './family-event-card';
+import { AppEmptyStateComponent } from './ui/app-empty-state';
+import { AppSectionHeaderComponent } from './ui/app-section-header';
 
 @Component({
     selector: 'app-family-detail',
@@ -22,7 +25,10 @@ import { FamilyEventCardComponent } from './family-event-card';
         AppPageContainerComponent,
         AppPageHeaderComponent,
         AppModalShell,
-        FamilyEventCardComponent
+        FamilyEventCardComponent,
+        AppAvatarComponent,
+        AppEmptyStateComponent,
+        AppSectionHeaderComponent
     ],
     templateUrl: './family-detail.html'
 })

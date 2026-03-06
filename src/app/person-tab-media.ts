@@ -6,38 +6,24 @@ import { AppModalShell } from './ui/app-modal-shell';
 import { MediaSelector } from './media-selector';
 import { ImageViewer } from './image-viewer';
 import { MediaAddModal } from './media-add-modal';
+import { AppEmptyStateComponent } from './ui/app-empty-state';
+import { AppSectionHeaderComponent } from './ui/app-section-header';
 import { GedcomService } from './gedcom.service';
 import { inject } from '@angular/core';
 
 @Component({
     selector: 'app-person-tab-media',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell, MediaSelector, ImageViewer, MediaAddModal],
+    imports: [CommonModule, FormsModule, AppModalShell, MediaSelector, ImageViewer, MediaAddModal, AppEmptyStateComponent, AppSectionHeaderComponent],
     template: `
         <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">
-                <div class="flex justify-between items-center mb-8">
-                    <div>
-                        <h2 class="text-xl font-semibold text-neutral-900">Medien &amp; Galerie</h2>
-                        <p class="text-sm text-neutral-950 mt-1">Bilder und Dokumente der Person.</p>
+                <app-section-header title="Medien & Galerie" icon="🖼️" description="Bilder und Dokumente der Person.">
+                    <div actions class="flex gap-2">
+                        <button (click)="openMediaAddModal()" class="btn-primary !w-auto !py-2">+ Upload</button>
+                        <button (click)="openMediaSelector()" class="btn-secondary !w-auto !py-2">Galerie</button>
                     </div>
-                    <div class="flex gap-2">
-                        <button (click)="openMediaAddModal()" class="btn-primary !w-auto !py-2">
-                            + Upload
-                        </button>
-                        <button (click)="openMediaSelector()" class="btn-secondary !w-auto !py-2">
-                            Galerie
-                        </button>
-                        <button (click)="addPersonMedia()" class="btn-ghost !w-auto !p-2" title="URL verlinken">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
+                </app-section-header>
 
                 <div *ngIf="person?.media && person.media.length > 0" class="grid grid-cols-1 gap-4">
                     <div *ngFor="let m of person.media; let i = index"
@@ -107,11 +93,15 @@ import { inject } from '@angular/core';
                     </div>
                 </div>
 
-                <div *ngIf="!person?.media || person.media.length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-neutral-300/60 rounded-3xl text-neutral-950">
-                    <span class="text-4xl mb-3 opacity-20">🖼️</span>
-                    <p class="font-medium">Keine Medien vorhanden.</p>
-                </div>
+                <app-empty-state *ngIf="!person?.media || person.media.length === 0"
+                    icon="🖼️" 
+                    title="Keine Medien" 
+                    message="Bilder und Dokumente machen die Geschichte lebendig. Lade ein Foto hoch oder wähle eines aus der Galerie.">
+                    <div actions class="flex gap-3">
+                        <button (click)="openMediaAddModal()" class="btn-secondary !py-2 !px-4 text-xs">Foto hochladen</button>
+                        <button (click)="openMediaSelector()" class="btn-ghost !py-2 !px-4 text-xs">Aus Galerie wählen</button>
+                    </div>
+                </app-empty-state>
             </div>
         </div>
 

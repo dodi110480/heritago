@@ -9,11 +9,12 @@ import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppModalShell } from './ui/app-modal-shell';
 import { AppListViewComponent } from './ui/app-list-view';
+import { AppAvatarComponent } from './ui/app-avatar';
 
 @Component({
     selector: 'app-media-gallery',
     standalone: true,
-    imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent, AppModalShell, AppListViewComponent],
+    imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent, AppModalShell, AppListViewComponent, AppAvatarComponent],
     templateUrl: './media-gallery.html'
 })
 export class MediaGallery implements OnInit {
@@ -363,6 +364,15 @@ export class MediaGallery implements OnInit {
         if (link.familyId) return `Familie ${link.familyId}`;
         if (link.sourceId) return `Quelle ${link.sourceId}`;
         return 'Verknüpfung';
+    }
+
+    getLinkAvatarData(link: any): { url: string | null, gender: string } {
+        if (link.person) {
+            const p = link.person;
+            const primaryMedia = p.media && p.media.length > 0 ? (p.media.find((m: any) => m.isPrimary) || p.media[0]) : null;
+            return { url: primaryMedia?.url || null, gender: p.gender || 'U' };
+        }
+        return { url: null, gender: 'U' };
     }
 
     private extractYear(value: string): string | undefined {

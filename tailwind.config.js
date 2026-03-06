@@ -8,138 +8,83 @@ export default {
         // default palette. ALL colors must be defined here – no native
         // Tailwind color names (slate, red, white, …) available in templates.
         colors: {
-            // ── ESSENTIALS ───────────────────────────────────────────────
             transparent: 'transparent',
             white: '#ffffff',
             black: '#000000',
 
-            // ── PRIMITIVES ────────────────────────────────────────────────
-            // Use these only when a semantic token doesn't fit.
-            canvas: {
-                white: '#ffffff',
-                black: '#000000',
-                transparent: 'transparent',
-            },
-
-            // ── NEUTRAL SCALE (formerly slate-*) ─────────────────────────
-            // Text hierarchy on dark surfaces, subtle borders, muted labels.
-            neutral: {
-                100: '#f3f3f3ff',  // slate-100
-                200: '#e2e8f0',  // slate-200
-                300: '#cbd5e1',  // slate-300
-                400: '#94a3b8',  // slate-400
-                500: '#64748b',  // slate-500
-                600: '#475569',  // slate-600
-                700: '#334155',  // slate-700
-                800: '#1e293b',  // slate-800
-                900: '#0f172a',  // slate-900
-                950: '#020617',  // slate-950
-            },
-
-            // ── UI SURFACE & SEMANTIC TOKENS ─────────────────────────────
-            ui: {
-                // Backgrounds
-                bg: '#bcdfb6ff',
-                bgSoft: '#6abe59ff',
-                // Cards & Panels
-                card: '#dee7dcff',
-                cardHover: '#d6f0d0ff',
-                panel: '#eef6ff',
-                // Borders
-                border: '#d8dadbff',
-                borderStrong: '#757070ff',
-                // Text
-                textSoft: '#334155',
-                textInputExample: '#cacacaff',
-                // Overlays
-                overlay: '#0f172a33',
-                // Surface depth scale (formerly surface.*)
-                surfaceLightest: '#ffffff',
-                surface: '#dfeeff',
-                surfaceDark: '#2c4a9bff',
-                surfaceDarkest: '#b6b0b0ff',
-            },
-
-            // ── BRAND (Primary Color Scale) ───────────────────────────────
+            // ── CORE TOKENS (Design Guide Rev. 2026) ─────────────────────
             brand: {
                 50: '#f2fbff',
                 100: '#def5ff',
                 200: '#b7eaff',
                 300: '#83d8ff',
                 400: '#4bc1ff',
-                500: '#1ea7ff',
+                500: '#1ea7ff', // Primary Action
                 600: '#0b87e6',
                 700: '#0e6bb8',
-                800: '#125894',
-                900: '#154a79',
-                950: '#11304f',
                 DEFAULT: '#1ea7ff',
             },
-
-            // ── ACCENT (Semantic Roles, not color names) ──────────────────
-            accent: {
-                // Highlights, warnings, important badges (warm/gold tones)
-                highlight: {
-                    300: '#fbbf24',
-                    400: '#f59e0b',
-                    500: '#d97706',
-                    600: '#b45309',
-                },
-                // Success states, active/alive indicators (green tones)
-                success: {
-                    400: '#4ade80',
-                    500: '#22c55e',
-                    600: '#16a34a',
-                },
-                // Danger states, delete actions, errors (rose/red tones)
-                danger: {
-                    400: '#fb7185',
-                    500: '#f43f5e',
-                    600: '#e11d48',
-                },
+            canvas: {
+                DEFAULT: '#ffffff', // Light background
+                dark: '#0f172a',    // Dark background
+                white: '#ffffff',
+                black: '#000000',
+            },
+            'accent-highlight': {
+                300: '#fbbf24',
+                500: '#d97706', // Focus/Selected
+            },
+            'accent-danger': {
+                400: '#fb7185',
+                500: '#f43f5e', // Errors/Delete
+            },
+            neutral: {
+                50: '#f8fafc',
+                100: '#f1f5f9',
+                200: '#e2e8f0',
+                300: '#cbd5e1',
+                400: '#94a3b8',
+                500: '#64748b', // Secondary text/borders
+                600: '#475569',
+                700: '#334155',
+                800: '#1e293b',
+                900: '#0f172a',
+                950: '#020617',
             },
 
-            // ── STATE (Application state feedback colors) ─────────────────
-            // Used for error messages, validation feedback, diagnostics.
+            // Legacy/UI Support (Keep basic tokens for compatibility)
+            ui: {
+                bg: '#f8fafc',
+                border: '#e2e8f0',
+                card: '#ffffff',
+            },
+
             state: {
-                error: '#f87171',  // red-400 – error text
-                errorBg: '#ef4444',  // red-500 – error backgrounds/borders
-                errorDeep: '#7f1d1d',  // red-900 – dark error surfaces
-                errorSoft: '#fecaca',  // red-200 – soft error text
+                error: '#f87171',
+                errorBg: '#ef4444',
             },
 
-            // ── WARN (Advisory / warning feedback colors) ─────────────────
-            // Used for import warnings, destructive action notices.
-            warn: {
-                text: '#f97316',  // orange-500
-                textSoft: '#fed7aa', // orange-200
-                bg: '#f97316',  // orange-500
-                border: '#f97316',  // orange-500
-            },
-
-            // ── GENDER INDICATOR TOKENS ───────────────────────────────────
-            // Semantic colors for gender indicators across the app.
-            // Use with opacity modifier: bg-gender-male/15 text-gender-male
             gender: {
-                male: '#4bc1ff',   // reflects brand.400 (blue)
-                female: '#f472b6',   // pink indicator
-                neutral: '#94a3b8',   // neutral/unknown
+                male: '#4bc1ff',
+                female: '#f472b6',
+                neutral: '#94a3b8',
             },
         },
 
-        // ── TYPOGRAPHY ───────────────────────────────────────────────────
         extend: {
             fontFamily: {
-                display: ['Playfair Display', 'Georgia', 'serif'],
-                body: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-                mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+                body: ['Inter', 'system-ui', 'sans-serif'],
+                display: ['Inter', 'system-ui', 'sans-serif'],
+                mono: ['JetBrains Mono', 'monospace'],
             },
             fontSize: {
-                'hero': ['3rem', { lineHeight: '1.1', fontWeight: '800', letterSpacing: '-0.02em' }],
-                'heading': ['1.75rem', { lineHeight: '1.2', fontWeight: '700', letterSpacing: '-0.01em' }],
-                'title': ['1.25rem', { lineHeight: '1.3', fontWeight: '600' }],
-                'label': ['0.6875rem', { lineHeight: '1.4', fontWeight: '700', letterSpacing: '0.08em' }],
-                'meta': ['0.75rem', { lineHeight: '1.5', fontWeight: '400' }],
+                'xs': ['0.8125rem', { lineHeight: '1.5' }],
+                'sm': ['0.875rem', { lineHeight: '1.5' }],
+                'base': ['1rem', { lineHeight: '1.625' }],
+                'lg': ['1.25rem', { lineHeight: '1.5' }],
+                'xl': ['1.5rem', { lineHeight: '1.4' }],
+                '2xl': ['1.875rem', { lineHeight: '1.3' }],
+                '3xl': ['2.25rem', { lineHeight: '1.2' }],
             },
 
             // ── SHADOWS ──────────────────────────────────────────────────

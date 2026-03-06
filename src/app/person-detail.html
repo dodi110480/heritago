@@ -1,4 +1,4 @@
-<app-page-container [wide]="true" *ngIf="person() as p" (input)="markDirty()">
+<div *ngIf="person() as p" (input)="markDirty()">
     <app-page-header [title]="p.firstName + ' ' + p.lastName"
         [description]="(p.birthDate | cleanDate) + ' - ' + (p.deathDate | cleanDate)">
         <div breadcrumbs>
@@ -16,7 +16,7 @@
     </app-page-header>
 
     <div
-        class="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-canvas-white/5 no-scrollbar animate-in slide-in-from-top-4 duration-300">
+        class="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-canvas/5 no-scrollbar animate-in slide-in-from-top-4 duration-[180ms]">
         <button *ngFor="let tab of [
             {id: 'basics', label: 'Allgemeines'},
             {id: 'timeline', label: 'Lebenslauf'},
@@ -29,8 +29,8 @@
             {id: 'citations', label: 'Referenzen'}
         ]" (click)="activeTab = tab.id"
             [class]="activeTab === tab.id ? 
-            'px-4 py-2 rounded-lg bg-brand-500/10 text-brand-400 border border-brand-500/20 text-sm font-medium whitespace-nowrap shadow-lg shadow-brand-500/5' : 
-            'px-4 py-2 rounded-lg hover:bg-canvas-white/5 text-neutral-400 hover:text-neutral-200 text-sm font-medium transition-all whitespace-nowrap'">
+            'px-4 py-2 rounded-lg bg-brand-500/10 text-brand-600 border border-brand-500/20 text-sm font-semibold whitespace-nowrap shadow-sm' : 
+            'px-4 py-2 rounded-lg hover:bg-canvas/5 text-neutral-500 hover:text-neutral-900 text-sm font-medium transition-all duration-[180ms] whitespace-nowrap'">
             {{tab.label}}
         </button>
     </div>
@@ -99,11 +99,10 @@
         (closed)="closeRelationModal()">
     </app-person-create-modal>
 
-    <!-- DELETE MODAL -->
     <app-modal-shell [visible]="showDeleteModal()" title="Person löschen" icon="🗑️" size="sm" [showSave]="false"
         [showDelete]="true" [deleteText]="isDeleting ? 'Lösche...' : 'Ja, löschen'" [loading]="isDeleting"
         (close)="closeDeleteModal()" (delete)="confirmDeletePerson()">
-        <div class="p-4 text-neutral-300 text-center">
+        <div class="p-4 text-neutral-600 text-center">
             <div
                 class="w-16 h-16 bg-accent-danger-500/10 text-accent-danger-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
@@ -216,10 +215,10 @@
         (close)="closeTimelineItemModal()" (save)="saveTimelineItemModal()" (delete)="removeTimelineItemModal()">
         <div *ngIf="activeTimelineItem() as item" class="space-y-4">
             <div *ngIf="isTimelineItemLocked(item)"
-                class="text-xs text-neutral-300 bg-canvas-white/5 border border-canvas-white/10 rounded-xl px-3 py-2 flex items-center justify-between gap-3">
+                class="text-[11px] text-neutral-500 bg-canvas/5 border border-neutral-200 rounded-xl px-3 py-2 flex items-center justify-between gap-3">
                 <span>Dieses Ereignis ist abgeleitet/familienbasiert und hier nur lesbar.</span>
                 <button *ngIf="hasTimelineItemSource(item)" (click)="goToTimelineItemSource(item)"
-                    class="btn-secondary !w-auto !py-1.5 !px-2.5 !text-[10px]">
+                    class="badge-neutral !py-1 !px-2">
                     {{ getTimelineItemSourceLabel(item) }}
                 </button>
             </div>
@@ -281,4 +280,4 @@
         </div>
     </app-modal-shell>
 
-</app-page-container>
+</div>

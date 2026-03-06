@@ -17,6 +17,7 @@ export const routes: Routes = [
             {
                 path: 'tree',
                 loadComponent: () => import('./family-chart.component').then(m => m.FamilyChartComponent),
+                data: { wide: true }
             },
             {
                 path: 'settings',
@@ -43,10 +44,12 @@ export const routes: Routes = [
             {
                 path: 'persons',
                 loadComponent: () => import('./person-list').then(m => m.PersonList),
+                data: { wide: true }
             },
             {
                 path: 'families',
                 loadComponent: () => import('./family-list').then(m => m.FamilyList),
+                data: { wide: true }
             },
             {
                 path: 'family/:id',
@@ -64,18 +67,22 @@ export const routes: Routes = [
             {
                 path: 'places',
                 loadComponent: () => import('./place-list').then(m => m.PlaceList),
+                data: { wide: true }
             },
             {
                 path: 'sources',
                 loadComponent: () => import('./source-list').then(m => m.SourceList),
+                data: { wide: true }
             },
             {
                 path: 'map',
                 loadComponent: () => import('./map-view').then(m => m.MapView),
+                data: { wide: true }
             },
             {
                 path: 'media',
                 loadComponent: () => import('./media-gallery').then(m => m.MediaGallery),
+                data: { wide: true }
             },
             {
                 path: 'statistics',

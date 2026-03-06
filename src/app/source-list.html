@@ -1,92 +1,90 @@
-<app-page-container [wide]="true">
-    <app-page-header title="Quellen & Archive"
-        description="Verwalte alle Quellen, Zitate und Aufbewahrungsorte in diesem Stammbaum.">
+<app-page-header title="Quellen & Archive"
+    description="Verwalte alle Quellen, Zitate und Aufbewahrungsorte in diesem Stammbaum.">
 
-        <div actions class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <button *ngIf="activeTab() === 'sources'" (click)="openAddModal()" class="btn-primary w-full md:w-auto">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                <span>Neue Quelle</span>
-            </button>
-            <button *ngIf="activeTab() === 'repositories'" (click)="openAddRepositoryModal()"
-                class="btn-primary w-full md:w-auto">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                <span>Neues Archiv</span>
-            </button>
-        </div>
-    </app-page-header>
-
-    <!-- Tab Navigation -->
-    <div class="flex gap-8 mb-8 border-b border-canvas-white/5 overflow-x-auto no-scrollbar">
-        <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
-            [class.text-brand-400]="activeTab() === 'sources'" [class.text-neutral-950]="activeTab() !== 'sources'"
-            (click)="activeTab.set('sources')">
-            Quellen
-            <div *ngIf="activeTab() === 'sources'"
-                class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
+    <div actions class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+        <button *ngIf="activeTab() === 'sources'" (click)="openAddModal()" class="btn-primary w-full md:w-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Neue Quelle</span>
         </button>
-        <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
-            [class.text-brand-400]="activeTab() === 'repositories'"
-            [class.text-neutral-950]="activeTab() !== 'repositories'" (click)="activeTab.set('repositories')">
-            Archive
-            <div *ngIf="activeTab() === 'repositories'"
-                class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
+        <button *ngIf="activeTab() === 'repositories'" (click)="openAddRepositoryModal()"
+            class="btn-primary w-full md:w-auto">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Neues Archiv</span>
         </button>
     </div>
+</app-page-header>
 
-    <!-- CONTENT -->
-    <div class="relative w-full">
-        <!-- Sources Tab -->
-        <ng-container *ngIf="activeTab() === 'sources'">
-            
-            <!-- Search Bar (always visible when sources tab active) -->
-            <div class="search-wrapper w-full !max-w-none mb-4">
-                <div class="search-icon-wrapper">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                </div>
-                <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-                    placeholder="Quellen durchsuchen..." class="search-input w-full">
+<!-- Tab Navigation -->
+<div class="flex gap-8 mb-8 border-b border-canvas-white/5 overflow-x-auto no-scrollbar">
+    <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
+        [class.text-brand-400]="activeTab() === 'sources'" [class.text-neutral-950]="activeTab() !== 'sources'"
+        (click)="activeTab.set('sources')">
+        Quellen
+        <div *ngIf="activeTab() === 'sources'"
+            class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
+    </button>
+    <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
+        [class.text-brand-400]="activeTab() === 'repositories'"
+        [class.text-neutral-950]="activeTab() !== 'repositories'" (click)="activeTab.set('repositories')">
+        Archive
+        <div *ngIf="activeTab() === 'repositories'"
+            class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
+    </button>
+</div>
+
+<!-- CONTENT -->
+<div class="relative w-full">
+    <!-- Sources Tab -->
+    <ng-container *ngIf="activeTab() === 'sources'">
+        
+        <!-- Search Bar (always visible when sources tab active) -->
+        <div class="search-wrapper w-full !max-w-none mb-4">
+            <div class="search-icon-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
             </div>
+            <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+                placeholder="Quellen durchsuchen..." class="search-input w-full">
+        </div>
 
-            <app-list-view
-                [isLoading]="loading()"
-                [isEmpty]="filteredSources.length === 0"
-                loadingText="Lade Quellen..."
-                emptyIcon="📚"
-                emptyTitle="Keine Quellen gefunden"
-                emptySubtitle="Probiere es mit einem anderen Suchbegriff.">
+        <app-list-view
+            [isLoading]="loading()"
+            [isEmpty]="filteredSources.length === 0"
+            loadingText="Lade Quellen..."
+            emptyIcon="📚"
+            emptyTitle="Keine Quellen gefunden"
+            emptySubtitle="Probiere es mit einem anderen Suchbegriff.">
 
-                <app-entity-card *ngFor="let source of filteredSources" [title]="source.title"
-                    [subtitle]="(source.author ? source.author : '') + (source.author && source.shortTitle ? ' • ' : '') + (source.shortTitle ? source.shortTitle : '')"
-                    [meta]="source.repositoryName ? '📍 ' + source.repositoryName : 'Kein Repositorium'"
-                    badgeText="Quelle" badgeColor="success" (onClick)="openEditModal(source)">
+            <app-entity-card *ngFor="let source of filteredSources" [title]="source.title"
+                [subtitle]="(source.author ? source.author : '') + (source.author && source.shortTitle ? ' • ' : '') + (source.shortTitle ? source.shortTitle : '')"
+                [meta]="source.repositoryName ? '📍 ' + source.repositoryName : 'Kein Repositorium'"
+                badgeText="Quelle" badgeColor="success" (onClick)="openEditModal(source)">
 
-                    <div actions *ngIf="source.usageCount > 0"
-                        class="text-xs px-2.5 py-1 rounded bg-brand-100/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
-                        {{ source.usageCount }} Zitate
-                    </div>
-                </app-entity-card>
+                <div actions *ngIf="source.usageCount > 0"
+                    class="text-xs px-2.5 py-1 rounded bg-brand-100/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap">
+                    {{ source.usageCount }} Zitate
+                </div>
+            </app-entity-card>
 
-            </app-list-view>
-        </ng-container>
+        </app-list-view>
+    </ng-container>
 
-        <!-- Repositories Tab -->
-        <ng-container *ngIf="activeTab() === 'repositories'">
-            <app-repository-list [currentTree]="currentTree()"></app-repository-list>
-        </ng-container>
-    </div>
-</app-page-container>
+    <!-- Repositories Tab -->
+    <ng-container *ngIf="activeTab() === 'repositories'">
+        <app-repository-list [currentTree]="currentTree()"></app-repository-list>
+    </ng-container>
+</div>
 
 <app-source-modal *ngIf="isModalOpen" [mode]="modalMode" [sourceData]="selectedSourceData" [currentTree]="currentTree()"
     [allSources]="sources()" (closeModal)="closeModal()" (saved)="onSourceSaved()" (deleted)="onSourceDeleted($event)"

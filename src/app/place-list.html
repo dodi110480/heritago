@@ -1,56 +1,51 @@
-<app-page-container [wide]="true">
-    <app-page-header title="Orte verwalten" description="Übersicht aller Orte in deiner Familiendatenbank">
+<app-page-header title="Orte verwalten" description="Übersicht aller Orte in deiner Familiendatenbank">
+    <div actions class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+        <button class="btn-primary flex-shrink-0 w-full md:w-auto" (click)="openAddModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Neuer Ort</span>
+        </button>
+    </div>
+</app-page-header>
 
-        <div actions class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <button class="btn-primary flex-shrink-0 w-full md:w-auto" (click)="openAddModal()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
+<!-- CONTENT -->
+<app-list-view
+    [isLoading]="loading()"
+    [isEmpty]="places().length === 0"
+    loadingText="Lade Orte..."
+    emptyIcon="📍"
+    emptyTitle="Keine Orte gefunden"
+    emptySubtitle="Lege deinen ersten Ort an, um zu beginnen.">
+
+    <app-entity-card *ngFor="let place of flattenHierarchy(hierarchy())"
+        [title]="place.phrase || (place.name | placeDisplay:'short')"
+        [subtitle]="place.phrase ? (place.name | placeDisplay:'short') : (place.parentName ? 'Teil von: ' + place.parentName : 'Hauptort / Root')"
+        [meta]="(place.lang || place.level) ? '[' + (place.lang || '--') + '] ' + place.level : ((place.latitude && place.longitude) ? 'Koord: ' + place.latitude + ', ' + place.longitude : 'Ort')"
+        icon="📍" [style.margin-left.px]="(place.depth || 0) * 16" badgeText="Ort" badgeColor="success"
+        [isFocused]="isModalOpen && selectedPlaceData?.id === place.id" (onClick)="openEditModal(place)">
+
+        <div actions class="flex gap-1 items-center">
+            <span *ngIf="place.usage?.total > 0"
+                class="text-[10px] px-2 py-0.5 rounded bg-neutral-400/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap mr-1"
+                [title]="'Events: ' + place.usage?.eventCount + ', Fakten: ' + place.usage?.factCount + ', Ass.: ' + place.usage?.associationCount">
+                {{ place.usage.total }} Verkn.
+            </span>
+            <button
+                class="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-400/50 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/10 transition-all border border-canvas-white/5 hover:border-brand-500/20"
+                (click)="$event.stopPropagation(); openEditModal(place)" title="Bearbeiten">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                 </svg>
-                <span>Neuer Ort</span>
             </button>
         </div>
-    </app-page-header>
+    </app-entity-card>
 
-    <!-- CONTENT -->
-    <app-list-view
-        [isLoading]="loading()"
-        [isEmpty]="places().length === 0"
-        loadingText="Lade Orte..."
-        emptyIcon="📍"
-        emptyTitle="Keine Orte gefunden"
-        emptySubtitle="Lege deinen ersten Ort an, um zu beginnen.">
-
-        <app-entity-card *ngFor="let place of flattenHierarchy(hierarchy())"
-            [title]="place.phrase || (place.name | placeDisplay:'short')"
-            [subtitle]="place.phrase ? (place.name | placeDisplay:'short') : (place.parentName ? 'Teil von: ' + place.parentName : 'Hauptort / Root')"
-            [meta]="(place.lang || place.level) ? '[' + (place.lang || '--') + '] ' + place.level : ((place.latitude && place.longitude) ? 'Koord: ' + place.latitude + ', ' + place.longitude : 'Ort')"
-            icon="📍" [style.margin-left.px]="(place.depth || 0) * 16" badgeText="Ort" badgeColor="success"
-            [isFocused]="isModalOpen && selectedPlaceData?.id === place.id" (onClick)="openEditModal(place)">
-
-            <div actions class="flex gap-1 items-center">
-                <span *ngIf="place.usage?.total > 0"
-                    class="text-[10px] px-2 py-0.5 rounded bg-neutral-400/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap mr-1"
-                    [title]="'Events: ' + place.usage?.eventCount + ', Fakten: ' + place.usage?.factCount + ', Ass.: ' + place.usage?.associationCount">
-                    {{ place.usage.total }} Verkn.
-                </span>
-                <button
-                    class="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-400/50 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/10 transition-all border border-canvas-white/5 hover:border-brand-500/20"
-                    (click)="$event.stopPropagation(); openEditModal(place)" title="Bearbeiten">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                </button>
-            </div>
-        </app-entity-card>
-
-    </app-list-view>
-</app-page-container>
-
-
+</app-list-view>
 
 <app-place-modal [visible]="isModalOpen" [mode]="modalMode" [initialData]="selectedPlaceData" (saved)="onPlaceSaved()"
     (closed)="closeModal()" (deleted)="onPlaceDeleted()" (merged)="onPlaceMerged()">

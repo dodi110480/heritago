@@ -1,11 +1,13 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, signal } from '@angular/core';
+import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { Navbar } from './navbar';
+import { AppPageContainerComponent } from './ui/app-page-container';
+import { filter, map, mergeMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, Navbar],
+  imports: [RouterOutlet, Navbar, AppPageContainerComponent],
   template: `
     <div class="min-h-screen text-neutral-200">
       <!-- Central Navbar -->
@@ -13,7 +15,9 @@ import { Navbar } from './navbar';
 
       <!-- Main Content Area -->
       <main class="pt-14 md:pt-16">
-        <router-outlet></router-outlet>
+        <app-page-container [wide]="isWide()">
+            <router-outlet></router-outlet>
+        </app-page-container>
       </main>
 
 
@@ -24,4 +28,20 @@ import { Navbar } from './navbar';
     </div>
   `
 })
-export class AppShellComponent { }
+export class AppShellComponent {
+    isWide = signal(false);
+
+    constructor(private router: Router, private activatedRoute: ActivatedRoute) {
+        this.router.events.pipe(
+            filter(event => event instanceof NavigationEnd),
+            map(() => this.activatedRoute),
+            map(route => {
+                while (route.firstChild) route = route.firstChild;
+                return route;
+            }),
+            mergeMap(route => route.data)
+        ).subscribe(data => {
+            this.isWide.set(!!data['wide']);
+        });
+    }
+}

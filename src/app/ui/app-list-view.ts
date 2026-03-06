@@ -1,10 +1,11 @@
 import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { AppEmptyStateComponent } from './app-empty-state';
 
 @Component({
   selector: 'app-list-view',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AppEmptyStateComponent],
   template: `
     <div class="relative w-full overflow-y-visible pb-10">
       <!-- Loading State -->
@@ -14,14 +15,14 @@ import { CommonModule } from '@angular/common';
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!isLoading && isEmpty" class="py-32 flex flex-col items-center justify-center text-neutral-950 glass-card">
-        <div class="w-20 h-20 bg-brand-100 rounded-full flex items-center justify-center mb-6 text-4xl opacity-50">
-          {{ emptyIcon }}
+      <app-empty-state *ngIf="!isLoading && isEmpty"
+        [icon]="emptyIcon"
+        [title]="emptyTitle"
+        [message]="emptySubtitle">
+        <div actions>
+          <ng-content select="[empty-actions]"></ng-content>
         </div>
-        <h3 class="text-xl font-bold text-neutral-900 mb-2">{{ emptyTitle }}</h3>
-        <p class="text-neutral-950 text-center max-w-md">{{ emptySubtitle }}</p>
-        <ng-content select="[empty-actions]"></ng-content>
-      </div>
+      </app-empty-state>
 
       <!-- Content Grid -->
       <div [style.display]="(isLoading || isEmpty) ? 'none' : ''" 

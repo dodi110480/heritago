@@ -280,6 +280,14 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         return primary?.url ? this.gedcomService.getMediaUrl(primary.url) : null;
     }
 
+    getPersonAvatarData(personId: string | undefined): { url: string | null, gender: string } {
+        if (!personId) return { url: null, gender: 'U' };
+        const p = this.treeData()?.individuals.find(i => i.id === personId);
+        if (!p) return { url: null, gender: 'U' };
+        const primaryMedia = p.media && p.media.length > 0 ? (p.media.find(m => m.isPrimary) || p.media[0]) : null;
+        return { url: primaryMedia?.url || null, gender: p.gender || 'U' };
+    }
+
     getFamilyWedding(familyId: string | undefined): string {
         if (!familyId) return '';
         const fam = this.treeData()?.families.find(f => f.id === familyId);

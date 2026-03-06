@@ -1,24 +1,22 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AppSectionHeaderComponent } from './ui/app-section-header';
 
 import { AppModalShell } from './ui/app-modal-shell';
 
 @Component({
     selector: 'app-person-expert-basics-tab',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell],
+    imports: [CommonModule, FormsModule, AppModalShell, AppSectionHeaderComponent],
     template: `
         <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0 space-y-6">
                 <div class="glass-card !bg-canvas-white/3 !rounded-2xl !p-5 cursor-pointer hover:bg-canvas-white/5 transition-all"
                     (click)="openBasicsModal()">
-                    <div class="flex items-start justify-between gap-4">
-                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-canvas-white">
-                            <span class="w-2 h-6 bg-brand-500 rounded-full"></span> Basisdaten
-                        </h3>
-                        <span class="text-[10px] uppercase tracking-widest text-neutral-950">Klick zum Bearbeiten</span>
-                    </div>
+                    <app-section-header title="Basisdaten" icon="🧾">
+                        <span actions class="text-[10px] uppercase tracking-widest text-neutral-950">Klick zum Bearbeiten</span>
+                    </app-section-header>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>

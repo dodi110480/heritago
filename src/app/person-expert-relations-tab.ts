@@ -1,21 +1,20 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { AppAvatarComponent } from './ui/app-avatar';
+import { AppEmptyStateComponent } from './ui/app-empty-state';
+import { AppSectionHeaderComponent } from './ui/app-section-header';
 
 
 @Component({
     selector: 'app-person-expert-relations-tab',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, AppAvatarComponent, AppEmptyStateComponent, AppSectionHeaderComponent],
     template: `
         <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">
-                <div class="flex justify-between items-center mb-8">
-                    <div>
-                        <h2 class="text-xl font-semibold text-canvas-white">Familie & Beziehungen</h2>
-                        <p class="text-sm text-neutral-400 mt-1">Verwalte Ehepartner, Eltern und Kinder.</p>
-                    </div>
-                    <div class="flex items-center gap-3">
+                <app-section-header title="Familie & Beziehungen" icon="👨‍👩‍👧‍👦" description="Verwalte Ehepartner, Eltern und Kinder.">
+                    <div actions class="flex items-center gap-3">
                         <button (click)="toggleFamilyEdit()" [class.bg-brand-500]="isEditingFamily()"
                             [class.text-canvas-white]="isEditingFamily()" [class.bg-canvas-white/5]="!isEditingFamily()"
                             [class.text-neutral-400]="!isEditingFamily()"
@@ -28,10 +27,10 @@ import { FormsModule } from '@angular/forms';
                             </svg>
                         </button>
                         <button (click)="addRelation()" class="btn-primary !w-auto !py-2">
-                            + Beziehung hinzufügen
+                            + Beziehung
                         </button>
                     </div>
-                </div>
+                </app-section-header>
 
                 <div *ngIf="relations().length > 0" class="space-y-3">
                     <div *ngFor="let rel of relations(); let i = index"
@@ -83,16 +82,24 @@ import { FormsModule } from '@angular/forms';
                         </div>
 
                         <ng-template #relRead>
-                            <div class="w-24 text-[10px] font-bold text-neutral-950 uppercase tracking-widest">
-                                {{ getRelationLabel(rel.type) }}
-                            </div>
-                            <div class="flex-1">
-                                <div class="text-sm font-semibold text-canvas-white mb-1 group-hover:text-brand-400 transition-colors">
-                                    {{ rel.personName }}
+                            <div class="flex items-center gap-3 flex-1">
+                                <app-avatar 
+                                    [imageUrl]="getPersonAvatarData(rel.personId).url" 
+                                    [gender]="getPersonAvatarData(rel.personId).gender" 
+                                    size="sm"
+                                    class="shrink-0"
+                                ></app-avatar>
+                                <div class="w-24 text-[10px] font-bold text-neutral-950 uppercase tracking-widest shrink-0">
+                                    {{ getRelationLabel(rel.type) }}
                                 </div>
-                                <div *ngIf="rel.type === 'SPOUSE' && getFamilyWedding(rel.familyId)"
-                                    class="text-[10px] text-neutral-400 flex items-center gap-1.5">
-                                    <span class="text-xs">💍</span> {{ getFamilyWedding(rel.familyId) }}
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-semibold text-canvas-white mb-0.5 group-hover:text-brand-400 transition-colors truncate">
+                                        {{ rel.personName }}
+                                    </div>
+                                    <div *ngIf="rel.type === 'SPOUSE' && getFamilyWedding(rel.familyId)"
+                                        class="text-[10px] text-neutral-400 flex items-center gap-1.5 truncate">
+                                        <span class="text-xs">💍</span> {{ getFamilyWedding(rel.familyId) }}
+                                    </div>
                                 </div>
                             </div>
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -105,11 +112,12 @@ import { FormsModule } from '@angular/forms';
                     </div>
                 </div>
 
-                <div *ngIf="relations().length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-canvas-white/5 rounded-3xl text-neutral-950">
-                    <span class="text-4xl mb-3 opacity-20">👨‍👩‍👧‍👦</span>
-                    <p class="font-medium">Keine familiären Beziehungen hinterlegt.</p>
-                </div>
+                <app-empty-state *ngIf="relations().length === 0"
+                    icon="👨‍👩‍👧‍👦" 
+                    title="Keine Beziehungen" 
+                    message="Verknüpfe diese Person mit Eltern, Partnern oder Kindern, um den Stammbaum aufzubauen.">
+                    <button actions (click)="addRelation()" class="btn-secondary !py-2 !px-4 text-xs">Beziehung hinzufügen</button>
+                </app-empty-state>
             </div>
         </div>
     `
@@ -134,5 +142,6 @@ export class PersonExpertRelationsTabComponent {
     removeRelation(i: number) { this.ctx.removeRelation(i); }
     getRelationLabel(type: string) { return this.ctx.getRelationLabel(type); }
     getFamilyWedding(familyId?: string) { return this.ctx.getFamilyWedding(familyId); }
+    getPersonAvatarData(personId: string | undefined) { return this.ctx.getPersonAvatarData(personId); }
 }
 

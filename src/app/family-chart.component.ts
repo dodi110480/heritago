@@ -117,20 +117,20 @@ import 'family-chart/styles/family-chart.css';
   styles: [`
 
   .f3 {
-    --female-color: rgba(119, 24, 37, 1);
-    --male-color: rgba(7, 93, 151, 1);
-    --genderless-color: lightgray;
-    --background-color: rgb(33, 33, 33);
-    --text-color: #fff;
-    --fc-primary: #448aff;
-    --fc-surface: #1e1e1e;
-    --fc-surface-2: #252525;
-    --fc-border: #333;
-    --fc-text-muted: #888;
-    --fc-text-soft: #ddd;
-    --fc-toolbar-bg: rgba(45, 45, 45, 0.9);
-    --fc-toolbar-border: rgba(255, 255, 255, 0.1);
-    --fc-overlay: rgba(0, 0, 0, 0.7);
+    --female-color: #f472b6;
+    --male-color: #60a5fa;
+    --genderless-color: #94a3b8;
+    --background-color: transparent;
+    --text-color: #1e293b;
+    --fc-primary: #bf953f;
+    --fc-surface: rgba(255, 255, 255, 0.7);
+    --fc-surface-2: rgba(255, 255, 255, 0.85);
+    --fc-border: rgba(255, 255, 255, 0.18);
+    --fc-text-muted: #64748b;
+    --fc-text-soft: #334155;
+    --fc-toolbar-bg: rgba(255, 255, 255, 0.7);
+    --fc-toolbar-border: rgba(255, 255, 255, 0.18);
+    --fc-overlay: rgba(0, 0, 0, 0.4);
     font-family: 'Roboto', sans-serif;
 }
 
@@ -165,7 +165,7 @@ import 'family-chart/styles/family-chart.css';
         cursor: pointer;
         font-weight: 500;
         transition: all 0.2s;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
     .fc-icon-btn:hover { background: var(--fc-primary); transform: translateY(-2px); }
 
@@ -218,9 +218,9 @@ import 'family-chart/styles/family-chart.css';
         display: flex;
         width: 100%;
         gap: 2px;
-        background: #fff;
+        background: rgba(255, 255, 255, 0.9);
         padding: 4px;
-        border-radius: 8px;
+        border-radius: 10px;
         border: 1px solid var(--fc-border);
     }
 
@@ -442,7 +442,7 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
       .attr("style", "position: absolute; top: 20px; right: 20px; width: 220px; z-index: 1000;");
 
     const search_input = search_cont.append("input")
-      .attr("style", "width: 100%; padding: 10px 15px; background: var(--fc-toolbar-bg); backdrop-filter: blur(8px); border: 1px solid var(--fc-toolbar-border); border-radius: 20px; color: white; outline: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3);")
+      .attr("style", "width: 100%; padding: 10px 18px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; color: #1e293b; outline: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-weight: 500;")
       .attr("type", "text")
       .attr("placeholder", "Person suchen...")
       .on("input", (event: any) => {
@@ -452,7 +452,7 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
       });
 
     const dropdown = search_cont.append("div")
-      .attr("style", "background: var(--fc-surface); max-height: 300px; overflow-y: auto; border-radius: 12px; margin-top: 8px; border: 1px solid var(--fc-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);");
+      .attr("style", "background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); max-height: 300px; overflow-y: auto; border-radius: 16px; margin-top: 8px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.1);");
 
     const updateSearchDropdown = (options: any[]) => {
       dropdown.selectAll("div").data(options).join("div")

@@ -70,29 +70,17 @@ export class FamilyList implements OnInit {
         return p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unbekannt';
     }
 
-    getPersonImage(id: string | undefined): string {
-        const p = this.getPersonById(id);
-        if (!p) return 'assets/avatars/unknown.svg';
-        if (p.media && p.media.length > 0) {
-            const primary = p.media.find(m => m.isPrimary) || p.media[0];
-            if (primary?.url) return this.gedcomService.getMediaUrl(primary.url);
-        }
-        const gender = p.gender === 'M' ? 'male' : (p.gender === 'F' ? 'female' : 'unknown');
-        return `assets/avatars/${gender}.svg`;
+    getFamilyImage(fam: Family): { url: string | null, gender: string } {
+        const h = this.getPersonById(fam.husband);
+        if (h?.media?.[0]?.url) return { url: h.media[0].url, gender: h.gender };
+        
+        const w = this.getPersonById(fam.wife);
+        if (w?.media?.[0]?.url) return { url: w.media[0].url, gender: w.gender };
+        
+        return { url: null, gender: h?.gender || w?.gender || 'U' };
     }
 
-    getFamilyImage(fam: Family): string {
-        // Use husband's image, if not available use wife's, if not available return unknown
-        if (fam.husband) {
-            const img = this.getPersonImage(fam.husband);
-            if (!img.includes('unknown.svg')) return img;
-        }
-        if (fam.wife) {
-            const img = this.getPersonImage(fam.wife);
-            if (!img.includes('unknown.svg')) return img;
-        }
-        return 'assets/avatars/unknown.svg';
-    }
+
 
     getPersonGender(id: string | undefined): string {
         const p = this.getPersonById(id);

@@ -18,16 +18,16 @@ import { CommonModule } from '@angular/common';
     <div class="fixed inset-0 bg-neutral-900/20 backdrop-blur-md flex items-center justify-center z-[3000]" (click)="cancel.emit()">
       <div class="modal-glass w-[90vw] max-w-[1200px] h-[85vh] flex flex-col overflow-hidden shadow-2xl" (click)="$event.stopPropagation()">
 
-        <div class="p-6 bg-brand-100 border-b border-neutral-300 flex items-center justify-between">
+        <div class="p-6 bg-canvas/80 border-b border-neutral-200 flex items-center justify-between">
           <h3 class="text-xl font-bold text-neutral-900">Bild zuschneiden</h3>
           <div class="flex gap-2">
-            <button class="btn-ghost !w-auto !px-4 !py-2 border border-neutral-300" (click)="setAspect('free')">Frei</button>
-            <button class="btn-ghost !w-auto !px-4 !py-2 border border-neutral-300" (click)="setAspect(1)">1:1</button>
-            <button class="btn-ghost !w-auto !px-4 !py-2 border border-neutral-300" (click)="useFullImage()">Ganzes Bild</button>
+            <button class="btn-ghost !w-auto !px-4 !py-2 border border-neutral-200" (click)="setAspect('free')">Frei</button>
+            <button class="btn-ghost !w-auto !px-4 !py-2 border border-neutral-200" (click)="setAspect(1)">1:1</button>
+            <button class="btn-ghost !w-auto !px-4 !py-2 border border-neutral-200" (click)="useFullImage()">Ganzes Bild</button>
           </div>
         </div>
 
-        <div class="flex-1 flex items-center justify-center bg-brand-100 overflow-hidden">
+        <div class="flex-1 flex items-center justify-center bg-neutral-900/5 overflow-hidden">
           <canvas #canvas
             class="max-w-full max-h-full touch-none rounded-xl"
             (pointerdown)="onPointerDown($event)"
@@ -38,7 +38,7 @@ import { CommonModule } from '@angular/common';
           ></canvas>
         </div>
 
-        <div class="p-6 bg-brand-100 border-t border-neutral-300 flex justify-end gap-3">
+        <div class="p-4 bg-canvas/80 border-t border-neutral-200 flex justify-end gap-3">
           <button class="btn-secondary !w-auto !py-2.5 !px-6" (click)="cancel.emit()">Abbrechen</button>
           <button class="btn-primary !w-auto !py-2.5 !px-8" (click)="crop()">Übernehmen</button>
         </div>
@@ -168,7 +168,7 @@ export class ImageCropper implements AfterViewInit {
       this.rect.h
     );
 
-    ctx.strokeStyle = '#3b82f6';
+    ctx.strokeStyle = '#bf953f'; // Brand Primary
     ctx.lineWidth = 2;
     ctx.strokeRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
 
@@ -180,7 +180,7 @@ export class ImageCropper implements AfterViewInit {
     const s = this.handleSize;
     const { x, y, w, h } = this.rect;
 
-    ctx.fillStyle = '#3b82f6';
+    ctx.fillStyle = '#bf953f';
     ctx.fillRect(x - s / 2, y - s / 2, s, s);
     ctx.fillRect(x + w - s / 2, y - s / 2, s, s);
     ctx.fillRect(x - s / 2, y + h - s / 2, s, s);

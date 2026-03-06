@@ -3,24 +3,21 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { AppModalShell } from './ui/app-modal-shell';
+import { AppEmptyStateComponent } from './ui/app-empty-state';
+import { AppSectionHeaderComponent } from './ui/app-section-header';
 
 @Component({
     selector: 'app-person-tab-citations',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell],
+    imports: [CommonModule, FormsModule, AppModalShell, AppEmptyStateComponent, AppSectionHeaderComponent],
     template: `
         <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">
-                <div class="flex justify-between items-center mb-8">
-                    <div>
-                        <h2 class="text-xl font-semibold text-neutral-900">Personenebene Quellen</h2>
-                        <p class="text-xs text-neutral-950 mt-1">Allgemeine Quellenbelege zur Person
-                            (nicht ereignis-spezifisch). Ereignis-Belege werden direkt am Ereignis gesetzt.</p>
-                    </div>
-                    <button (click)="addPersonCitation()" class="btn-primary !w-auto !py-2">
+                <app-section-header title="Allgemeine Quellen" icon="📖" description="Allgemeine Belege zur Person (nicht ereignis-spezifisch).">
+                    <button actions (click)="addPersonCitation()" class="btn-primary !w-auto !py-2">
                         + Beleg
                     </button>
-                </div>
+                </app-section-header>
 
                 <div *ngIf="person?.citations && person.citations.length > 0" class="space-y-3">
                     <div *ngFor="let cit of person.citations; let i = index"
@@ -35,12 +32,12 @@ import { AppModalShell } from './ui/app-modal-shell';
                     </div>
                 </div>
 
-                <div *ngIf="!person?.citations || person.citations.length === 0"
-                    class="py-12 flex flex-col items-center justify-center border-2 border-dashed border-neutral-300/60 rounded-3xl text-neutral-950">
-                    <span class="text-4xl mb-3 opacity-20">📖</span>
-                    <p class="font-medium">Keine allgemeinen Quellen vorhanden.</p>
-                    <p class="text-xs mt-1 text-neutral-600">Ereignis-spezifische Belege findest du direkt in der Timeline.</p>
-                </div>
+                <app-empty-state *ngIf="!person?.citations || person.citations.length === 0"
+                    icon="📖" 
+                    title="Keine allgemeinen Quellen" 
+                    message="Ereignis-spezifische Belege findest du direkt in der Timeline. Hier können allgemeine Quellen zur ganzen Person hinterlegt werden.">
+                    <button actions (click)="addPersonCitation()" class="btn-secondary !py-2 !px-4 text-xs">Quelle hinzufügen</button>
+                </app-empty-state>
             </div>
         </div>
 
