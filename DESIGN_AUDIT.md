@@ -97,3 +97,28 @@ Diese Punkte betreffen nicht die Farb-Tokens, sondern das grundsätzliche HTML-L
 - Erfolgreicher Abschluss der UI-Standardisierung 
 - Alle Legacy-Klassen (`bg-surface-*`, `text-state-*`) aus den HTML-Templates entfernt
 - Konsistente Anwendung von Glassmorphism und den Tailwing-Theme Farben (`ui-*`, `brand-*`, `accent-*`)
+
+---
+
+## UI-Komponenten Dokumentation
+
+Hier ist eine Übersicht über die dedizierten, wiederverwendbaren Custom-Components (`app-*` und wesentliche CSS-Klassen) der Heritago-Anwendung:
+
+### Layout & Struktur
+- **`app-page-container`**: Wrapper für den Hauptinhalt einer Ansicht. Erzeugt ein responsives zentriertes Layout mit definierten seitlichen Abständen (`px-4 md:px-12`) und ordnet den Seitenbereich ein. Über den Input `[wide]="true"` kann die maximale Breite von `max-w-6xl` auf `max-w-[1600px]` erhöht werden.
+- **`app-page-header`**: Der Standard-Seitenkopfbereich. Hebt den Haupttitel (`h1`) und eine optionale Beschreibung hervor. Über `<ng-content select="[actions]">` lassen sich außerdem globale Buttons für die Seite (z.B. "Neu anlegen") auf der rechten Seite einbetten.
+
+### Cards & Container
+- **`glass-card` (CSS-Klasse)**: Das zentrale Design-Element für strukturierte Flächen. Erzeugt einen Hintergrund mit Glassmorphism-Effekt und leichten Rahmen (`border-ui-border`). Diese Utility-Klasse wird im gesamten Projekt genutzt, um Bereiche einheitlich im Karteikarten-Gefühl erscheinen zu lassen.
+- **`app-card`**: Eine generische Komponente, die direkt einen `glass-card`-Hintergrund samt Schlagschatten implementiert. Verfügt typischerweise über einen sichtbaren (und abgetrennten) Header-Bereich (`[title]`) und ein großzügiges Standard-Padding für den Content.
+
+### Listen & Datenanzeige
+- **`app-entity-card`**: Die wichtigste Komponente zur Auflistung einzelner Datensätze (Person, Familie, Ort etc.). Sie liefert immer einen Titel, optional einen Avatar (oder Icon) auf der linken Seite sowie Untertitel (Subtitle und Meta). Die Entitäts-Karte wird hervorgehoben durch einen farbigen linken Rand (`badgeColor`), der semantische Stati oder Typen (`primary`, `highlight`, `success`, `danger`, `neutral`) visualisieren kann. Typischerweise leitet ein Klick via `routerLink` zum Detail-Datensatz weiter.
+- **`app-stat-card`**: Wird auf Dashboards und Übersichten (z.B. Statistics) verwendet. Sie zeigt eine große Zahl (`value`) mit einem kleinen Label (z.B. "Personen" oder "Medien") an. Durch ein dezent gehaltenes Hintergrund-Icon sowie Hover-Effekte mit spezifischen Akzentfarben (`accent`: brand, emerald, amber, purple) wird sie optisch zu einem Blickfang gemacht.
+
+### Overlays & Interaktion
+- **`app-modal-shell`**: Das Grundgerüst für alle Dialoge/Modals (etwa "Person bearbeiten", "Medium löschen"). Diese Shell liefert automatisch den abgedunkelten, weichgezeichneten Hintergrund (`backdrop-blur-xl`), die weiße Modal-Karte inklusive Header (Titel und "X" zum Schließen) und ein Fußfenster mit den standardisierten Buttons ("Abbrechen", "Speichern", oder optional "Löschen"). Unterstützt Modal-Größen von `sm` bis `xl`.
+
+### Formular & Aktionen (Altbestand, teilweise ersetzt)
+- **`app-button` (@deprecated)**: Ursprüngliche Button-Komponente mit Inputs für `variant` (`primary`, `secondary`, `outline` etc.) und `size`. **Hinweis:** Im Rahmen des Design-Audits wurde festgestellt, dass an vielen Stellen inzwischen wieder direkt auf direkte Tailwind-Utility-Klassen (`.btn-primary`, `.btn-secondary`, `.btn-danger`) gesetzt wird statt auf diese Komponente.
+- **`app-input` (@deprecated)**: Ursprünglicher Wrapper für Texteingabefelder mit Standard-Design und Label. **Hinweis:** Wird inzwischen ebenfalls zunehmend durch generisches HTML mit der CSS-Klasse `.form-input` anstelle des Component-Tags eingesetzt.
