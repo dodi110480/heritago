@@ -6,7 +6,6 @@ import { AuthService } from './auth.service';
 import { MediaAddModal } from './media-add-modal';
 import { AppEntityCard } from './ui/app-entity-card';
 import { AppPageHeaderComponent } from './ui/app-page-header';
-import { AppPageContainerComponent } from './ui/app-page-container';
 import { AppModalShell } from './ui/app-modal-shell';
 import { AppListViewComponent } from './ui/app-list-view';
 import { AppAvatarComponent } from './ui/app-avatar';
@@ -14,7 +13,7 @@ import { AppAvatarComponent } from './ui/app-avatar';
 @Component({
     selector: 'app-media-gallery',
     standalone: true,
-    imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppPageContainerComponent, AppModalShell, AppListViewComponent, AppAvatarComponent],
+    imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppModalShell, AppListViewComponent, AppAvatarComponent],
     templateUrl: './media-gallery.html'
 })
 export class MediaGallery implements OnInit {
@@ -101,10 +100,13 @@ export class MediaGallery implements OnInit {
 
         this.gedcomService.getMedia(tree.id, backendType, this.searchQuery()).subscribe({
             next: (res: any) => {
-                const items = (res.media || []).map((m: any) => ({
-                    ...m,
-                    previewUrl: this.gedcomService.getMediaUrl(m.remoteUrl || (m.filePath ? `/uploads/${m.filePath}` : ''))
-                }));
+                const items = (res.media || []).map((m: any) => {
+                    const url = m.remoteUrl || (m.filePath ? `/uploads/${m.filePath}` : '');
+                    return {
+                        ...m,
+                        previewUrl: this.gedcomService.getMediaUrl(url)
+                    };
+                });
                 this.mediaItems.set(items);
                 this.loading.set(false);
             },
@@ -339,8 +341,12 @@ export class MediaGallery implements OnInit {
     }
 
     isImage(item: any): boolean {
-        const mime = String(item?.mimeType || '').toLowerCase();
-        return mime.startsWith('image/');
+        if (!item) return false;
+        const mime = String(item.mimeType || '').toLowerCase();
+        if (mime.startsWith('image/')) return true;
+
+        const url = String(item.remoteUrl || item.filePath || '').toLowerCase();
+        return /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(url);
     }
 
     isPdf(item: any): boolean {

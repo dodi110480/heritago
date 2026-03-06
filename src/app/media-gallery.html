@@ -14,14 +14,13 @@
     </div>
 
     <div class="flex items-center gap-2 w-full md:w-auto">
-      <button class="btn-secondary flex-1 md:flex-none !py-2.5" (click)="loadMedia()">Aktualisieren</button>
       <button class="btn-primary flex-1 md:flex-none !py-2.5" (click)="showAddModal.set(true)">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
-        <span>Medium</span>
+        <span>Medium hochladen</span>
       </button>
     </div>
   </div>
@@ -32,55 +31,55 @@
   class="glass-card mb-8 !py-4 flex flex-wrap items-center justify-around gap-6 border-brand-500/10 bg-ui-card/40 backdrop-blur-md">
   <div class="flex flex-col items-center gap-1">
     <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Gesamt</span>
-    <strong class="text-2xl text-canvas-white font-black tracking-tight">{{ stats().total }}</strong>
+    <strong class="text-2xl text-neutral-900 font-black tracking-tight">{{ stats().total }}</strong>
   </div>
-  <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
+  <div class="w-px h-8 bg-neutral-200/50 hidden sm:block"></div>
   <div class="flex flex-col items-center gap-1">
     <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Fotos</span>
-    <strong class="text-2xl text-brand-400 font-black tracking-tight">{{ stats().fotos }}</strong>
+    <strong class="text-2xl text-brand-500 font-black tracking-tight">{{ stats().fotos }}</strong>
   </div>
-  <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
+  <div class="w-px h-8 bg-neutral-200/50 hidden sm:block"></div>
   <div class="flex flex-col items-center gap-1">
     <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Dokumente</span>
-    <strong class="text-2xl text-accent-success-400 font-black tracking-tight">{{ stats().docs }}</strong>
+    <strong class="text-2xl text-accent-success-500 font-black tracking-tight">{{ stats().docs }}</strong>
   </div>
-  <div class="w-px h-8 bg-canvas-white/5 hidden sm:block"></div>
+  <div class="w-px h-8 bg-neutral-200/50 hidden sm:block"></div>
   <div class="flex flex-col items-center gap-1">
     <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Unverknüpft</span>
-    <strong class="text-2xl text-accent-danger-400 font-black tracking-tight">{{ stats().unlinked }}</strong>
+    <strong class="text-2xl text-accent-danger-500 font-black tracking-tight">{{ stats().unlinked }}</strong>
   </div>
 </section>
 
 <!-- Tabs Integration -->
-<div class="flex gap-8 mb-6 border-b border-canvas-white/5 overflow-x-auto no-scrollbar">
+<div class="flex gap-8 mb-6 border-b border-neutral-200 overflow-x-auto no-scrollbar">
   <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
-    [class.text-brand-400]="filterType() === 'ALLE'" [class.text-neutral-500]="filterType() !== 'ALLE'"
+    [class.text-brand-500]="filterType() === 'ALLE'" [class.text-neutral-500]="filterType() !== 'ALLE'"
     (click)="filterType.set('ALLE'); loadMedia()">
     Alle
-    <div *ngIf="filterType() === 'ALLE'" class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow">
+    <div *ngIf="filterType() === 'ALLE'" class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500">
     </div>
   </button>
   <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
-    [class.text-brand-400]="filterType() === 'FOTOS'" [class.text-neutral-500]="filterType() !== 'FOTOS'"
+    [class.text-brand-500]="filterType() === 'FOTOS'" [class.text-neutral-500]="filterType() !== 'FOTOS'"
     (click)="filterType.set('FOTOS'); loadMedia()">
     Fotos
     <div *ngIf="filterType() === 'FOTOS'"
-      class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow">
+      class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500">
     </div>
   </button>
   <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
-    [class.text-brand-400]="filterType() === 'DOKUMENTE'" [class.text-neutral-500]="filterType() !== 'DOKUMENTE'"
+    [class.text-brand-500]="filterType() === 'DOKUMENTE'" [class.text-neutral-500]="filterType() !== 'DOKUMENTE'"
     (click)="filterType.set('DOKUMENTE'); loadMedia()">
     Dokumente
     <div *ngIf="filterType() === 'DOKUMENTE'"
-      class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
+      class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500"></div>
   </button>
   <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
-    [class.text-brand-400]="filterType() === 'UNLINKED'" [class.text-neutral-500]="filterType() !== 'UNLINKED'"
+    [class.text-brand-500]="filterType() === 'UNLINKED'" [class.text-neutral-500]="filterType() !== 'UNLINKED'"
     (click)="filterType.set('UNLINKED'); loadMedia()">
     Ohne Zuordnung
     <div *ngIf="filterType() === 'UNLINKED'"
-      class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
+      class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500"></div>
   </button>
 </div>
 
@@ -141,9 +140,9 @@
       <!-- Media Preview Card -->
       <div class="glass-card !p-5 !rounded-2xl space-y-4">
         <img *ngIf="isImage(selected())" [src]="selected()?.previewUrl"
-          class="max-w-full max-h-[60vh] object-contain rounded-2xl">
+          class="max-w-full max-h-[60vh] object-contain rounded-2xl mx-auto shadow-lg">
         <iframe *ngIf="isPdf(selected())" [src]="pdfUrl(selected())"
-          class="w-full h-[60vh] border-0 rounded-2xl"></iframe>
+          class="w-full h-[60vh] border-0 rounded-2xl shadow-lg"></iframe>
         <div *ngIf="!isImage(selected()) && !isPdf(selected())" class="p-20 text-center space-y-4">
           <div class="text-4xl">📎</div>
           <p class="text-neutral-400 text-sm">Keine Inline-Vorschau verfügbar.</p>
@@ -158,25 +157,25 @@
           Basis-Informationen</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-1.5 md:col-span-2">
-            <label class="block text-sm font-medium text-neutral-400">Titel</label>
+            <label class="block text-sm font-medium text-neutral-500">Titel</label>
             <input type="text" [(ngModel)]="selected()!.title" class="form-input" placeholder="Titel des Mediums...">
           </div>
           <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Medientyp</label>
+            <label class="block text-sm font-medium text-neutral-500">Medientyp</label>
             <select [(ngModel)]="selected()!.mediaType" class="form-input">
               <option *ngFor="let type of mediaTypeOptions" [value]="type">{{ type }}</option>
             </select>
           </div>
           <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">GEDCOM-ID</label>
+            <label class="block text-sm font-medium text-neutral-500">GEDCOM-ID</label>
             <input type="text" [(ngModel)]="selected()!.gedcomId" class="form-input" placeholder="@M123@">
           </div>
           <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Format</label>
+            <label class="block text-sm font-medium text-neutral-500">Format</label>
             <input type="text" [(ngModel)]="selected()!.fileFormat" class="form-input" placeholder="jpg, pdf, tiff...">
           </div>
           <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Dimensionen</label>
+            <label class="block text-sm font-medium text-neutral-500">Dimensionen</label>
             <input type="text" [(ngModel)]="selected()!.dimensions" class="form-input" placeholder="z.B. 3000x2000">
           </div>
         </div>
@@ -237,7 +236,7 @@
               class="form-input !py-1.5 !text-[11px] flex-1">
             <input type="text" [(ngModel)]="id.value" placeholder="ID Wert"
               class="form-input !py-1.5 !text-[11px] flex-1">
-            <button (click)="removeIdentifier(i)" class="text-accent-danger-500 hover:scale-110 transition-transform">
+            <button (click)="removeIdentifier(i)" class="text-accent-danger-500 hover:scale-110 transition-transform p-1">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2">
                 <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
