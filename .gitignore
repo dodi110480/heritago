@@ -38,6 +38,7 @@ yarn-error.log
 # Heritago specific
 server/uploads/*
 !server/uploads/.gitkeep
+server/media-storage/
 *.ged
 server/prisma/*.db
 server/prisma/*.db-journal
