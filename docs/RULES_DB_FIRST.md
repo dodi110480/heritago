@@ -1,10 +1,6 @@
----
-trigger: always_on
----
+# RULES_DB_FIRST.md - Heritago DB-First Prinzipien
 
-# Heritago DB-First Prinzipien
-
-Dieses Regelwerk ersetzt alle vorherigen GEDCOM-fokussierten Entwicklungsmodelle. Der Fokus liegt auf der Effizienz der Arbeit mit der PostgreSQL/Prisma-Datenbank.
+Der Fokus liegt auf der Effizienz der Arbeit mit der PostgreSQL/Prisma-Datenbank.
 
 1. Das Schema ist das Gesetz
 ## Die bestehende schema.prisma ist unveränderlich. Du darfst neue Felder, Modelle oder Relationen hinzufügen, solange sie das bestehende System nicht brechen. Jede Änderung kurz dokumentieren und Migrationen testen.

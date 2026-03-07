@@ -29,13 +29,13 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                                     <h3 class="font-bold text-lg text-neutral-900">{{ n.given }} {{ n.surname }}</h3>
                                     <span *ngIf="n.isPrimary" class="badge badge-primary text-[10px] py-0.5 px-2">Primär</span>
                                 </div>
-                                <p class="text-sm text-neutral-950 flex items-center gap-1">
-                                    <span class="text-xs font-mono bg-brand-100 px-1.5 py-0.5 rounded text-neutral-950">{{
+                                <p class="text-sm text-neutral-800 dark:text-neutral-200 flex items-center gap-1">
+                                    <span class="text-xs font-mono bg-brand-100 px-1.5 py-0.5 rounded text-neutral-800 dark:text-neutral-200">{{
                                         n.type === 'BIRTH' ? 'Geburtsname' : n.type === 'MARRIED' ? 'Ehename' : 'Alias' }}</span>
                                 </p>
                             </div>
                             <button (click)="$event.stopPropagation(); removeName(i)"
-                                class="p-1.5 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                                class="p-1.5 text-neutral-800 dark:text-neutral-200 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M3 6h18"></path>
@@ -49,7 +49,6 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                         icon="🧾" 
                         title="Keine weiteren Namen" 
                         message="Neben dem Primärnamen können hier Alias-Namen, Geburtsnamen oder religiöse Namen erfasst werden.">
-                        <button actions (click)="openNameModal()" class="btn-secondary !py-2 !px-4 text-xs">Name hinzufügen</button>
                     </app-empty-state>
                 </div>
             </div>

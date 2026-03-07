@@ -4,9 +4,9 @@ import { Observable, tap, of, catchError, map } from 'rxjs';
 import { environment } from './environment';
 
 export interface User {
-    id: number;
+    id: string;
     username: string;
-    realName: string;
+    email: string;
     isAdmin: boolean;
 }
 
@@ -75,6 +75,23 @@ export class AuthService {
         );
     }
 
+    register(username: string, email: string, password: string): Observable<{ success: boolean, message?: string }> {
+        return this.http.post<any>(`${this.apiUrl}/auth/register`,
+            { username, email, password },
+            { withCredentials: true }
+        ).pipe(
+            map(response => {
+                if (response.success) {
+                    this.currentUser.set(response.user);
+                    localStorage.setItem('user', JSON.stringify(response.user));
+                    return { success: true };
+                }
+                return { success: false, message: response.message };
+            }),
+            catchError(err => of({ success: false, message: err.error?.message || 'Registrierung fehlgeschlagen.' }))
+        );
+    }
+
     logout() {
         this.currentUser.set(null);
         localStorage.removeItem('user');
@@ -91,12 +108,12 @@ export class AuthService {
         );
     }
 
-    createTree(name: string, title: string, firstName: string, lastName: string, gender: string, birthDate: string): Observable<{ success: boolean; message?: string }> {
+    createTree(name: string, title: string, firstName: string, lastName: string, gender: string, birthDate: string, userId?: string): Observable<{ success: boolean; message?: string; tree?: Tree }> {
         return this.http.post<any>(`${this.apiUrl}/tree/create`,
-            { name, title, firstName, lastName, gender, birthDate },
+            { name, title, firstName, lastName, gender, birthDate, userId },
             { withCredentials: true }
         ).pipe(
-            map(response => ({ success: response.success, message: response.message })),
+            map(response => ({ success: response.success, message: response.message, tree: response.tree })),
             catchError(err => of({ success: false, message: err.error?.message || 'Ein unbekannter Fehler ist aufgetreten.' }))
         );
     }
@@ -107,5 +124,27 @@ export class AuthService {
 
     deleteTree(id: string): Observable<any> {
         return this.http.delete<any>(`${this.apiUrl}/tree/${id}`, { withCredentials: true });
+    }
+
+    // Admin Methods
+    getUsers(): Observable<any[]> {
+        return this.http.get<any>(`${this.apiUrl}/admin/users`, { withCredentials: true }).pipe(
+            map(response => response.success ? response.users : []),
+            catchError(() => of([]))
+        );
+    }
+
+    deleteUser(id: string): Observable<boolean> {
+        return this.http.delete<any>(`${this.apiUrl}/admin/users/${id}`, { withCredentials: true }).pipe(
+            map(response => response.success),
+            catchError(() => of(false))
+        );
+    }
+
+    updateUserRole(id: string, role: string): Observable<boolean> {
+        return this.http.patch<any>(`${this.apiUrl}/admin/users/${id}/role`, { role }, { withCredentials: true }).pipe(
+            map(response => response.success),
+            catchError(() => of(false))
+        );
     }
 }

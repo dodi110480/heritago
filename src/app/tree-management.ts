@@ -98,10 +98,16 @@ export class TreeManagement implements OnInit {
                 .replace(/[^-a-z0-9]/g, '')
                 .replace(/-+/g, '-');
 
-            this.authService.createTree(normalizedName, this.title, this.firstName, this.lastName, this.gender, this.birthDate).subscribe(result => {
+            const userId = this.authService.currentUser()?.id;
+
+            this.authService.createTree(normalizedName, this.title, this.firstName, this.lastName, this.gender, this.birthDate, userId).subscribe(result => {
                 if (result.success) {
+                    if (result.tree) {
+                        this.authService.selectTree(result.tree);
+                    }
                     this.loadTrees();
                     this.showForm.set('none');
+                    this.router.navigate(['/persons']);
                 } else {
                     this.error.set(result.message || 'Fehler beim Erstellen.');
                 }

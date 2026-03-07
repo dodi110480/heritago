@@ -33,6 +33,11 @@ export class PersonList {
     isCreating = false;
     showCreateModal = signal(false);
 
+    getAvatarUrl(person: Individual): string {
+        if (!person.profileImageUrl) return '';
+        return this.gedcomService.getMediaUrl(person.profileImageUrl, 'thumbs');
+    }
+
     filteredIndividuals = computed(() => {
         const term = this.searchTerm().toLowerCase();
         const base = this.individuals().filter(person => {

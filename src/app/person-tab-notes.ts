@@ -39,7 +39,6 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                     icon="📝" 
                     title="Keine Notizen" 
                     message="Halte wichtige Details oder Forschungsergebnisse zu dieser Person in Notizen fest.">
-                    <button actions (click)="addPersonNote()" class="btn-secondary !py-2 !px-4 text-xs">Erste Notiz schreiben</button>
                 </app-empty-state>
             </div>
         </div>

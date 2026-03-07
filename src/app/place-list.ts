@@ -26,6 +26,31 @@ export class PlaceList {
     isSaving = signal(false);
     currentTree = signal<string | null>(null);
     errorMessage = signal<string | null>(null);
+    searchQuery = signal('');
+
+    filteredHierarchy = computed(() => {
+        const query = this.searchQuery().toLowerCase().trim();
+        if (!query) return this.hierarchy();
+
+        const filterNodes = (nodes: any[]): any[] => {
+            return nodes
+                .map(node => {
+                    const matches = 
+                        node.name.toLowerCase().includes(query) || 
+                        (node.phrase && node.phrase.toLowerCase().includes(query));
+                    
+                    const filteredChildren = node.children ? filterNodes(node.children) : [];
+                    
+                    if (matches || filteredChildren.length > 0) {
+                        return { ...node, children: filteredChildren };
+                    }
+                    return null;
+                })
+                .filter((n): n is any => n !== null);
+        };
+
+        return filterNodes(this.hierarchy());
+    });
 
     // Modal State
     isModalOpen = false;

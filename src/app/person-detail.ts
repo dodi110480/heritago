@@ -11,6 +11,11 @@ import { PersonCreateModal } from './person-create-modal';
 import { CanComponentDeactivate } from './unsaved-changes.guard';
 import { forkJoin, of, switchMap } from 'rxjs';
 
+import { MediaSelector } from './media-selector';
+import { MediaAddModal } from './media-add-modal';
+import { EventModal } from './event-modal';
+import { ImageViewer } from './image-viewer';
+
 import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppModalShell } from './ui/app-modal-shell';
 import { PersonExpertBasicsTabComponent } from './person-expert-basics-tab';
@@ -61,7 +66,11 @@ interface TimelineItem {
         PersonTabCitationsComponent,
         PersonTabNamesComponent,
         PersonTabAssociationsComponent,
-        PersonTabDnaComponent
+        PersonTabDnaComponent,
+        MediaSelector,
+        MediaAddModal,
+        EventModal,
+        ImageViewer
     ],
     templateUrl: './person-detail.html',
     encapsulation: ViewEncapsulation.None
@@ -71,7 +80,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private gedcomService = inject(GedcomService);
-    private authService = inject(AuthService);
+    public authService = inject(AuthService);
     readonly self = this;
 
     personId = '';
@@ -119,7 +128,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     editMediaDraft = signal<any>({});
     activeTimelineIndexForMediaAdd: number | null = null;
 
-    showMediaSelector = false;
+    showMediaSelector = signal(false);
     isEditingFamily = signal(false);
     showNameCreateModal = signal(false);
     showNameEditModal = signal(false);
@@ -168,18 +177,25 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         totalCm: null
     });
     showTimelineCreateModal = signal(false);
+    timelineModalTab = signal<'basics' | 'media' | 'citations' | 'notes'>('basics');
     newTimelineDraft = signal<{
         itemKind: 'event' | 'fact';
         tag: string;
         date: string;
         place: string;
         description: string;
+        media: any[];
+        citations: any[];
+        notes: string[];
     }>({
         itemKind: 'event',
         tag: 'DEAT',
         date: '',
         place: '',
-        description: ''
+        description: '',
+        media: [],
+        citations: [],
+        notes: []
     });
     showTimelineItemModal = signal(false);
     activeTimelineItemIndex = signal<number | null>(null);
@@ -208,6 +224,8 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     // Viewer
     viewerUrl = signal<string | null>(null);
     viewerTitle = signal<string>('');
+    // Internal: remember to reopen timeline modal after media dialogs
+    pendingReopenTimelineModal: 'create' | 'item' | null = null;
 
     // Place Management
     showPlaceModal = false;
@@ -221,6 +239,8 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
     individualSearchResults = signal<Individual[]>([]);
     showIndividualResults = signal<number | null>(null);
+
+    isMediaForNewTimelineItem = false;
 
     // Available sources for citation dropdowns
     availableSources = signal<any[]>([]);
@@ -275,7 +295,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     getProfileImage(person: Individual): string | null {
         if (!person.media || person.media.length === 0) return null;
         const primary = person.media.find(m => m.isPrimary) || person.media[0];
-        return primary?.url ? this.gedcomService.getMediaUrl(primary.url) : null;
+        return primary?.id ? this.gedcomService.getMediaUrl(primary.id, 'thumbs') : null;
     }
 
     getPersonAvatarData(personId: string | undefined): { url: string | null, gender: string } {
@@ -283,7 +303,8 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         const p = this.treeData()?.individuals.find(i => i.id === personId);
         if (!p) return { url: null, gender: 'U' };
         const primaryMedia = p.media && p.media.length > 0 ? (p.media.find(m => m.isPrimary) || p.media[0]) : null;
-        return { url: primaryMedia?.url || null, gender: p.gender || 'U' };
+        const url = primaryMedia?.id ? this.gedcomService.getMediaUrl(primaryMedia.id, 'thumbs') : null;
+        return { url, gender: p.gender || 'U' };
     }
 
     getFamilyWedding(familyId: string | undefined): string {
@@ -882,9 +903,9 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         this.savePerson();
     }
 
-    getMediaUrlExt(url: string | undefined): string | null {
-        if (!url) return null;
-        return this.gedcomService.getMediaUrl(url);
+    getMediaUrlExt(idOrUrl: string | undefined, variant?: string): string | null {
+        if (!idOrUrl) return null;
+        return this.gedcomService.getMediaUrl(idOrUrl, variant || 'thumbs');
     }
 
     isImage(m: any): boolean {
@@ -893,8 +914,8 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         return false;
     }
 
-    getMediaUrl(url: string | undefined): string {
-        return this.gedcomService.getMediaUrl(url);
+    getMediaUrl(idOrUrl: string | undefined, variant?: string): string {
+        return this.gedcomService.getMediaUrl(idOrUrl, variant);
     }
 
     openViewer(media: any) {
@@ -911,8 +932,34 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     onMediaAddUploaded(media: any) {
         if (!media) return;
 
-        if (this.activeTimelineIndexForMediaAdd !== null) {
-            // Event media
+        if (this.isMediaForNewTimelineItem) {
+            // New timeline item draft
+            this.newTimelineDraft.update(v => ({
+                ...v,
+                media: [...(v.media || []), {
+                    id: media.id,
+                    url: media.remoteUrl || (media.filePath ? `/uploads/${media.filePath}` : media.url),
+                    title: media.title || media.filePath || '',
+                    isPrimary: false,
+                    mimeType: media.mimeType
+                }]
+            }));
+            this.isMediaForNewTimelineItem = false;
+        } else if (this.activeTimelineItemIndex() !== null) {
+            // Existing event media in modal
+            const current = this.timeline();
+            const idx = this.activeTimelineItemIndex()!;
+            current[idx].media = current[idx].media || [];
+            current[idx].media!.push({
+                id: media.id,
+                url: media.remoteUrl || (media.filePath ? `/uploads/${media.filePath}` : media.url),
+                title: media.title || media.filePath || '',
+                isPrimary: false,
+                mimeType: media.mimeType
+            });
+            this.timeline.set([...current]);
+        } else if (this.activeTimelineIndexForMediaAdd !== null) {
+            // Existing event media
             const current = this.timeline();
             const idx = this.activeTimelineIndexForMediaAdd;
             current[idx].media = current[idx].media || [];
@@ -941,6 +988,13 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         }
         this.markDirty();
         this.showMediaAddModal.set(false);
+        // Reopen timeline modal if it was hidden to open media
+        if (this.pendingReopenTimelineModal === 'create') {
+            this.showTimelineCreateModal.set(true);
+        } else if (this.pendingReopenTimelineModal === 'item') {
+            this.showTimelineItemModal.set(true);
+        }
+        this.pendingReopenTimelineModal = null;
     }
 
     openMediaEditModal(index: number) {
@@ -983,7 +1037,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
     openMediaSelector(itemIndex?: number) {
         this.activeTimelineIndexForMedia = itemIndex !== undefined ? itemIndex : null;
-        this.showMediaSelector = true;
+        this.showMediaSelector.set(true);
     }
 
     getRelationLabel(type: string): string {
@@ -1003,7 +1057,33 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     onMediaSelected(mediaObj: any) {
         if (!mediaObj) return;
 
-        if (this.activeTimelineIndexForMedia !== null) {
+        if (this.isMediaForNewTimelineItem) {
+             // New timeline item draft
+             this.newTimelineDraft.update(v => ({
+                 ...v,
+                 media: [...(v.media || []), {
+                     id: mediaObj.id,
+                     url: mediaObj.remoteUrl || (mediaObj.filePath ? `/uploads/${mediaObj.filePath}` : mediaObj.url),
+                     title: mediaObj.title || mediaObj.filePath || '',
+                     isPrimary: false,
+                     mimeType: mediaObj.mimeType
+                 }]
+             }));
+             this.isMediaForNewTimelineItem = false;
+        } else if (this.activeTimelineItemIndex() !== null) {
+            // Existing event media in modal
+            const current = this.timeline();
+            const idx = this.activeTimelineItemIndex()!;
+            current[idx].media = current[idx].media || [];
+            current[idx].media!.push({
+                id: mediaObj.id,
+                url: mediaObj.remoteUrl || (mediaObj.filePath ? `/uploads/${mediaObj.filePath}` : mediaObj.url),
+                title: mediaObj.title || mediaObj.filePath || '',
+                isPrimary: false,
+                mimeType: mediaObj.mimeType
+            });
+            this.timeline.set([...current]);
+        } else if (this.activeTimelineIndexForMedia !== null) {
             // Event media
             const current = this.timeline();
             const idx = this.activeTimelineIndexForMedia;
@@ -1031,7 +1111,15 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                 this.person.set({ ...p });
             }
         }
-        this.showMediaSelector = false;
+        this.showMediaSelector.set(false);
+        this.markDirty();
+        // Reopen timeline modal if it was hidden to open selector
+        if (this.pendingReopenTimelineModal === 'create') {
+            this.showTimelineCreateModal.set(true);
+        } else if (this.pendingReopenTimelineModal === 'item') {
+            this.showTimelineItemModal.set(true);
+        }
+        this.pendingReopenTimelineModal = null;
     }
 
     addPersonMedia() {
@@ -1649,8 +1737,12 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             tag: 'DEAT',
             date: '',
             place: '',
-            description: ''
+            description: '',
+            media: [],
+            citations: [],
+            notes: []
         });
+        this.timelineModalTab.set('basics');
         this.showTimelineCreateModal.set(true);
     }
 
@@ -1672,15 +1764,79 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             place: draft.place || '',
             description: isFact ? '' : text,
             value: isFact ? text : '',
-            media: [],
-            notes: [],
-            citations: [],
+            media: draft.media || [],
+            notes: draft.notes || [],
+            citations: draft.citations || [],
             editing: false,
             expanded: true
         }]);
         this.markDirty();
         this.showTimelineCreateModal.set(false);
         this.savePerson();
+    }
+
+    openNewTimelineMediaAdd() {
+        if (this.showTimelineCreateModal && this.showTimelineCreateModal()) {
+            this.pendingReopenTimelineModal = 'create';
+            this.showTimelineCreateModal.set(false);
+        }
+        this.isMediaForNewTimelineItem = true;
+        this.showMediaAddModal.set(true);
+    }
+
+    openNewTimelineMediaSelector() {
+        if (this.showTimelineCreateModal && this.showTimelineCreateModal()) {
+            this.pendingReopenTimelineModal = 'create';
+            this.showTimelineCreateModal.set(false);
+        }
+        this.isMediaForNewTimelineItem = true;
+        this.showMediaSelector.set(true);
+    }
+
+    removeNewTimelineMedia(idx: number) {
+        this.newTimelineDraft.update(v => {
+            const media = [...v.media];
+            media.splice(idx, 1);
+            return { ...v, media };
+        });
+    }
+
+    addNewTimelineCitation() {
+        this.newTimelineDraft.update(v => ({
+            ...v,
+            citations: [...v.citations, { sourceId: '', confidence: '', page: '', text: '' }]
+        }));
+    }
+
+    removeNewTimelineCitation(idx: number) {
+        this.newTimelineDraft.update(v => {
+            const citations = [...v.citations];
+            citations.splice(idx, 1);
+            return { ...v, citations };
+        });
+    }
+
+    addNewTimelineNote() {
+        this.newTimelineDraft.update(v => ({
+            ...v,
+            notes: [...v.notes, '']
+        }));
+    }
+
+    updateNewTimelineNote(idx: number, val: string) {
+        this.newTimelineDraft.update(v => {
+            const notes = [...v.notes];
+            notes[idx] = val;
+            return { ...v, notes };
+        });
+    }
+
+    removeNewTimelineNote(idx: number) {
+        this.newTimelineDraft.update(v => {
+            const notes = [...v.notes];
+            notes.splice(idx, 1);
+            return { ...v, notes };
+        });
     }
 
     isTimelineItemLocked(item: TimelineItem): boolean {
@@ -1709,6 +1865,80 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         }
     }
 
+    addTimelineItemMedia() {
+        this.isMediaForNewTimelineItem = false;
+        this.showMediaAddModal.set(true);
+    }
+
+    addTimelineItemMediaSelector() {
+        this.isMediaForNewTimelineItem = false;
+        this.showMediaSelector.set(true);
+    }
+
+    removeTimelineItemMedia(idx: number) {
+        const itemIdx = this.activeTimelineItemIndex();
+        if (itemIdx === null) return;
+        const current = this.timeline();
+        if (current[itemIdx].media) {
+            current[itemIdx].media!.splice(idx, 1);
+            this.timeline.set([...current]);
+            this.markDirty();
+        }
+    }
+
+    addTimelineItemCitation() {
+        const itemIdx = this.activeTimelineItemIndex();
+        if (itemIdx === null) return;
+        const current = this.timeline();
+        current[itemIdx].citations = current[itemIdx].citations || [];
+        current[itemIdx].citations!.push({ sourceId: '', confidence: '', page: '', text: '' });
+        this.timeline.set([...current]);
+        this.markDirty();
+    }
+
+    removeTimelineItemCitation(idx: number) {
+        const itemIdx = this.activeTimelineItemIndex();
+        if (itemIdx === null) return;
+        const current = this.timeline();
+        if (current[itemIdx].citations) {
+            current[itemIdx].citations!.splice(idx, 1);
+            this.timeline.set([...current]);
+            this.markDirty();
+        }
+    }
+
+    addTimelineItemNote() {
+        const itemIdx = this.activeTimelineItemIndex();
+        if (itemIdx === null) return;
+        const current = this.timeline();
+        current[itemIdx].notes = current[itemIdx].notes || [];
+        current[itemIdx].notes!.push('');
+        this.timeline.set([...current]);
+        this.markDirty();
+    }
+    
+    updateTimelineItemNote(idx: number, val: string) {
+        const itemIdx = this.activeTimelineItemIndex();
+        if (itemIdx === null) return;
+        const current = this.timeline();
+        if (current[itemIdx].notes) {
+            current[itemIdx].notes![idx] = val;
+            this.timeline.set([...current]);
+            this.markDirty();
+        }
+    }
+
+    removeTimelineItemNote(idx: number) {
+        const itemIdx = this.activeTimelineItemIndex();
+        if (itemIdx === null) return;
+        const current = this.timeline();
+        if (current[itemIdx].notes) {
+            current[itemIdx].notes!.splice(idx, 1);
+            this.timeline.set([...current]);
+            this.markDirty();
+        }
+    }
+
     openTimelineItemModal(index: number) {
         const current = this.timeline();
         if (!current[index]) return;
@@ -1721,6 +1951,22 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     closeTimelineItemModal() {
         this.showTimelineItemModal.set(false);
         this.activeTimelineItemIndex.set(null);
+    }
+
+    openTimelineMediaAdd() {
+        if (this.showTimelineItemModal && this.showTimelineItemModal()) {
+            this.pendingReopenTimelineModal = 'item';
+            this.showTimelineItemModal.set(false);
+        }
+        this.openMediaAddModal(this.activeTimelineItemIndex() ?? undefined);
+    }
+
+    openTimelineMediaSelector() {
+        if (this.showTimelineItemModal && this.showTimelineItemModal()) {
+            this.pendingReopenTimelineModal = 'item';
+            this.showTimelineItemModal.set(false);
+        }
+        this.openMediaSelector(this.activeTimelineItemIndex() ?? undefined);
     }
 
     activeTimelineItem(): TimelineItem | null {
@@ -1764,9 +2010,9 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         const current = this.timeline();
         current[index].editing = false;
         this.timeline.set([...current]);
-        // Also trigger general save if you want it persistent immediately
-        // Actually, the user wants the card smaller. Global save is already there via "Speichern" button at the top.
-        // But let's keep local state consistent.
+        // Mark dirty and persist immediately so added media is saved
+        this.markDirty();
+        this.savePerson();
     }
 
     removeTimelineItem(index: number) {
@@ -2002,8 +2248,26 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                     }))
                 });
             } else {
+                // FactType Mapping for Prisma
+                let factType = t.tag;
+                const mapping: { [key: string]: string } = {
+                    'RELI': 'RELIGION',
+                    'OCCU': 'OCCUPATION',
+                    'EDUC': 'EDUCATION',
+                    'RESI': 'RESIDENCE',
+                    'TITL': 'TITLE',
+                    'NATI': 'NATIONALITY',
+                    'PROP': 'PROPERTY',
+                    'MILI': 'MILITARY_SERVICE',
+                    'DSCR': 'DESCRIPTION',
+                    'FACT': 'OTHER'
+                };
+                if (mapping[factType]) {
+                    factType = mapping[factType];
+                }
+
                 newFacts.push({
-                    type: t.tag,
+                    type: factType,
                     date: t.date,
                     place: t.place,
                     value: t.value || t.description,

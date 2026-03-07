@@ -1,0 +1,73 @@
+<div class="modal-container bg-neutral-400">
+    <div class="modal-glass max-w-[440px]">
+        <!-- Decorative Background Glow -->
+        <div class="modal-glow-brand"></div>
+        <div class="modal-glow-highlight"></div>
+
+        <div class="relative z-10">
+            <div class="text-center mb-10">
+                <div
+                    class="inline-flex p-4 rounded-3xl bg-brand-500/10 text-brand-400 mb-6 border border-brand-500/20 shadow-lg shadow-blue-500/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="8.5" cy="7" r="4" />
+                        <line x1="20" y1="8" x2="20" y2="14" />
+                        <line x1="23" y1="11" x2="17" y2="11" />
+                    </svg>
+                </div>
+                <h1
+                    class="text-4xl font-black bg-gradient-to-br from-canvas-white to-canvas-white bg-clip-text text-transparent tracking-tighter mb-2">
+                    Registrieren
+                </h1>
+                <p class="text-neutral-800 dark:text-neutral-200 font-medium tracking-wide">Starte dein Abenteuer</p>
+            </div>
+
+            <form (submit)="onSubmit()" #registerForm="ngForm" class="flex flex-col gap-2">
+                <div class="form-group">
+                    <label class="form-label" for="username">Benutzername</label>
+                    <input type="text" id="username" name="username" [(ngModel)]="username" required class="form-input"
+                        placeholder="Benutzername" autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Adresse</label>
+                    <input type="email" id="email" name="email" [(ngModel)]="email" required email class="form-input"
+                        placeholder="dein@name.de" autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Passwort</label>
+                    <input type="password" id="password" name="password" [(ngModel)]="password" required
+                        class="form-input" placeholder="••••••••" autocomplete="new-password">
+                </div>
+
+                <div class="form-group mb-8">
+                    <label class="form-label" for="confirmPassword">Passwort bestätigen</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" [(ngModel)]="confirmPassword"
+                        required class="form-input" placeholder="••••••••" autocomplete="new-password">
+                </div>
+
+                <div *ngIf="error()" class="form-error">
+                    {{ error() }}
+                </div>
+
+                <button type="submit" [disabled]="!registerForm.form.valid || loading()"
+                    class="btn-primary !py-4 text-lg transform transition-all active:scale-95 disabled:opacity-50">
+                    <span *ngIf="!loading()">Konto erstellen</span>
+                    <span *ngIf="loading()"
+                        class="w-6 h-6 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin"></span>
+                </button>
+            </form>
+
+            <div class="mt-8 text-center">
+                <p class="text-neutral-400 text-sm">Bereits ein Konto?</p>
+                <a routerLink="/login" class="text-brand-400 font-bold hover:underline">Hie einloggen</a>
+            </div>
+
+            <div class="mt-10 text-center text-[10px] font-bold text-neutral-600 uppercase tracking-[0.3em]">
+                &copy; 2026 Heritago &middot; Modern Genealogy
+            </div>
+        </div>
+    </div>
+</div>

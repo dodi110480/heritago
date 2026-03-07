@@ -44,7 +44,7 @@ export class AppAvatarComponent {
     return 'assets/avatars/unknown.svg';
   });
 
-  isFallback = computed(() => this.safeImageUrl().includes('assets/avatars/'));
+  isFallback = computed(() => this.safeImageUrl().startsWith('assets/avatars/'));
 
   fallbackPadding = computed(() => {
     switch (this.size) {

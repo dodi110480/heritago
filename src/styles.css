@@ -140,6 +140,10 @@
         @apply w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-xl px-5 py-3.5 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition-all;
     }
 
+    .form-label {
+        @apply block text-sm font-bold text-neutral-800 dark:text-neutral-200 mb-2;
+    }
+
     /* --- Badges --- */
     .badge {
         @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all;

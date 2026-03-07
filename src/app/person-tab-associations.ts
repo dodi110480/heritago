@@ -30,9 +30,9 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                                         '📜' : a.role === 'CLERGY' ? '⛪' : a.role === 'EMPLOYER' ? '💼' : a.role ===
                                         'FRIEND' ? '🤝' : '👤' }}</span>
                                     <span *ngIf="a.associatedPersonName">{{ a.associatedPersonName }}</span>
-                                    <span *ngIf="!a.associatedPersonName" class="text-neutral-950 italic">Unbekannte Person</span>
+                                    <span *ngIf="!a.associatedPersonName" class="text-neutral-800 dark:text-neutral-200 italic">Unbekannte Person</span>
                                 </h3>
-                                <p class="text-sm text-neutral-950 mt-1">
+                                <p class="text-sm text-neutral-800 dark:text-neutral-200 mt-1">
                                     <span class="font-semibold">{{ a.role === 'GODPARENT' ? 'Taufpate/in' : a.role ===
                                         'WITNESS' ? 'Zeuge/in' : a.role === 'CLERGY' ? 'Geistliche/r' : a.role ===
                                         'EMPLOYER' ? 'Arbeitgeber' : a.role === 'FRIEND' ? 'Freund/in' :
@@ -42,7 +42,7 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                                 </p>
                             </div>
                             <button (click)="$event.stopPropagation(); removeAssociation(i)"
-                                class="p-1.5 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                                class="p-1.5 text-neutral-800 dark:text-neutral-200 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M3 6h18"></path>
@@ -54,7 +54,7 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                             class="mt-2 text-xs text-neutral-700 bg-brand-100/50 p-2 rounded-lg border border-neutral-300/30">
                             📝 {{ a.notes }}
                         </div>
-                        <div *ngIf="a.confidence" class="mt-1 flex items-center gap-1 text-[10px] text-neutral-950">
+                        <div *ngIf="a.confidence" class="mt-1 flex items-center gap-1 text-[10px] text-neutral-800 dark:text-neutral-200">
                             <span class="uppercase tracking-widest font-bold">Konfidenz:</span>
                             <span>{{ getConfidenceLabel(a.confidence) }}</span>
                         </div>

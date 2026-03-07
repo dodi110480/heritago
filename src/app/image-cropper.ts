@@ -5,8 +5,7 @@ import {
   EventEmitter,
   ViewChild,
   ElementRef,
-  AfterViewInit,
-  HostListener
+  AfterViewInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -51,7 +50,8 @@ export class ImageCropper implements AfterViewInit {
 
   @Input() imageUrl!: string;
   @Input() aspect: number | 'free' = 'free';
-  @Output() cropped = new EventEmitter<Blob>();
+  @Input() initialRect?: { x: number, y: number, width: number, height: number };
+  @Output() cropped = new EventEmitter<{ x: number, y: number, width: number, height: number }>();
   @Output() cancel = new EventEmitter<void>();
 
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -60,12 +60,11 @@ export class ImageCropper implements AfterViewInit {
   private img = new Image();
 
   private scale = 1;
-  private zoom = 1;
 
   private rect = { x: 100, y: 100, w: 300, h: 300 };
   private dragging = false;
   private resizing = false;
-  private resizeCorner: 'nw' | 'ne' | 'sw' | 'se' | null = null;
+  private resizeCorner: 'se' | null = null;
   private dragOffsetX = 0;
   private dragOffsetY = 0;
 
@@ -103,22 +102,21 @@ export class ImageCropper implements AfterViewInit {
 
     const visualW = canvas.width / dpr;
     const visualH = canvas.height / dpr;
-    const base = Math.min(visualW, visualH);
-    // Start with ~25% of image area side length to improve touch usability on small screens.
-    const initial = Math.max(this.minSize, Math.round(base * 0.5));
-    this.rect.w = Math.min(initial, visualW);
-    this.rect.h = this.aspect === 'free' ? Math.min(initial, visualH) : this.rect.w / (this.aspect as number);
-    this.rect.x = Math.max(0, Math.round((visualW - this.rect.w) / 2));
-    this.rect.y = Math.max(0, Math.round((visualH - this.rect.h) / 2));
 
-    if (window.innerWidth <= 768) {
-      this.minSize = 56;
-      this.handleSize = 18;
-      this.cornerHitSize = 28;
+    if (this.initialRect) {
+      this.rect = {
+        x: this.initialRect.x * ratio,
+        y: this.initialRect.y * ratio,
+        w: this.initialRect.width * ratio,
+        h: this.initialRect.height * ratio
+      };
     } else {
-      this.minSize = 80;
-      this.handleSize = 10;
-      this.cornerHitSize = 18;
+      const base = Math.min(visualW, visualH);
+      const initial = Math.max(this.minSize, Math.round(base * 0.5));
+      this.rect.w = Math.min(initial, visualW);
+      this.rect.h = this.aspect === 'free' ? Math.min(initial, visualH) : this.rect.w / (this.aspect as number);
+      this.rect.x = Math.max(0, Math.round((visualW - this.rect.w) / 2));
+      this.rect.y = Math.max(0, Math.round((visualH - this.rect.h) / 2));
     }
 
     this.draw();
@@ -144,14 +142,11 @@ export class ImageCropper implements AfterViewInit {
   private draw() {
     const canvas = this.canvasRef.nativeElement;
     const ctx = this.ctx;
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     const w = canvas.width / (window.devicePixelRatio || 1);
     const h = canvas.height / (window.devicePixelRatio || 1);
 
     ctx.drawImage(this.img, 0, 0, w, h);
-
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(0, 0, w, h);
 
@@ -168,10 +163,9 @@ export class ImageCropper implements AfterViewInit {
       this.rect.h
     );
 
-    ctx.strokeStyle = '#bf953f'; // Brand Primary
+    ctx.strokeStyle = '#bf953f';
     ctx.lineWidth = 2;
     ctx.strokeRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
-
     this.drawHandles();
   }
 
@@ -179,20 +173,16 @@ export class ImageCropper implements AfterViewInit {
     const ctx = this.ctx;
     const s = this.handleSize;
     const { x, y, w, h } = this.rect;
-
     ctx.fillStyle = '#bf953f';
-    ctx.fillRect(x - s / 2, y - s / 2, s, s);
-    ctx.fillRect(x + w - s / 2, y - s / 2, s, s);
-    ctx.fillRect(x - s / 2, y + h - s / 2, s, s);
     ctx.fillRect(x + w - s / 2, y + h - s / 2, s, s);
   }
 
   onPointerDown(e: PointerEvent) {
     const pos = this.getPos(e);
     this.canvasRef.nativeElement.setPointerCapture(e.pointerId);
-
     if (this.hitCorner(pos)) {
       this.resizing = true;
+      this.resizeCorner = 'se';
     } else if (this.inRect(pos)) {
       this.dragging = true;
       this.dragOffsetX = pos.x - this.rect.x;
@@ -202,25 +192,15 @@ export class ImageCropper implements AfterViewInit {
 
   onPointerMove(e: PointerEvent) {
     const pos = this.getPos(e);
-
     if (this.dragging) {
       this.rect.x = pos.x - this.dragOffsetX;
       this.rect.y = pos.y - this.dragOffsetY;
       this.constrain();
       this.draw();
     }
-
-    if (this.resizing && this.resizeCorner) {
-      const dx = pos.x - this.rect.x;
-      const dy = pos.y - this.rect.y;
-
-      if (this.resizeCorner === 'se') {
-        this.rect.w = Math.max(this.minSize, dx);
-        this.rect.h = this.aspect === 'free'
-          ? Math.max(this.minSize, dy)
-          : this.rect.w / (this.aspect as number);
-      }
-
+    if (this.resizing) {
+      this.rect.w = Math.max(this.minSize, pos.x - this.rect.x);
+      this.rect.h = this.aspect === 'free' ? Math.max(this.minSize, pos.y - this.rect.y) : this.rect.w / (this.aspect as number);
       this.constrain();
       this.draw();
     }
@@ -245,65 +225,34 @@ export class ImageCropper implements AfterViewInit {
     const canvas = this.canvasRef.nativeElement;
     const w = canvas.width / (window.devicePixelRatio || 1);
     const h = canvas.height / (window.devicePixelRatio || 1);
-
-    this.rect.w = Math.max(this.minSize, this.rect.w);
-    this.rect.h = Math.max(this.minSize, this.rect.h);
     this.rect.w = Math.min(this.rect.w, w);
     this.rect.h = Math.min(this.rect.h, h);
-
     this.rect.x = Math.max(0, Math.min(this.rect.x, w - this.rect.w));
     this.rect.y = Math.max(0, Math.min(this.rect.y, h - this.rect.h));
   }
 
   private getPos(e: PointerEvent) {
     const rect = this.canvasRef.nativeElement.getBoundingClientRect();
-    return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }
 
   private inRect(p: any) {
-    return p.x > this.rect.x && p.x < this.rect.x + this.rect.w &&
-      p.y > this.rect.y && p.y < this.rect.y + this.rect.h;
+    return p.x > this.rect.x && p.x < this.rect.x + this.rect.w && p.y > this.rect.y && p.y < this.rect.y + this.rect.h;
   }
 
   private hitCorner(p: any) {
     const s = this.cornerHitSize;
-    const { x, y, w, h } = this.rect;
-
-    if (Math.abs(p.x - (x + w)) < s && Math.abs(p.y - (y + h)) < s) {
-      this.resizeCorner = 'se';
-      return true;
-    }
-    return false;
+    return Math.abs(p.x - (this.rect.x + this.rect.w)) < s && Math.abs(p.y - (this.rect.y + this.rect.h)) < s;
   }
 
   crop() {
-    const out = document.createElement('canvas');
-    const scaleX = this.img.width /
-      (this.canvasRef.nativeElement.width / (window.devicePixelRatio || 1));
-    const scaleY = this.img.height /
-      (this.canvasRef.nativeElement.height / (window.devicePixelRatio || 1));
-
-    out.width = this.rect.w * scaleX;
-    out.height = this.rect.h * scaleY;
-
-    const ctx = out.getContext('2d')!;
-    ctx.drawImage(
-      this.img,
-      this.rect.x * scaleX,
-      this.rect.y * scaleY,
-      out.width,
-      out.height,
-      0,
-      0,
-      out.width,
-      out.height
-    );
-
-    out.toBlob(b => {
-      if (b) this.cropped.emit(b);
-    }, 'image/webp', 0.92);
+    const scaleX = this.img.width / (this.canvasRef.nativeElement.width / (window.devicePixelRatio || 1));
+    const scaleY = this.img.height / (this.canvasRef.nativeElement.height / (window.devicePixelRatio || 1));
+    this.cropped.emit({
+      x: Math.round(this.rect.x * scaleX),
+      y: Math.round(this.rect.y * scaleY),
+      width: Math.round(this.rect.w * scaleX),
+      height: Math.round(this.rect.h * scaleY)
+    });
   }
 }

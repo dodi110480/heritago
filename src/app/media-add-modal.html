@@ -1,73 +1,191 @@
-<app-modal-shell [visible]="visible" title="Medium hinzufügen" icon="🖼️" size="md" [showFooter]="false"
-  [showSave]="false" (close)="close()">
-  <div class="relative z-10 flex flex-col gap-6">
-    <!-- Modal Body -->
-    <div class="flex flex-col gap-6 max-h-[75vh] overflow-y-auto px-1 custom-scrollbar">
-      <!-- Upload Zone -->
-      <label
-        class="group relative flex flex-col items-center justify-center p-12 border-2 border-dashed border-canvas-white/10 rounded-[32px] bg-neutral-black/20 hover:bg-neutral-black/40 hover:border-brand-500/50 transition-all cursor-pointer overflow-hidden">
-        <input type="file" accept="image/*,application/pdf" (change)="onFilePicked($event)" hidden>
-        <div class="bg-brand-500/10 p-4 rounded-2xl text-brand-400 mb-4 group-hover:scale-110 transition-transform">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="17 8 12 3 7 8"></polyline>
-            <line x1="12" y1="3" x2="12" y2="15"></line>
-          </svg>
-        </div>
-        <span class="text-neutral-300 font-bold tracking-tight">Datei wählen</span>
-        <span class="text-neutral-950 text-xs mt-1">Bilder oder PDF-Dokumente</span>
-      </label>
+<app-modal-shell [visible]="visible" [title]="isEditing() ? 'Medium bearbeiten' : 'Medium hinzufügen'" icon="🖼️" size="xl"
+  [loading]="uploading()" [disabledSave]="(!selectedFile() && !isEditing()) || uploading() || !treeId()" 
+  [showDelete]="isEditing()" [saveText]="isEditing() ? 'Speichern' : 'Hochladen'"
+  (close)="close()" (save)="submit()" (delete)="deleteItem()">
 
-      <div class="flex flex-col gap-5" *ngIf="selectedFile() as file">
-        <!-- File Info -->
-        <div class="grid grid-cols-2 gap-4">
-          <div class="form-group mb-0">
-            <label class="form-label px-0">Typ</label>
-            <div class="form-input py-3 pointer-events-none opacity-60 bg-canvas-white/5">{{ kind() }}</div>
+  <div *ngIf="!treeId() && !isEditing()" class="mb-4 mx-6 p-3 rounded-lg bg-accent-amber-500/10 border border-accent-amber-500/20 text-accent-amber-600 text-sm flex items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+    <span>Bitte wähle zuerst einen Stammbaum aus oder erstelle einen neuen, um Medien hochzuladen.</span>
+  </div>
+
+  <!-- Tabbed single-column layout to match event modal -->
+  <div class="flex flex-col h-[600px] max-h-[70vh]">
+    <div class="flex border-b border-canvas/10 mb-4 shrink-0 gap-2">
+      <button (click)="activeTab.set('preview')" [class]="activeTab() === 'preview' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Vorschau</button>
+      <button (click)="activeTab.set('basics')" [class]="activeTab() === 'basics' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Basis</button>
+      <button (click)="activeTab.set('citations')" [class]="activeTab() === 'citations' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Belege</button>
+      <button (click)="activeTab.set('identifiers')" [class]="activeTab() === 'identifiers' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Identifikatoren</button>
+      <button (click)="activeTab.set('links')" [class]="activeTab() === 'links' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Verknüpfungen</button>
+      <button (click)="activeTab.set('notes')" [class]="activeTab() === 'notes' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Notizen</button>
+    </div>
+
+    <div class="overflow-y-auto pr-2 custom-scrollbar space-y-6">
+      <!-- Preview Tab -->
+      <div *ngIf="activeTab() === 'preview'">
+        <div class="glass-card !p-0 overflow-hidden relative group mb-4">
+          <label *ngIf="!selectedFile() && !isEditing()" class="flex flex-col items-center justify-center p-12 border-2 border-dashed border-neutral-300/30 rounded-xl bg-neutral-50/10 hover:bg-brand-500/5 hover:border-brand-500/40 transition-all cursor-pointer">
+            <input type="file" accept="image/*,application/pdf" (change)="onFilePicked($event)" hidden>
+            <div class="bg-brand-500/10 p-4 rounded-xl text-brand-500 mb-4 group-hover:scale-110 transition-transform">
+              <!-- icon -->
+            </div>
+            <span class="text-neutral-800 font-bold">Datei auswählen</span>
+            <span class="text-neutral-500 text-xs mt-1">Bilder oder PDF</span>
+          </label>
+
+          <div *ngIf="selectedFile() || isEditing()" class="relative aspect-video bg-neutral-900/40 flex items-center justify-center">
+            <img *ngIf="previewUrl()" [src]="previewUrl()" class="max-w-full max-h-full object-contain">
+            <div *ngIf="!previewUrl()" class="text-6xl opacity-30">📄</div>
+            <label class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity cursor-pointer">
+              <input type="file" accept="image/*,application/pdf" (change)="onFilePicked($event)" hidden>
+              <div class="bg-white/10 p-3 rounded-full text-white mb-2">↻</div>
+              <span class="text-white text-xs font-bold uppercase tracking-widest">Datei ersetzen</span>
+            </label>
           </div>
-          <div class="form-group mb-0">
-            <label class="form-label px-0">Dateiname</label>
-            <div class="form-input py-3 pointer-events-none opacity-60 bg-canvas-white/5 truncate">{{ file.name }}</div>
+        </div>
+      </div>
+
+      <!-- Basics Tab -->
+      <div *ngIf="activeTab() === 'basics'">
+        <div class="glass-card space-y-4">
+          <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest border-b border-white/10 pb-2">Basis-Informationen</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1.5 md:col-span-2">
+              <label class="form-label">Namens-Hinweis</label>
+              <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)" class="form-input" placeholder="z. B. Porträt Klaus, Geburtsurkunde...">
+            </div>
+            <div class="space-y-1.5">
+              <label class="form-label">Kategorie</label>
+              <select [ngModel]="mediaType()" (ngModelChange)="mediaType.set($event)" class="form-input">
+                <option *ngFor="let type of mediaTypeOptions" [value]="type">{{ type }}</option>
+              </select>
+            </div>
           </div>
         </div>
+      </div>
 
-        <!-- Options -->
-        <div class="form-group mb-0">
-          <label class="form-label">Namens-Hinweis (optional)</label>
-          <input type="text" [ngModel]="hint()" (ngModelChange)="hint.set($event)" (blur)="refreshTitle()"
-            class="form-input" placeholder="z.B. Lebenslauf, Hochzeit, Grabstein...">
+      <!-- Citations Tab -->
+      <div *ngIf="activeTab() === 'citations'">
+        <div class="glass-card space-y-4">
+          <div class="flex justify-between items-center border-b border-white/10 pb-2">
+            <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">Belege & Quellen</h3>
+            <button (click)="addCitation()" class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+ Hinzufügen</button>
+          </div>
+          <div class="space-y-4">
+            <div *ngFor="let cit of citations(); let i = index" class="p-3 bg-neutral-50/5 rounded-lg border border-white/5 space-y-3 relative">
+              <button (click)="removeCitation(i)" class="absolute top-2 right-2 text-neutral-500 hover:text-accent-danger-500 transition-colors">
+                ✕
+              </button>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="space-y-1.5">
+                  <label class="form-label">Quelle</label>
+                  <select [ngModel]="cit.sourceId" (ngModelChange)="updateCitation(i, 'sourceId', $event)" class="form-input text-sm">
+                    <option value="">Wähle eine Quelle...</option>
+                    <option *ngFor="let s of sourceOptions()" [value]="s.id">{{ s.title }}</option>
+                  </select>
+                </div>
+                <div class="space-y-1.5">
+                  <label class="form-label">Seite / Fundstelle</label>
+                  <input type="text" [ngModel]="cit.page" (ngModelChange)="updateCitation(i, 'page', $event)" class="form-input text-sm" placeholder="S. 123, Archiv-Info...">
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="form-group mb-0">
-          <label class="form-label">Titel (Dateiname auf Server)</label>
-          <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)"
-            class="form-input font-mono text-sm" placeholder="Picture_Name_Family">
+      <!-- Identifiers Tab -->
+      <div *ngIf="activeTab() === 'identifiers'">
+        <div class="glass-card space-y-4">
+          <div class="flex justify-between items-center border-b border-white/10 pb-2">
+            <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">Identifikatoren</h3>
+            <button (click)="addIdentifier()" class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+ Hinzufügen</button>
+          </div>
+          <div class="space-y-2">
+            <div *ngFor="let iden of identifiers(); let i = index" class="flex gap-2">
+              <input type="text" [ngModel]="iden.type" (ngModelChange)="updateIdentifier(i, 'type', $event)" class="form-input text-sm flex-1" placeholder="Typ (z.B. AR-ID)">
+              <input type="text" [ngModel]="iden.value" (ngModelChange)="updateIdentifier(i, 'value', $event)" class="form-input text-sm flex-[2]" placeholder="Wert">
+              <button (click)="removeIdentifier(i)" class="btn-icon text-accent-danger-500">✕</button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div class="form-group mb-0">
-          <label class="form-label">Kategorie</label>
-          <select [ngModel]="mediaType()" (ngModelChange)="mediaType.set($event)"
-            class="form-input appearance-none bg-neutral-black/40">
-            <option *ngFor="let type of mediaTypeOptions" [value]="type" class="bg-neutral-100">{{ type }}</option>
-          </select>
+      <!-- Links Tab -->
+      <div *ngIf="activeTab() === 'links'">
+        <div class="glass-card space-y-4">
+          <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest border-b border-white/10 pb-2">Verknüpfungen</h3>
+          <div class="space-y-3">
+            <div *ngFor="let link of links(); let i = index" class="flex items-center gap-2 p-2 bg-neutral-50/5 rounded-lg text-xs">
+              <button (click)="navigateToLink(link)" class="flex-1 text-left truncate text-brand-600 font-medium hover:underline">
+                {{ formatLinkLabel(link) }}
+              </button>
+              <span class="text-[10px] uppercase font-bold text-neutral-500">{{ link.person || link.personId ? 'Person' : (link.family || link.familyId ? 'Familie' : 'Sonstiges') }}</span>
+              <button (click)="removeLink(i)" class="btn-icon text-accent-danger-500">✕</button>
+            </div>
+            <p *ngIf="links().length === 0" class="text-xs text-neutral-500 italic">Noch keine Verknüpfungen.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div>
+                <label class="form-label text-xs">Person hinzufügen</label>
+                <select [ngModel]="selectedPersonId()" (ngModelChange)="selectedPersonId.set($event)" class="form-input text-sm">
+                  <option value="">-- Person wählen --</option>
+                  <option *ngFor="let p of personOptions()" [value]="p.id">{{ p.name }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label text-xs">Familie hinzufügen</label>
+                <select [ngModel]="selectedFamilyId()" (ngModelChange)="selectedFamilyId.set($event)" class="form-input text-sm">
+                  <option value="">-- Familie wählen --</option>
+                  <option *ngFor="let f of familyOptions()" [value]="f.id">{{ f.label }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <button (click)="addLink()" class="btn-secondary !text-[10px] !py-2 w-full uppercase tracking-widest">Link hinzufügen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes Tab -->
+      <div *ngIf="activeTab() === 'notes'">
+        <div class="glass-card space-y-4">
+          <div class="flex justify-between items-center border-b border-white/10 pb-2">
+            <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">Notizen</h3>
+            <button (click)="addNote()" class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+ Hinzufügen</button>
+          </div>
+          <div class="space-y-3">
+            <div *ngFor="let note of notes(); let i = index" class="relative">
+              <textarea [ngModel]="notes()[i]" (ngModelChange)="updateNote(i, $event)" class="form-input text-sm min-h-[80px]" placeholder="Deine Notiz..."></textarea>
+              <button (click)="removeNote(i)" class="absolute top-2 right-2 text-neutral-500 hover:text-accent-danger-500 transition-colors">✕</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="flex gap-4 pt-4 px-1">
-      <button (click)="close()" class="btn-secondary !flex-1 !py-4">
-        Abbrechen
+  </div>
+
+  <!-- Extra Actions (Left Side of Footer) -->
+  <div extraActions *ngIf="isEditing()">
+    <div class="flex items-center gap-2">
+      <button (click)="download()" class="btn-secondary !px-4 !py-3 md:!py-2.5 flex items-center gap-2" title="Herunterladen">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span class="hidden md:inline">Download</span>
       </button>
-      <button (click)="submit()" [disabled]="!selectedFile() || uploading()" class="btn-primary !flex-[2] !py-4">
-        <span *ngIf="uploading()"
-          class="w-5 h-5 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin"></span>
-        {{ uploading() ? 'Wird hochgeladen...' : 'Datei speichern' }}
+
+      <button *ngIf="mediaType() === 'PHOTO'" (click)="startCropping()" class="btn-secondary !px-4 !py-3 md:!py-2.5 flex items-center gap-2" title="Beschnitt anpassen">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"/><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"/></svg>
+        <span class="hidden md:inline">Beschnitt anpassen</span>
       </button>
     </div>
   </div>
+
 </app-modal-shell>
 
-<!-- Image Cropper Modal (Nested) -->
-<app-image-cropper *ngIf="showCropper()" [imageUrl]="cropImageUrl()!" (cropped)="onCropped($event)"
-  (cancel)="showCropper.set(false)" class="z-[3000]">
+<app-image-cropper *ngIf="showCropper()"
+  [imageUrl]="cropImageUrl() || ''"
+  [initialRect]="currentCrop()"
+  (cropped)="onCropped($event)"
+  (cancel)="showCropper.set(false)">
 </app-image-cropper>

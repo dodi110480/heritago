@@ -15,49 +15,49 @@ import { AppModalShell } from './ui/app-modal-shell';
                 <div class="glass-card !bg-canvas-white/3 !rounded-2xl !p-5 cursor-pointer hover:bg-canvas-white/5 transition-all"
                     (click)="openBasicsModal()">
                     <app-section-header title="Basisdaten" icon="🧾">
-                        <span actions class="text-[10px] uppercase tracking-widest text-neutral-950">Klick zum Bearbeiten</span>
+                        <span actions class="text-[10px] uppercase tracking-widest text-neutral-800 dark:text-neutral-200">Klick zum Bearbeiten</span>
                     </app-section-header>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <div class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mb-1">Vorname</div>
-                            <div class="text-sm text-canvas-white">{{ person?.firstName || '-' }}</div>
+                            <div class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Vorname</div>
+                            <div class="text-sm text-neutral-800 dark:text-neutral-200">{{ person?.firstName || '-' }}</div>
                         </div>
                         <div>
-                            <div class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mb-1">Nachname</div>
-                            <div class="text-sm text-canvas-white">{{ person?.lastName || '-' }}</div>
+                            <div class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Nachname</div>
+                            <div class="text-sm text-neutral-800 dark:text-neutral-200">{{ person?.lastName || '-' }}</div>
                         </div>
                         <div>
-                            <div class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mb-1">Geschlecht</div>
-                            <div class="text-sm text-canvas-white">{{ genderLabel(person?.gender) }}</div>
+                            <div class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Geschlecht</div>
+                            <div class="text-sm text-neutral-800 dark:text-neutral-200">{{ genderLabel(person?.gender) }}</div>
                         </div>
                         <div>
-                            <div class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mb-1">Status</div>
-                            <div class="text-sm text-canvas-white">{{ person?.isLiving ? 'Lebend' : 'Verstorben' }}</div>
+                            <div class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Status</div>
+                            <div class="text-sm text-neutral-800 dark:text-neutral-200">{{ person?.isLiving ? 'Lebend' : 'Verstorben' }}</div>
                         </div>
                         <div>
-                            <div class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mb-1">Datenschutz</div>
-                            <div class="text-sm text-canvas-white">{{ privacyLabel(person?.privacyLevel) }}</div>
+                            <div class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Datenschutz</div>
+                            <div class="text-sm text-neutral-800 dark:text-neutral-200">{{ privacyLabel(person?.privacyLevel) }}</div>
                         </div>
                     </div>
 
                     <div class="mt-8 border-t border-canvas-white/5 pt-8">
-                        <h3 class="text-sm font-semibold mb-3 flex items-center gap-2 text-canvas-white">
+                        <h3 class="text-sm font-semibold mb-3 flex items-center gap-2 text-neutral-800 dark:text-neutral-200">
                             <span class="w-1.5 h-4 bg-canvas-white rounded-full"></span> System-Info
                         </h3>
                         <div class="glass-card !bg-neutral-black/20 p-4 space-y-3 !rounded-xl border !border-canvas-white/5 max-w-2xl">
                             <div class="space-y-2 text-xs text-neutral-400">
                                 <div class="flex justify-between items-center" *ngIf="person.createdAt">
                                     <span>Erstellt:</span>
-                                    <span class="text-canvas-white">{{ person.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                                    <span class="text-neutral-800 dark:text-neutral-200">{{ person.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
                                 </div>
                                 <div class="flex justify-between items-center" *ngIf="person.updatedAt">
                                     <span>Zuletzt geändert:</span>
-                                    <span class="text-canvas-white">{{ person.updatedAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                                    <span class="text-neutral-800 dark:text-neutral-200">{{ person.updatedAt | date:'dd.MM.yyyy HH:mm' }}</span>
                                 </div>
                                 <div class="flex justify-between items-center" *ngIf="person.chanDate">
                                     <span>Letzte GEDCOM Änd.:</span>
-                                    <span class="text-canvas-white">{{ person.chanDate | date:'dd.MM.yyyy' }}</span>
+                                    <span class="text-neutral-800 dark:text-neutral-200">{{ person.chanDate | date:'dd.MM.yyyy' }}</span>
                                 </div>
                                 <div class="flex justify-between items-center pt-2 mt-2 border-t border-canvas-white/5">
                                     <span>Ex-ID:</span>

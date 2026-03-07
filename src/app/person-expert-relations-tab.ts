@@ -16,7 +16,7 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                 <app-section-header title="Familie & Beziehungen" icon="👨‍👩‍👧‍👦" description="Verwalte Ehepartner, Eltern und Kinder.">
                     <div actions class="flex items-center gap-3">
                         <button (click)="toggleFamilyEdit()" [class.bg-brand-500]="isEditingFamily()"
-                            [class.text-canvas-white]="isEditingFamily()" [class.bg-canvas-white/5]="!isEditingFamily()"
+                            [class.text-neutral-800 dark:text-neutral-200]="isEditingFamily()" [class.bg-canvas-white/5]="!isEditingFamily()"
                             [class.text-neutral-400]="!isEditingFamily()"
                             class="p-2.5 rounded-xl transition-all hover:bg-brand-500/20" title="Bearbeiten">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
@@ -60,7 +60,7 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                                     *ngIf="showIndividualResults() === i && individualSearchResults().length > 0">
                                     <div *ngFor="let ind of individualSearchResults()"
                                         (click)="selectIndividual(i, ind)"
-                                        class="px-4 py-2.5 text-sm text-neutral-300 hover:bg-brand-500/20 hover:text-canvas-white cursor-pointer border-b border-canvas-white/5 last:border-0 transition-colors">
+                                        class="px-4 py-2.5 text-sm text-neutral-300 hover:bg-brand-500/20 hover:text-neutral-800 dark:text-neutral-200 cursor-pointer border-b border-canvas-white/5 last:border-0 transition-colors">
                                         👤 {{ ind.firstName }} {{ ind.lastName }}
                                     </div>
                                 </div>
@@ -89,11 +89,11 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                                     size="sm"
                                     class="shrink-0"
                                 ></app-avatar>
-                                <div class="w-24 text-[10px] font-bold text-neutral-950 uppercase tracking-widest shrink-0">
+                                <div class="w-24 text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest shrink-0">
                                     {{ getRelationLabel(rel.type) }}
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <div class="text-sm font-semibold text-canvas-white mb-0.5 group-hover:text-brand-400 transition-colors truncate">
+                                    <div class="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-0.5 group-hover:text-brand-400 transition-colors truncate">
                                         {{ rel.personName }}
                                     </div>
                                     <div *ngIf="rel.type === 'SPOUSE' && getFamilyWedding(rel.familyId)"
@@ -116,7 +116,6 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                     icon="👨‍👩‍👧‍👦" 
                     title="Keine Beziehungen" 
                     message="Verknüpfe diese Person mit Eltern, Partnern oder Kindern, um den Stammbaum aufzubauen.">
-                    <button actions (click)="addRelation()" class="btn-secondary !py-2 !px-4 text-xs">Beziehung hinzufügen</button>
                 </app-empty-state>
             </div>
         </div>

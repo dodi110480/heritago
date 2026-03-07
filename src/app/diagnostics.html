@@ -16,13 +16,13 @@
         <div
             class="w-16 h-16 border-4 border-neutral-300/40 border-l-brand-500 rounded-full animate-spin shadow-brand-glow mb-8">
         </div>
-        <p class="text-sm font-black text-neutral-950 uppercase tracking-[0.3em]">Datenbank wird analysiert...</p>
+        <p class="text-sm font-black text-neutral-800 dark:text-neutral-200 uppercase tracking-[0.3em]">Datenbank wird analysiert...</p>
     </div>
 
     <!-- LOGICAL VALIDATION -->
     <div class="mb-12 animate-in slide-in-from-bottom-5 duration-700"
         *ngIf="!isLoading() && logicalErrors().length > 0">
-        <h2 class="text-[10px] font-black text-neutral-950 uppercase tracking-[0.2em] mb-6 px-4">Logische Prüfungen
+        <h2 class="text-[10px] font-black text-neutral-800 dark:text-neutral-200 uppercase tracking-[0.2em] mb-6 px-4">Logische Prüfungen
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div *ngFor="let result of logicalErrors()"
@@ -68,7 +68,7 @@
     <!-- SYNTAX VALIDATION -->
     <div class="animate-in slide-in-from-bottom-5 duration-700 delay-150"
         *ngIf="!isLoading() && errors().length > 0">
-        <h2 class="text-[10px] font-black text-neutral-950 uppercase tracking-[0.2em] mb-6 px-4">Syntax &
+        <h2 class="text-[10px] font-black text-neutral-800 dark:text-neutral-200 uppercase tracking-[0.2em] mb-6 px-4">Syntax &
             Standard-Prüfungen</h2>
         <div class="space-y-4">
             <div *ngFor="let error of errors()" (click)="toggleExpand(error)"
@@ -88,7 +88,7 @@
 
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-3 mb-1">
-                            <span class="text-[10px] font-black text-neutral-950 uppercase tracking-widest">{{
+                            <span class="text-[10px] font-black text-neutral-800 dark:text-neutral-200 uppercase tracking-widest">{{
                                 error.type }}: {{ error.id }}</span>
                             <span
                                 class="px-3 py-1 bg-surface rounded-full text-[10px] font-black text-neutral-400 uppercase tracking-widest">Zeile
@@ -97,7 +97,7 @@
                         <h3 class="text-lg font-black text-canvas-white truncate">{{ error.message }}</h3>
                     </div>
 
-                    <div class="shrink-0 w-10 h-10 rounded-full border border-canvas-white/5 flex items-center justify-center text-neutral-950 group-hover:text-brand-400 transition-all"
+                    <div class="shrink-0 w-10 h-10 rounded-full border border-canvas-white/5 flex items-center justify-center text-neutral-800 dark:text-neutral-200 group-hover:text-brand-400 transition-all"
                         [class.rotate-180]="error.expanded">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -110,12 +110,12 @@
                 <div class="px-8 pb-8 animate-in slide-in-from-top-4 duration-300" *ngIf="error.expanded">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-canvas-white/5">
                         <div>
-                            <h4 class="text-[10px] font-black text-neutral-950 uppercase tracking-widest mb-3">
+                            <h4 class="text-[10px] font-black text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-3">
                                 Erklärung</h4>
                             <p class="text-sm text-neutral-400 leading-relaxed">{{ error.explanation }}</p>
                         </div>
                         <div>
-                            <h4 class="text-[10px] font-black text-neutral-950 uppercase tracking-widest mb-3">
+                            <h4 class="text-[10px] font-black text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-3">
                                 Datenfragment</h4>
                             <div
                                 class="bg-neutral-black/40 rounded-2xl p-4 border border-canvas-white/5 text-xs font-mono text-brand-300 overflow-x-auto custom-scrollbar">
@@ -140,7 +140,7 @@
             </svg>
         </div>
         <h2 class="text-3xl font-black text-neutral-900 tracking-tight mb-4">Keine Fehler gefunden</h2>
-        <p class="text-neutral-950 max-w-md mx-auto leading-relaxed">Dein Stammbaum entspricht den GEDCOM 7.0
+        <p class="text-neutral-800 dark:text-neutral-200 max-w-md mx-auto leading-relaxed">Dein Stammbaum entspricht den GEDCOM 7.0
             Standards und der logischen Validierung.</p>
     </div>
 </main>

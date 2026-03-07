@@ -68,6 +68,24 @@ export class PlaceModal implements OnInit {
     locationLabel = signal('');
     mergeTargetId = signal<string>('');
     reassignTargetId = signal<string>('');
+    showMap = signal(true);
+    activeTab = signal<'basics' | 'languages' | 'location' | 'maintenance'>('basics');
+
+    setTab(tab: 'basics' | 'languages' | 'location' | 'maintenance') {
+        this.activeTab.set(tab);
+        if (tab === 'location' && this.showMap()) {
+            setTimeout(() => this.initMap(), 50);
+        }
+    }
+
+    toggleMap() {
+        this.showMap.set(!this.showMap());
+        if (this.showMap()) {
+            setTimeout(() => this.initMap(), 50);
+        } else {
+            this.destroyMap();
+        }
+    }
 
     ngOnInit() {
         const tree = this.authService.currentTree();

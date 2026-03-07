@@ -6,8 +6,8 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="mx-auto px-4 md:px-12 pb-20 transition-all duration-300"
-         [ngClass]="wide ? 'max-w-[1600px]' : 'max-w-6xl'">
+    <div class="mx-auto pb-20 transition-all duration-300"
+         [ngClass]="wide ? 'max-w-none px-4 md:px-8' : 'max-w-7xl px-4 md:px-12'">
       <ng-content></ng-content>
     </div>
   `,

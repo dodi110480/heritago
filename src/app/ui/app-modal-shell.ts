@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
              *ngIf="visible" (click)="close.emit()">
             
             <!-- Modal Window -->
-            <div class="w-full flex flex-col bg-ui-bg border-t md:border border-brand-500/15 shadow-modal overflow-hidden transition-all duration-300
+            <div class="w-full flex flex-col bg-canvas dark:bg-neutral-900 border-t md:border border-brand-500/15 shadow-modal overflow-hidden transition-all duration-300
                         h-[95vh] rounded-t-modal md:h-auto md:max-h-[90vh] md:rounded-modal"
                  [ngClass]="{
                      'md:max-w-xl': size === 'sm',
@@ -21,12 +21,12 @@ import { CommonModule } from '@angular/common';
                  (click)="$event.stopPropagation()">
                  
                 <!-- Header -->
-                <div class="flex justify-between items-center p-4 md:p-6 border-b border-brand-500/10 bg-ui-bgSoft/20 flex-shrink-0">
-                    <h2 class="text-xl md:text-2xl font-bold text-canvas-white m-0 flex items-center gap-3">
+                <div class="flex justify-between items-center p-4 md:p-6 border-b border-brand-500/10 bg-canvas/40 dark:bg-black/20 flex-shrink-0">
+                    <h2 class="text-xl md:text-2xl font-bold text-neutral-900 dark:text-white m-0 flex items-center gap-3">
                         <span *ngIf="icon" class="text-2xl">{{ icon }}</span>
                         {{ title }}
                     </h2>
-                    <button class="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center rounded-full md:rounded-btn bg-canvas-white/5 md:bg-transparent text-canvas-white/40 hover:text-canvas-white hover:bg-canvas-white/10 transition-colors"
+                    <button class="w-10 h-10 md:w-8 md:h-8 flex items-center justify-center rounded-full md:rounded-btn bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors"
                             (click)="close.emit()" title="Schließen">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -36,14 +36,14 @@ import { CommonModule } from '@angular/common';
                 </div>
 
                 <!-- Body (Scrollable Content Projection) -->
-                <div class="p-4 md:p-6 overflow-y-auto custom-scrollbar flex-1 relative bg-ui-bgSoft/10">
+                <div class="p-4 md:p-6 overflow-y-auto custom-scrollbar flex-1 relative bg-transparent text-neutral-900 dark:text-neutral-100">
                     <ng-content></ng-content>
                 </div>
 
                 <!-- Footer (Actions) -->
-                <div *ngIf="showFooter" class="flex flex-col-reverse md:flex-row justify-between items-stretch md:items-center gap-3 p-4 md:p-6 border-t border-brand-500/10 bg-ui-bgSoft/20 flex-shrink-0">
+                <div *ngIf="showFooter" class="flex flex-col-reverse md:flex-row justify-between items-stretch md:items-center gap-3 p-4 md:p-6 border-t border-brand-500/10 bg-canvas/40 dark:bg-black/20 flex-shrink-0">
                     <!-- Optionale Löschen-Aktion auf der linken Seite -->
-                    <div class="w-full md:w-auto">
+                    <div class="w-full md:w-auto flex gap-2">
                         <button *ngIf="showDelete" class="btn-danger w-full md:w-auto !px-4 !py-3 md:!py-2.5 flex items-center justify-center gap-2" 
                                 [disabled]="loading" (click)="delete.emit()">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -52,6 +52,7 @@ import { CommonModule } from '@angular/common';
                             </svg>
                             {{ deleteText }}
                         </button>
+                        <ng-content select="[extraActions]"></ng-content>
                     </div>
 
                     <!-- Abbrechen und Speichern / Primäre Aktion auf der rechten Seite -->

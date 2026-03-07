@@ -12,13 +12,13 @@
         </div>
 
         <div *ngIf="loading()"
-            class="py-8 flex justify-center text-neutral-950 uppercase tracking-widest text-[10px] font-bold">
+            class="py-8 flex justify-center text-neutral-800 dark:text-neutral-200 uppercase tracking-widest text-[10px] font-bold">
             <div class="w-4 h-4 border-2 border-canvas-white/10 border-l-brand-500 rounded-full animate-spin mr-2"></div>
             Laden...
         </div>
 
         <div *ngIf="!loading() && events().length === 0"
-            class="py-8 text-center text-neutral-950 text-sm font-medium italic">
+            class="py-8 text-center text-neutral-800 dark:text-neutral-200 text-sm font-medium italic">
             Keine Ereignisse heute.
         </div>
 
@@ -39,7 +39,7 @@
 
                 <div class="flex flex-col min-w-0">
                     <span class="text-neutral-200 font-bold truncate tracking-tight">{{ event.name }}</span>
-                    <span class="text-[10px] font-bold text-neutral-950 uppercase tracking-widest mt-0.5">
+                    <span class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mt-0.5">
                         {{ event.years }} Jahre
                         <span class="text-brand-400/70" *ngIf="event.type === 'BIRT'">her</span>
                         <span class="text-accent-highlight-400/70" *ngIf="event.type === 'MARR'">verheiratet</span>

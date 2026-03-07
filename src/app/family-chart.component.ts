@@ -379,6 +379,17 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
 
   private renderChart() {
     const data = JSON.parse(JSON.stringify(this.treeData()));
+    
+    // Resolve avatar URLs
+    data.forEach((d: any) => {
+      if (d.data.avatar) {
+        d.data.avatar = this.gedcomService.getMediaUrl(d.data.avatar, 'thumbs');
+      } else {
+        const gender = d.data.gender === 'M' ? 'male' : (d.data.gender === 'F' ? 'female' : 'unknown');
+        d.data.avatar = `assets/avatars/${gender}.svg`;
+      }
+    });
+
     const cont = this.chartElement.nativeElement;
     cont.innerHTML = '';
 

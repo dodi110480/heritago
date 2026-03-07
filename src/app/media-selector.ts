@@ -35,16 +35,14 @@ export class MediaSelector implements OnInit, OnChanges {
         const tree = this.authService.currentTree();
         if (!tree) return;
         this.loading.set(true);
-        this.gedcomService.getMedia(tree.id, this.searchQuery()).subscribe({
+        this.gedcomService.getMedia(tree.id, 'FOTOS', this.searchQuery()).subscribe({
             next: (res: any) => {
                 const items = (res.media || []).map((m: any) => ({
                     ...m,
-                    url: this.gedcomService.getMediaUrl(m.remoteUrl || (m.filePath ? `/uploads/${m.filePath}` : m.url || '')),
-                    mimeType: m.mimeType || 'application/octet-stream'
+                    previewUrl: this.gedcomService.getMediaUrl(m.id, 'thumbs'),
+                    fullUrl: this.gedcomService.getMediaUrl(m.id)
                 }));
-                // Only images for now
-                const imagesOnly = items.filter((i: any) => i.mimeType.startsWith('image/'));
-                this.mediaItems.set(imagesOnly);
+                this.mediaItems.set(items);
                 this.loading.set(false);
             },
             error: () => this.loading.set(false)
@@ -56,12 +54,7 @@ export class MediaSelector implements OnInit, OnChanges {
     }
 
     selectItem(item: any) {
-        // Strip the localhost:3000 mapping back to relative path if possible for saving
-        const itemCopy = { ...item };
-        if (itemCopy.url && itemCopy.url.includes('/uploads/')) {
-            itemCopy.url = '/uploads/' + itemCopy.url.split('/uploads/')[1];
-        }
-        this.selected.emit(itemCopy);
+        this.selected.emit(item);
         this.close();
     }
 

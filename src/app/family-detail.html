@@ -1,179 +1,93 @@
 <ng-container *ngIf="!loading() && family()">
     <app-page-header [title]="'Familie ' + family()?.id"
         [description]="getPersonName(family()?.husband) + ' & ' + getPersonName(family()?.wife) + (getMarriageInfo() ? ' — ' + getMarriageInfo() : '')">
-        <a breadcrumbs routerLink="/families"
-            class="w-10 h-10 rounded-xl bg-canvas-white/5 border border-canvas-white/10 text-neutral-400 flex items-center justify-center hover:bg-canvas-white/10 hover:text-canvas-white transition-colors cursor-pointer shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-        </a>
-        <div actions class="flex gap-3">
-            <button class="btn-secondary" (click)="requestCancel()">Abbrechen</button>
-            <button class="btn-primary flex items-center gap-2" [disabled]="!isDirty() || isSaving()" (click)="save()">
-                <div *ngIf="isSaving()"
-                    class="w-4 h-4 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin"></div>
-                Speichern
-            </button>
-        </div>
+        <div actions></div>
     </app-page-header>
 
-    <div class="flex flex-col gap-8 pb-20">
+    <!-- Tab Navigation -->
+    <div class="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-canvas/5 no-scrollbar animate-in slide-in-from-top-4 duration-[180ms]">
+        <button *ngFor="let tab of [
+            {id: 'basics', label: 'Allgemeines'},
+            {id: 'children', label: 'Kinder'},
+            {id: 'events', label: 'Ereignisse'},
+            {id: 'notes', label: 'Notizen'},
+            {id: 'citations', label: 'Referenzen'},
+            {id: 'media', label: 'Medien'}
+        ]" (click)="activeTab.set(tab.id)"
+            [class]="activeTab() === tab.id ? 
+            'px-4 py-2 rounded-lg bg-brand-500/10 text-brand-600 border border-brand-500/20 text-sm font-semibold whitespace-nowrap shadow-sm' : 
+            'px-4 py-2 rounded-lg hover:bg-canvas/5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white text-sm font-medium transition-all duration-[180ms] whitespace-nowrap'">
+            {{tab.label}}
+        </button>
+    </div>
 
-        <!-- Partner Section -->
-        <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-2">
-            <app-section-header title="Partner" [accent]="true"></app-section-header>
-            <div
-                class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-10 items-center glass-card !rounded-2xl p-6 md:p-10 relative">
-                <!-- Husband -->
-                <div class="flex items-center gap-5">
-                        <!-- Avatar Husband -->
+    <div class="space-y-8 animate-in fade-in duration-500 pb-20">
+
+        <!-- Tab: Basics -->
+        <div *ngIf="activeTab() === 'basics'" class="space-y-6">
+            <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
+                <app-section-header title="Partner" [accent]="true"></app-section-header>
+                <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-10 items-center bg-canvas/5 dark:bg-white/5 !rounded-2xl p-6 md:p-10 relative border border-canvas/10 dark:border-white/10">
+                    <!-- Husband -->
+                    <div class="flex items-center gap-5">
                         <app-avatar 
                             [imageUrl]="getPersonById(family()?.husband)?.media?.[0]?.url" 
                             [gender]="getPersonGender(family()?.husband)" 
                             size="lg"
                             [alt]="getPersonName(family()?.husband)"
                         ></app-avatar>
-                    <div class="flex flex-col">
-                        <span
-                            class="text-xs text-neutral-950 font-semibold uppercase tracking-wider mb-1">Ehemann</span>
-                        <span class="text-lg font-bold text-neutral-900">{{ getPersonName(family()?.husband) }}</span>
-                        <a [routerLink]="['/person', family()?.husband]"
-                            class="text-sm text-brand-400 hover:text-brand-300 hover:underline mt-1">Profil ansehen</a>
+                        <div class="flex flex-col">
+                            <span class="text-xs text-neutral-500 dark:text-neutral-400 font-semibold uppercase tracking-wider mb-1">Ehemann</span>
+                            <span class="text-lg font-bold text-neutral-900 dark:text-white">{{ getPersonName(family()?.husband) }}</span>
+                            <a [routerLink]="['/person', family()?.husband]"
+                                class="text-sm text-brand-600 dark:text-brand-400 hover:underline mt-1">Profil ansehen</a>
+                        </div>
                     </div>
-                </div>
 
-                <div class="text-4xl opacity-30 rotate-90 md:rotate-0 text-center">💍</div>
+                    <div class="text-4xl opacity-30 rotate-90 md:rotate-0 text-center">💍</div>
 
-                <!-- Wife -->
-                <div
-                    class="flex items-center gap-5 justify-start md:justify-end text-left md:text-right flex-row md:flex-row-reverse">
-                        <!-- Avatar Wife -->
+                    <!-- Wife -->
+                    <div class="flex items-center gap-5 justify-start md:justify-end text-left md:text-right flex-row md:flex-row-reverse">
                         <app-avatar 
                             [imageUrl]="getPersonById(family()?.wife)?.media?.[0]?.url" 
                             [gender]="getPersonGender(family()?.wife)" 
                             size="lg"
                             [alt]="getPersonName(family()?.wife)"
                         ></app-avatar>
-                    <div class="flex flex-col">
-                        <span
-                            class="text-xs text-neutral-950 font-semibold uppercase tracking-wider mb-1">Ehefrau</span>
-                        <span class="text-lg font-bold text-neutral-900">{{ getPersonName(family()?.wife) }}</span>
-                        <a [routerLink]="['/person', family()?.wife]"
-                            class="text-sm text-brand-400 hover:text-brand-300 hover:underline mt-1">Profil ansehen</a>
+                        <div class="flex flex-col">
+                            <span class="text-xs text-neutral-500 dark:text-neutral-400 font-semibold uppercase tracking-wider mb-1">Ehefrau</span>
+                            <span class="text-lg font-bold text-neutral-900 dark:text-white">{{ getPersonName(family()?.wife) }}</span>
+                            <a [routerLink]="['/person', family()?.wife]"
+                                class="text-sm text-brand-600 dark:text-brand-400 hover:underline mt-1">Profil ansehen</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Events Section -->
-        <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-2">
-            <app-section-header title="Ereignisse" icon="📅">
-                <button actions class="btn-primary !w-auto !py-1.5 text-sm" (click)="addEvent()">+ Ereignis</button>
-            </app-section-header>
-            <div class="flex flex-col gap-4">
-                <app-family-event-card *ngFor="let event of family()?.events; let i = index" [event]="event"
-                    [availableSources]="availableSources()" (changed)="updateEvent()"
-                    (removeRequested)="removeEvent(i)">
-                </app-family-event-card>
+        <!-- Tab: Kinder -->
+        <div *ngIf="activeTab() === 'children'" class="space-y-6">
+            <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
+                <app-section-header title="Kinder" icon="👶">
+                    <button actions class="btn-primary !w-auto !py-1.5 text-sm" (click)="openAddChildModal()">+ Kind</button>
+                </app-section-header>
 
-                <app-empty-state *ngIf="!family()?.events || family()?.events?.length === 0"
-                    icon="📅" 
-                    title="Keine Ereignisse" 
-                    message="In dieser Familie wurden noch keine gemeinsamen Ereignisse wie Hochzeiten oder Jubiläen hinterlegt.">
-                    <button actions class="btn-secondary !py-2 !px-4 text-xs" (click)="addEvent()">Erstes Ereignis hinzufügen</button>
-                </app-empty-state>
-            </div>
-        </div>
-
-        <!-- Notes Section -->
-        <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-2">
-            <app-section-header title="Notizen" icon="📝" description="Allgemeine Anmerkungen zur Familie">
-                <div actions class="flex items-center gap-2">
-                    <span *ngIf="family()?.notes?.length" class="text-xs text-neutral-400 font-bold mr-2">{{ family()?.notes?.length }} Notizen</span>
-                    <button class="btn-primary !w-auto !py-1.5 text-sm" (click)="addNote()">+ Notiz</button>
-                </div>
-            </app-section-header>
-
-            <div class="flex flex-col gap-3" *ngIf="family()?.notes && family()?.notes!.length > 0">
-                <div *ngFor="let note of family()?.notes; let i = index"
-                    class="glass-card !p-4 !rounded-2xl space-y-3 group">
-                    <!-- Pill Row -->
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <select [(ngModel)]="note.noteType" (ngModelChange)="isDirty.set(true)"
-                            class="bg-brand-500/15 border border-brand-500/30 text-brand-300 text-xs font-semibold rounded-full px-3 py-1 focus:outline-none cursor-pointer">
-                            <option value="GENERAL">📝 Allgemein</option>
-                            <option value="RESEARCH">🔍 Recherche</option>
-                            <option value="TRANSCRIPTION">📄 Transkript</option>
-                            <option value="ANALYSIS">📊 Analyse</option>
-                            <option value="TODO">⚠️ ToDo</option>
-                        </select>
-                        <select [(ngModel)]="note.researchStatus" (ngModelChange)="isDirty.set(true)" [ngClass]="{
-                                'bg-amber-500/15 border-amber-500/30 text-amber-300': note.researchStatus === 'OPEN',
-                                'bg-brand-500/15 border-brand-500/30 text-brand-300': note.researchStatus === 'IN_PROGRESS',
-                                'bg-emerald-500/15 border-emerald-500/30 text-emerald-300': note.researchStatus === 'DONE',
-                                'bg-brand-100/30 border-neutral-300/30 text-neutral-950': note.researchStatus === 'BLOCKED'
-                            }"
-                            class="border text-xs font-semibold rounded-full px-3 py-1 focus:outline-none cursor-pointer">
-                            <option value="OPEN">🔍 Offen</option>
-                            <option value="IN_PROGRESS">🔄 In Bearbeitung</option>
-                            <option value="DONE">✅ Fertig</option>
-                            <option value="BLOCKED">🚫 Blockiert</option>
-                        </select>
-                        <select [(ngModel)]="note.privacyLevel" (ngModelChange)="isDirty.set(true)"
-                            class="bg-brand-100/40 border border-neutral-300/40 text-neutral-700 text-xs font-semibold rounded-full px-3 py-1 focus:outline-none cursor-pointer">
-                            <option value="PUBLIC">🌍 Öffentlich</option>
-                            <option value="FAMILY">👨‍👩‍👧 Familie</option>
-                            <option value="PRIVATE">🔒 Privat</option>
-                        </select>
-                        <button (click)="removeNote(i)"
-                            class="ml-auto p-1.5 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2.5">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                        </button>
-                    </div>
-                    <textarea [(ngModel)]="note.text" (ngModelChange)="isDirty.set(true)"
-                        placeholder="Notiz zur Familie..." class="form-input min-h-[100px] resize-none"></textarea>
-                </div>
-            </div>
-
-            <app-empty-state *ngIf="!family()?.notes || family()?.notes!.length === 0"
-                icon="📝" 
-                title="Keine Notizen" 
-                message="Halte wichtige Details oder Forschungsergebnisse zu dieser Familie in Notizen fest.">
-                <button actions class="btn-secondary !py-2 !px-4 text-xs" (click)="addNote()">Notiz schreiben</button>
-            </app-empty-state>
-        </div>
-
-        <!-- Children Section -->
-        <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-2">
-            <app-section-header title="Kinder" icon="👶">
-                <div actions class="flex items-center gap-2">
-                    <span *ngIf="family()?.children?.length" class="text-xs text-neutral-400 font-bold mr-2">{{ family()?.children?.length }} Kinder</span>
-                    <button class="btn-primary !w-auto !py-1.5 text-sm" (click)="openAddChildModal()">+ Kind</button>
-                </div>
-            </app-section-header>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div class="glass-card !p-4 !rounded-2xl flex items-center gap-4"
-                    *ngFor="let childId of family()?.children">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" *ngIf="family()?.children?.length">
+                    <div class="glass-card !p-4 !rounded-2xl flex items-center gap-4 hover:scale-[1.02] transition-transform cursor-pointer"
+                        *ngFor="let childId of family()?.children" [routerLink]="['/person', childId]">
                         <app-avatar 
                             [imageUrl]="getPersonById(childId)?.media?.[0]?.url" 
                             [gender]="getPersonGender(childId)" 
                             size="sm"
                             [alt]="getPersonName(childId)"
                         ></app-avatar>
-                    <div class="flex flex-col flex-1 min-w-0">
-                        <span class="font-bold text-sm text-neutral-900 truncate">{{ getPersonName(childId) }}</span>
-                        <div class="flex gap-3 mt-1 text-xs">
-                            <a [routerLink]="['/person', childId]"
-                                class="text-brand-400 hover:text-brand-300 hover:underline">Profil</a>
-                            <button class="text-accent-danger-500/70 hover:text-accent-danger-500 hover:underline"
-                                (click)="removeChild(childId)">Entfernen</button>
+                        <div class="flex flex-col flex-1 min-w-0">
+                            <span class="font-bold text-sm text-neutral-900 dark:text-white truncate">{{ getPersonName(childId) }}</span>
+                            <div class="flex gap-3 mt-1 text-xs">
+                                <span class="text-brand-600 dark:text-brand-400 hover:underline">Profil</span>
+                                <button class="text-accent-danger-500/70 hover:text-accent-danger-500 hover:underline"
+                                    (click)="$event.stopPropagation(); removeChild(childId)">Entfernen</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -182,35 +96,334 @@
                     icon="👶" 
                     title="Keine Kinder" 
                     message="Bisher sind keine Kinder dieser Familie zugeordnet.">
-                    <button actions class="btn-secondary !py-2 !px-4 text-xs" (click)="openAddChildModal()">Kind hinzufügen</button>
+                </app-empty-state>
+            </div>
+        </div>
+
+        <!-- Tab: Ereignisse -->
+        <div *ngIf="activeTab() === 'events'" class="space-y-6">
+            <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
+                <app-section-header title="Ereignisse" icon="📅">
+                    <button actions class="btn-primary !w-auto !py-1.5 text-sm" (click)="openAddEventModal()">+ Ereignis</button>
+                </app-section-header>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" *ngIf="family()?.events?.length">
+                    <div *ngFor="let ev of family()?.events; let i = index" 
+                        (click)="openEditEventModal(i)"
+                        class="glass-card !p-5 !rounded-2xl hover:scale-[1.02] transition-transform cursor-pointer group">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xl">
+                                    {{ ev.type === 'MARR' ? '💍' : '📅' }}
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-bold text-neutral-900 dark:text-white">{{ ev.type }}</span>
+                                    <span class="text-xs text-neutral-500 dark:text-neutral-400 uppercase font-semibold tracking-wider">{{ ev.subType || 'Allgemein' }}</span>
+                                </div>
+                            </div>
+                            <button (click)="$event.stopPropagation(); removeEvent(i)" 
+                                class="p-2 text-neutral-400 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+                                <span class="text-neutral-400">📅</span>
+                                <span>{{ ev.dateText || ev.date || 'Kein Datum' }}</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+                                <span class="text-neutral-400">📍</span>
+                                <span>{{ ev.place || 'Kein Ort' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Data Indicators -->
+                        <div class="flex flex-wrap gap-2 mt-4" *ngIf="ev.citations?.length || ev.media?.length || ev.notes?.length">
+                            <span *ngIf="ev.citations?.length" class="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase rounded-full border border-emerald-500/20">
+                                📖 {{ ev.citations.length }}
+                            </span>
+                            <span *ngIf="ev.media?.length" class="px-2 py-0.5 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-bold uppercase rounded-full border border-brand-500/20">
+                                🖼 {{ ev.media.length }}
+                            </span>
+                            <span *ngIf="ev.notes?.length" class="px-2 py-0.5 bg-accent-highlight-500/10 text-accent-highlight-600 dark:text-accent-highlight-400 text-[10px] font-bold uppercase rounded-full border border-accent-highlight-500/20">
+                                📝 {{ ev.notes.length }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <app-empty-state *ngIf="!family()?.events || family()?.events?.length === 0"
+                    icon="📅" 
+                    title="Keine Ereignisse" 
+                    message="In dieser Familie wurden noch keine gemeinsamen Ereignisse hinterlegt.">
+                </app-empty-state>
+            </div>
+        </div>
+
+        <!-- Tab: Notizen -->
+        <div *ngIf="activeTab() === 'notes'" class="space-y-6">
+            <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
+                <app-section-header title="Notizen" icon="📝">
+                    <button actions class="btn-primary !w-auto !py-1.5 text-sm" (click)="openAddNoteModal()">+ Notiz</button>
+                </app-section-header>
+
+                <div class="grid grid-cols-1 gap-4" *ngIf="family()?.notes?.length">
+                    <div *ngFor="let note of family()?.notes; let i = index"
+                        (click)="openEditNoteModal(i)"
+                        class="glass-card !p-5 !rounded-2xl hover:bg-canvas/5 transition-all cursor-pointer group border border-canvas/10 dark:border-white/10">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="px-3 py-1 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-bold uppercase rounded-full border border-brand-500/20">
+                                    {{ note.noteType }}
+                                </span>
+                                <span class="px-3 py-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 text-[10px] font-bold uppercase rounded-full border border-neutral-200 dark:border-neutral-700">
+                                    {{ note.privacyLevel }}
+                                </span>
+                            </div>
+                            <button (click)="$event.stopPropagation(); removeNote(i)" 
+                                class="p-2 text-neutral-400 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-3 leading-relaxed">{{ note.text }}</p>
+                    </div>
+                </div>
+
+                <app-empty-state *ngIf="!family()?.notes || family()?.notes?.length === 0"
+                    icon="📝" 
+                    title="Keine Notizen" 
+                    message="Halte wichtige Details oder Forschungsergebnisse fest.">
+                </app-empty-state>
+            </div>
+        </div>
+
+        <!-- Tab: Referenzen -->
+        <div *ngIf="activeTab() === 'citations'" class="space-y-6">
+            <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
+                <app-section-header title="Quellennachweise" icon="📚">
+                    <button actions class="btn-primary !w-auto !py-1.5 text-sm" (click)="openAddCitationModal()">+ Referenz</button>
+                </app-section-header>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" *ngIf="family()?.citations?.length">
+                    <div *ngFor="let cite of family()?.citations; let i = index"
+                        (click)="openEditCitationModal(i)"
+                        class="glass-card !p-5 !rounded-2xl group hover:scale-[1.02] transition-transform cursor-pointer border border-canvas/10 dark:border-white/10">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">{{ getSourceTitle(cite.sourceId) }}</span>
+                            <button (click)="$event.stopPropagation(); removeCitation(i)" 
+                                class="p-1.5 text-neutral-400 hover:text-accent-danger-500 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="text-sm text-neutral-800 dark:text-neutral-200">
+                            <p *ngIf="cite.page">Seite/Ort: <span class="font-medium">{{ cite.page }}</span></p>
+                            <p *ngIf="cite.dateText" class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Datum: {{ cite.dateText }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <app-empty-state *ngIf="!family()?.citations || family()?.citations?.length === 0"
+                    icon="📚" 
+                    title="Keine Referenzen" 
+                    message="Verknüpfe Quellen, um deine Forschung zu belegen.">
+                </app-empty-state>
+            </div>
+        </div>
+
+        <!-- Tab: Medien -->
+        <div *ngIf="activeTab() === 'media'" class="space-y-6">
+            <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
+                <app-section-header title="Medien" icon="🖼">
+                    <div actions class="flex gap-2">
+                        <button (click)="openMediaAddModal()" class="btn-primary !w-auto !py-1.5 text-sm">+ Upload</button>
+                        <button (click)="openMediaSelector()" class="btn-secondary !w-auto !py-1.5 text-sm">Galerie</button>
+                    </div>
+                </app-section-header>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" *ngIf="family()?.media?.length">
+                    <div *ngFor="let med of family()?.media; let i = index"
+                        (click)="openEditMediaModal(i)"
+                        class="glass-card !p-0 !rounded-2xl overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer border border-canvas/10 dark:border-white/10">
+                        <div class="aspect-video bg-canvas/10 dark:bg-white/10 relative flex items-center justify-center overflow-hidden">
+                            <img *ngIf="isImageUrl(med.url)" [src]="med.url" class="w-full h-full object-cover">
+                            <div *ngIf="!isImageUrl(med.url)" class="text-neutral-400 dark:text-neutral-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                    <polyline points="13 2 13 9 20 9"></polyline>
+                                </svg>
+                            </div>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
+                                Klicken zum Bearbeiten
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <p class="text-xs font-bold text-neutral-900 dark:text-white truncate">{{ med.title || 'Ohne Titel' }}</p>
+                            <p class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">{{ med.url }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <app-empty-state *ngIf="!family()?.media || family()?.media?.length === 0"
+                    icon="🖼" 
+                    title="Keine Medien" 
+                    message="Lade Bilder, Urkunden oder andere Dokumente hoch.">
                 </app-empty-state>
             </div>
         </div>
 
     </div>
 
+    <!-- MODALS -->
+
+    <!-- Media Modal -->
+    <app-modal-shell [visible]="showMediaModal()" 
+        [title]="activeMediaIndex() !== null ? 'Medium bearbeiten' : 'Neues Medium'" 
+        icon="🖼" size="md" [showSave]="true" (close)="showMediaModal.set(false)" (save)="confirmSaveMedia()">
+        <div *ngIf="mediaDraft() as draft" class="space-y-4">
+            <div class="form-group">
+                <label class="form-label">Titel</label>
+                <input type="text" [(ngModel)]="draft.title" class="form-input" placeholder="z.B. Hochzeitsurkunde">
+            </div>
+            <div class="form-group">
+                <label class="form-label">URL / Dateipfad</label>
+                <input type="text" [(ngModel)]="draft.url" class="form-input" placeholder="https://... oder path/to/file">
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-canvas/5 dark:bg-white/5 rounded-xl border border-canvas/10 dark:border-white/10" *ngIf="isImageUrl(draft.url)">
+                <img [src]="draft.url" class="w-20 h-20 object-cover rounded-lg border border-canvas/20">
+                <span class="text-xs text-neutral-500 dark:text-neutral-400">Vorschau</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" [(ngModel)]="draft.isPrimary" id="isPrimary" class="rounded border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900/50">
+                <label for="isPrimary" class="text-sm text-neutral-700 dark:text-neutral-300">Als Hauptbild verwenden</label>
+            </div>
+
+            <div class="pt-4 flex justify-end" *ngIf="activeMediaIndex() !== null">
+                <button (click)="removeMedia(activeMediaIndex()!)" class="text-accent-danger-500 text-sm hover:underline">Medium löschen</button>
+            </div>
+        </div>
+    </app-modal-shell>
+
+        <app-media-selector [visible]="showMediaSelector" (selected)="onMediaSelected($event)" (closed)="showMediaSelector = false">
+        </app-media-selector>
+
+        <app-media-add-modal [visible]="showMediaAddModal()" [treeId]="authService.currentTree()?.name || ''" (closed)="showMediaAddModal.set(false)" (saved)="onMediaAddUploaded($event)">
+        </app-media-add-modal>
+
+        <app-image-viewer [url]="viewerUrl()" [title]="viewerTitle()" (closed)="viewerUrl.set(null)"></app-image-viewer>
+
+    <!-- Event Modal (reusable component) -->
+    <app-event-modal
+        [visible]="showEventModal()"
+        [item]="eventDraft()"
+        [isNew]="activeEventIndex() === null"
+        [showDelete]="activeEventIndex() !== null"
+        (close)="showEventModal.set(false)"
+        (save)="confirmSaveEvent()"
+        (delete)="removeEvent(activeEventIndex()!)"
+        (addCitation)="addEventCitation()"
+        (removeCitation)="removeEventCitation($event)"
+        (openUpload)="openMediaAddModal()"
+        (openGallery)="openMediaSelector()"
+        (addNote)="addEventNote()"
+        (removeNote)="removeEventNote($event)"
+        (addMedia)="addEventMedia()"
+        (removeMedia)="removeEventMedia($event)"
+        (openViewer)="openViewer($event)">
+    </app-event-modal>
+
+    <!-- Globaler Place Modal Integration -->
+    <app-place-modal [visible]="showPlaceModal()" mode="add" (closed)="showPlaceModal.set(false)" (saved)="onPlaceSaved($event)"></app-place-modal>
+
+    <!-- Note Modal -->
+    <app-modal-shell [visible]="showNoteModal()" 
+        [title]="activeNoteIndex() !== null ? 'Notiz bearbeiten' : 'Neue Notiz'" 
+        icon="📝" size="md" [showSave]="true" (close)="showNoteModal.set(false)" (save)="confirmSaveNote()">
+        <div *ngIf="noteDraft() as draft" class="space-y-4">
+            <div class="grid grid-cols-3 gap-3">
+                <div class="form-group">
+                    <label class="form-label">Kategorie</label>
+                    <select [(ngModel)]="draft.noteType" class="form-input">
+                        <option value="GENERAL">Allgemein</option>
+                        <option value="RESEARCH">Recherche</option>
+                        <option value="TODO">ToDo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select [(ngModel)]="draft.researchStatus" class="form-input">
+                        <option value="OPEN">Offen</option>
+                        <option value="IN_PROGRESS">In Arbeit</option>
+                        <option value="DONE">Erledigt</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Privatsphäre</label>
+                    <select [(ngModel)]="draft.privacyLevel" class="form-input">
+                        <option value="PUBLIC">Öffentlich</option>
+                        <option value="PRIVATE">Privat</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Inhalt</label>
+                <textarea [(ngModel)]="draft.text" class="form-input min-h-[150px]" placeholder="Deine Notiz..."></textarea>
+            </div>
+        </div>
+    </app-modal-shell>
+
     <!-- Kind hinzufügen Modal -->
     <app-modal-shell [visible]="showAddChildModal()" title="Kind hinzufügen" icon="👶" size="sm" [showSave]="true"
-        saveText="Hinzufügen" [showDelete]="false" (close)="showAddChildModal.set(false)" (save)="confirmAddChild()">
+        saveText="Verknüpfen" (close)="showAddChildModal.set(false)" (save)="confirmAddChild()">
         <div class="space-y-4">
-            <div class="form-group mb-0">
-                <label class="form-label">Name oder ID der Person</label>
-                <input type="text" [(ngModel)]="addChildQuery" class="form-input"
-                    placeholder="z.B. Max Mustermann oder I001" autofocus>
+            <div class="form-group">
+                <label class="form-label">Name oder ID</label>
+                <input type="text" [(ngModel)]="addChildQuery" class="form-input" placeholder="z.B. I001..." autofocus>
             </div>
-            <div *ngIf="addChildResults().length > 1" class="space-y-2">
-                <label class="form-label">Treffer auswählen</label>
-                <div class="space-y-1 max-h-48 overflow-y-auto">
+            <div *ngIf="addChildResults().length > 0" class="space-y-2">
+                <label class="form-label">Treffer</label>
+                <div class="flex flex-col gap-1 max-h-48 overflow-y-auto">
                     <button *ngFor="let c of addChildResults()" (click)="selectChildCandidate(c)"
-                        [class]="selectedChildId() === c.id ? 'w-full text-left px-3 py-2 rounded-lg bg-brand-500/20 border border-brand-500/40 text-brand-300 text-sm' : 'w-full text-left px-3 py-2 rounded-lg bg-brand-100/50 hover:bg-brand-100 border border-neutral-300/30 text-neutral-700 text-sm'">
-                        {{ c.firstName }} {{ c.lastName }} <span class="text-neutral-950 text-xs ml-1">({{ c.id
-                            }})</span>
+                        [class]="selectedChildId() === c.id ? 'btn-brand-soft !justify-start !text-left' : 'btn-ghost !justify-start !text-left text-sm'">
+                        {{ c.firstName }} {{ c.lastName }} ({{ c.id }})
                     </button>
                 </div>
             </div>
-            <p *ngIf="addChildError()"
-                class="text-sm text-accent-danger-500 bg-accent-danger-500/10 px-3 py-2 rounded-lg">{{ addChildError()
-                }}</p>
+            <p *ngIf="addChildError()" class="text-xs text-accent-danger-500 bg-accent-danger-500/10 p-2 rounded-lg">{{ addChildError() }}</p>
+        </div>
+    </app-modal-shell>
+
+    <!-- Source Citation Modal -->
+    <app-modal-shell [visible]="showCitationModal()" 
+        [title]="activeCitationIndex() !== null ? 'Referenz bearbeiten' : 'Neue Referenz'" 
+        icon="📚" size="md" [showSave]="true" (close)="showCitationModal.set(false)" (save)="confirmSaveCitation()">
+        <div *ngIf="citationDraft() as draft" class="space-y-4">
+            <div class="form-group">
+                <label class="form-label">Quelle auswählen</label>
+                <select [(ngModel)]="draft.sourceId" class="form-input">
+                    <option value="">-- Bitte wählen --</option>
+                    <option *ngFor="let s of availableSources()" [value]="s.id">{{ s.title }} ({{ s.id }})</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label">Seite / Ort</label>
+                    <input type="text" [(ngModel)]="draft.page" class="form-input" placeholder="z.B. Seite 45">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Datum</label>
+                    <input type="text" [(ngModel)]="draft.dateText" class="form-input" placeholder="z.B. 1900">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Qualität/Glaubwürdigkeit (0-3)</label>
+                <input type="text" [(ngModel)]="draft.confidence" class="form-input" placeholder="0 = unzuverlässig, 3 = primär">
+            </div>
         </div>
     </app-modal-shell>
 
@@ -218,13 +431,14 @@
     <app-modal-shell [visible]="showCancelConfirmModal()" title="Änderungen verwerfen?" icon="⚠️" size="sm"
         [showSave]="false" [showDelete]="true" deleteText="Ja, verwerfen" (close)="showCancelConfirmModal.set(false)"
         (delete)="confirmCancel()">
-        <p class="p-4 text-neutral-700 text-center">Ungespeicherte Änderungen gehen verloren.</p>
+        <p class="p-4 text-neutral-600 dark:text-neutral-300 text-center">Möchten Sie alle ungespeicherten Änderungen wirklich verwerfen?</p>
     </app-modal-shell>
+
 </ng-container>
 
-<!-- Global Loading Overlay -->
-<div class="fixed inset-0 bg-ui-canvasDark/80 backdrop-blur-sm z-[1000] flex flex-col items-center justify-center gap-4"
+<!-- Loading Overlay -->
+<div class="fixed inset-0 bg-canvas/80 dark:bg-canvas-dark/80 backdrop-blur-sm z-[1000] flex flex-col items-center justify-center gap-4"
     *ngIf="loading()">
     <div class="w-10 h-10 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin"></div>
-    <p class="text-neutral-700 font-medium tracking-wide">Lade Familiendetails...</p>
+    <p class="text-neutral-700 dark:text-neutral-200 font-medium tracking-wide">Lade Familiendetails...</p>
 </div>

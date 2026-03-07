@@ -17,10 +17,25 @@ export class GedcomService {
 
     currentTreeData = signal<TreeData | null>(null);
 
-    getMediaUrl(url: string | undefined): string {
-        if (!url) return '';
-        if (url.startsWith('http')) return url;
-        return `${this.baseMediaUrl}${url}`;
+    getMediaUrl(mediaId: string | undefined, variant?: string): string {
+        if (!mediaId) return '';
+        if (mediaId.startsWith('http') || mediaId.startsWith('/') || mediaId.startsWith('assets/')) return mediaId;
+        const v = variant ? `?variant=${variant}` : '';
+        return `${environment.apiUrl}/media/file/${mediaId}${v}`;
+    }
+
+    isImage(item: any): boolean {
+        if (!item) return false;
+        const mime = String(item.mimeType || '').toLowerCase();
+        const p = String(item.path || item.filePath || '').toLowerCase();
+        return mime.startsWith('image/') || ['.jpg', '.jpeg', '.png', '.webp', '.gif'].some(ext => p.endsWith(ext));
+    }
+
+    isPdf(item: any): boolean {
+        if (!item) return false;
+        const mime = String(item.mimeType || '').toLowerCase();
+        const p = String(item.path || item.filePath || '').toLowerCase();
+        return mime.includes('pdf') || p.endsWith('.pdf');
     }
 
     getTreeData(treeName?: string): Observable<TreeData | null> {
@@ -97,14 +112,23 @@ export class GedcomService {
         });
     }
 
-    uploadMedia(treeId: string, file: File, title?: string, mediaType?: string): Observable<any> {
+    uploadMedia(treeId: string, userId: string, file: File, title?: string, mediaType?: string): Observable<any> {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('treeId', treeId);
+        formData.append('userId', userId);
         if (title) formData.append('title', title);
         if (mediaType) formData.append('mediaType', mediaType);
 
         return this.http.post<any>(`${environment.apiUrl}/media/upload`, formData, { withCredentials: true });
+    }
+
+    updateCrop(mediaId: string, crop: { x: number, y: number, width: number, height: number }): Observable<any> {
+        return this.http.patch<any>(`${environment.apiUrl}/media/${mediaId}/crop`, crop, { withCredentials: true });
+    }
+
+    resetCrop(mediaId: string): Observable<any> {
+        return this.http.delete<any>(`${environment.apiUrl}/media/${mediaId}/crop`, { withCredentials: true });
     }
 
     deleteMedia(id: string): Observable<any> {
@@ -117,9 +141,18 @@ export class GedcomService {
         gedcomId?: string,
         dimensions?: string,
         fileFormat?: string,
-        identifiers?: any[]
+        identifiers?: any[],
+        notes?: string[],
+        citations?: any[]
     }): Observable<any> {
         return this.http.put<any>(`${environment.apiUrl}/media/${id}`, data, { withCredentials: true });
+    }
+
+    deleteOrphanFile(path: string): Observable<any> {
+        return this.http.request<any>('delete', `${environment.apiUrl}/media/orphan-file`, { 
+            body: { path },
+            withCredentials: true 
+        });
     }
 
     linkMedia(mediaId: string, linkData: { treeId: string, personId?: string, familyId?: string, sourceId?: string, isPrimary?: boolean }): Observable<any> {
@@ -137,13 +170,6 @@ export class GedcomService {
             title,
             mediaType
         }, { withCredentials: true });
-    }
-
-    deleteOrphanFile(filePath: string): Observable<any> {
-        return this.http.request<any>('delete', `${environment.apiUrl}/media/orphan-file`, {
-            body: { filePath },
-            withCredentials: true
-        });
     }
 
     getStatistics(treeName: string): Observable<any> {
@@ -203,12 +229,16 @@ export class GedcomService {
         return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, { mode: 'delete', name: placeName }, { withCredentials: true });
     }
 
-    getSources(treeName: string): Observable<any> {
-        return this.http.get<any>(`${this.baseApiUrl}${treeName}/source`, { withCredentials: true });
+    getSource(treeName: string, id: string): Observable<any> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/source/${id}`, { withCredentials: true });
     }
 
     getSourceUsage(treeName: string, sourceId: string): Observable<any> {
         return this.http.get<any>(`${this.baseApiUrl}${treeName}/source/${sourceId}/usage`, { withCredentials: true });
+    }
+
+    getSources(treeName: string): Observable<any> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/source`, { withCredentials: true });
     }
 
     saveSource(treeName: string, payload: any): Observable<any> {

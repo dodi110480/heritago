@@ -46,7 +46,7 @@ import { FormsModule } from '@angular/forms';
                 </div>
                 <div class="flex justify-end lg:col-span-1">
                     <button
-                        class="p-2 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-xl transition-colors"
+                        class="p-2 text-neutral-800 dark:text-neutral-200 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-xl transition-colors"
                         (click)="removeRequested.emit()" title="Ereignis löschen">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -71,7 +71,7 @@ import { FormsModule } from '@angular/forms';
                             class="grid grid-cols-1 md:grid-cols-[64px_1fr_1fr_auto] gap-3 items-center">
                             <div class="w-full md:w-16 h-24 md:h-12 bg-brand-100 rounded-lg border border-neutral-300 overflow-hidden flex items-center justify-center shrink-0">
                                 <img *ngIf="isImageUrl(med.url)" [src]="med.url" class="w-full h-full object-cover" alt="">
-                                <svg *ngIf="!isImageUrl(med.url)" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-neutral-950">
+                                <svg *ngIf="!isImageUrl(med.url)" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-neutral-800 dark:text-neutral-200">
                                     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                                     <polyline points="13 2 13 9 20 9"></polyline>
                                 </svg>
@@ -80,11 +80,11 @@ import { FormsModule } from '@angular/forms';
                                 placeholder="Titel" class="form-input form-input-sm">
                             <input type="text" [(ngModel)]="med.url" (ngModelChange)="change()"
                                 placeholder="URL / Dateipfad" class="form-input form-input-sm">
-                            <button class="p-2 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-colors place-self-end md:place-self-auto"
+                            <button class="p-2 text-neutral-800 dark:text-neutral-200 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-colors place-self-end md:place-self-auto"
                                 (click)="removeMedia(mIndex)">&times;</button>
                         </div>
                     </div>
-                    <p *ngIf="!event.media || event.media.length === 0" class="text-xs text-neutral-950 italic">Keine Medien.</p>
+                    <p *ngIf="!event.media || event.media.length === 0" class="text-xs text-neutral-800 dark:text-neutral-200 italic">Keine Medien.</p>
                 </div>
 
                 <!-- Notizen -->
@@ -98,11 +98,11 @@ import { FormsModule } from '@angular/forms';
                             class="grid grid-cols-[1fr_auto] gap-3 items-start">
                             <textarea [ngModel]="note" (ngModelChange)="updateNote(nIndex, $event)"
                                 class="form-input form-input-sm min-h-[60px]" placeholder="Notiz zum Ereignis"></textarea>
-                            <button class="p-2 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-colors"
+                            <button class="p-2 text-neutral-800 dark:text-neutral-200 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-colors"
                                 (click)="removeNote(nIndex)">&times;</button>
                         </div>
                     </div>
-                    <p *ngIf="!event.notes || event.notes.length === 0" class="text-xs text-neutral-950 italic">Keine Notizen.</p>
+                    <p *ngIf="!event.notes || event.notes.length === 0" class="text-xs text-neutral-800 dark:text-neutral-200 italic">Keine Notizen.</p>
                 </div>
 
                 <!-- Quellenbelege -->
@@ -117,7 +117,7 @@ import { FormsModule } from '@angular/forms';
                         </strong>
                         <button class="btn-ghost !w-auto !py-1 text-xs" (click)="addCitation()">+ Beleg</button>
                     </div>
-                    <p *ngIf="!event.citations?.length" class="text-xs text-neutral-950 italic">Noch kein Quellbeleg.</p>
+                    <p *ngIf="!event.citations?.length" class="text-xs text-neutral-800 dark:text-neutral-200 italic">Noch kein Quellbeleg.</p>
                     <div *ngIf="event.citations && event.citations.length > 0" class="flex flex-col gap-2">
                         <div *ngFor="let cit of event.citations; let cIndex = index"
                             class="bg-brand-50/50 border border-neutral-300/20 rounded-xl p-3 space-y-2">
@@ -129,7 +129,7 @@ import { FormsModule } from '@angular/forms';
                                         {{ s.title }}{{ s.author ? ' · ' + s.author : '' }}
                                     </option>
                                 </select>
-                                <button class="p-1.5 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-all shrink-0"
+                                <button class="p-1.5 text-neutral-800 dark:text-neutral-200 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-all shrink-0"
                                     (click)="removeCitation(cIndex)" title="Beleg entfernen">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                         <line x1="18" y1="6" x2="6" y2="18"></line>

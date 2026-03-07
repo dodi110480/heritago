@@ -1,17 +1,6 @@
 <div *ngIf="person() as p" (input)="markDirty()">
     <app-page-header [title]="p.firstName + ' ' + p.lastName"
         [description]="(p.birthDate | cleanDate) + ' - ' + (p.deathDate | cleanDate)">
-        <div breadcrumbs>
-            <button class="btn-ghost !w-auto !px-3" (click)="goBack()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="19" y1="12" x2="5" y2="12"></line>
-                    <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-                Zurück
-            </button>
-        </div>
-
         <div actions></div>
     </app-page-header>
 
@@ -143,141 +132,58 @@
     </app-modal-shell>
 
     <!-- TIMELINE MODALS (global – used by timeline tab via ctx) -->
-    <app-modal-shell [visible]="showTimelineCreateModal()" title="Ereignis/Fakt hinzufügen" icon="📌" size="md"
-        [showSave]="true" saveText="Hinzufügen" [showDelete]="false" (close)="closeTimelineCreateModal()"
-        (save)="confirmAddTimelineItem()">
-        <div class="space-y-4">
-            <div class="form-group mb-0">
-                <label class="form-label">Typ</label>
-                <select [ngModel]="newTimelineDraft().itemKind"
-                    (ngModelChange)="newTimelineDraft.update(v => ({ ...v, itemKind: $event, tag: $event === 'fact' ? 'FACT' : 'DEAT' }))"
-                    class="form-input !py-2.5">
-                    <option value="event">Ereignis</option>
-                    <option value="fact">Fakt</option>
-                </select>
-            </div>
+    <app-event-modal 
+        [visible]="showTimelineCreateModal()" 
+        [item]="newTimelineDraft()" 
+        [isNew]="true"
+        (close)="closeTimelineCreateModal()" 
+        (save)="confirmAddTimelineItem()"
+        (addCitation)="addNewTimelineCitation()"
+        (removeCitation)="removeNewTimelineCitation($event)"
+        (openUpload)="openNewTimelineMediaAdd()"
+        (openGallery)="openNewTimelineMediaSelector()"
+        (addNote)="addNewTimelineNote()"
+        (removeNote)="removeNewTimelineNote($event)"
+        (addMedia)="addNewTimelineMedia()"
+        (removeMedia)="removeNewTimelineMedia($event)"
+        (openViewer)="openViewer($event)">
+    </app-event-modal>
 
-            <div class="form-group mb-0">
-                <label class="form-label">Kategorie</label>
-                <select [ngModel]="newTimelineDraft().tag"
-                    (ngModelChange)="newTimelineDraft.update(v => ({ ...v, tag: $event }))" class="form-input !py-2.5">
-                    <ng-container *ngIf="newTimelineDraft().itemKind === 'event'; else factTags">
-                        <option value="BIRT">Geburt</option>
-                        <option value="CHR">Taufe</option>
-                        <option value="DEAT">Tod</option>
-                        <option value="BURI">Begräbnis</option>
-                        <option value="CREM">Einäscherung</option>
-                        <option value="EMIG">Auswanderung</option>
-                        <option value="IMMI">Einwanderung</option>
-                        <option value="MARR">Heirat</option>
-                    </ng-container>
-                    <ng-template #factTags>
-                        <option value="OCCU">Beruf</option>
-                        <option value="RELI">Religion</option>
-                        <option value="EDUC">Bildung</option>
-                        <option value="RESI">Wohnsitz</option>
-                        <option value="TITL">Titel</option>
-                        <option value="NATI">Nationalität/Herkunft</option>
-                        <option value="DSCR">Körperl. Merkmale</option>
-                        <option value="FACT">Anderer Fakt</option>
-                    </ng-template>
-                </select>
-            </div>
+    <app-event-modal 
+        [visible]="showTimelineItemModal()" 
+        [item]="activeTimelineItem()" 
+        [isNew]="false"
+        [showDelete]="!!activeTimelineItem() && !isTimelineItemLocked(activeTimelineItem()!)"
+        (close)="closeTimelineItemModal()"
+        (save)="saveTimelineItemModal()"
+        (delete)="removeTimelineItemModal()"
+        (addCitation)="addTimelineCitation()"
+        (removeCitation)="removeTimelineCitation($event)"
+        (openUpload)="openTimelineMediaAdd()"
+        (openGallery)="openTimelineMediaSelector()"
+        (addNote)="addEventNote()"
+        (removeNote)="removeEventNote($event)"
+        (addMedia)="addEventMedia()"
+        (removeMedia)="removeEventMedia($event)"
+        (openViewer)="openViewer($event)">
+    </app-event-modal>
+    
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group mb-0">
-                    <label class="form-label">Datum</label>
-                    <input type="text" [ngModel]="newTimelineDraft().date"
-                        (ngModelChange)="newTimelineDraft.update(v => ({ ...v, date: $event }))" class="form-input"
-                        placeholder="z.B. 12 MAR 1890">
-                </div>
-                <div class="form-group mb-0">
-                    <label class="form-label">Ort</label>
-                    <input type="text" [ngModel]="newTimelineDraft().place"
-                        (ngModelChange)="newTimelineDraft.update(v => ({ ...v, place: $event }))" class="form-input"
-                        placeholder="z.B. München">
-                </div>
-            </div>
+    <!-- MEDIA SELECTION MODALS -->
+    <app-image-viewer [url]="viewerUrl()" [title]="viewerTitle()" (closed)="viewerUrl.set(null)"></app-image-viewer>
 
-            <div class="form-group mb-0">
-                <label class="form-label">{{ newTimelineDraft().itemKind === 'fact' ? 'Wert' : 'Beschreibung' }}</label>
-                <input type="text" [ngModel]="newTimelineDraft().description"
-                    (ngModelChange)="newTimelineDraft.update(v => ({ ...v, description: $event }))" class="form-input"
-                    placeholder="Optional">
-            </div>
-        </div>
-    </app-modal-shell>
+    <app-media-add-modal 
+        *ngIf="showMediaAddModal()" 
+        [visible]="true"
+        [treeId]="authService.currentTree()?.id || ''"
+        (closed)="showMediaAddModal.set(false)" 
+        (saved)="onMediaAddUploaded($event)">
+    </app-media-add-modal>
 
-    <app-modal-shell [visible]="showTimelineItemModal()"
-        [title]="activeTimelineItem() ? (getTagLabel(activeTimelineItem()!.tag) + ' bearbeiten') : 'Ereignis bearbeiten'"
-        icon="📅" size="md" [showSave]="true" saveText="Speichern"
-        [showDelete]="!!activeTimelineItem() && !isTimelineItemLocked(activeTimelineItem()!)" deleteText="Löschen"
-        (close)="closeTimelineItemModal()" (save)="saveTimelineItemModal()" (delete)="removeTimelineItemModal()">
-        <div *ngIf="activeTimelineItem() as item" class="space-y-4">
-            <div *ngIf="isTimelineItemLocked(item)"
-                class="text-[11px] text-neutral-500 bg-canvas/5 border border-neutral-200 rounded-xl px-3 py-2 flex items-center justify-between gap-3">
-                <span>Dieses Ereignis ist abgeleitet/familienbasiert und hier nur lesbar.</span>
-                <button *ngIf="hasTimelineItemSource(item)" (click)="goToTimelineItemSource(item)"
-                    class="badge-neutral !py-1 !px-2">
-                    {{ getTimelineItemSourceLabel(item) }}
-                </button>
-            </div>
-
-            <div class="form-group mb-0">
-                <label class="form-label">Kategorie</label>
-                <select [(ngModel)]="item.tag" (ngModelChange)="markDirty()" [disabled]="isTimelineItemLocked(item)"
-                    class="form-input !py-2.5 disabled:opacity-60 disabled:cursor-not-allowed">
-                    <optgroup label="Lebensereignisse">
-                        <option value="BIRT">Geburt</option>
-                        <option value="CHR">Taufe</option>
-                        <option value="DEAT">Tod</option>
-                        <option value="BURI">Begräbnis</option>
-                        <option value="CREM">Einäscherung</option>
-                        <option value="EMIG">Auswanderung</option>
-                        <option value="IMMI">Einwanderung</option>
-                        <option value="MARR">Heirat</option>
-                    </optgroup>
-                    <optgroup label="Eigenschaften &amp; Fakten">
-                        <option value="OCCU">Beruf</option>
-                        <option value="RELI">Religion</option>
-                        <option value="EDUC">Bildung</option>
-                        <option value="RESI">Wohnsitz</option>
-                        <option value="TITL">Titel</option>
-                        <option value="NATI">Nationalität/Herkunft</option>
-                        <option value="DSCR">Körperl. Merkmale</option>
-                        <option value="FACT">Anderer Fakt</option>
-                    </optgroup>
-                </select>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="form-group mb-0">
-                    <label class="form-label">Datum</label>
-                    <input type="text" [(ngModel)]="item.date" (ngModelChange)="markDirty()"
-                        [disabled]="isTimelineItemLocked(item)"
-                        class="form-input disabled:opacity-60 disabled:cursor-not-allowed"
-                        placeholder="z.B. 12 MAR 1890">
-                </div>
-                <div class="form-group mb-0">
-                    <label class="form-label">Ort</label>
-                    <input type="text" [(ngModel)]="item.place" (ngModelChange)="markDirty()"
-                        [disabled]="isTimelineItemLocked(item)"
-                        class="form-input disabled:opacity-60 disabled:cursor-not-allowed" placeholder="z.B. München">
-                </div>
-            </div>
-
-            <div class="form-group mb-0">
-                <label class="form-label">Beschreibung / Wert</label>
-                <input *ngIf="['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(item.tag)"
-                    type="text" [(ngModel)]="item.value" (ngModelChange)="markDirty()"
-                    [disabled]="isTimelineItemLocked(item)"
-                    class="form-input disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Optional">
-                <input *ngIf="!['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'DSCR', 'FACT'].includes(item.tag)"
-                    type="text" [(ngModel)]="item.description" (ngModelChange)="markDirty()"
-                    [disabled]="isTimelineItemLocked(item)"
-                    class="form-input disabled:opacity-60 disabled:cursor-not-allowed" placeholder="Optional">
-            </div>
-        </div>
-    </app-modal-shell>
-
+    <app-media-selector 
+        *ngIf="showMediaSelector()" 
+        [visible]="true"
+        (closed)="showMediaSelector.set(false)" 
+        (selected)="onMediaSelected($event)">
+    </app-media-selector>
 </div>

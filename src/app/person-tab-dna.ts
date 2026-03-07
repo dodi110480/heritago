@@ -31,11 +31,11 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                                     <span class="badge badge-primary py-0.5 px-2">{{ m.totalCm ? m.totalCm + ' cM' :
                                         'unbekannt' }}</span>
                                 </div>
-                                <p class="text-sm text-neutral-950 mt-1">Provider: <span class="font-semibold text-neutral-900">{{
+                                <p class="text-sm text-neutral-800 dark:text-neutral-200 mt-1">Provider: <span class="font-semibold text-neutral-900">{{
                                         m.provider || 'Unbekannt' }}</span></p>
                             </div>
                             <button (click)="$event.stopPropagation(); removeDnaMatch(i)"
-                                class="p-1.5 text-neutral-950 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+                                class="p-1.5 text-neutral-800 dark:text-neutral-200 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M3 6h18"></path>
@@ -45,11 +45,11 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                         </div>
 
                         <div *ngIf="m.segments && m.segments.length > 0" class="mt-4 pt-4 border-t border-neutral-300/50">
-                            <h4 class="text-xs font-bold text-neutral-950 uppercase tracking-widest mb-2">Segmente
+                            <h4 class="text-xs font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-2">Segmente
                                 ({{ m.segments.length }})</h4>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                 <div *ngFor="let s of m.segments"
-                                    class="bg-brand-100/50 p-2 rounded-lg border border-neutral-300/30 text-xs text-neutral-950">
+                                    class="bg-brand-100/50 p-2 rounded-lg border border-neutral-300/30 text-xs text-neutral-800 dark:text-neutral-200">
                                     <span class="font-bold text-neutral-900">Chr {{ s.chromosome }}</span>: {{
                                     s.startPosition }} - {{ s.endPosition }} ({{ s.cm }} cM)
                                 </div>
@@ -62,7 +62,6 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                     icon="🧬" 
                     title="Keine DNA-Matches" 
                     message="Verknüpfe DNA-Testergebnisse von Anbietern wie Ancestry oder MyHeritage, um verwandtschaftliche Beziehungen genetisch zu belegen.">
-                    <button actions (click)="addDnaMatch()" class="btn-secondary !py-2 !px-4 text-xs">Match hinzufügen</button>
                 </app-empty-state>
             </div>
         </div>
@@ -136,7 +135,7 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
 
                 <div class="space-y-4 p-4 bg-brand-100 rounded-xl">
                     <div class="flex justify-between items-center">
-                        <h4 class="text-xs font-bold text-neutral-950 uppercase tracking-widest">Segmente</h4>
+                        <h4 class="text-xs font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest">Segmente</h4>
                         <button (click)="addDnaSegmentDraft()"
                             class="text-[10px] font-bold text-brand-400 hover:text-brand-300 uppercase">+ Segment</button>
                     </div>

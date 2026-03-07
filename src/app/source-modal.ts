@@ -1,13 +1,14 @@
 import { Component, Input, Output, EventEmitter, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { AppModalShell } from './ui/app-modal-shell';
 
 @Component({
     selector: 'app-source-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell],
+    imports: [CommonModule, FormsModule, RouterLink, AppModalShell],
     templateUrl: './source-modal.html'
 })
 export class SourceModal implements OnInit {
@@ -24,8 +25,10 @@ export class SourceModal implements OnInit {
 
     visible = true;
     isSaving = signal(false);
+    isLoadingUsage = signal(false);
     errorMessage = signal<string | null>(null);
     repositories = signal<any[]>([]);
+    usages = signal<any[]>([]);
 
     // Form Fields
     title = signal('');
@@ -53,6 +56,19 @@ export class SourceModal implements OnInit {
                     if (res.success) this.repositories.set(res.repositories);
                 }
             });
+
+            if (this.mode === 'edit' && this.sourceData?.id) {
+                this.isLoadingUsage.set(true);
+                this.gedcomService.getSourceUsage(this.currentTree, this.sourceData.id).subscribe({
+                    next: (res) => {
+                        this.isLoadingUsage.set(false);
+                        if (res.success && res.usage) {
+                            this.usages.set(res.usage.citations || []);
+                        }
+                    },
+                    error: () => this.isLoadingUsage.set(false)
+                });
+            }
         }
     }
 

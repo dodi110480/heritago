@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { AppEntityCard } from './ui/app-entity-card';
+import { AppPageHeaderComponent } from './ui/app-page-header';
 
 declare const L: any;
 
 @Component({
     selector: 'app-map-view',
     standalone: true,
-    imports: [CommonModule, RouterLink, AppEntityCard],
+    imports: [CommonModule, RouterLink, AppEntityCard, AppPageHeaderComponent],
     templateUrl: './map-view.html'
 })
 export class MapView implements OnInit {
@@ -36,6 +37,10 @@ export class MapView implements OnInit {
 
     ngOnInit() {
         this.loadMapData();
+    }
+
+    getAvatarUrl(profileImageUrl: string | undefined): string {
+        return this.gedcomService.getMediaUrl(profileImageUrl, 'thumbs');
     }
 
     loadMapData() {
@@ -75,14 +80,36 @@ export class MapView implements OnInit {
         }).addTo(this.map);
 
         const markers = this.markers();
+        const persons = this.persons();
+
         if (markers.length > 0) {
             const bounds = L.latLngBounds([]);
             markers.forEach((m: any) => {
+                // Find persons associated with this place name (or coordinates)
+                const personAtPlace = persons.filter(p => p.places.some((pl: any) => pl.name === m.name));
+                
+                let personsHtml = '';
+                if (personAtPlace.length > 0) {
+                    personsHtml = `
+                        <div style="margin-top: 10px; border-top: 1px solid #eee; pt-2;">
+                            <p style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #666; margin: 8px 0 4px 0;">Personen hier:</p>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                ${personAtPlace.map(p => `
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: #f0f0f0; border: 1px solid #ddd;" title="${p.firstName} ${p.lastName}">
+                                        <img src="${this.getAvatarUrl(p.profileImageUrl)}" style="width: 100%; height: 100%; object-cover: true;">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
                 const marker = L.marker([m.lat, m.lng])
                     .bindPopup(`
-                        <div style="padding: 5px;">
-                            <h4 style="margin: 0 0 5px 0;">${m.name}</h4>
-                            <p style="margin: 0; font-size: 12px;">${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}</p>
+                        <div style="padding: 5px; min-width: 150px;">
+                            <h4 style="margin: 0 0 5px 0; color: #1e293b;">${m.name}</h4>
+                            <p style="margin: 0; font-size: 11px; color: #64748b;">${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}</p>
+                            ${personsHtml}
                         </div>
                     `)
                     .addTo(this.map);

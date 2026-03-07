@@ -2,6 +2,7 @@ import { PrismaClient, EntityType, NameType, RestrictionNotice, Sex } from '@pri
 
 export class Phase4FinalInsert {
     private xrefMap: Map<string, string> = new Map();
+    private validMediaIds: Set<string> = new Set();
 
     constructor(private prisma: PrismaClient, private treeId: string, private importId: string) { }
 
@@ -60,17 +61,20 @@ export class Phase4FinalInsert {
 
             const addrNode = this.findChild(node, 'ADDR');
 
-            await this.prisma.submitter.create({
-                data: {
-                    id,
-                    treeId: this.treeId,
-                    gedcomId: r.gedcomXref,
-                    name: node.value || 'Unknown Submitter',
-                    language: this.findChild(node, 'LANG')?.value,
-                    phone: this.findChildren(node, 'PHON').map(c => c.value).filter(Boolean) as string[],
-                    email: this.findChildren(node, 'EMAIL').map(c => c.value).filter(Boolean) as string[],
-                    www: this.findChildren(node, 'WWW').map(c => c.value).filter(Boolean) as string[],
-                }
+            const data = {
+                treeId: this.treeId,
+                gedcomId: r.gedcomXref,
+                name: node.value || 'Unknown Submitter',
+                language: this.findChild(node, 'LANG')?.value,
+                phone: this.findChildren(node, 'PHON').map(c => c.value).filter(Boolean) as string[],
+                email: this.findChildren(node, 'EMAIL').map(c => c.value).filter(Boolean) as string[],
+                www: this.findChildren(node, 'WWW').map(c => c.value).filter(Boolean) as string[],
+            };
+
+            await this.prisma.submitter.upsert({
+                where: { id },
+                create: { id, ...data },
+                update: data
             });
 
             if (addrNode) {
@@ -89,18 +93,21 @@ export class Phase4FinalInsert {
 
             const addrNode = this.findChild(node, 'ADDR');
 
-            await this.prisma.repository.create({
-                data: {
-                    id,
-                    treeId: this.treeId,
-                    gedcomId: r.gedcomXref,
-                    name: this.getFullValue(this.findChild(node, 'NAME')) || 'Unknown Repository',
-                    address: this.getFullValue(addrNode),
-                    phone: this.findChild(node, 'PHON')?.value,
-                    email: this.findChild(node, 'EMAIL')?.value,
-                    website: this.findChild(node, 'WWW')?.value,
-                    callNumbers: this.findChildren(node, 'CALN').map(c => c.value).filter(Boolean) as string[],
-                }
+            const data = {
+                treeId: this.treeId,
+                gedcomId: r.gedcomXref,
+                name: this.getFullValue(this.findChild(node, 'NAME')) || 'Unknown Repository',
+                address: this.getFullValue(addrNode),
+                phone: this.findChild(node, 'PHON')?.value,
+                email: this.findChild(node, 'EMAIL')?.value,
+                website: this.findChild(node, 'WWW')?.value,
+                callNumbers: this.findChildren(node, 'CALN').map(c => c.value).filter(Boolean) as string[],
+            };
+
+            await this.prisma.repository.upsert({
+                where: { id },
+                create: { id, ...data },
+                update: data
             });
 
             await this.insertIdentifiers(node, EntityType.REPOSITORY, id);
@@ -115,15 +122,18 @@ export class Phase4FinalInsert {
             const id = this.getResolvedId(r.gedcomXref, EntityType.SOURCE);
             if (!id) continue;
 
-            await this.prisma.source.create({
-                data: {
-                    id,
-                    treeId: this.treeId,
-                    gedcomId: r.gedcomXref,
-                    title: this.getFullValue(this.findChild(node, 'TITL')) || 'Untitled Source',
-                    author: this.getFullValue(this.findChild(node, 'AUTH')) || null,
-                    publication: this.getFullValue(this.findChild(node, 'PUBL')) || null,
-                }
+            const data = {
+                treeId: this.treeId,
+                gedcomId: r.gedcomXref,
+                title: this.getFullValue(this.findChild(node, 'TITL')) || 'Untitled Source',
+                author: this.getFullValue(this.findChild(node, 'AUTH')) || null,
+                publication: this.getFullValue(this.findChild(node, 'PUBL')) || null,
+            };
+
+            await this.prisma.source.upsert({
+                where: { id },
+                create: { id, ...data },
+                update: data
             });
 
             await this.insertIdentifiers(node, EntityType.SOURCE, id);
@@ -140,20 +150,42 @@ export class Phase4FinalInsert {
 
             const fileNode = this.findChild(node, 'FILE');
             const filePathRaw = fileNode?.value || '';
-            // If it's a local Windows path, we just take the filename
-            const fileName = filePathRaw.includes('\\') ? filePathRaw.split('\\').pop() : filePathRaw.split('/').pop();
+            
+            // Validate if it's a real URL
+            const isWebUrl = /^https?:\/\//i.test(filePathRaw);
+            
+            // If it's a local path and we are in an import, we KNOW it's a ghost.
+            // But we might want to keep the metadata (Title, etc.)
+            // The USER wants them GONE from the gallery.
+            
+            const fileName = filePathRaw.includes('\\') 
+                ? filePathRaw.split('\\').pop() 
+                : filePathRaw.split('/').pop();
 
-            await this.prisma.media.create({
-                data: {
-                    id,
-                    treeId: this.treeId,
-                    gedcomId: r.gedcomXref,
-                    title: this.findChild(node, 'TITL')?.value || fileName || 'Unbenannt',
-                    mediaType: this.findChild(fileNode, 'FORM')?.value || (fileName?.toLowerCase().endsWith('.pdf') ? 'DOCUMENT' : 'PHOTO'),
-                    filePath: fileName || null,
-                    remoteUrl: filePathRaw || null,
-                }
+            if (!isWebUrl && filePathRaw) {
+                // It's a local path. We SKIP creating the Media record to avoid "77 ghosts".
+                // Instead, we can store it in the XrefMap as a special "GHOST" ID or just not resolve it.
+                // However, we want to keep the info.
+                console.log(`[Import]: Skipping Media record for local path: ${filePathRaw}`);
+                continue; 
+            }
+
+            const data = {
+                treeId: this.treeId,
+                gedcomId: r.gedcomXref,
+                title: this.findChild(node, 'TITL')?.value || fileName || 'Unbenannt',
+                mediaType: this.findChild(fileNode, 'FORM')?.value || (fileName?.toLowerCase().endsWith('.pdf') ? 'DOCUMENT' : 'PHOTO'),
+                path: fileName || null,
+                remoteUrl: isWebUrl ? filePathRaw : null,
+            };
+
+            await this.prisma.media.upsert({
+                where: { id },
+                create: { id, ...data },
+                update: data
             });
+
+            this.validMediaIds.add(id);
 
             await this.insertIdentifiers(node, EntityType.MEDIA, id);
         }
@@ -167,13 +199,16 @@ export class Phase4FinalInsert {
             const id = this.getResolvedId(r.gedcomXref, EntityType.NOTE);
             if (!id) continue;
 
-            await this.prisma.sharedNote.create({
-                data: {
-                    id,
-                    treeId: this.treeId,
-                    gedcomId: r.gedcomXref,
-                    text: node.value || '',
-                }
+            const data = {
+                treeId: this.treeId,
+                gedcomId: r.gedcomXref,
+                text: node.value || '',
+            };
+
+            await this.prisma.sharedNote.upsert({
+                where: { id },
+                create: { id, ...data },
+                update: data
             });
         }
     }
@@ -189,16 +224,19 @@ export class Phase4FinalInsert {
             const sexNode = this.findChild(node, 'SEX');
             const sex = (sexNode?.value === 'F' ? Sex.F : (sexNode?.value === 'M' ? Sex.M : Sex.U)) as Sex;
 
-            await this.prisma.person.create({
-                data: {
-                    id,
-                    treeId: this.treeId,
-                    gedcomId: r.gedcomXref,
-                    sex,
-                    restrictionNotice: this.mapRestrictionNotice(this.findChild(node, 'RESN')?.value),
-                    www: this.findChildren(node, 'WWW').map(c => c.value).filter(Boolean) as string[],
-                    religion: this.findChild(node, 'RELI')?.value,
-                }
+            const data = {
+                treeId: this.treeId,
+                gedcomId: r.gedcomXref,
+                sex,
+                restrictionNotice: this.mapRestrictionNotice(this.findChild(node, 'RESN')?.value),
+                www: this.findChildren(node, 'WWW').map(c => c.value).filter(Boolean) as string[],
+                religion: this.findChild(node, 'RELI')?.value,
+            };
+
+            await this.prisma.person.upsert({
+                where: { id },
+                create: { id, ...data },
+                update: data
             });
 
             // Address
@@ -304,10 +342,18 @@ export class Phase4FinalInsert {
             for (const objeNode of this.findChildren(node, 'OBJE')) {
                 const mediaXref = objeNode.value?.startsWith('@') ? objeNode.value : this.findChild(objeNode, 'OBJE')?.value;
                 const mediaId = this.getResolvedId(mediaXref, EntityType.MEDIA);
-                if (mediaId) {
-                    await this.prisma.mediaLink.create({
-                        data: { treeId: this.treeId, personId: id, mediaId, isPrimary: false }
+                
+                if (mediaId && this.validMediaIds.has(mediaId)) {
+                    // Check for existing link to avoid duplicates
+                    const existingLink = await this.prisma.mediaLink.findFirst({
+                        where: { personId: id, mediaId }
                     });
+
+                    if (!existingLink) {
+                        await this.prisma.mediaLink.create({
+                            data: { treeId: this.treeId, personId: id, mediaId, isPrimary: false }
+                        });
+                    }
                 }
             }
         }
@@ -321,14 +367,17 @@ export class Phase4FinalInsert {
             const id = this.getResolvedId(r.gedcomXref, EntityType.FAMILY);
             if (!id) continue;
 
-            await this.prisma.family.create({
-                data: {
-                    id,
-                    treeId: this.treeId,
-                    gedcomId: r.gedcomXref,
-                    restrictionNotice: this.mapRestrictionNotice(this.findChild(node, 'RESN')?.value),
-                    childCount: this.findChild(node, 'NCHI')?.value ? parseInt(this.findChild(node, 'NCHI')?.value) : null,
-                }
+            const data = {
+                treeId: this.treeId,
+                gedcomId: r.gedcomXref,
+                restrictionNotice: this.mapRestrictionNotice(this.findChild(node, 'RESN')?.value),
+                childCount: this.findChild(node, 'NCHI')?.value ? parseInt(this.findChild(node, 'NCHI')?.value) : null,
+            };
+
+            await this.prisma.family.upsert({
+                where: { id },
+                create: { id, ...data },
+                update: data
             });
 
             // Identifiers
@@ -409,10 +458,18 @@ export class Phase4FinalInsert {
             for (const objeNode of this.findChildren(node, 'OBJE')) {
                 const mediaXref = objeNode.value?.startsWith('@') ? objeNode.value : this.findChild(objeNode, 'OBJE')?.value;
                 const mediaId = this.getResolvedId(mediaXref, EntityType.MEDIA);
-                if (mediaId) {
-                    await this.prisma.mediaLink.create({
-                        data: { treeId: this.treeId, familyId: id, mediaId, isPrimary: false }
+                
+                if (mediaId && this.validMediaIds.has(mediaId)) {
+                    // Check for existing link
+                    const existingLink = await this.prisma.mediaLink.findFirst({
+                        where: { familyId: id, mediaId }
                     });
+
+                    if (!existingLink) {
+                        await this.prisma.mediaLink.create({
+                            data: { treeId: this.treeId, familyId: id, mediaId, isPrimary: false }
+                        });
+                    }
                 }
             }
         }
@@ -425,6 +482,17 @@ export class Phase4FinalInsert {
         // GEDCOM ADDR structure: The value can be the street, or ADR1 sub-tag.
         // PHON and EMAIL can be siblings of ADDR (handled in insertSubmitters/insertPersons) 
         // or sometimes nested (handled here).
+        // Check if primary address for this parent already exists
+        const existing = await this.prisma.address.findFirst({
+            where: {
+                personId: parentType === 'PERSON' ? parentId : undefined,
+                submitterId: parentType === 'SUBMITTER' ? parentId : undefined,
+                isPrimary: true
+            }
+        });
+
+        if (existing) return;
+
         await this.prisma.address.create({
             data: {
                 street: this.findChild(node, 'ADR1')?.value || node.value || undefined,
@@ -446,13 +514,23 @@ export class Phase4FinalInsert {
         for (const tag of identifierTags) {
             const children = this.findChildren(node, tag);
             for (const c of children) {
+                const value = c.value || '';
+                const type = this.findChild(c, 'TYPE')?.value || tag;
+
+                // Check for existence
+                const existing = await this.prisma.identifier.findFirst({
+                    where: { treeId: this.treeId, entityType, entityId, value, type }
+                });
+
+                if (existing) continue;
+
                 await this.prisma.identifier.create({
                     data: {
                         treeId: this.treeId,
                         entityType,
                         entityId,
-                        value: c.value || '',
-                        type: this.findChild(c, 'TYPE')?.value || tag,
+                        value,
+                        type,
                         personId: entityType === EntityType.PERSON ? entityId : undefined,
                         sourceId: entityType === EntityType.SOURCE ? entityId : undefined,
                         citationId: entityType === EntityType.CITATION ? entityId : undefined,

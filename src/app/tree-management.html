@@ -1,5 +1,8 @@
 <app-page-header title="Tree Management" description="Organize, edit, or delete your family trees.">
-    <button actions class="btn-primary !w-auto !py-2" (click)="openCreate()">
+    <button actions class="btn-primary !w-auto !py-2 disabled:opacity-50 disabled:cursor-not-allowed" 
+        [disabled]="!authService.currentUser()?.isAdmin && availableTrees().length >= 1"
+        (click)="openCreate()"
+        [title]="!authService.currentUser()?.isAdmin && availableTrees().length >= 1 ? 'Du kannst maximal einen Stammbaum besitzen' : ''">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -10,14 +13,14 @@
 </app-page-header>
 
 <div class="mt-12 pb-20">
-    <div *ngIf="loading()" class="py-20 flex flex-col items-center gap-4 text-neutral-950">
+    <div *ngIf="loading()" class="py-20 flex flex-col items-center gap-4 text-neutral-800 dark:text-neutral-200">
         <div class="w-10 h-10 border-4 border-canvas-white/5 border-l-brand-500 rounded-full animate-spin"></div>
         <p class="font-bold uppercase tracking-widest text-xs">Loading trees...</p>
     </div>
 
     <div class="flex flex-col gap-4" *ngIf="!loading() && showForm() === 'none'">
         <div class="p-20 text-center glass-card !rounded-[40px]" *ngIf="availableTrees().length === 0">
-            <p class="text-neutral-950 font-medium">No trees created yet.</p>
+            <p class="text-neutral-800 dark:text-neutral-200 font-medium">No trees created yet.</p>
         </div>
 
         <div *ngFor="let tree of availableTrees()"
@@ -32,7 +35,7 @@
                 </div>
                 <div class="flex flex-col gap-1">
                     <h3 class="text-xl font-bold text-canvas-white group-hover:text-brand-400 transition-colors">{{ tree.title }}</h3>
-                    <span class="text-xs font-mono text-neutral-950 tracking-tighter">{{ tree.name }}</span>
+                    <span class="text-xs font-mono text-neutral-800 dark:text-neutral-200 tracking-tighter">{{ tree.name }}</span>
                 </div>
                 <div class="ml-4 badge badge-primary" *ngIf="tree.id === authService.currentTree()?.id">Active</div>
             </div>
@@ -109,7 +112,7 @@
 
     <div class="mt-12 text-center" *ngIf="showForm() === 'none'">
         <a routerLink="/settings"
-            class="inline-flex items-center gap-3 text-neutral-950 hover:text-brand-400 font-bold uppercase tracking-widest text-xs transition-all hover:gap-4">
+            class="inline-flex items-center gap-3 text-neutral-800 dark:text-neutral-200 hover:text-brand-400 font-bold uppercase tracking-widest text-xs transition-all hover:gap-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>

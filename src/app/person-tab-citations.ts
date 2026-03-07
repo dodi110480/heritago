@@ -28,7 +28,7 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                             <span class="badge {{ getConfidenceColorClass(cit.confidence) }} text-xs">{{
                                 getConfidenceLabel(cit.confidence) }}</span>
                         </div>
-                        <div class="text-xs text-neutral-950">Fundstelle: {{ cit.page || '-' }}</div>
+                        <div class="text-xs text-neutral-800 dark:text-neutral-200">Fundstelle: {{ cit.page || '-' }}</div>
                     </div>
                 </div>
 
@@ -36,7 +36,6 @@ import { AppSectionHeaderComponent } from './ui/app-section-header';
                     icon="📖" 
                     title="Keine allgemeinen Quellen" 
                     message="Ereignis-spezifische Belege findest du direkt in der Timeline. Hier können allgemeine Quellen zur ganzen Person hinterlegt werden.">
-                    <button actions (click)="addPersonCitation()" class="btn-secondary !py-2 !px-4 text-xs">Quelle hinzufügen</button>
                 </app-empty-state>
             </div>
         </div>

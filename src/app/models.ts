@@ -23,13 +23,25 @@ export interface Citation {
 
 export interface Media {
     id?: string;
-    url: string;
+    path?: string;
+    url?: string; // Legacy compatibility
+    remoteUrl?: string;
     title?: string;
-    caption?: string; // Legacy
-    isPrimary: boolean;
+    mediaType?: 'PHOTO' | 'DOCUMENT' | 'RECORD' | 'OTHER';
     mimeType?: string;
-    originalFileName?: string;
-    fileSize?: number;
+    filesize?: number;
+    userId?: string;
+    version?: number;
+    isCurrent?: boolean;
+    isPrimary?: boolean; // Needed for person/family links
+    cropX?: number;
+    cropY?: number;
+    cropWidth?: number;
+    cropHeight?: number;
+    links?: any[];
+    orphanFile?: boolean;
+    fileMissing?: boolean;
+    previewUrl?: string; // Frontend only
 }
 
 export interface Fact {

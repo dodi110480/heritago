@@ -22,7 +22,7 @@ import { filter, map, mergeMap } from 'rxjs/operators';
 
 
       <!-- Simple Footer -->
-      <footer class="py-12 border-t border-canvas-white/5 text-center text-neutral-950 text-sm">
+      <footer class="py-12 border-t border-canvas-white/5 text-center text-neutral-800 dark:text-neutral-200 text-sm">
         <p>&copy; 2026 Heritago - Gedächtnis der Generationen</p>
       </footer>
     </div>

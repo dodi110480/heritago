@@ -17,7 +17,7 @@
                     class="text-4xl font-black bg-gradient-to-br from-canvas-white to-canvas-white bg-clip-text text-transparent tracking-tighter mb-2">
                     Heritago
                 </h1>
-                <p class="text-neutral-950 font-medium tracking-wide">Entdecke deine Wurzeln</p>
+                <p class="text-neutral-800 dark:text-neutral-200 font-medium tracking-wide">Entdecke deine Wurzeln</p>
             </div>
 
             <form (submit)="onSubmit()" #loginForm="ngForm" class="flex flex-col gap-2">
@@ -44,6 +44,11 @@
                         class="w-6 h-6 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin"></span>
                 </button>
             </form>
+
+            <div class="mt-8 text-center">
+                <p class="text-neutral-400 text-sm">Noch kein Konto?</p>
+                <a routerLink="/register" class="text-brand-400 font-bold hover:underline">Jetzt registrieren</a>
+            </div>
 
             <div class="mt-10 text-center text-[10px] font-bold text-neutral-600 uppercase tracking-[0.3em]">
                 &copy; 2026 Heritago &middot; Modern Genealogy

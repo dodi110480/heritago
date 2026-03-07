@@ -8,7 +8,7 @@ export type StatCardAccent = 'brand' | 'purple' | 'emerald' | 'amber';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="group relative glass-card flex flex-col shadow-xl overflow-hidden transition-all duration-300"
+    <div class="group relative glass-card flex flex-col shadow-xl overflow-hidden transition-all duration-300 cursor-pointer"
       [ngClass]="accentClasses()">
       <div class="text-3xl md:text-5xl font-black mb-2 leading-none" [ngClass]="valueClasses()">
         {{ value }}

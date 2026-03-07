@@ -19,16 +19,33 @@ const execAsync = promisify(exec);
 dotenv.config();
 
 const app = express();
-const UPLOADS_DIR = path.join(__dirname, '../uploads');
 
-// Ensure uploads directory exists
-if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-    console.log('[server]: Created uploads directory');
+// --- STORAGE CONFIGURATION ---
+let STORAGE_ROOT = '/var/heri/media';
+try {
+    if (!fs.existsSync(STORAGE_ROOT)) {
+        fs.mkdirSync(STORAGE_ROOT, { recursive: true });
+    }
+} catch (e) {
+    console.warn(`[server]: Could not use /var/heri/media (permission denied). Using local fallback.`);
+    STORAGE_ROOT = path.join(__dirname, '../media-storage');
 }
+
+const USERS_DIR = path.join(STORAGE_ROOT, 'users');
+const MEDIA_ROOT = path.join(STORAGE_ROOT, 'uploads');
+const TEMP_DIR = path.join(STORAGE_ROOT, 'temp');
+
+// Ensure root directories exist
+[STORAGE_ROOT, USERS_DIR, MEDIA_ROOT, TEMP_DIR].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        console.log(`[server]: Created directory ${dir}`);
+    }
+});
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, UPLOADS_DIR);
+        cb(null, MEDIA_ROOT);
     },
     filename: (req, file, cb) => {
         const ext = path.extname(file.originalname);
@@ -37,10 +54,85 @@ const storage = multer.diskStorage({
     }
 });
 const upload = multer({ storage });
+
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter } as any);
 const port = process.env.PORT || 3000;
+
+export class MediaService {
+    static formatUserId(userId: string | number): string {
+        if (typeof userId === 'string' && userId.includes('-')) {
+            // It's a UUID, just use it safely
+            return userId.replace(/[^a-zA-Z0-9-]/g, '');
+        }
+        const id = typeof userId === 'number' ? userId : parseInt(userId, 10);
+        return isNaN(id) ? String(userId).replace(/[^a-zA-Z0-9-]/g, '') : id.toString().padStart(8, '0');
+    }
+
+    static async validateImage(file: Express.Multer.File): Promise<{ width: number; height: number }> {
+        const metadata = await sharp(file.path).metadata();
+        if (!metadata.width || !metadata.height) {
+            throw new Error('pixel_limit_exceeded');
+        }
+        if (metadata.width * metadata.height > 40000000) {
+            throw new Error('pixel_limit_exceeded');
+        }
+        return { width: metadata.width, height: metadata.height };
+    }
+
+    static async stripExifAndSave(inputPath: string, outputPath: string): Promise<void> {
+        await sharp(inputPath)
+            .withMetadata({
+                exif: {
+                    IFD0: {
+                        Software: 'Heritago',
+                        ImageUniqueID: path.basename(outputPath, path.extname(outputPath))
+                    }
+                }
+            })
+            .toFile(outputPath);
+    }
+
+    static async generateVariants(mediaId: string): Promise<void> {
+        const media = await prisma.media.findUnique({ where: { id: mediaId } });
+        if (!media || !media.path) return;
+
+        const originalPath = path.join(STORAGE_ROOT, media.path);
+        const userDir = path.dirname(path.dirname(path.dirname(originalPath))); // ../../../
+        const thumbsDir = path.join(userDir, 'thumbs');
+        const mediumDir = path.join(userDir, 'medium');
+
+        [thumbsDir, mediumDir].forEach(dir => {
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        });
+
+        const ext = '.webp';
+        const uuid = path.basename(media.path, path.extname(media.path));
+        const thumbPath = path.join(thumbsDir, `${uuid}${ext}`);
+        const mediumPath = path.join(mediumDir, `${uuid}${ext}`);
+
+        let image = sharp(originalPath);
+        if (media.cropX !== null && media.cropY !== null && media.cropWidth !== null && media.cropHeight !== null) {
+            image = image.extract({ left: media.cropX, top: media.cropY, width: media.cropWidth, height: media.cropHeight });
+        }
+
+        // Generate Thumb
+        await image.clone().resize(200, 200, { fit: 'cover' }).webp().toFile(thumbPath);
+        // Generate Medium
+        await image.clone().resize(1200, 1200, { fit: 'inside', withoutEnlargement: true }).webp().toFile(mediumPath);
+
+        // Update Media Variants in DB
+        await prisma.mediaVariant.deleteMany({ where: { mediaId } });
+        await prisma.mediaVariant.createMany({
+            data: [
+                { mediaId, variant: 'thumbs', path: path.relative(STORAGE_ROOT, thumbPath), mimeType: 'image/webp' },
+                { mediaId, variant: 'medium', path: path.relative(STORAGE_ROOT, mediumPath), mimeType: 'image/webp' }
+            ]
+        });
+        console.log(`[server]: Variants generated for media ${mediaId} (Crop: ${media.cropX}, ${media.cropY}, ${media.cropWidth}x${media.cropHeight})`);
+    }
+}
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -51,7 +143,7 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
-app.use('/uploads', express.static(UPLOADS_DIR));
+app.use('/uploads', express.static(MEDIA_ROOT));
 
 // --- Helper: Auth & User Seed ---
 async function ensureDefaultUser() {
@@ -60,7 +152,10 @@ async function ensureDefaultUser() {
         await prisma.user.create({
             data: {
                 username: 'Dodi',
+                email: 'admin@heritago.de',
                 password: 'heritago123', // In production, use hashing!
+                globalRole: 'ADMIN',
+                isEmailVerified: true
             }
         });
         console.log('[server]: Default user Dodi created');
@@ -80,12 +175,97 @@ app.post('/api/auth/login', async (req, res) => {
             user: {
                 id: user.id,
                 username: user.username,
-                realName: 'Dodi',
-                isAdmin: true
+                email: user.email,
+                isAdmin: user.globalRole === 'ADMIN'
             }
         });
     } else {
         res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+});
+
+app.post('/api/auth/register', async (req, res) => {
+    const { username, email, password } = req.body;
+
+    if (!username || !email || !password) {
+        return res.status(400).json({ success: false, message: 'Alle Felder müssen ausgefüllt sein.' });
+    }
+
+    try {
+        const existingUser = await prisma.user.findFirst({
+            where: { OR: [{ username }, { email }] }
+        });
+
+        if (existingUser) {
+            return res.status(400).json({ success: false, message: 'Benutzername oder Email bereits vergeben.' });
+        }
+
+        const user = await prisma.user.create({
+            data: {
+                username,
+                email,
+                password, // In production, hash this!
+                globalRole: 'USER'
+            }
+        });
+
+        res.json({
+            success: true,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                isAdmin: false
+            }
+        });
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ success: false, message: 'Serverfehler bei der Registrierung.' });
+    }
+});
+
+// Admin User Management
+app.get('/api/admin/users', async (req, res) => {
+    // Basic auth check should be here, but for now we list all
+    try {
+        const users = await prisma.user.findMany({
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                globalRole: true,
+                createdAt: true,
+                _count: {
+                    select: { permissions: { where: { level: 'OWNER' } } }
+                }
+            }
+        });
+        res.json({ success: true, users });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Fehler beim Laden der Benutzer.' });
+    }
+});
+
+app.delete('/api/admin/users/:id', async (req, res) => {
+    try {
+        await prisma.user.delete({ where: { id: req.params.id } });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(400).json({ success: false, message: 'Benutzer konnte nicht gelöscht werden.' });
+    }
+});
+
+app.patch('/api/admin/users/:id/role', async (req, res) => {
+    const { role } = req.body;
+    try {
+        await prisma.user.update({
+            where: { id: req.params.id },
+            data: { globalRole: role }
+        });
+        res.json({ success: true });
+    } catch (error) {
+        res.status(400).json({ success: false, message: 'Rolle konnte nicht aktualisiert werden.' });
     }
 });
 // This will eventually handle the validation logic from the /rules folder
@@ -208,9 +388,9 @@ export class GedcomManager {
             if (existing) return existing;
         }
 
-        if (med.url || med.remoteUrl || med.filePath) {
+        if (med.url || med.remoteUrl || med.path) {
             let cleanUrl = med.remoteUrl || med.url || null;
-            const filePath = med.filePath || (cleanUrl && cleanUrl.includes('/uploads/') ? cleanUrl.split('/uploads/')[1] : null);
+            const mediaPath = med.path || (cleanUrl && cleanUrl.includes('/uploads/') ? cleanUrl.split('/uploads/')[1] : null);
             if (cleanUrl && cleanUrl.includes('/uploads/')) {
                 cleanUrl = '/uploads/' + cleanUrl.split('/uploads/')[1];
             }
@@ -219,13 +399,13 @@ export class GedcomManager {
                     treeId,
                     OR: [
                         cleanUrl ? { remoteUrl: cleanUrl } : undefined,
-                        filePath ? { filePath } : undefined
+                        mediaPath ? { path: mediaPath } : undefined
                     ].filter(Boolean) as any
                 }
             });
             if (!mediaObj) {
                 mediaObj = await prisma.media.create({
-                    data: { treeId, remoteUrl: cleanUrl, filePath, title: med.title, mimeType: med.mimeType }
+                    data: { treeId, remoteUrl: cleanUrl, path: mediaPath, title: med.title, mimeType: med.mimeType }
                 });
             }
             return mediaObj;
@@ -302,6 +482,15 @@ export class GedcomManager {
                 exid: data.exid || null
             }
         });
+ 
+        if (data.birthDate && !data.events?.some((e: any) => e.type === 'BIRT')) {
+            if (!data.events) data.events = [];
+            data.events.push({
+                type: 'BIRT',
+                dateText: data.birthDate,
+                date: data.birthDate
+            });
+        }
 
         await prisma.name.deleteMany({ where: { personId: person.id } });
         if (data.names && Array.isArray(data.names)) {
@@ -673,7 +862,7 @@ export class GedcomManager {
             where: { id: person.id },
             include: {
                 names: true,
-                events: { include: { place: true, citations: { include: { source: true } } } },
+                events: { include: { place: true, citations: { include: { source: true } }, mediaLinks: { include: { media: true } }, noteLinks: { include: { note: true } } } },
                 facts: { include: { place: true, citations: { include: { source: true } } } },
                 mediaLinks: { include: { media: true } },
                 noteLinks: { include: { note: true } },
@@ -730,6 +919,14 @@ export class GedcomManager {
                 date: e.dateText,
                 place: e.place?.name,
                 description: e.description || '',
+                media: (e.mediaLinks || []).map((ml: any) => ({
+                    id: ml.media?.id,
+                    url: ml.media?.remoteUrl || ml.media?.path,
+                    title: ml.media?.title || ml.media?.path,
+                    isPrimary: !!ml.isPrimary,
+                    mimeType: ml.media?.mimeType
+                })),
+                notes: (e.noteLinks || []).map((nl: any) => nl.note?.text).filter(Boolean),
                 citations: (e.citations || []).map((c: any) => ({
                     sourceId: c.source?.id || c.sourceId || '',
                     sourceTitle: c.source?.title || '',
@@ -754,8 +951,8 @@ export class GedcomManager {
             })) || [],
             media: person.mediaLinks?.map((ml: any) => ({
                 id: ml.media?.id,
-                url: ml.media?.remoteUrl || ml.media?.filePath,
-                title: ml.media?.title || ml.media?.filePath,
+                url: ml.media?.remoteUrl || ml.media?.path,
+                title: ml.media?.title || ml.media?.path,
                 isPrimary: ml.isPrimary,
                 role: ml.role || '',
                 caption: ml.caption || '',
@@ -809,6 +1006,8 @@ export class GedcomManager {
             birthPlace: birthEvent?.place?.name || '',
             deathDate: deathEvent?.dateText || '',
             deathPlace: deathEvent?.place?.name || '',
+            profileImageUrl: person.mediaLinks?.find((ml: any) => ml.isPrimary)?.media?.id || 
+                             person.mediaLinks?.[0]?.media?.id || '',
             createdAt: person.createdAt,
             updatedAt: person.updatedAt,
             chanDate: person.chanDate || null
@@ -1077,8 +1276,8 @@ export class GedcomManager {
                 subType: e.eventSubtype,
                 media: (e.mediaLinks || []).map((ml: any) => ({
                     id: ml.media?.id,
-                    url: ml.media?.remoteUrl || ml.media?.filePath,
-                    title: ml.media?.title || ml.media?.filePath,
+                    url: ml.media?.remoteUrl || ml.media?.path,
+                    title: ml.media?.title || ml.media?.path,
                     isPrimary: !!ml.isPrimary,
                     mimeType: ml.media?.mimeType
                 })),
@@ -1818,9 +2017,34 @@ app.get('/api/trees', async (req, res) => {
 });
 
 app.post('/api/tree/create', async (req, res) => {
-    const { name, title, firstName, lastName, gender, birthDate } = req.body;
+    const { name, title, firstName, lastName, gender, birthDate, userId } = req.body;
+    
     try {
+        // Enforce one tree limit for non-admins
+        if (userId) {
+            const user = await prisma.user.findUnique({ where: { id: userId } });
+            if (user && user.globalRole !== 'ADMIN') {
+                const ownerCount = await prisma.treePermission.count({
+                    where: { userId, level: 'OWNER' }
+                });
+                if (ownerCount >= 1) {
+                    return res.status(400).json({ success: false, message: 'Du kannst nur einen Stammbaum besitzen.' });
+                }
+            }
+        }
+
         const tree = await prisma.tree.create({ data: { name, title } });
+
+        // If userId is provided, create OWNER permission
+        if (userId) {
+            await prisma.treePermission.create({
+                data: {
+                    treeId: tree.id,
+                    userId,
+                    level: 'OWNER'
+                }
+            });
+        }
 
         // Create the initial person if data is provided
         if (firstName && lastName) {
@@ -1859,9 +2083,10 @@ app.delete('/api/tree/:id', async (req, res) => {
         // Find media to delete files
         const media = await prisma.media.findMany({ where: { treeId: id } });
         for (const m of media) {
-            const fname = m.filePath;
+            const fname = m.path;
             if (fname) {
-                const fullPath = path.join(UPLOADS_DIR, fname);
+                const baseDir = fname.startsWith('users/') ? STORAGE_ROOT : MEDIA_ROOT;
+                const fullPath = path.join(baseDir, fname);
                 if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
             }
         }
@@ -2653,18 +2878,58 @@ app.get('/api/tree/:tree/source/:id/usage', async (req, res) => {
             citations: citations.map(c => {
                 let context = 'Unknown';
                 let contextLabel = 'Unknown';
-                if (c.person) { context = 'Person'; contextLabel = personLabel(c.person); }
-                else if (c.family) { context = 'Family'; contextLabel = c.family.gedcomId || c.family.id; }
-                else if (c.event) { context = `Event (${c.event.type})`; contextLabel = personLabel(c.event.person) || c.event.family?.gedcomId || 'Unknown'; }
-                else if (c.fact) { context = `Fact (${c.fact.type})`; contextLabel = personLabel(c.fact.person) || c.fact.family?.gedcomId || 'Unknown'; }
-                else if (c.media) { context = 'Media'; contextLabel = c.media.title || c.media.filePath || c.media.id; }
-                else if (c.note) { context = 'Note'; contextLabel = c.note.text.substring(0, 30) + '...'; }
-                else if (c.association) { context = `Association (${c.association.role})`; contextLabel = personLabel(c.association.person); }
+                let entityId = null;
+                let entityType = null;
+
+                if (c.person) { 
+                    context = 'Person'; 
+                    contextLabel = personLabel(c.person); 
+                    entityId = c.person.id;
+                    entityType = 'person';
+                }
+                else if (c.family) { 
+                    context = 'Family'; 
+                    contextLabel = c.family.gedcomId || c.family.id; 
+                    entityId = c.family.id;
+                    entityType = 'family';
+                }
+                else if (c.event) { 
+                    context = `Event (${c.event.type})`; 
+                    contextLabel = personLabel(c.event.person) || c.event.family?.gedcomId || 'Unknown'; 
+                    entityId = c.event.personId || c.event.familyId || null;
+                    entityType = c.event.personId ? 'person' : (c.event.familyId ? 'family' : null);
+                }
+                else if (c.fact) { 
+                    context = `Fact (${c.fact.type})`; 
+                    contextLabel = personLabel(c.fact.person) || c.fact.family?.gedcomId || 'Unknown'; 
+                    entityId = c.fact.personId || c.fact.familyId || null;
+                    entityType = c.fact.personId ? 'person' : (c.fact.familyId ? 'family' : null);
+                }
+                else if (c.media) { 
+                    context = 'Media'; 
+                    contextLabel = c.media.title || c.media.path || c.media.id; 
+                    entityId = c.media.id;
+                    entityType = 'media';
+                }
+                else if (c.note) { 
+                    context = 'Note'; 
+                    contextLabel = c.note.text.substring(0, 30) + '...'; 
+                    entityId = c.note.id;
+                    entityType = 'note';
+                }
+                else if (c.association) { 
+                    context = `Association (${c.association.role})`; 
+                    contextLabel = personLabel(c.association.person); 
+                    entityId = c.association.personId;
+                    entityType = 'person';
+                }
 
                 return {
                     id: c.id,
                     context,
                     contextLabel,
+                    entityId,
+                    entityType,
                     page: c.page,
                     dateText: c.dateText,
                     confidence: c.confidence
@@ -2852,6 +3117,7 @@ app.get('/api/tree/:tree/statistics', async (req, res) => {
         families: await prisma.family.count({ where: { treeId: tree.id } }),
         media: await prisma.media.count({ where: { treeId: tree.id } }),
         places: await prisma.place.count({ where: { treeId: tree.id } }),
+        sources: await prisma.source.count({ where: { treeId: tree.id } }),
     };
 
     const gender = {
@@ -3043,10 +3309,22 @@ app.get('/api/media', async (req, res) => {
             }
         }
 
+        // --- GLOBAL STATS (for the whole tree, ignoring the current filter/search) ---
+        const allMediaForStats = await prisma.media.findMany({
+            where: { treeId: treeId as string },
+            select: { mediaType: true, mimeType: true, links: { select: { id: true } } }
+        });
+        const stats = {
+            total: allMediaForStats.length,
+            fotos: allMediaForStats.filter(m => m.mediaType === 'PHOTO' || (!m.mediaType && m.mimeType?.startsWith('image/'))).length,
+            docs: allMediaForStats.filter(m => ['DOCUMENT', 'RECORD'].includes(m.mediaType as string) || (!m.mediaType && ['application/pdf', 'text/plain'].includes(m.mimeType as string))).length,
+            unlinked: allMediaForStats.filter(m => !m.links || m.links.length === 0).length
+        };
+
         if (search) {
             const searchOr = [
                 { title: { contains: search as string, mode: 'insensitive' } },
-                { filePath: { contains: search as string, mode: 'insensitive' } },
+                { path: { contains: search as string, mode: 'insensitive' } },
                 { remoteUrl: { contains: search as string, mode: 'insensitive' } }
             ];
             if (where.OR) {
@@ -3065,16 +3343,20 @@ app.get('/api/media', async (req, res) => {
                         person: { include: { names: { where: { isPrimary: true } } } },
                         family: { include: { mediaLinks: { include: { media: true } } } }
                     }
-                }
+                },
+                citations: true,
+                identifiers: true,
+                noteLinks: { include: { note: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
 
         // --- Helper for filename extraction ---
         const getFileName = (m: any) => {
-            if (m.filePath) return m.filePath;
-            if (m.remoteUrl && !m.remoteUrl.startsWith('http') && !m.remoteUrl.startsWith('/')) {
-                // Potential legacy or Windows path in remoteUrl
+            if (m.path) return m.path;
+            if (m.remoteUrl) {
+                if (m.remoteUrl.startsWith('http')) return null;
+                // If it's an absolute path, we take the basename for server lookup
                 return path.basename(m.remoteUrl);
             }
             return null;
@@ -3089,39 +3371,52 @@ app.get('/api/media', async (req, res) => {
             const fname = getFileName(item);
 
             if (fname && fname !== 'Unbenannt') {
-                const fullPath = path.join(UPLOADS_DIR, fname);
+                // Determine the correct base directory: 
+                // files starting with 'users/' are relative to STORAGE_ROOT
+                // others (orphans/legacy) are relative to MEDIA_ROOT
+                const baseDir = (item.path && item.path.startsWith('users/')) ? STORAGE_ROOT : MEDIA_ROOT;
+                const fullPath = path.join(baseDir, fname);
+                // If the file does NOT exist in the uploads directory, it's a "ghost"
+                // (Unless it's a remote URL, which getFileName returns null for)
                 if (!fs.existsSync(fullPath)) {
                     fileFound = false;
                 }
             } else if (!item.remoteUrl || item.remoteUrl === 'Unbenannt') {
-                // No file path and no remote URL -> definitely a ghost if it has no content
+                // No filename and no remote URL
+                fileFound = false;
+            } else if (!item.remoteUrl.startsWith('http')) {
+                // It's a non-web remoteUrl that didn't yield a filename
                 fileFound = false;
             }
 
             if (fileFound) {
                 validMedia.push(item);
             } else {
-                console.log(`[server]: Identified ghost media entry: ${item.id} (Filename: ${fname})`);
+                console.log(`[server]: Identified ghost media entry: ${item.id} (Filename: ${fname}, Remote: ${item.remoteUrl})`);
                 orphanedIds.push(item.id);
             }
         }
 
-        // We only delete if they are both missing AND have no links (safe pruning)
+        // We only delete if they are both missing AND have no links AND no custom GEDCOM ID
+        // (Pruning should be very conservative for imported data)
         const deadIds = media
-            .filter(m => orphanedIds.includes(m.id) && (!m.links || m.links.length === 0))
+            .filter(m => orphanedIds.includes(m.id) && (!m.links || m.links.length === 0) && !m.gedcomId)
             .map(m => m.id);
 
         if (deadIds.length > 0) {
-            console.log(`[server]: Pruning ${deadIds.length} dead media entries (missing file & unlinked)`);
+            console.log(`[server]: Pruning ${deadIds.length} dead media entries (missing file, unlinked, no GEDCOM ID)`);
             await prisma.media.deleteMany({
                 where: { id: { in: deadIds } }
             });
         }
 
         // The remaining orphaned ones (missing but linked) are kept but flagged
+        // NEW: We only keep them if they are NOT imported (gedcomId === null)
+        // because imported ghosts (77 images!) are annoying the user.
         const finalMedia = validMedia.concat(
             media
                 .filter(m => orphanedIds.includes(m.id) && !deadIds.includes(m.id))
+                .filter(m => !m.gedcomId) // Hide imported ghosts
                 .map(m => ({ ...m, fileMissing: true }))
         );
 
@@ -3129,19 +3424,19 @@ app.get('/api/media', async (req, res) => {
         if (type === 'UNLINKED') {
             const knownFileNames = new Set(
                 validMedia
-                    .map((m: any) => m.filePath)
+                    .map((m: any) => m.path)
                     .filter((f: any) => typeof f === 'string' && f.length > 0)
             );
 
-            const filesOnDisk = fs.readdirSync(UPLOADS_DIR).filter((f) => {
-                const full = path.join(UPLOADS_DIR, f);
+            const filesOnDisk = fs.readdirSync(MEDIA_ROOT).filter((f) => {
+                const full = path.join(MEDIA_ROOT, f);
                 return fs.statSync(full).isFile();
             });
 
             orphanFiles = filesOnDisk
                 .filter((f) => !knownFileNames.has(f))
                 .map((f) => {
-                    const full = path.join(UPLOADS_DIR, f);
+                    const full = path.join(MEDIA_ROOT, f);
                     const ext = path.extname(f).toLowerCase();
                     const stats = fs.statSync(full);
                     const mimeType =
@@ -3154,22 +3449,18 @@ app.get('/api/media', async (req, res) => {
                     const mediaType = mimeType.startsWith('image/') ? 'PHOTO' : 'DOCUMENT';
 
                     return {
-                        id: `orphan:${f}`,
-                        treeId,
-                        title: f,
-                        filePath: f,
+                        path: f,
                         remoteUrl: `/uploads/${f}`,
                         mimeType,
                         mediaType,
-                        fileSize: Math.min(Number.MAX_SAFE_INTEGER, stats.size),
+                        filesize: Math.min(Number.MAX_SAFE_INTEGER, stats.size),
                         links: [],
                         orphanFile: true,
                         createdAt: stats.birthtime ?? stats.mtime
                     };
                 });
         }
-
-        res.json({ success: true, media: [...finalMedia, ...orphanFiles] });
+        res.json({ success: true, media: [...finalMedia, ...orphanFiles], stats });
     } catch (error: any) {
         console.error('Fetch media error:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -3178,21 +3469,21 @@ app.get('/api/media', async (req, res) => {
 
 app.post('/api/media/adopt-orphan', async (req, res) => {
     try {
-        const { treeId, filePath, title, mediaType } = req.body;
+        const { treeId, path: filePath, title, mediaType } = req.body;
         if (!treeId || !filePath) {
-            return res.status(400).json({ success: false, message: 'treeId and filePath required' });
+            return res.status(400).json({ success: false, message: 'treeId and path required' });
         }
         if (filePath.includes('..') || path.isAbsolute(filePath)) {
             return res.status(400).json({ success: false, message: 'Invalid filePath' });
         }
 
-        const fullPath = path.join(UPLOADS_DIR, filePath);
+        const fullPath = path.join(MEDIA_ROOT, filePath);
         if (!fs.existsSync(fullPath)) {
             return res.status(404).json({ success: false, message: 'File not found on disk' });
         }
 
         const existing = await prisma.media.findFirst({
-            where: { treeId, filePath }
+            where: { treeId, path: filePath }
         });
         if (existing) return res.json({ success: true, media: existing, duplicate: true });
 
@@ -3211,10 +3502,10 @@ app.post('/api/media/adopt-orphan', async (req, res) => {
                 treeId,
                 title: title || filePath,
                 mediaType: mediaType || (mimeType.startsWith('image/') ? 'PHOTO' : 'DOCUMENT'),
-                filePath,
+                path: filePath,
                 remoteUrl: `/uploads/${filePath}`,
                 mimeType,
-                fileSize: Math.min(Number.MAX_SAFE_INTEGER, stats.size)
+                filesize: Math.min(Number.MAX_SAFE_INTEGER, stats.size)
             }
         });
 
@@ -3226,109 +3517,233 @@ app.post('/api/media/adopt-orphan', async (req, res) => {
 
 app.delete('/api/media/orphan-file', async (req, res) => {
     try {
-        const { filePath } = req.body;
-        if (!filePath) return res.status(400).json({ success: false, message: 'filePath required' });
+        const { path: filePath } = req.body;
+        console.log('[server]: DELETE /api/media/orphan-file request with path:', filePath);
+        
+        if (!filePath || typeof filePath !== 'string') {
+            return res.status(400).json({ success: false, message: 'path required' });
+        }
+        
         if (filePath.includes('..') || path.isAbsolute(filePath)) {
-            return res.status(400).json({ success: false, message: 'Invalid filePath' });
+            return res.status(400).json({ success: false, message: 'Invalid filePath (security)' });
         }
 
-        const fullPath = path.join(UPLOADS_DIR, filePath);
-        if (!fs.existsSync(fullPath)) return res.status(404).json({ success: false, message: 'File not found' });
+        const fullPath = path.join(MEDIA_ROOT, filePath);
+        if (!fs.existsSync(fullPath)) {
+            console.warn('[server]: File not found for orphan deletion:', fullPath);
+            return res.status(404).json({ success: false, message: 'File not found on disk' });
+        }
 
         fs.unlinkSync(fullPath);
+        console.log('[server]: Successfully deleted orphan file:', filePath);
         res.json({ success: true });
     } catch (error: any) {
+        console.error('[server]: Orphan file deletion error:', error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
 app.post('/api/media/upload', upload.single('file'), async (req, res) => {
+    let sessionDir = '';
     try {
-        console.log('[server]: Media upload request received');
         const file = req.file;
-        const { treeId, title, mediaType } = req.body;
+        const { treeId, title, mediaType, userId } = req.body;
+        console.log(`[server]: POST /api/media/upload - treeId: ${treeId}, userId: ${userId}, title: ${title}`);
 
-        if (!file || !treeId) {
-            console.error('[server]: Missing file or treeId');
-            return res.status(400).json({ success: false, message: 'File and treeId required' });
+        if (!file || !treeId || !userId) {
+            return res.status(400).json({ success: false, message: 'File, treeId and userId required' });
         }
 
+        // Check if tree and user actually exist to avoid P2003
         const tree = await prisma.tree.findUnique({ where: { id: treeId } });
-        if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
+        if (!tree) {
+            return res.status(400).json({ success: false, message: `tree_not_found: ${treeId}` });
+        }
 
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            // Detailed message for development context
+            return res.status(401).json({ 
+                success: false, 
+                message: 'user_not_found', 
+                detail: `User ID ${userId} does not exist. Your session might be stale. Please log out and log in again.` 
+            });
+        }
+
+        // 1. Session Verzeichnis
+        const sessionId = crypto.randomUUID();
+        sessionDir = path.join(TEMP_DIR, sessionId);
+        fs.mkdirSync(sessionDir, { recursive: true });
+
+        // 2. User-ID formatieren
+        const formattedUserId = MediaService.formatUserId(userId);
+
+        // 3. Ordnerstruktur
+        const userPath = path.join(USERS_DIR, formattedUserId);
+        const originalsDir = path.join(userPath, 'originals', 'v1');
+        const thumbsDir = path.join(userPath, 'thumbs');
+        const mediumDir = path.join(userPath, 'medium');
+        [originalsDir, thumbsDir, mediumDir].forEach(dir => fs.mkdirSync(dir, { recursive: true }));
+
+        // 4. Validierung
+        const allowedExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf'];
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (!allowedExts.includes(ext)) {
+            throw new Error('invalid_mime');
+        }
+
+        let width = 0, height = 0;
         const isImage = file.mimetype.startsWith('image/');
-        let finalFilename = file.filename;
-        let finalMimeType = file.mimetype;
-        let finalPath = file.path;
-        let width = undefined;
-        let height = undefined;
-        const fileBuffer = fs.readFileSync(file.path);
-
-        const existing = await prisma.media.findFirst({
-            where: { treeId, filePath: finalFilename }
-        });
-        if (existing) {
-            fs.unlinkSync(file.path);
-            return res.json({ success: true, media: existing, duplicate: true });
-        }
-
         if (isImage) {
-            // Processing with sharp: Resize, Convert to WebP, Rename to UUID.webp
-            const sharpImg = sharp(fileBuffer);
-            const metadata = await sharpImg.metadata();
-
-            const uuid = crypto.randomUUID();
-            finalFilename = `${uuid}.webp`;
-            finalPath = path.join(UPLOADS_DIR, finalFilename);
-            finalMimeType = 'image/webp';
-
-            // Resize if too large, otherwise just convert
-            let pipeline = sharpImg;
-            if (metadata.width && metadata.width > 2000 || metadata.height && metadata.height > 2000) {
-                pipeline = pipeline.resize(2000, 2000, { fit: 'inside', withoutEnlargement: true });
-            }
-
-            await pipeline.webp({ quality: 85 }).toFile(finalPath);
-
-            // Get processed metadata
-            const processedMetadata = await sharp(finalPath).metadata();
-            width = processedMetadata.width;
-            height = processedMetadata.height;
-
-            // Delete temporary upload
-            fs.unlinkSync(file.path);
+            const dims = await MediaService.validateImage(file);
+            width = dims.width;
+            height = dims.height;
         }
 
-        const stats = fs.statSync(finalPath);
+        // 5. Virus Scan (Mock)
+        // 6. Deduplizierung (Optional, übersprungen für nun)
 
+        // 8. Datei umbenennen (UUID)
+        const uuid = crypto.randomUUID().replace(/-/g, '');
+        const filename = `${uuid}${ext}`;
+        const relativePath = path.join('users', formattedUserId, 'originals', 'v1', filename);
+        const targetPath = path.join(STORAGE_ROOT, relativePath);
+
+        // 9. Original speichern + EXIF strip
+        if (isImage) {
+            await MediaService.stripExifAndSave(file.path, targetPath);
+        } else {
+            fs.copyFileSync(file.path, targetPath);
+        }
+
+        // 12. DB Eintrag
         const media = await prisma.media.create({
             data: {
                 treeId,
+                userId,
                 title: title || file.originalname,
                 mediaType: mediaType || (isImage ? 'PHOTO' : 'DOCUMENT'),
-                filePath: finalFilename,
-                remoteUrl: `/uploads/${finalFilename}`,
-                mimeType: finalMimeType,
-                fileSize: Math.min(Number.MAX_SAFE_INTEGER, stats.size),
-                dimensions: width && height ? `${width}x${height}` : null
+                path: relativePath,
+                mimeType: file.mimetype,
+                filesize: file.size,
+                dimensions: width && height ? `${width}x${height}` : null,
+                fileFormat: ext.replace('.', ''),
+                version: 1,
+                isCurrent: true
             }
         });
 
-        await prisma.changeLog.create({
-            data: {
-                treeId,
-                action: 'CREATE',
-                entityType: 'MEDIA',
-                entityId: media.id,
-                after: media as any,
-                summary: `Medium ${media.title} hochgeladen`
-            }
-        });
+        // 13. Varianten Erzeugung (hier synchron für Einfachheit, sollte async sein)
+        if (isImage || ext === '.pdf') {
+            await MediaService.generateVariants(media.id);
+        }
+
+        // Cleanup temp file
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true });
 
         res.json({ success: true, media });
     } catch (error: any) {
         console.error('Upload error:', error);
-        res.status(500).json({ success: false, message: error.message });
+        if (sessionDir && fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true });
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+
+app.get('/api/media/file/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { variant } = req.query;
+
+        // 1. Try DB lookup
+        const media = await prisma.media.findUnique({
+            where: { id },
+            include: { variants: true }
+        });
+
+        if (media) {
+            let filePath = media.path;
+            let mimeType = media.mimeType;
+
+            if (variant) {
+                const v = media.variants.find(v => v.variant === variant);
+                if (v && v.path) {
+                    filePath = v.path;
+                    mimeType = v.mimeType;
+                }
+            }
+
+            if (!filePath) return res.status(404).send('File not found');
+            const fullPath = path.join(STORAGE_ROOT, filePath);
+            if (!fs.existsSync(fullPath)) return res.status(404).send('File missing on disk');
+
+            res.setHeader('Content-Type', mimeType || 'application/octet-stream');
+            return fs.createReadStream(fullPath).pipe(res);
+        }
+
+        // 2. Fallback: Lookup in MEDIA_ROOT (for orphans or direct filename access)
+        // Ensure path safety
+        if (id.includes('..') || path.isAbsolute(id)) {
+            return res.status(400).send('Invalid file path');
+        }
+
+        const orphanPath = path.join(MEDIA_ROOT, id);
+        if (fs.existsSync(orphanPath)) {
+            const ext = path.extname(id).toLowerCase();
+            const mimeType = ext === '.pdf' ? 'application/pdf'
+                           : ['.jpg', '.jpeg'].includes(ext) ? 'image/jpeg'
+                           : ext === '.png' ? 'image/png'
+                           : ext === '.webp' ? 'image/webp'
+                           : 'application/octet-stream';
+            
+            res.setHeader('Content-Type', mimeType);
+            return fs.createReadStream(orphanPath).pipe(res);
+        }
+
+        res.status(404).send('Not found');
+    } catch (e) {
+        console.error('[server]: File serving error:', e);
+        res.status(500).send('Server error');
+    }
+});
+
+app.patch('/api/media/:id/crop', async (req, res) => {
+    try {
+        const { x, y, width, height } = req.body;
+        const media = await prisma.media.update({
+            where: { id: req.params.id },
+            data: {
+                cropX: x,
+                cropY: y,
+                cropWidth: width,
+                cropHeight: height
+            }
+        });
+
+        console.log(`[server]: Cropping media ${req.params.id} to ${x},${y} ${width}x${height}`);
+        await MediaService.generateVariants(media.id);
+        res.json({ success: true, media });
+    } catch (error: any) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+
+app.delete('/api/media/:id/crop', async (req, res) => {
+    try {
+        const media = await prisma.media.update({
+            where: { id: req.params.id },
+            data: {
+                cropX: null,
+                cropY: null,
+                cropWidth: null,
+                cropHeight: null
+            }
+        });
+
+        await MediaService.generateVariants(media.id);
+        res.json({ success: true, media });
+    } catch (error: any) {
+        res.status(400).json({ success: false, message: error.message });
     }
 });
 
@@ -3337,7 +3752,10 @@ app.get('/api/media/:id', async (req, res) => {
         const media = await prisma.media.findUnique({
             where: { id: req.params.id },
             include: {
-                links: true
+                links: true,
+                citations: true,
+                identifiers: true,
+                noteLinks: { include: { note: true } }
             }
         });
         if (!media) return res.status(404).json({ success: false, message: 'Media not found' });
@@ -3349,12 +3767,89 @@ app.get('/api/media/:id', async (req, res) => {
 
 app.put('/api/media/:id', async (req, res) => {
     try {
-        const { title, mediaType } = req.body;
-        const media = await prisma.media.update({
-            where: { id: req.params.id },
-            data: { title, mediaType }
+        const { title, mediaType, notes, identifiers, citations } = req.body;
+        const mediaId = req.params.id;
+
+        const result = await prisma.$transaction(async (tx) => {
+            const currentMedia = await tx.media.findUnique({
+                where: { id: mediaId },
+                select: { treeId: true }
+            });
+            if (!currentMedia) throw new Error('Media not found');
+            const treeId = currentMedia.treeId;
+
+            // 1. Basic fields
+            const updatedMedia = await tx.media.update({
+                where: { id: mediaId },
+                data: { title, mediaType }
+            });
+
+            // 2. Identifiers
+            if (identifiers !== undefined) {
+                await tx.identifier.deleteMany({ where: { mediaId } });
+                if (Array.isArray(identifiers) && identifiers.length > 0) {
+                    for (const iden of identifiers) {
+                        if (!iden.value) continue;
+                        await tx.identifier.create({
+                            data: {
+                                treeId,
+                                mediaId,
+                                entityId: mediaId,
+                                entityType: 'MEDIA',
+                                type: iden.type || null,
+                                value: iden.value
+                            }
+                        });
+                    }
+                }
+            }
+
+            // 3. Notes
+            if (notes !== undefined) {
+                // Remove old links
+                await tx.noteLink.deleteMany({ where: { mediaId } });
+                if (Array.isArray(notes)) {
+                    for (const noteText of notes) {
+                        if (typeof noteText !== 'string' || !noteText.trim()) continue;
+                        const sharedNote = await tx.sharedNote.create({
+                            data: {
+                                treeId,
+                                text: noteText.trim()
+                            }
+                        });
+                        await tx.noteLink.create({
+                            data: {
+                                treeId,
+                                mediaId,
+                                noteId: sharedNote.id
+                            }
+                        });
+                    }
+                }
+            }
+
+            // 4. Citations
+            if (citations !== undefined) {
+                await tx.citation.deleteMany({ where: { mediaId } });
+                if (Array.isArray(citations)) {
+                    for (const cit of citations) {
+                        if (!cit.sourceId) continue;
+                        await tx.citation.create({
+                            data: {
+                                treeId,
+                                mediaId,
+                                sourceId: cit.sourceId,
+                                page: cit.page || null
+                            }
+                        });
+                    }
+                }
+            }
+
+            return updatedMedia;
         });
-        res.json({ success: true, media });
+
+        res.json({ success: true, media: result });
     } catch (error: any) {
         console.error('Update media error:', error);
         res.status(500).json({ success: false, message: error.message });
@@ -3469,9 +3964,10 @@ app.delete('/api/media/:id', async (req, res) => {
         if (!media) return res.status(404).json({ success: false, message: 'Media not found' });
 
         // Delete file logic (mirrors pruning)
-        const fname = media.filePath;
+        const fname = media.path;
         if (fname) {
-            const fullPath = path.join(UPLOADS_DIR, fname);
+            const baseDir = (fname.startsWith('users/') || fname.includes('/originals/')) ? STORAGE_ROOT : MEDIA_ROOT;
+            const fullPath = path.join(baseDir, fname);
             if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
         }
 
@@ -3691,7 +4187,42 @@ app.get('/api/tree/:tree/map', async (req, res) => {
         lng: p.longitude
     }));
 
-    res.json({ success: true, markers });
+    // Find persons with places in this tree
+    const personsWithPlaces = await prisma.person.findMany({
+        where: { treeId: tree.id },
+        take: 50,
+        include: {
+            events: {
+                where: { place: { latitude: { not: null }, longitude: { not: null } } },
+                include: { place: true }
+            },
+            facts: {
+                where: { place: { latitude: { not: null }, longitude: { not: null } } },
+                include: { place: true }
+            },
+            names: { where: { isPrimary: true } },
+            mediaLinks: {
+                include: { media: true }
+            }
+        }
+    });
+
+    const persons = personsWithPlaces.filter(p => p.events.length > 0 || p.facts.length > 0).map((p: any) => {
+        const primaryMedia = p.mediaLinks.find((ml: any) => ml.isPrimary)?.media || p.mediaLinks[0]?.media;
+        return {
+            id: p.id,
+            gedcomId: p.gedcomId,
+            firstName: p.names[0]?.given || '',
+            lastName: p.names[0]?.surname || '',
+            profileImageUrl: primaryMedia?.id || '',
+            places: [
+                ...p.events.map((e: any) => ({ name: e.place?.name || '', lat: e.place?.latitude, lng: e.place?.longitude })),
+                ...p.facts.map((f: any) => ({ name: f.place?.name || '', lat: f.place?.latitude, lng: f.place?.longitude }))
+            ]
+        };
+    });
+
+    res.json({ success: true, markers, persons });
 });
 
 app.listen(port, () => {

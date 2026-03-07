@@ -3,15 +3,23 @@
         [description]="funStat()">
     </app-page-header>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-10" *ngIf="!loading()">
-        <app-stat-card [value]="stats()?.counts?.individuals || 0" label="Personen" icon="👥" accent="brand">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-10" *ngIf="!loading()">
+        <app-stat-card [value]="stats()?.counts?.individuals || 0" label="Personen" icon="👥" accent="brand"
+            routerLink="/persons">
         </app-stat-card>
         <app-stat-card [value]="stats()?.counts?.families || 0" label="Familien" icon="👨‍👩‍👧‍👦"
-            accent="highlight">
+            accent="purple" routerLink="/families">
         </app-stat-card>
-        <app-stat-card [value]="stats()?.counts?.media || 0" label="Medien" icon="🖼️" accent="highlight">
+        <app-stat-card [value]="stats()?.counts?.media || 0" label="Medien" icon="🖼️" accent="purple"
+            routerLink="/media">
         </app-stat-card>
-        <app-stat-card [value]="completeness() + '%'" label="Vollständigkeit" icon="✅" accent="success">
+        <app-stat-card [value]="stats()?.counts?.sources || 0" label="Quellen" icon="📚" accent="amber"
+            routerLink="/sources">
+        </app-stat-card>
+        <app-stat-card [value]="stats()?.counts?.places || 0" label="Orte" icon="📍" accent="emerald"
+            routerLink="/places">
+        </app-stat-card>
+        <app-stat-card [value]="completeness() + '%'" label="Vollständigkeit" icon="✅" accent="emerald">
             <div class="w-full h-1 bg-canvas/5 rounded-full mt-3 overflow-hidden">
                 <div class="h-full bg-gradient-to-r from-accent-success-500 to-accent-success-600 rounded-full shadow-sm transition-all duration-1000 ease-out"
                     [style.width.%]="completeness()"></div>
@@ -59,7 +67,7 @@
     </div>
 
     <div
-        class="flex flex-wrap justify-center gap-2 glass-card !p-2 !rounded-xl mb-16 max-w-fit mx-auto">
+        class="flex flex-wrap gap-2 glass-card !p-2 !rounded-xl mb-16 w-full">
         <a routerLink="/map" title="Karte"
             class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-[180ms]">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
