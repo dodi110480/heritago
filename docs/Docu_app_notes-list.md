@@ -74,7 +74,7 @@ export class NotesListComponent { … }
 interface DisplayNote {
   id: string;
   text: string;
-  noteType?: 'RESEARCH' | 'HINT' | 'QUESTION' | 'TRANSCRIPTION' | 'TODO' | 'COMMENT' | 'OTHER';
+  noteType?: 'FORSCHUNG' | 'HINWEIS' | 'FRAGE' | 'TRANSKRIPTION' | 'AUFGABE' | 'KOMMENTAR' | 'ANDERE';
   createdAt: Date;
   updatedAt?: Date;
   createdBy?: { id: string; username: string; avatarUrl?: string };
@@ -260,7 +260,7 @@ interface DisplayNote {
   [allowCreate]="canEdit()"
   [allowEdit]="canEdit()"
   [readOnly]="isArchived()"
-  [categoryOptions]="['RESEARCH', 'HINT', 'QUESTION', 'COMMENT']"
+  [categoryOptions]="['RESEARCH', 'HINT', 'QUESTION', 'TRANSCRIPTION', 'TODO', 'COMMENT', 'OTHER']"
   [enableEntityLinking]="true"
   [showCreatedBy]="true"
   (noteEditRequested)="openNoteEditModal($event)"

@@ -1,29 +1,42 @@
-<app-modal-shell [visible]="visible" [title]="isEditing() ? 'Medium bearbeiten' : 'Medium hinzufügen'" icon="🖼️" size="xl"
-  [loading]="uploading()" [disabledSave]="(!selectedFile() && !isEditing()) || uploading() || !treeId()" 
-  [showDelete]="isEditing()" [saveText]="isEditing() ? 'Speichern' : 'Hochladen'"
-  (close)="close()" (save)="submit()" (delete)="deleteItem()">
+<app-modal-shell [visible]="visible" [title]="isEditing() ? 'Medium bearbeiten' : 'Medium hinzufügen'" icon="🖼️"
+  size="xl" [loading]="uploading()" [disabledSave]="(!selectedFile() && !isEditing()) || uploading() || !treeId()"
+  [showDelete]="isEditing()" [saveText]="isEditing() ? 'Speichern' : 'Hochladen'" (close)="close()" (save)="submit()"
+  (delete)="deleteItem()">
 
-  <div *ngIf="!treeId() && !isEditing()" class="mb-4 mx-6 p-3 rounded-lg bg-accent-amber-500/10 border border-accent-amber-500/20 text-accent-amber-600 text-sm flex items-center gap-2">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+  <div *ngIf="!treeId() && !isEditing()"
+    class="mb-4 mx-6 p-3 rounded-lg bg-accent-amber-500/10 border border-accent-amber-500/20 text-accent-amber-600 text-sm flex items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
     <span>Bitte wähle zuerst einen Stammbaum aus oder erstelle einen neuen, um Medien hochzuladen.</span>
   </div>
 
   <!-- Tabbed single-column layout to match event modal -->
   <div class="flex flex-col h-[600px] max-h-[70vh]">
     <div class="flex border-b border-canvas/10 mb-4 shrink-0 gap-2">
-      <button (click)="activeTab.set('preview')" [class]="activeTab() === 'preview' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Vorschau</button>
-      <button (click)="activeTab.set('basics')" [class]="activeTab() === 'basics' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Basis</button>
-      <button (click)="activeTab.set('citations')" [class]="activeTab() === 'citations' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Belege</button>
-      <button (click)="activeTab.set('identifiers')" [class]="activeTab() === 'identifiers' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Identifikatoren</button>
-      <button (click)="activeTab.set('links')" [class]="activeTab() === 'links' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Verknüpfungen</button>
-      <button (click)="activeTab.set('notes')" [class]="activeTab() === 'notes' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Notizen</button>
+      <button (click)="activeTab.set('preview')"
+        [class]="activeTab() === 'preview' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Vorschau</button>
+      <button (click)="activeTab.set('basics')"
+        [class]="activeTab() === 'basics' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Basis</button>
+      <button (click)="activeTab.set('citations')"
+        [class]="activeTab() === 'citations' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Belege</button>
+      <button (click)="activeTab.set('identifiers')"
+        [class]="activeTab() === 'identifiers' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Identifikatoren</button>
+      <button (click)="activeTab.set('links')"
+        [class]="activeTab() === 'links' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Verknüpfungen</button>
+      <button (click)="activeTab.set('notes')"
+        [class]="activeTab() === 'notes' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Notizen</button>
     </div>
 
     <div class="overflow-y-auto pr-2 custom-scrollbar space-y-6">
       <!-- Preview Tab -->
       <div *ngIf="activeTab() === 'preview'">
         <div class="glass-card !p-0 overflow-hidden relative group mb-4">
-          <label *ngIf="!selectedFile() && !isEditing()" class="flex flex-col items-center justify-center p-12 border-2 border-dashed border-neutral-300/30 rounded-xl bg-neutral-50/10 hover:bg-brand-500/5 hover:border-brand-500/40 transition-all cursor-pointer">
+          <label *ngIf="!selectedFile() && !isEditing()"
+            class="flex flex-col items-center justify-center p-12 border-2 border-dashed border-neutral-300/30 rounded-xl bg-neutral-50/10 hover:bg-brand-500/5 hover:border-brand-500/40 transition-all cursor-pointer">
             <input type="file" accept="image/*,application/pdf" (change)="onFilePicked($event)" hidden>
             <div class="bg-brand-500/10 p-4 rounded-xl text-brand-500 mb-4 group-hover:scale-110 transition-transform">
               <!-- icon -->
@@ -32,10 +45,12 @@
             <span class="text-neutral-500 text-xs mt-1">Bilder oder PDF</span>
           </label>
 
-          <div *ngIf="selectedFile() || isEditing()" class="relative aspect-video bg-neutral-900/40 flex items-center justify-center">
+          <div *ngIf="selectedFile() || isEditing()"
+            class="relative aspect-video bg-neutral-900/40 flex items-center justify-center">
             <img *ngIf="previewUrl()" [src]="previewUrl()" class="max-w-full max-h-full object-contain">
             <div *ngIf="!previewUrl()" class="text-6xl opacity-30">📄</div>
-            <label class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity cursor-pointer">
+            <label
+              class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity cursor-pointer">
               <input type="file" accept="image/*,application/pdf" (change)="onFilePicked($event)" hidden>
               <div class="bg-white/10 p-3 rounded-full text-white mb-2">↻</div>
               <span class="text-white text-xs font-bold uppercase tracking-widest">Datei ersetzen</span>
@@ -47,11 +62,13 @@
       <!-- Basics Tab -->
       <div *ngIf="activeTab() === 'basics'">
         <div class="glass-card space-y-4">
-          <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest border-b border-white/10 pb-2">Basis-Informationen</h3>
+          <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest border-b border-white/10 pb-2">
+            Basis-Informationen</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5 md:col-span-2">
               <label class="form-label">Namens-Hinweis</label>
-              <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)" class="form-input" placeholder="z. B. Porträt Klaus, Geburtsurkunde...">
+              <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)" class="form-input"
+                placeholder="z. B. Porträt Klaus, Geburtsurkunde...">
             </div>
             <div class="space-y-1.5">
               <label class="form-label">Kategorie</label>
@@ -68,24 +85,30 @@
         <div class="glass-card space-y-4">
           <div class="flex justify-between items-center border-b border-white/10 pb-2">
             <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">Belege & Quellen</h3>
-            <button (click)="addCitation()" class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+ Hinzufügen</button>
+            <button (click)="addCitation()"
+              class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+
+              Hinzufügen</button>
           </div>
           <div class="space-y-4">
-            <div *ngFor="let cit of citations(); let i = index" class="p-3 bg-neutral-50/5 rounded-lg border border-white/5 space-y-3 relative">
-              <button (click)="removeCitation(i)" class="absolute top-2 right-2 text-neutral-500 hover:text-accent-danger-500 transition-colors">
+            <div *ngFor="let cit of citations(); let i = index"
+              class="p-3 bg-neutral-50/5 rounded-lg border border-white/5 space-y-3 relative">
+              <button (click)="removeCitation(i)"
+                class="absolute top-2 right-2 text-neutral-500 hover:text-accent-danger-500 transition-colors">
                 ✕
               </button>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div class="space-y-1.5">
                   <label class="form-label">Quelle</label>
-                  <select [ngModel]="cit.sourceId" (ngModelChange)="updateCitation(i, 'sourceId', $event)" class="form-input text-sm">
+                  <select [ngModel]="cit.sourceId" (ngModelChange)="updateCitation(i, 'sourceId', $event)"
+                    class="form-input text-sm">
                     <option value="">Wähle eine Quelle...</option>
                     <option *ngFor="let s of sourceOptions()" [value]="s.id">{{ s.title }}</option>
                   </select>
                 </div>
                 <div class="space-y-1.5">
                   <label class="form-label">Seite / Fundstelle</label>
-                  <input type="text" [ngModel]="cit.page" (ngModelChange)="updateCitation(i, 'page', $event)" class="form-input text-sm" placeholder="S. 123, Archiv-Info...">
+                  <input type="text" [ngModel]="cit.page" (ngModelChange)="updateCitation(i, 'page', $event)"
+                    class="form-input text-sm" placeholder="S. 123, Archiv-Info...">
                 </div>
               </div>
             </div>
@@ -98,12 +121,16 @@
         <div class="glass-card space-y-4">
           <div class="flex justify-between items-center border-b border-white/10 pb-2">
             <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">Identifikatoren</h3>
-            <button (click)="addIdentifier()" class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+ Hinzufügen</button>
+            <button (click)="addIdentifier()"
+              class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+
+              Hinzufügen</button>
           </div>
           <div class="space-y-2">
             <div *ngFor="let iden of identifiers(); let i = index" class="flex gap-2">
-              <input type="text" [ngModel]="iden.type" (ngModelChange)="updateIdentifier(i, 'type', $event)" class="form-input text-sm flex-1" placeholder="Typ (z.B. AR-ID)">
-              <input type="text" [ngModel]="iden.value" (ngModelChange)="updateIdentifier(i, 'value', $event)" class="form-input text-sm flex-[2]" placeholder="Wert">
+              <input type="text" [ngModel]="iden.type" (ngModelChange)="updateIdentifier(i, 'type', $event)"
+                class="form-input text-sm flex-1" placeholder="Typ (z.B. AR-ID)">
+              <input type="text" [ngModel]="iden.value" (ngModelChange)="updateIdentifier(i, 'value', $event)"
+                class="form-input text-sm flex-[2]" placeholder="Wert">
               <button (click)="removeIdentifier(i)" class="btn-icon text-accent-danger-500">✕</button>
             </div>
           </div>
@@ -113,13 +140,17 @@
       <!-- Links Tab -->
       <div *ngIf="activeTab() === 'links'">
         <div class="glass-card space-y-4">
-          <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest border-b border-white/10 pb-2">Verknüpfungen</h3>
+          <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest border-b border-white/10 pb-2">
+            Verknüpfungen</h3>
           <div class="space-y-3">
-            <div *ngFor="let link of links(); let i = index" class="flex items-center gap-2 p-2 bg-neutral-50/5 rounded-lg text-xs">
-              <button (click)="navigateToLink(link)" class="flex-1 text-left truncate text-brand-600 font-medium hover:underline">
+            <div *ngFor="let link of links(); let i = index"
+              class="flex items-center gap-2 p-2 bg-neutral-50/5 rounded-lg text-xs">
+              <button (click)="navigateToLink(link)"
+                class="flex-1 text-left truncate text-brand-600 font-medium hover:underline">
                 {{ formatLinkLabel(link) }}
               </button>
-              <span class="text-[10px] uppercase font-bold text-neutral-500">{{ link.person || link.personId ? 'Person' : (link.family || link.familyId ? 'Familie' : 'Sonstiges') }}</span>
+              <span class="text-[10px] uppercase font-bold text-neutral-500">{{ link.person || link.personId ? 'Person'
+                : (link.family || link.familyId ? 'Familie' : 'Sonstiges') }}</span>
               <button (click)="removeLink(i)" class="btn-icon text-accent-danger-500">✕</button>
             </div>
             <p *ngIf="links().length === 0" class="text-xs text-neutral-500 italic">Noch keine Verknüpfungen.</p>
@@ -127,14 +158,16 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div>
                 <label class="form-label text-xs">Person hinzufügen</label>
-                <select [ngModel]="selectedPersonId()" (ngModelChange)="selectedPersonId.set($event)" class="form-input text-sm">
+                <select [ngModel]="selectedPersonId()" (ngModelChange)="selectedPersonId.set($event)"
+                  class="form-input text-sm">
                   <option value="">-- Person wählen --</option>
                   <option *ngFor="let p of personOptions()" [value]="p.id">{{ p.name }}</option>
                 </select>
               </div>
               <div>
                 <label class="form-label text-xs">Familie hinzufügen</label>
-                <select [ngModel]="selectedFamilyId()" (ngModelChange)="selectedFamilyId.set($event)" class="form-input text-sm">
+                <select [ngModel]="selectedFamilyId()" (ngModelChange)="selectedFamilyId.set($event)"
+                  class="form-input text-sm">
                   <option value="">-- Familie wählen --</option>
                   <option *ngFor="let f of familyOptions()" [value]="f.id">{{ f.label }}</option>
                 </select>
@@ -142,7 +175,8 @@
             </div>
 
             <div class="pt-2">
-              <button (click)="addLink()" class="btn-secondary !text-[10px] !py-2 w-full uppercase tracking-widest">Link hinzufügen</button>
+              <button (click)="addLink()" class="btn-secondary !text-[10px] !py-2 w-full uppercase tracking-widest">Link
+                hinzufügen</button>
             </div>
           </div>
         </div>
@@ -150,17 +184,10 @@
 
       <!-- Notes Tab -->
       <div *ngIf="activeTab() === 'notes'" class="animate-in fade-in slide-in-from-top-2 duration-300">
-        <app-notes-list
-          [entityId]="id()"
-          [entityType]="'MEDIA'"
-          [notesDisplay]="notes()"
-          [allowCreate]="true"
-          [allowEdit]="true"
-          [placeholder]="'Medien-Notizen durchsuchen...'"
-          (noteCreateRequested)="onNoteCreateRequested()"
-          (noteEditRequested)="onNoteEditRequested($event)"
-          (noteDeleted)="onNoteDeleted($event)"
-        ></app-notes-list>
+        <app-notes-list [entityId]="id()" [entityType]="'MEDIA'" [notesDisplay]="notes()" [allowCreate]="true"
+          [allowEdit]="true" [placeholder]="'Medien-Notizen durchsuchen...'"
+          (noteCreateRequested)="onNoteCreateRequested()" (noteEditRequested)="onNoteEditRequested($event)"
+          (noteDeleted)="onNoteDeleted($event)"></app-notes-list>
       </div>
     </div>
   </div>
@@ -168,13 +195,24 @@
   <!-- Extra Actions (Left Side of Footer) -->
   <div extraActions *ngIf="isEditing()">
     <div class="flex items-center gap-2">
-      <button (click)="download()" class="btn-secondary !px-4 !py-3 md:!py-2.5 flex items-center gap-2" title="Herunterladen">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+      <button (click)="download()" class="btn-secondary !px-4 !py-3 md:!py-2.5 flex items-center gap-2"
+        title="Herunterladen">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
         <span class="hidden md:inline">Download</span>
       </button>
 
-      <button *ngIf="mediaType() === 'PHOTO'" (click)="startCropping()" class="btn-secondary !px-4 !py-3 md:!py-2.5 flex items-center gap-2" title="Beschnitt anpassen">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"/><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"/></svg>
+      <button *ngIf="mediaType() === 'PHOTO'" (click)="startCropping()"
+        class="btn-secondary !px-4 !py-3 md:!py-2.5 flex items-center gap-2" title="Beschnitt anpassen">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6.13 1L6 16a2 2 0 0 0 2 2h15" />
+          <path d="M1 6.13L16 6a2 2 0 0 1 2 2v15" />
+        </svg>
         <span class="hidden md:inline">Beschnitt anpassen</span>
       </button>
     </div>
@@ -183,26 +221,18 @@
 </app-modal-shell>
 
 <!-- NOTE EDIT SUB-MODAL -->
-<app-modal-shell 
-  [visible]="showNoteSubModal()" 
-  [title]="activeNoteIndex() !== null ? 'Notiz bearbeiten' : 'Neue Notiz'" 
-  icon="📝" 
-  size="md"
-  [showSave]="true" 
-  [showDelete]="activeNoteIndex() !== null" 
-  (close)="showNoteSubModal.set(false)"
-  (save)="onNoteSave()"
-  (delete)="onNoteDeleteFromModal()"
->
+<app-modal-shell [visible]="showNoteSubModal()" [title]="activeNoteIndex() !== null ? 'Notiz bearbeiten' : 'Neue Notiz'"
+  icon="📝" size="md" [showSave]="true" [showDelete]="activeNoteIndex() !== null" (close)="showNoteSubModal.set(false)"
+  (save)="onNoteSave()" (delete)="onNoteDeleteFromModal()">
   <div class="space-y-4">
     <div class="form-group mb-0">
       <label class="form-label">Kategorie / Typ</label>
       <select [(ngModel)]="noteDraft().noteType" class="form-input">
         <option value="COMMENT">Kommentar</option>
         <option value="TRANSCRIPTION">Transkription</option>
-        <option value="RESEARCH">Forschung / Quellenkritik</option>
-        <option value="QUESTION">Offene Frage</option>
-        <option value="TODO">Aufgabe / To-Do</option>
+        <option value="RESEARCH">Forschung</option>
+        <option value="QUESTION">Frage</option>
+        <option value="TODO">Aufgabe</option>
         <option value="HINT">Hinweis</option>
         <option value="OTHER">Andere</option>
       </select>
@@ -210,30 +240,21 @@
 
     <div class="form-group mb-0">
       <label class="form-label">Inhalt</label>
-      <textarea 
-        [(ngModel)]="noteDraft().text" 
-        class="form-input min-h-[160px] font-body" 
-        placeholder="Schreibe deine Notiz hier..."
-      ></textarea>
+      <textarea [(ngModel)]="noteDraft().text" class="form-input min-h-[160px] font-body"
+        placeholder="Schreibe deine Notiz hier..."></textarea>
     </div>
 
-    <div class="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-xl border border-neutral-200 dark:border-neutral-800">
+    <div
+      class="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-xl border border-neutral-200 dark:border-neutral-800">
       <div class="flex-1">
         <div class="text-sm font-bold text-neutral-900">Private Notiz</div>
         <div class="text-[10px] text-neutral-500">Nur für dich (und eingeladene Bearbeiter) sichtbar.</div>
       </div>
-      <input 
-        type="checkbox" 
-        [(ngModel)]="noteDraft().isPrivate"
-        class="checkbox checkbox-brand"
-      >
+      <input type="checkbox" [(ngModel)]="noteDraft().isPrivate" class="checkbox checkbox-brand">
     </div>
   </div>
 </app-modal-shell>
 
-<app-image-cropper *ngIf="showCropper()"
-  [imageUrl]="cropImageUrl() || ''"
-  [initialRect]="currentCrop()"
-  (cropped)="onCropped($event)"
-  (cancel)="showCropper.set(false)">
+<app-image-cropper *ngIf="showCropper()" [imageUrl]="cropImageUrl() || ''" [initialRect]="currentCrop()"
+  (cropped)="onCropped($event)" (cancel)="showCropper.set(false)">
 </app-image-cropper>

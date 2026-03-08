@@ -199,4 +199,17 @@ export class AppNotesList {
       default: return 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20';
     }
   }
+
+  getNoteTypeLabel(type?: NoteCategory): string {
+    switch (type) {
+      case 'RESEARCH': return 'Forschung';
+      case 'HINT': return 'Hinweis';
+      case 'QUESTION': return 'Frage';
+      case 'TRANSCRIPTION': return 'Transkription';
+      case 'TODO': return 'Aufgabe';
+      case 'COMMENT': return 'Kommentar';
+      case 'OTHER': return 'Andere';
+      default: return 'Andere';
+    }
+  }
 }

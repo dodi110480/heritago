@@ -149,9 +149,9 @@ export class GedcomService {
     }
 
     deleteOrphanFile(path: string): Observable<any> {
-        return this.http.request<any>('delete', `${environment.apiUrl}/media/orphan-file`, { 
+        return this.http.request<any>('delete', `${environment.apiUrl}/media/orphan-file`, {
             body: { path },
-            withCredentials: true 
+            withCredentials: true
         });
     }
 
@@ -189,7 +189,7 @@ export class GedcomService {
     savePerson(treeName: string, data: any): Observable<any> {
         try {
             console.log('[GedcomService] savePerson payload', { treeName, data });
-        } catch (e) {}
+        } catch (e) { }
 
         return this.http.post<any>(`${this.baseApiUrl}${treeName}/person`, data, { withCredentials: true }).pipe(
             tap({

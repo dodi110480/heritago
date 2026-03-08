@@ -2408,7 +2408,8 @@ app.post('/api/tree/:tree/person', async (req, res) => {
         }
     }
 
-    const record = await GedcomManager.createPerson(prisma, tree.id, req.body);
+    const userId = req.body?.userId || (req as any).user?.id;
+    const record = await GedcomManager.createPerson(prisma, tree.id, { ...req.body, currentUserId: userId });
 
     // Nach dem Speichern den neuen Stand für das Log holen
     const afterState = await prisma.person.findUnique({
@@ -2510,15 +2511,16 @@ app.post('/api/tree/:tree/family', async (req, res) => {
             });
         }
 
-        const result = await GedcomManager.saveFamily(prisma, tree.id, data);
+        const userId = req.body?.userId || (req as any).user?.id;
+    const result = await GedcomManager.saveFamily(prisma, tree.id, { ...data, currentUserId: userId }, userId);
 
         if (result && !('deleted' in result)) {
             const familyAfter = await prisma.family.findUnique({
                 where: { id: result.id },
                 include: { 
                     familyMembers: { include: { person: { include: { names: true } } } }, 
-                    events: { include: { place: true, mediaLinks: { include: { media: true } }, noteLinks: { include: { note: true } }, citations: { include: { source: true } }, associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } } } }, 
-                    noteLinks: { include: { note: true } } 
+                    events: { include: { place: true, mediaLinks: { include: { media: true } }, noteLinks: { include: { note: { include: { createdBy: { select: { id: true, username: true } } } } } }, citations: { include: { source: true } }, associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } } } }, 
+                    noteLinks: { include: { note: { include: { createdBy: { select: { id: true, username: true } } } } } } 
                 }
             });
 
@@ -2620,7 +2622,11 @@ app.get('/api/tree/:tree/place/:id', async (req, res) => {
             identifiers: true,
             noteLinks: {
                 include: {
-                    note: true
+                    note: {
+                        include: {
+                            createdBy: { select: { id: true, username: true } }
+                        }
+                    }
                 }
             }
         }
@@ -2632,14 +2638,17 @@ app.get('/api/tree/:tree/place/:id', async (req, res) => {
         success: true,
         place: {
             ...place,
-                notes: place.noteLinks.map(nl => ({
+                notes: (place.noteLinks || []).map((nl: any) => ({
                 id: nl.note.id,
                 text: nl.note.text,
                 noteType: nl.note.noteType,
                 privacyLevel: nl.note.privacyLevel,
                 createdAt: nl.note.createdAt,
                 updatedAt: nl.note.updatedAt,
-                createdBy: null
+                createdBy: nl.note.createdBy ? {
+                    id: nl.note.createdBy.id,
+                    username: nl.note.createdBy.username
+                } : null
             }))
         }
     });
@@ -2786,6 +2795,8 @@ app.post('/api/tree/:tree/place', async (req, res) => {
 
     const tree = await prisma.tree.findUnique({ where: { name: treeName } });
     if (!tree) return res.status(404).json({ success: false });
+
+    const currentUserId = req.body?.userId || (req as any).user?.id;
 
     try {
         if (mode === 'delete' && (name || id)) {
@@ -3021,7 +3032,8 @@ app.post('/api/tree/:tree/place', async (req, res) => {
                                 treeId: tree.id,
                                 text: noteText,
                                 noteType,
-                                privacyLevel: pLevel as any
+                                privacyLevel: pLevel as any,
+                                userId: currentUserId || null
                             }
                         });
                     }
@@ -3134,14 +3146,17 @@ app.get('/api/tree/:tree/source/:id', async (req, res) => {
         success: true,
         source: {
             ...source,
-            notes: source.noteLinks.map(nl => ({
+            notes: (source.noteLinks || []).map((nl: any) => ({
                 id: nl.note.id,
                 text: nl.note.text,
                 noteType: nl.note.noteType,
                 privacyLevel: nl.note.privacyLevel,
                 createdAt: nl.note.createdAt,
                 updatedAt: nl.note.updatedAt,
-                createdBy: nl.note.createdBy
+                createdBy: nl.note.createdBy ? {
+                    id: nl.note.createdBy.id,
+                    username: nl.note.createdBy.username
+                } : null
             }))
         }
     });
@@ -3268,7 +3283,8 @@ app.post('/api/tree/:tree/source/merge', async (req, res) => {
 
 app.post('/api/tree/:tree/source', async (req, res) => {
     const { tree: treeName } = req.params;
-    const { id, title, shortTitle, author, publication, repositoryId, mode, reassignToId, notes } = req.body;
+    const { id, title, shortTitle, author, publication, repositoryId, mode, reassignToId, notes, userId: bodyUserId } = req.body;
+    const currentUserId = bodyUserId || (req as any).user?.id;
 
     const tree = await prisma.tree.findUnique({ where: { name: treeName } });
     if (!tree) return res.status(404).json({ success: false });
@@ -3335,44 +3351,7 @@ app.post('/api/tree/:tree/source', async (req, res) => {
         // Processing Notes (Standardized)
         if (notes && Array.isArray(notes)) {
             await prisma.noteLink.deleteMany({ where: { sourceId: resultSource.id } });
-            for (const noteData of notes) {
-                const isString = typeof noteData === 'string';
-                const noteText = isString ? noteData : (noteData?.text || '');
-                if (!noteText.trim()) continue;
-
-                const noteType = isString ? 'OTHER' : (noteData?.noteType || 'OTHER');
-                const pLevel = (!isString && noteData?.isPrivate) ? 'PRIVATE' : 'PUBLIC';
-                
-                let note;
-                if (!isString && noteData?.id && !noteData.id.startsWith('note-')) {
-                    note = await prisma.sharedNote.findUnique({ where: { id: noteData.id } });
-                    if (note) {
-                        note = await prisma.sharedNote.update({
-                            where: { id: note.id },
-                            data: { text: noteText, noteType, privacyLevel: pLevel as any }
-                        });
-                    }
-                }
-                
-                if (!note) {
-                    note = await prisma.sharedNote.create({
-                        data: {
-                            treeId,
-                            text: noteText,
-                            noteType,
-                            privacyLevel: pLevel as any
-                        }
-                    });
-                }
-                
-                await prisma.noteLink.create({
-                    data: {
-                        treeId,
-                        sourceId: resultSource.id,
-                        noteId: note.id
-                    }
-                });
-            }
+            await this.processSharedNotes(prisma, tree.id, notes, { sourceId: resultSource.id }, currentUserId);
         }
 
         res.json({ success: true });

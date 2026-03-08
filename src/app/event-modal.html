@@ -1,120 +1,158 @@
-<app-modal-shell [visible]="visible" 
-  [title]="isNew ? 'Ereignis/Fakt hinzufügen' : (item ? (item.tag || 'Ereignis') + ' bearbeiten' : 'Ereignis bearbeiten')" 
-  icon="📅" size="lg" [showSave]="true" [showDelete]="showDelete" (close)="emitClose()" (save)="emitSave()" (delete)="emitDelete()">
+<app-modal-shell [visible]="visible"
+  [title]="isNew ? 'Ereignis/Fakt hinzufügen' : (item ? (item.tag || 'Ereignis') + ' bearbeiten' : 'Ereignis bearbeiten')"
+  icon="📅" size="lg" [showSave]="true" [showDelete]="showDelete" (close)="emitClose()" (save)="emitSave()"
+  (delete)="emitDelete()">
 
   <div *ngIf="item" class="flex flex-col h-[500px] max-h-[70vh]">
     <div class="flex border-b border-canvas/10 dark:border-white/10 mb-6 shrink-0">
-      <button (click)="activeTab.set('basics')" [class]="activeTab() === 'basics' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Basis</button>
-      <button (click)="activeTab.set('participants')" [class]="activeTab() === 'participants' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Beteiligte <span class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.associations?.length || 0}}</span></button>
-      <button (click)="activeTab.set('citations')" [class]="activeTab() === 'citations' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Quellen <span class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.citations?.length || 0}}</span></button>
-      <button (click)="activeTab.set('media')" [class]="activeTab() === 'media' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Medien <span class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.media?.length || 0}}</span></button>
-      <button (click)="activeTab.set('notes')" [class]="activeTab() === 'notes' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Notizen <span class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.notes?.length || 0}}</span></button>
+      <button (click)="activeTab.set('basics')"
+        [class]="activeTab() === 'basics' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+        class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Basis</button>
+      <button (click)="activeTab.set('participants')"
+        [class]="activeTab() === 'participants' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+        class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Beteiligte <span
+          class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.associations?.length
+          || 0}}</span></button>
+      <button (click)="activeTab.set('citations')"
+        [class]="activeTab() === 'citations' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+        class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Quellen <span
+          class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.citations?.length
+          || 0}}</span></button>
+      <button (click)="activeTab.set('media')"
+        [class]="activeTab() === 'media' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+        class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Medien <span
+          class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.media?.length ||
+          0}}</span></button>
+      <button (click)="activeTab.set('notes')"
+        [class]="activeTab() === 'notes' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+        class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Notizen <span
+          class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.notes?.length ||
+          0}}</span></button>
     </div>
 
     <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
       <div *ngIf="activeTab() === 'basics'" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div class="form-group">
-                  <label class="form-label">Typ</label>
-                    <select [(ngModel)]="item.type" class="form-input">
-                      <option value="BIRT">Geburt</option>
-                      <option value="CHR">Taufe (religiös)</option>
-                      <option value="BAPM">Taufe (nicht-religiös)</option>
-                      <option value="DEAT">Tod</option>
-                      <option value="BURI">Beerdigung</option>
-                      <option value="CREM">Einäscherung</option>
-                      <option value="MARR">Heirat</option>
-                      <option value="DIV">Scheidung</option>
-                      <option value="ANUL">Annullierung</option>
-                      <option value="ENGA">Verlobung</option>
-                      <option value="ADOP">Adoption</option>
-                      <option value="BARM">Bar Mitzvah</option>
-                      <option value="BASM">Bas Mitzvah</option>
-                      <option value="BLES">Segen</option>
-                      <option value="CHRA">Erwachsenentaufe</option>
-                      <option value="CONF">Firmung / Konfirmation</option>
-                      <option value="FCOM">Erste Kommunion</option>
-                      <option value="ORDN">Ordination</option>
-                      <option value="NATU">Einbürgerung</option>
-                      <option value="EMIG">Auswanderung</option>
-                      <option value="IMMI">Einwanderung</option>
-                      <option value="CENS">Volkszählung</option>
-                      <option value="PROB">Testamentseröffnung</option>
-                      <option value="WILL">Testament</option>
-                      <option value="GRAD">Abschluss</option>
-                      <option value="RETI">Ruhestand</option>
-                      <option value="EVEN">Allgemeines Ereignis</option>
-                      <option value="BAPL">LDS-Taufe (für Verstorbene)</option>
-                      <option value="CONL">LDS-Bestätigung</option>
-                      <option value="ENDL">LDS-Investitur</option>
-                      <option value="SLGC">LDS-Kindersiegelung</option>
-                      <option value="SLGS">LDS-Stellvertreter-Siegelung</option>
-                      <option value="RESI">Wohnsitz</option>
-                      <option value="MILI">Militärdienst</option>
-                      <option value="CAST">Kaste</option>
-                      <option value="DSCR">Körperliche Beschreibung</option>
-                      <option value="OTHER">Sonstiges</option>
-                    </select>
-              </div>
-              <div class="form-group">
-                  <label class="form-label">Untertyp</label>
-                  <input type="text" [(ngModel)]="item.subType" class="form-input" placeholder="z.B. Standesamt">
-              </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div class="form-group">
-                  <label class="form-label">Datum</label>
-                  <input type="text" [(ngModel)]="item.dateText" class="form-input" placeholder="z.B. 12 JAN 1900">
-              </div>
-              <div class="form-group relative">
-                  <label class="form-label">Ort</label>
-                  <input type="text" [(ngModel)]="item.place" class="form-input" placeholder="Ort suchen oder eingeben...">
-              </div>
-          </div>
-
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div class="form-group">
-              <label class="form-label">Beschreibung (optional)</label>
-              <textarea [(ngModel)]="item.description" class="form-input min-h-[80px]" placeholder="Zusätzliche Details zum Ereignis..."></textarea>
+            <label class="form-label">Typ</label>
+            <select [(ngModel)]="item.type" class="form-input">
+              <option value="BIRT">Geburt</option>
+              <option value="CHR">Taufe (religiös)</option>
+              <option value="BAPM">Taufe (nicht-religiös)</option>
+              <option value="DEAT">Tod</option>
+              <option value="BURI">Beerdigung</option>
+              <option value="CREM">Einäscherung</option>
+              <option value="MARR">Heirat</option>
+              <option value="DIV">Scheidung</option>
+              <option value="ANUL">Annullierung</option>
+              <option value="ENGA">Verlobung</option>
+              <option value="ADOP">Adoption</option>
+              <option value="BARM">Bar Mitzvah</option>
+              <option value="BASM">Bas Mitzvah</option>
+              <option value="BLES">Segen</option>
+              <option value="CHRA">Erwachsenentaufe</option>
+              <option value="CONF">Firmung / Konfirmation</option>
+              <option value="FCOM">Erste Kommunion</option>
+              <option value="ORDN">Ordination</option>
+              <option value="NATU">Einbürgerung</option>
+              <option value="EMIG">Auswanderung</option>
+              <option value="IMMI">Einwanderung</option>
+              <option value="CENS">Volkszählung</option>
+              <option value="PROB">Testamentseröffnung</option>
+              <option value="WILL">Testament</option>
+              <option value="GRAD">Abschluss</option>
+              <option value="RETI">Ruhestand</option>
+              <option value="EVEN">Allgemeines Ereignis</option>
+              <option value="BAPL">LDS-Taufe (für Verstorbene)</option>
+              <option value="CONL">LDS-Bestätigung</option>
+              <option value="ENDL">LDS-Investitur</option>
+              <option value="SLGC">LDS-Kindersiegelung</option>
+              <option value="SLGS">LDS-Stellvertreter-Siegelung</option>
+              <option value="RESI">Wohnsitz</option>
+              <option value="MILI">Militärdienst</option>
+              <option value="CAST">Kaste</option>
+              <option value="DSCR">Körperliche Beschreibung</option>
+              <option value="OTHER">Sonstiges</option>
+            </select>
           </div>
-
-          <div class="flex items-center gap-2 pt-2">
-              <input type="checkbox" [(ngModel)]="item.isPrimary" id="eventPrimary" class="w-4 h-4 rounded border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900/50 text-brand-500 focus:ring-brand-500">
-              <label for="eventPrimary" class="text-sm text-neutral-700 dark:text-neutral-300">Als Haupt-Ereignis markieren</label>
-          </div>
-
-          <div class="pt-6 flex justify-end" *ngIf="showDelete">
-              <button (click)="emitDelete()" class="btn-secondary !w-auto !py-1 !px-3 !bg-accent-danger-500/10 !text-accent-danger-500 !border-accent-danger-500/20 text-xs flex items-center gap-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                  Ereignis löschen
-              </button>
+          <div class="form-group">
+            <label class="form-label">Untertyp</label>
+            <input type="text" [(ngModel)]="item.subType" class="form-input" placeholder="z.B. Standesamt">
           </div>
         </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="form-group">
+            <label class="form-label">Datum</label>
+            <input type="text" [(ngModel)]="item.dateText" class="form-input" placeholder="z.B. 12 JAN 1900">
+          </div>
+          <div class="form-group relative">
+            <label class="form-label">Ort</label>
+            <input type="text" [(ngModel)]="item.place" class="form-input" placeholder="Ort suchen oder eingeben...">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Beschreibung (optional)</label>
+          <textarea [(ngModel)]="item.description" class="form-input min-h-[80px]"
+            placeholder="Zusätzliche Details zum Ereignis..."></textarea>
+        </div>
+
+        <div class="flex items-center gap-2 pt-2">
+          <input type="checkbox" [(ngModel)]="item.isPrimary" id="eventPrimary"
+            class="w-4 h-4 rounded border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900/50 text-brand-500 focus:ring-brand-500">
+          <label for="eventPrimary" class="text-sm text-neutral-700 dark:text-neutral-300">Als Haupt-Ereignis
+            markieren</label>
+        </div>
+
+        <div class="pt-6 flex justify-end" *ngIf="showDelete">
+          <button (click)="emitDelete()"
+            class="btn-secondary !w-auto !py-1 !px-3 !bg-accent-danger-500/10 !text-accent-danger-500 !border-accent-danger-500/20 text-xs flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Ereignis löschen
+          </button>
+        </div>
+      </div>
 
       <div *ngIf="activeTab() === 'participants'" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
         <div class="flex justify-between items-center mb-2">
           <h4 class="text-xs font-bold text-neutral-500 uppercase tracking-widest">Beteiligte Personen</h4>
           <button (click)="addParticipant()" class="btn-primary !w-auto !py-1 !px-3 text-[10px]">+ Beteiligte/r</button>
         </div>
-        <div *ngIf="!item.associations?.length" class="text-center py-10 opacity-50 italic text-sm">Noch keine Beteiligten hinzugefügt.</div>
-        
+        <div *ngIf="!item.associations?.length" class="text-center py-10 opacity-50 italic text-sm">Noch keine
+          Beteiligten hinzugefügt.</div>
+
         <div class="grid grid-cols-1 gap-3">
-          <div *ngFor="let p of item.associations; let pIdx = index" class="glass-card !p-4 flex justify-between items-center group">
+          <div *ngFor="let p of item.associations; let pIdx = index"
+            class="glass-card !p-4 flex justify-between items-center group">
             <div class="flex items-center gap-4">
               <div class="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center text-lg shadow-inner">
-                {{ p.role === 'GODPARENT' ? '🕊️' : p.role === 'WITNESS' ? '📜' : p.role === 'CLERGY' ? '⛪' : p.role === 'INFORMANT' ? '📢' : p.role === 'MIDWIFE' ? '👶' : p.role === 'DOCTOR' ? '🩺' : p.role === 'UNDERTAKER' ? '⚰️' : '👤' }}
+                {{ p.role === 'GODPARENT' ? '🕊️' : p.role === 'WITNESS' ? '📜' : p.role === 'CLERGY' ? '⛪' : p.role ===
+                'INFORMANT' ? '📢' : p.role === 'MIDWIFE' ? '👶' : p.role === 'DOCTOR' ? '🩺' : p.role === 'UNDERTAKER'
+                ? '⚰️' : '👤' }}
               </div>
               <div>
-                <p class="font-bold text-neutral-900 leading-tight">{{ p.associatedPersonName || 'Unbekannte Person' }}</p>
-                <p class="text-[10px] text-neutral-500 font-medium uppercase tracking-wider flex items-center gap-1.5 mt-0.5">
+                <p class="font-bold text-neutral-900 leading-tight">{{ p.associatedPersonName || 'Unbekannte Person' }}
+                </p>
+                <p
+                  class="text-[10px] text-neutral-500 font-medium uppercase tracking-wider flex items-center gap-1.5 mt-0.5">
                   <span class="bg-brand-500/10 text-brand-600 px-1.5 py-0.5 rounded">{{ getRoleLabel(p.role) }}</span>
                   <span *ngIf="p.relationText" class="text-neutral-400">•</span>
                   <span *ngIf="p.relationText">{{ p.relationText }}</span>
                 </p>
               </div>
             </div>
-            <button (click)="removeParticipant(pIdx)" class="p-1.5 text-neutral-400 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <button (click)="removeParticipant(pIdx)"
+              class="p-1.5 text-neutral-400 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
             </button>
           </div>
         </div>
@@ -125,9 +163,11 @@
           <h4 class="text-xs font-bold text-neutral-500 uppercase tracking-widest">Quellenbelege</h4>
           <button (click)="emitAddCitation()" class="btn-primary !w-auto !py-1 !px-3 text-[10px]">+ Beleg</button>
         </div>
-        <div *ngIf="!item.citations?.length" class="text-center py-10 opacity-50 italic text-sm">Keine Quellenbelege hinzugefügt.</div>
+        <div *ngIf="!item.citations?.length" class="text-center py-10 opacity-50 italic text-sm">Keine Quellenbelege
+          hinzugefügt.</div>
         <div *ngFor="let cit of item.citations; let cIdx = index" class="glass-card !p-4 space-y-3 relative">
-          <button (click)="emitRemoveCitation(cIdx)" class="absolute top-2 right-2 text-accent-danger-500 hover:scale-110 transition-transform">✕</button>
+          <button (click)="emitRemoveCitation(cIdx)"
+            class="absolute top-2 right-2 text-accent-danger-500 hover:scale-110 transition-transform">✕</button>
           <div class="form-group mb-0">
             <label class="form-label text-[10px]">Quelle</label>
             <select [(ngModel)]="cit.sourceId" class="form-input !py-1.5 !text-xs">
@@ -157,22 +197,31 @@
         <div class="flex justify-between items-center mb-2">
           <h4 class="text-xs font-bold text-neutral-500 uppercase tracking-widest">Medien</h4>
           <div class="flex gap-2">
-            <button (click)="emitOpenUpload()" class="btn-primary !w-auto !py-1 !px-3 text-[10px]"><span class="mr-1">📤</span> Upload</button>
-            <button (click)="emitOpenGallery()" class="btn-secondary !w-auto !py-1 !px-3 text-[10px]"><span class="mr-1">🖼️</span> Galerie</button>
+            <button (click)="emitOpenUpload()" class="btn-primary !w-auto !py-1 !px-3 text-[10px]"><span
+                class="mr-1">📤</span> Upload</button>
+            <button (click)="emitOpenGallery()" class="btn-secondary !w-auto !py-1 !px-3 text-[10px]"><span
+                class="mr-1">🖼️</span> Galerie</button>
           </div>
         </div>
-        <div *ngIf="!item.media?.length" class="text-center py-10 opacity-50 italic text-sm">Keine Medien hinzugefügt.</div>
+        <div *ngIf="!item.media?.length" class="text-center py-10 opacity-50 italic text-sm">Keine Medien hinzugefügt.
+        </div>
         <div class="grid grid-cols-3 md:grid-cols-4 gap-3">
           <div *ngFor="let med of item.media; let mIdx = index" class="glass-card !p-0 overflow-hidden relative group">
-            <button (click)="emitRemoveMedia(mIdx)" class="absolute top-1 right-1 z-10 bg-black/50 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-accent-danger-500 transition-colors opacity-0 group-hover:opacity-100">✕</button>
-            <button (click)="$event.stopPropagation(); emitOpenViewer(med)" title="Vorschau" class="absolute left-1 bottom-1 z-10 bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-brand-500 transition-colors opacity-0 group-hover:opacity-100">🔍</button>
-            <div (click)="emitOpenViewer(med)" class="aspect-square bg-canvas/10 flex items-center justify-center overflow-hidden cursor-pointer">
-              <img *ngIf="med.id" [src]="getMediaUrl(med.id, 'thumbs')" class="w-full h-full object-cover transition-transform group-hover:scale-110">
-              <img *ngIf="!med.id && med.url" [src]="getMediaUrl(med.url, 'thumbs')" class="w-full h-full object-cover transition-transform group-hover:scale-110">
+            <button (click)="emitRemoveMedia(mIdx)"
+              class="absolute top-1 right-1 z-10 bg-black/50 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-accent-danger-500 transition-colors opacity-0 group-hover:opacity-100">✕</button>
+            <button (click)="$event.stopPropagation(); emitOpenViewer(med)" title="Vorschau"
+              class="absolute left-1 bottom-1 z-10 bg-black/50 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-brand-500 transition-colors opacity-0 group-hover:opacity-100">🔍</button>
+            <div (click)="emitOpenViewer(med)"
+              class="aspect-square bg-canvas/10 flex items-center justify-center overflow-hidden cursor-pointer">
+              <img *ngIf="med.id" [src]="getMediaUrl(med.id, 'thumbs')"
+                class="w-full h-full object-cover transition-transform group-hover:scale-110">
+              <img *ngIf="!med.id && med.url" [src]="getMediaUrl(med.url, 'thumbs')"
+                class="w-full h-full object-cover transition-transform group-hover:scale-110">
               <span *ngIf="!med.id && !med.url" class="text-xl">🖼️</span>
             </div>
             <div class="p-1 px-2 border-t border-white/5 bg-black/5">
-              <p class="text-[9px] font-medium truncate text-neutral-400" [title]="med.title">{{med.title || 'Bild'}}</p>
+              <p class="text-[9px] font-medium truncate text-neutral-400" [title]="med.title">{{med.title || 'Bild'}}
+              </p>
             </div>
           </div>
         </div>
@@ -183,36 +232,33 @@
           <h4 class="text-xs font-bold text-neutral-500 uppercase tracking-widest">Notizen</h4>
         </div>
 
-        <app-notes-list
-          [entityId]="item.id"
-          [entityType]="'EVENT'"
-          [notesDisplay]="normalizedNotes()"
-          [allowCreate]="true"
-          [allowEdit]="true"
-          (noteCreateRequested)="onNoteCreateRequested()"
-          (noteEditRequested)="onNoteEditRequested($event)"
-          (noteDeleted)="onNoteDeleted($event)">
+        <app-notes-list [entityId]="item.id" [entityType]="'EVENT'" [notesDisplay]="normalizedNotes()"
+          [allowCreate]="true" [allowEdit]="true" (noteCreateRequested)="onNoteCreateRequested()"
+          (noteEditRequested)="onNoteEditRequested($event)" (noteDeleted)="onNoteDeleted($event)">
         </app-notes-list>
 
         <!-- Note Edit / Create Sub-Modal -->
-        <app-modal-shell [visible]="showNoteSubModal()" title="Notiz" size="md" [showSave]="true" [showDelete]="activeNoteIndex() !== null" (close)="showNoteSubModal.set(false)" (save)="onNoteSave()" (delete)="onNoteDeleteFromModal()">
+        <app-modal-shell [visible]="showNoteSubModal()" title="Notiz" size="md" [showSave]="true"
+          [showDelete]="activeNoteIndex() !== null" (close)="showNoteSubModal.set(false)" (save)="onNoteSave()"
+          (delete)="onNoteDeleteFromModal()">
           <div class="space-y-4">
             <div class="form-group mb-0">
               <label class="form-label">Inhalt</label>
-              <textarea [(ngModel)]="noteDraft().text" class="form-input min-h-[120px]" placeholder="Notiztext..."></textarea>
+              <textarea [(ngModel)]="noteDraft().text" class="form-input min-h-[120px]"
+                placeholder="Notiztext..."></textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
               <div class="form-group mb-0">
                 <label class="form-label">Kategorie</label>
                 <select [(ngModel)]="noteDraft().noteType" class="form-input">
-                  <option value="RESEARCH">Research</option>
-                  <option value="HINT">Hint</option>
-                  <option value="QUESTION">Question</option>
-                  <option value="TRANSCRIPTION">Transcription</option>
-                  <option value="TODO">Todo</option>
-                  <option value="COMMENT">Comment</option>
-                  <option value="OTHER">Other</option>
+                  <option value="COMMENT">Kommentar</option>
+                  <option value="TRANSCRIPTION">Transkription</option>
+                  <option value="RESEARCH">Forschung</option>
+                  <option value="QUESTION">Frage</option>
+                  <option value="TODO">Aufgabe</option>
+                  <option value="HINT">Hinweis</option>
+                  <option value="OTHER">Andere</option>
                 </select>
               </div>
 
@@ -233,39 +279,39 @@
 
 <!-- ADD PARTICIPANT MODAL -->
 <app-modal-shell [visible]="showParticipantAddModal()" title="Beteiligte Person hinzufügen" icon="👤" size="md"
-    [showSave]="true" saveText="Hinzufügen" [showDelete]="false" (close)="showParticipantAddModal.set(false)"
-    (save)="confirmAddParticipant()">
-    <div class="space-y-4">
-        <div class="form-group mb-0">
-            <label class="form-label">Person</label>
-            <input type="text" [(ngModel)]="newParticipantDraft().personInput"
-                list="participant-person-list" class="form-input" placeholder="Person suchen oder Name eingeben...">
-            <datalist id="participant-person-list">
-                <option *ngFor="let opt of allPersonsOptions" [value]="opt.displayName"></option>
-            </datalist>
-        </div>
-        <div class="form-group mb-0">
-            <label class="form-label">Rolle</label>
-            <select [(ngModel)]="newParticipantDraft().role" class="form-input !py-2.5">
-                <option value="GODPARENT">Pate / Gevatter</option>
-                <option value="WITNESS">Zeuge / Trauzeuge</option>
-                <option value="CLERGY">Pfarrer / Priester</option>
-                <option value="INFORMANT">Informant</option>
-                <option value="MIDWIFE">Hebamme</option>
-                <option value="DOCTOR">Arzt</option>
-                <option value="UNDERTAKER">Bestatter</option>
-                <option value="OTHER">Andere</option>
-            </select>
-        </div>
-        <div class="form-group mb-0">
-            <label class="form-label">Zusatz / Phrase (optional)</label>
-            <input type="text" [(ngModel)]="newParticipantDraft().relationText"
-                class="form-input" placeholder="z.B. rechte Patin, Standesbeamter">
-        </div>
-        <div class="form-group mb-0">
-            <label class="form-label">Notizen (optional)</label>
-            <textarea [(ngModel)]="newParticipantDraft().notes" class="form-input min-h-[60px]"
-                placeholder="Interne Anmerkungen..."></textarea>
-        </div>
+  [showSave]="true" saveText="Hinzufügen" [showDelete]="false" (close)="showParticipantAddModal.set(false)"
+  (save)="confirmAddParticipant()">
+  <div class="space-y-4">
+    <div class="form-group mb-0">
+      <label class="form-label">Person</label>
+      <input type="text" [(ngModel)]="newParticipantDraft().personInput" list="participant-person-list"
+        class="form-input" placeholder="Person suchen oder Name eingeben...">
+      <datalist id="participant-person-list">
+        <option *ngFor="let opt of allPersonsOptions" [value]="opt.displayName"></option>
+      </datalist>
     </div>
+    <div class="form-group mb-0">
+      <label class="form-label">Rolle</label>
+      <select [(ngModel)]="newParticipantDraft().role" class="form-input !py-2.5">
+        <option value="GODPARENT">Pate / Gevatter</option>
+        <option value="WITNESS">Zeuge / Trauzeuge</option>
+        <option value="CLERGY">Pfarrer / Priester</option>
+        <option value="INFORMANT">Informant</option>
+        <option value="MIDWIFE">Hebamme</option>
+        <option value="DOCTOR">Arzt</option>
+        <option value="UNDERTAKER">Bestatter</option>
+        <option value="OTHER">Andere</option>
+      </select>
+    </div>
+    <div class="form-group mb-0">
+      <label class="form-label">Zusatz / Phrase (optional)</label>
+      <input type="text" [(ngModel)]="newParticipantDraft().relationText" class="form-input"
+        placeholder="z.B. rechte Patin, Standesbeamter">
+    </div>
+    <div class="form-group mb-0">
+      <label class="form-label">Notizen (optional)</label>
+      <textarea [(ngModel)]="newParticipantDraft().notes" class="form-input min-h-[60px]"
+        placeholder="Interne Anmerkungen..."></textarea>
+    </div>
+  </div>
 </app-modal-shell>

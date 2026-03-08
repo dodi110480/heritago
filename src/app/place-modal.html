@@ -5,37 +5,41 @@
 
   <div class="flex flex-col h-[600px] max-h-[80vh]">
     <!-- Fehleranzeige -->
-    <div class="bg-accent-danger-500/10 border border-accent-danger-500/20 text-accent-danger-500 p-3 rounded-xl text-sm mb-5 shrink-0"
+    <div
+      class="bg-accent-danger-500/10 border border-accent-danger-500/20 text-accent-danger-500 p-3 rounded-xl text-sm mb-5 shrink-0"
       *ngIf="errorMessage()">
       {{ errorMessage() }}
     </div>
 
     <!-- Modal Tabs -->
     <div class="flex border-b border-canvas/10 dark:border-white/10 mb-6 shrink-0">
-      <button (click)="setTab('basics')" 
-          [class]="activeTab() === 'basics' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" 
-          class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Basis</button>
-      <button (click)="setTab('languages')" 
-          [class]="activeTab() === 'languages' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" 
-          class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">
-          Sprachen <span class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{modalData.translations?.length || 0}}</span>
+      <button (click)="setTab('basics')"
+        [class]="activeTab() === 'basics' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+        class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Basis</button>
+      <button (click)="setTab('languages')"
+        [class]="activeTab() === 'languages' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+        class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">
+        Sprachen <span
+          class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{modalData.translations?.length
+          || 0}}</span>
       </button>
-      <button (click)="setTab('location')" 
-          [class]="activeTab() === 'location' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" 
-          class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Position</button>
-      <button (click)="setTab('notes')" 
-          [class]="activeTab() === 'notes' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" 
-          class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">
-          Notizen <span class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{notes().length}}</span>
+      <button (click)="setTab('location')"
+        [class]="activeTab() === 'location' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+        class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Position</button>
+      <button (click)="setTab('notes')"
+        [class]="activeTab() === 'notes' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+        class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">
+        Notizen <span
+          class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{notes().length}}</span>
       </button>
-      <button (click)="setTab('maintenance')" 
-          [class]="activeTab() === 'maintenance' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" 
-          class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Wartung</button>
+      <button (click)="setTab('maintenance')"
+        [class]="activeTab() === 'maintenance' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+        class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Wartung</button>
     </div>
 
     <!-- Tab Content -->
     <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
-      
+
       <!-- Tab: Basis -->
       <div *ngIf="activeTab() === 'basics'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
         <div class="space-y-1.5">
@@ -70,11 +74,17 @@
               + ID Hinzufügen
             </button>
           </div>
-          <div *ngFor="let id of modalData.identifiers; let i = index" class="flex gap-3 items-center p-3 bg-canvas/5 dark:bg-white/5 rounded-xl border border-canvas/10 dark:border-white/10">
-            <input type="text" [(ngModel)]="id.type" placeholder="Typ (wikidata...)" class="form-input !text-xs !py-1.5 flex-1">
+          <div *ngFor="let id of modalData.identifiers; let i = index"
+            class="flex gap-3 items-center p-3 bg-canvas/5 dark:bg-white/5 rounded-xl border border-canvas/10 dark:border-white/10">
+            <input type="text" [(ngModel)]="id.type" placeholder="Typ (wikidata...)"
+              class="form-input !text-xs !py-1.5 flex-1">
             <input type="text" [(ngModel)]="id.value" placeholder="ID-Wert" class="form-input !text-xs !py-1.5 flex-1">
             <button (click)="removeIdentifier(i)" class="text-accent-danger-500 hover:text-accent-danger-600 p-1">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
             </button>
           </div>
         </div>
@@ -83,22 +93,29 @@
       <!-- Tab: Sprachen -->
       <div *ngIf="activeTab() === 'languages'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
         <div class="flex justify-between items-center">
-          <h4 class="text-sm font-bold text-neutral-800 dark:text-white uppercase tracking-wider">Mehrsprachige Namen</h4>
+          <h4 class="text-sm font-bold text-neutral-800 dark:text-white uppercase tracking-wider">Mehrsprachige Namen
+          </h4>
           <button (click)="addTranslation()" class="btn-brand-soft !w-auto !py-1.5 !px-3 text-xs">
             + Übersetzung
           </button>
         </div>
 
-        <div *ngFor="let tr of modalData.translations; let i = index" class="space-y-3 p-4 bg-canvas/5 dark:bg-white/5 rounded-2xl border border-canvas/10 dark:border-white/10 relative">
-          <button (click)="removeTranslation(i)" class="absolute top-2 right-2 text-neutral-400 hover:text-accent-danger-500 p-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <div *ngFor="let tr of modalData.translations; let i = index"
+          class="space-y-3 p-4 bg-canvas/5 dark:bg-white/5 rounded-2xl border border-canvas/10 dark:border-white/10 relative">
+          <button (click)="removeTranslation(i)"
+            class="absolute top-2 right-2 text-neutral-400 hover:text-accent-danger-500 p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
-          
+
           <div class="form-group pb-1">
             <label class="form-label text-[10px]">Name in dieser Sprache</label>
             <input type="text" [(ngModel)]="tr.name" placeholder="z.B. Hirschberg" class="form-input !text-sm !py-2">
           </div>
-          
+
           <div class="grid grid-cols-2 gap-4">
             <div class="form-group">
               <label class="form-label text-[10px]">ISO-Code</label>
@@ -106,10 +123,11 @@
             </div>
             <div class="form-group">
               <label class="form-label text-[10px]">Typ / Form</label>
-              <input type="text" [(ngModel)]="tr.form" placeholder="Stadt, Dorf, ..." class="form-input !text-xs !py-1.5">
+              <input type="text" [(ngModel)]="tr.form" placeholder="Stadt, Dorf, ..."
+                class="form-input !text-xs !py-1.5">
             </div>
           </div>
-          
+
           <div class="grid grid-cols-2 gap-4">
             <div class="form-group">
               <label class="form-label text-[10px]">Gültig ab</label>
@@ -122,7 +140,8 @@
           </div>
         </div>
 
-        <div *ngIf="!modalData.translations?.length" class="text-center py-10 bg-canvas/5 dark:bg-white/5 rounded-2xl border border-dashed border-canvas/10 dark:border-white/10">
+        <div *ngIf="!modalData.translations?.length"
+          class="text-center py-10 bg-canvas/5 dark:bg-white/5 rounded-2xl border border-dashed border-canvas/10 dark:border-white/10">
           <p class="text-sm text-neutral-500 italic">Keine weiteren Sprachfassungen vorhanden.</p>
         </div>
       </div>
@@ -131,13 +150,15 @@
       <div *ngIf="activeTab() === 'location'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
         <div class="space-y-4">
           <div class="flex justify-between items-center">
-            <h4 class="text-sm font-bold text-neutral-800 dark:text-white uppercase tracking-wider">Geografische Position</h4>
+            <h4 class="text-sm font-bold text-neutral-800 dark:text-white uppercase tracking-wider">Geografische
+              Position</h4>
             <button (click)="toggleMap()" class="btn-secondary !w-auto !py-1.5 !px-3 text-xs">
               {{ showMap() ? 'Karte verbergen' : 'Karte laden' }}
             </button>
           </div>
 
-          <div *ngIf="showMap()" class="h-64 rounded-2xl overflow-hidden border border-canvas/10 dark:border-white/10 shadow-lg mt-3"
+          <div *ngIf="showMap()"
+            class="h-64 rounded-2xl overflow-hidden border border-canvas/10 dark:border-white/10 shadow-lg mt-3"
             #mapContainer></div>
 
           <div class="grid grid-cols-2 gap-5">
@@ -152,13 +173,15 @@
           </div>
 
           <div class="flex justify-between items-center text-xs mt-2">
-            <button (click)="useMyLocation()" class="text-brand-600 dark:text-brand-400 font-bold hover:underline">📡 Meinen Standort nutzen</button>
+            <button (click)="useMyLocation()" class="text-brand-600 dark:text-brand-400 font-bold hover:underline">📡
+              Meinen Standort nutzen</button>
             <span *ngIf="locationLabel()" class="italic text-neutral-500">{{ locationLabel() }}</span>
           </div>
         </div>
 
         <div class="space-y-5 pt-4 border-t border-canvas/10 dark:border-white/10">
-          <h4 class="text-sm font-bold text-neutral-800 dark:text-white uppercase tracking-wider">Struktur & Hierarchie</h4>
+          <h4 class="text-sm font-bold text-neutral-800 dark:text-white uppercase tracking-wider">Struktur & Hierarchie
+          </h4>
 
           <div class="space-y-1.5">
             <label class="form-label">Übergeordneter Ort</label>
@@ -171,8 +194,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div class="space-y-1.5">
               <label class="form-label">Ort-Struktur / Form</label>
-              <input type="text" [(ngModel)]="modalData.form" class="form-input"
-                placeholder="z.B. Stadt, Landkreis">
+              <input type="text" [(ngModel)]="modalData.form" class="form-input" placeholder="z.B. Stadt, Landkreis">
             </div>
 
             <div class="space-y-1.5">
@@ -186,17 +208,10 @@
 
       <!-- Tab: Notizen -->
       <div *ngIf="activeTab() === 'notes'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-        <app-notes-list
-          [entityId]="initialData?.id || ''"
-          [entityType]="'PLACE'"
-          [notesDisplay]="notes()"
-          [allowCreate]="true"
-          [allowEdit]="true"
-          [placeholder]="'Orts-Notizen durchsuchen...'"
-          (noteCreateRequested)="onNoteCreateRequested()"
-          (noteEditRequested)="onNoteEditRequested($event)"
-          (noteDeleted)="onNoteDeleted($event)"
-        ></app-notes-list>
+        <app-notes-list [entityId]="initialData?.id || ''" [entityType]="'PLACE'" [notesDisplay]="notes()"
+          [allowCreate]="true" [allowEdit]="true" [placeholder]="'Orts-Notizen durchsuchen...'"
+          (noteCreateRequested)="onNoteCreateRequested()" (noteEditRequested)="onNoteEditRequested($event)"
+          (noteDeleted)="onNoteDeleted($event)"></app-notes-list>
       </div>
 
       <!-- Tab: Wartung -->
@@ -204,31 +219,36 @@
 
         <!-- Verwendungsnachweise -->
         <div class="space-y-4 pt-4 border-t border-canvas/10 dark:border-white/10" *ngIf="mode === 'edit' && usage()">
-          <h4 class="text-sm font-bold text-neutral-800 dark:text-white uppercase tracking-wider flex items-center justify-between">
+          <h4
+            class="text-sm font-bold text-neutral-800 dark:text-white uppercase tracking-wider flex items-center justify-between">
             <span>Verwendungsnachweise</span>
             <span class="text-[10px] px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full">
               {{ (usage().events?.length || 0) + (usage().facts?.length || 0) + (usage().associations?.length || 0) }}
             </span>
           </h4>
-          
+
           <div class="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
             <div *ngIf="usage().events?.length" class="space-y-2">
-              <div *ngFor="let ev of usage().events" class="text-xs p-3 bg-canvas/5 dark:bg-white/5 rounded-xl border border-canvas/10 dark:border-white/10 flex justify-between items-center hover:bg-brand-500/5 transition-colors group">
+              <div *ngFor="let ev of usage().events"
+                class="text-xs p-3 bg-canvas/5 dark:bg-white/5 rounded-xl border border-canvas/10 dark:border-white/10 flex justify-between items-center hover:bg-brand-500/5 transition-colors group">
                 <div class="flex flex-col gap-1">
                   <span class="font-bold text-neutral-900 dark:text-white">{{ ev.type }}</span>
-                  <button *ngIf="ev.personId" (click)="openPersonProfile(ev.personId)" class="text-brand-600 dark:text-brand-400 font-medium text-left">
+                  <button *ngIf="ev.personId" (click)="openPersonProfile(ev.personId)"
+                    class="text-brand-600 dark:text-brand-400 font-medium text-left">
                     {{ ev.personName }}
                   </button>
                 </div>
                 <span class="text-neutral-500 italic">{{ ev.date || ev.dateText }}</span>
               </div>
             </div>
-            
+
             <div *ngIf="usage().facts?.length" class="space-y-2">
-              <div *ngFor="let f of usage().facts" class="text-xs p-3 bg-canvas/5 dark:bg-white/5 rounded-xl border border-canvas/10 dark:border-white/10 flex justify-between items-center">
+              <div *ngFor="let f of usage().facts"
+                class="text-xs p-3 bg-canvas/5 dark:bg-white/5 rounded-xl border border-canvas/10 dark:border-white/10 flex justify-between items-center">
                 <div class="flex flex-col gap-1">
                   <span class="font-bold text-neutral-900 dark:text-white">{{ f.type }}</span>
-                  <button *ngIf="f.personId" (click)="openPersonProfile(f.personId)" class="text-brand-600 dark:text-brand-400 font-medium text-left">
+                  <button *ngIf="f.personId" (click)="openPersonProfile(f.personId)"
+                    class="text-brand-600 dark:text-brand-400 font-medium text-left">
                     {{ f.personName }}
                   </button>
                 </div>
@@ -242,26 +262,32 @@
         <div class="space-y-4 pt-4 border-t border-accent-danger-500/20" *ngIf="mode === 'edit'">
           <h4 class="text-sm font-bold text-accent-danger-500 uppercase tracking-wider">Datenpflege & Gefahrenzone</h4>
 
-          <div class="bg-brand-500/5 p-4 rounded-2xl border border-brand-500/20 space-y-4 transition-all hover:bg-brand-500/10">
+          <div
+            class="bg-brand-500/5 p-4 rounded-2xl border border-brand-500/20 space-y-4 transition-all hover:bg-brand-500/10">
             <div>
               <h5 class="text-xs font-bold text-neutral-900 dark:text-white">Merge (Zusammenführen)</h5>
-              <p class="text-[10px] text-neutral-500 mt-1">Überträgt alle Verknüpfungen dieses Ortes auf ein Ziel und löscht diesen Ort anschließend.</p>
+              <p class="text-[10px] text-neutral-500 mt-1">Überträgt alle Verknüpfungen dieses Ortes auf ein Ziel und
+                löscht diesen Ort anschließend.</p>
             </div>
             <div class="flex gap-2">
-              <select [ngModel]="mergeTargetId()" (ngModelChange)="mergeTargetId.set($event)" class="form-input !text-xs !py-2 flex-1">
+              <select [ngModel]="mergeTargetId()" (ngModelChange)="mergeTargetId.set($event)"
+                class="form-input !text-xs !py-2 flex-1">
                 <option value="">-- Zielort wählen --</option>
                 <option *ngFor="let p of availableParents()" [value]="p.id" [disabled]="p.id === initialData?.id">
                   {{ p.name }}
                 </option>
               </select>
-              <button (click)="mergeSelected()" [disabled]="!mergeTargetId()" class="btn-brand !w-auto !py-2 !px-4 text-xs">Merge</button>
+              <button (click)="mergeSelected()" [disabled]="!mergeTargetId()"
+                class="btn-brand !w-auto !py-2 !px-4 text-xs">Merge</button>
             </div>
           </div>
 
-          <div class="bg-accent-danger-500/5 p-4 rounded-2xl border border-accent-danger-500/20 space-y-4 transition-all hover:bg-accent-danger-500/10">
+          <div
+            class="bg-accent-danger-500/5 p-4 rounded-2xl border border-accent-danger-500/20 space-y-4 transition-all hover:bg-accent-danger-500/10">
             <div>
               <h5 class="text-xs font-bold text-accent-danger-500">Löschen</h5>
-              <p class="text-[10px] text-accent-danger-500/70 mt-1">Löscht den Ort unwiderruflich. Verknüpfungen können optional auf einen Ersatz übertragen werden.</p>
+              <p class="text-[10px] text-accent-danger-500/70 mt-1">Löscht den Ort unwiderruflich. Verknüpfungen können
+                optional auf einen Ersatz übertragen werden.</p>
             </div>
             <div class="space-y-3">
               <select [ngModel]="reassignTargetId()" (ngModelChange)="reassignTargetId.set($event)"
@@ -285,26 +311,18 @@
 </app-modal-shell>
 
 <!-- NOTE EDIT SUB-MODAL -->
-<app-modal-shell 
-  [visible]="showNoteSubModal()" 
-  [title]="activeNoteIndex() !== null ? 'Notiz bearbeiten' : 'Neue Notiz'" 
-  icon="📝" 
-  size="md"
-  [showSave]="true" 
-  [showDelete]="activeNoteIndex() !== null" 
-  (close)="showNoteSubModal.set(false)"
-  (save)="onNoteSave()"
-  (delete)="onNoteDeleteFromModal()"
->
+<app-modal-shell [visible]="showNoteSubModal()" [title]="activeNoteIndex() !== null ? 'Notiz bearbeiten' : 'Neue Notiz'"
+  icon="📝" size="md" [showSave]="true" [showDelete]="activeNoteIndex() !== null" (close)="showNoteSubModal.set(false)"
+  (save)="onNoteSave()" (delete)="onNoteDeleteFromModal()">
   <div class="space-y-4">
     <div class="form-group mb-0">
       <label class="form-label">Kategorie / Typ</label>
       <select [(ngModel)]="noteDraft().noteType" class="form-input">
         <option value="COMMENT">Kommentar</option>
         <option value="TRANSCRIPTION">Transkription</option>
-        <option value="RESEARCH">Forschung / Quellenkritik</option>
-        <option value="QUESTION">Offene Frage</option>
-        <option value="TODO">Aufgabe / To-Do</option>
+        <option value="RESEARCH">Forschung</option>
+        <option value="QUESTION">Frage</option>
+        <option value="TODO">Aufgabe</option>
         <option value="HINT">Hinweis</option>
         <option value="OTHER">Andere</option>
       </select>
@@ -312,23 +330,17 @@
 
     <div class="form-group mb-0">
       <label class="form-label">Inhalt</label>
-      <textarea 
-        [(ngModel)]="noteDraft().text" 
-        class="form-input min-h-[160px] font-body" 
-        placeholder="Schreibe deine Notiz hier..."
-      ></textarea>
+      <textarea [(ngModel)]="noteDraft().text" class="form-input min-h-[160px] font-body"
+        placeholder="Schreibe deine Notiz hier..."></textarea>
     </div>
 
-    <div class="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-xl border border-neutral-200 dark:border-neutral-800">
+    <div
+      class="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-xl border border-neutral-200 dark:border-neutral-800">
       <div class="flex-1">
         <div class="text-sm font-bold text-neutral-900">Private Notiz</div>
         <div class="text-[10px] text-neutral-500">Nur für dich (und eingeladene Bearbeiter) sichtbar.</div>
       </div>
-      <input 
-        type="checkbox" 
-        [(ngModel)]="noteDraft().isPrivate"
-        class="checkbox checkbox-brand"
-      >
+      <input type="checkbox" [(ngModel)]="noteDraft().isPrivate" class="checkbox checkbox-brand">
     </div>
   </div>
 </app-modal-shell>

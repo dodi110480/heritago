@@ -41,11 +41,11 @@ import { DisplayNote, NoteCategory } from './models';
                 <div class="form-group mb-0">
                     <label class="form-label text-xs uppercase tracking-wider font-bold text-neutral-500">Kategorie / Typ</label>
                     <select [(ngModel)]="noteDraft().noteType" class="form-input">
-                        <option value="COMMENT">Kommentar / Allgemein</option>
+                        <option value="COMMENT">Kommentar</option>
                         <option value="TRANSCRIPTION">Transkription</option>
-                        <option value="RESEARCH">Forschung / Quellenkritik</option>
-                        <option value="QUESTION">Offene Frage</option>
-                        <option value="TODO">Aufgabe / To-Do</option>
+                        <option value="RESEARCH">Forschung</option>
+                        <option value="QUESTION">Frage</option>
+                        <option value="TODO">Aufgabe</option>
                         <option value="HINT">Hinweis</option>
                         <option value="OTHER">Andere</option>
                     </select>
@@ -117,7 +117,7 @@ export class PersonTabNotesComponent {
     onNoteEditRequested(displayNote: DisplayNote) {
         const p = this.person;
         if (!p || !p.notes) return;
-        
+
         const idx = p.notes.findIndex((n: any, i: number) => (n.id || `note-${i}`) === displayNote.id);
         if (idx !== -1) {
             this.activeNoteIndex.set(idx);
@@ -134,7 +134,7 @@ export class PersonTabNotesComponent {
         if (!p) return;
 
         const idx = this.activeNoteIndex();
-        
+
         // Map back to API structure
         const apiNote = {
             id: draft.id.startsWith('note-') ? undefined : draft.id,
@@ -158,7 +158,7 @@ export class PersonTabNotesComponent {
     onNoteDeleted(noteId: string) {
         const p = this.person;
         if (!p || !p.notes) return;
-        
+
         const idx = p.notes.findIndex((n: any, i: number) => (n.id || `note-${i}`) === noteId);
         if (idx !== -1) {
             if (confirm('Möchtest du diese Notiz wirklich löschen?')) {
@@ -173,7 +173,7 @@ export class PersonTabNotesComponent {
     onNoteDeleteFromModal() {
         const idx = this.activeNoteIndex();
         if (idx === null) return;
-        
+
         const p = this.person;
         if (!p || !p.notes) return;
 
@@ -183,7 +183,7 @@ export class PersonTabNotesComponent {
         // Wir rufen onNoteDeleted auf, aber wir wollen das confirm eventuell hier steuern oder doppelung vermeiden.
         // Die Anforderung sagt "sofortiges Löschen (mit Schließen des Modals)".
         // Im app-notes-list gibt es schon ein confirm.
-        
+
         p.notes.splice(idx, 1);
         this.changed.emit();
         this.showNoteSubModal.set(false);
