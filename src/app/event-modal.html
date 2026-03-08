@@ -5,6 +5,7 @@
   <div *ngIf="item" class="flex flex-col h-[500px] max-h-[70vh]">
     <div class="flex border-b border-canvas/10 dark:border-white/10 mb-6 shrink-0">
       <button (click)="activeTab.set('basics')" [class]="activeTab() === 'basics' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Basis</button>
+      <button (click)="activeTab.set('participants')" [class]="activeTab() === 'participants' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Beteiligte <span class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.associations?.length || 0}}</span></button>
       <button (click)="activeTab.set('citations')" [class]="activeTab() === 'citations' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Quellen <span class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.citations?.length || 0}}</span></button>
       <button (click)="activeTab.set('media')" [class]="activeTab() === 'media' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Medien <span class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.media?.length || 0}}</span></button>
       <button (click)="activeTab.set('notes')" [class]="activeTab() === 'notes' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Notizen <span class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{item.notes?.length || 0}}</span></button>
@@ -15,15 +16,45 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div class="form-group">
                   <label class="form-label">Typ</label>
-                  <select [(ngModel)]="item.type" class="form-input">
-                      <option value="MARR">Heirat (MARR)</option>
-                      <option value="DIV">Scheidung (DIV)</option>
-                      <option value="MARB">Aufgebot (MARB)</option>
-                      <option value="MARL">Heiratserlaubnis (MARL)</option>
-                      <option value="MARS">Ehevertrag (MARS)</option>
-                      <option value="ANUL">Annullierung (ANUL)</option>
-                      <option value="EVEN">Anderes Ereignis (EVEN)</option>
-                  </select>
+                    <select [(ngModel)]="item.type" class="form-input">
+                      <option value="BIRT">Geburt</option>
+                      <option value="CHR">Taufe (religiös)</option>
+                      <option value="BAPM">Taufe (nicht-religiös)</option>
+                      <option value="DEAT">Tod</option>
+                      <option value="BURI">Beerdigung</option>
+                      <option value="CREM">Einäscherung</option>
+                      <option value="MARR">Heirat</option>
+                      <option value="DIV">Scheidung</option>
+                      <option value="ANUL">Annullierung</option>
+                      <option value="ENGA">Verlobung</option>
+                      <option value="ADOP">Adoption</option>
+                      <option value="BARM">Bar Mitzvah</option>
+                      <option value="BASM">Bas Mitzvah</option>
+                      <option value="BLES">Segen</option>
+                      <option value="CHRA">Erwachsenentaufe</option>
+                      <option value="CONF">Firmung / Konfirmation</option>
+                      <option value="FCOM">Erste Kommunion</option>
+                      <option value="ORDN">Ordination</option>
+                      <option value="NATU">Einbürgerung</option>
+                      <option value="EMIG">Auswanderung</option>
+                      <option value="IMMI">Einwanderung</option>
+                      <option value="CENS">Volkszählung</option>
+                      <option value="PROB">Testamentseröffnung</option>
+                      <option value="WILL">Testament</option>
+                      <option value="GRAD">Abschluss</option>
+                      <option value="RETI">Ruhestand</option>
+                      <option value="EVEN">Allgemeines Ereignis</option>
+                      <option value="BAPL">LDS-Taufe (für Verstorbene)</option>
+                      <option value="CONL">LDS-Bestätigung</option>
+                      <option value="ENDL">LDS-Investitur</option>
+                      <option value="SLGC">LDS-Kindersiegelung</option>
+                      <option value="SLGS">LDS-Stellvertreter-Siegelung</option>
+                      <option value="RESI">Wohnsitz</option>
+                      <option value="MILI">Militärdienst</option>
+                      <option value="CAST">Kaste</option>
+                      <option value="DSCR">Körperliche Beschreibung</option>
+                      <option value="OTHER">Sonstiges</option>
+                    </select>
               </div>
               <div class="form-group">
                   <label class="form-label">Untertyp</label>
@@ -53,12 +84,41 @@
           </div>
 
           <div class="pt-6 flex justify-end" *ngIf="showDelete">
-              <button (click)="emitDelete()" class="text-accent-danger-500 text-sm font-medium hover:underline flex items-center gap-1">
+              <button (click)="emitDelete()" class="btn-secondary !w-auto !py-1 !px-3 !bg-accent-danger-500/10 !text-accent-danger-500 !border-accent-danger-500/20 text-xs flex items-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                   Ereignis löschen
               </button>
           </div>
         </div>
+
+      <div *ngIf="activeTab() === 'participants'" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div class="flex justify-between items-center mb-2">
+          <h4 class="text-xs font-bold text-neutral-500 uppercase tracking-widest">Beteiligte Personen</h4>
+          <button (click)="addParticipant()" class="btn-primary !w-auto !py-1 !px-3 text-[10px]">+ Beteiligte/r</button>
+        </div>
+        <div *ngIf="!item.associations?.length" class="text-center py-10 opacity-50 italic text-sm">Noch keine Beteiligten hinzugefügt.</div>
+        
+        <div class="grid grid-cols-1 gap-3">
+          <div *ngFor="let p of item.associations; let pIdx = index" class="glass-card !p-4 flex justify-between items-center group">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center text-lg shadow-inner">
+                {{ p.role === 'GODPARENT' ? '🕊️' : p.role === 'WITNESS' ? '📜' : p.role === 'CLERGY' ? '⛪' : p.role === 'INFORMANT' ? '📢' : p.role === 'MIDWIFE' ? '👶' : p.role === 'DOCTOR' ? '🩺' : p.role === 'UNDERTAKER' ? '⚰️' : '👤' }}
+              </div>
+              <div>
+                <p class="font-bold text-neutral-900 leading-tight">{{ p.associatedPersonName || 'Unbekannte Person' }}</p>
+                <p class="text-[10px] text-neutral-500 font-medium uppercase tracking-wider flex items-center gap-1.5 mt-0.5">
+                  <span class="bg-brand-500/10 text-brand-600 px-1.5 py-0.5 rounded">{{ getRoleLabel(p.role) }}</span>
+                  <span *ngIf="p.relationText" class="text-neutral-400">•</span>
+                  <span *ngIf="p.relationText">{{ p.relationText }}</span>
+                </p>
+              </div>
+            </div>
+            <button (click)="removeParticipant(pIdx)" class="p-1.5 text-neutral-400 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div *ngIf="activeTab() === 'citations'" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
         <div class="flex justify-between items-center mb-2">
@@ -119,17 +179,93 @@
       </div>
 
       <div *ngIf="activeTab() === 'notes'" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-        <div class="flex justify-between items-center mb-2">
+        <div class="flex items-center mb-2">
           <h4 class="text-xs font-bold text-neutral-500 uppercase tracking-widest">Notizen</h4>
-          <button (click)="emitAddNote()" class="btn-primary !w-auto !py-1 !px-3 text-[10px]">+ Notiz</button>
         </div>
-        <div *ngIf="!item.notes?.length" class="text-center py-10 opacity-50 italic text-sm">Keine Notizen hinzugefügt.</div>
-        <div *ngFor="let note of item.notes; let nIdx = index" class="relative group">
-          <textarea [(ngModel)]="item.notes[nIdx]" class="form-input min-h-[80px] pr-8" placeholder="Deine Notiz..."></textarea>
-          <button (click)="emitRemoveNote(nIdx)" class="absolute top-2 right-2 text-neutral-400 hover:text-accent-danger-500 transition-colors">✕</button>
-        </div>
+
+        <app-notes-list
+          [entityId]="item.id"
+          [entityType]="'EVENT'"
+          [notesDisplay]="normalizedNotes()"
+          [allowCreate]="true"
+          [allowEdit]="true"
+          (noteCreateRequested)="onNoteCreateRequested()"
+          (noteEditRequested)="onNoteEditRequested($event)"
+          (noteDeleted)="onNoteDeleted($event)">
+        </app-notes-list>
+
+        <!-- Note Edit / Create Sub-Modal -->
+        <app-modal-shell [visible]="showNoteSubModal()" title="Notiz" size="md" [showSave]="true" [showDelete]="activeNoteIndex() !== null" (close)="showNoteSubModal.set(false)" (save)="onNoteSave()" (delete)="onNoteDeleteFromModal()">
+          <div class="space-y-4">
+            <div class="form-group mb-0">
+              <label class="form-label">Inhalt</label>
+              <textarea [(ngModel)]="noteDraft().text" class="form-input min-h-[120px]" placeholder="Notiztext..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="form-group mb-0">
+                <label class="form-label">Kategorie</label>
+                <select [(ngModel)]="noteDraft().noteType" class="form-input">
+                  <option value="RESEARCH">Research</option>
+                  <option value="HINT">Hint</option>
+                  <option value="QUESTION">Question</option>
+                  <option value="TRANSCRIPTION">Transcription</option>
+                  <option value="TODO">Todo</option>
+                  <option value="COMMENT">Comment</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+
+              <div class="form-group mb-0 flex items-end">
+                <label class="inline-flex items-center gap-2">
+                  <input type="checkbox" [(ngModel)]="noteDraft().isPrivate" class="w-4 h-4" />
+                  <span class="text-sm">Privat</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </app-modal-shell>
       </div>
     </div>
   </div>
 
+</app-modal-shell>
+
+<!-- ADD PARTICIPANT MODAL -->
+<app-modal-shell [visible]="showParticipantAddModal()" title="Beteiligte Person hinzufügen" icon="👤" size="md"
+    [showSave]="true" saveText="Hinzufügen" [showDelete]="false" (close)="showParticipantAddModal.set(false)"
+    (save)="confirmAddParticipant()">
+    <div class="space-y-4">
+        <div class="form-group mb-0">
+            <label class="form-label">Person</label>
+            <input type="text" [(ngModel)]="newParticipantDraft().personInput"
+                list="participant-person-list" class="form-input" placeholder="Person suchen oder Name eingeben...">
+            <datalist id="participant-person-list">
+                <option *ngFor="let opt of allPersonsOptions" [value]="opt.displayName"></option>
+            </datalist>
+        </div>
+        <div class="form-group mb-0">
+            <label class="form-label">Rolle</label>
+            <select [(ngModel)]="newParticipantDraft().role" class="form-input !py-2.5">
+                <option value="GODPARENT">Pate / Gevatter</option>
+                <option value="WITNESS">Zeuge / Trauzeuge</option>
+                <option value="CLERGY">Pfarrer / Priester</option>
+                <option value="INFORMANT">Informant</option>
+                <option value="MIDWIFE">Hebamme</option>
+                <option value="DOCTOR">Arzt</option>
+                <option value="UNDERTAKER">Bestatter</option>
+                <option value="OTHER">Andere</option>
+            </select>
+        </div>
+        <div class="form-group mb-0">
+            <label class="form-label">Zusatz / Phrase (optional)</label>
+            <input type="text" [(ngModel)]="newParticipantDraft().relationText"
+                class="form-input" placeholder="z.B. rechte Patin, Standesbeamter">
+        </div>
+        <div class="form-group mb-0">
+            <label class="form-label">Notizen (optional)</label>
+            <textarea [(ngModel)]="newParticipantDraft().notes" class="form-input min-h-[60px]"
+                placeholder="Interne Anmerkungen..."></textarea>
+        </div>
+    </div>
 </app-modal-shell>

@@ -11,13 +11,12 @@
             {id: 'timeline', label: 'Lebenslauf'},
             {id: 'relations', label: 'Familie'},
             {id: 'names', label: 'Namen'},
-            {id: 'associations', label: 'Assoziationen'},
             {id: 'dna', label: 'DNA'},
             {id: 'media', label: 'Medien'},
             {id: 'notes', label: 'Notizen'},
             {id: 'citations', label: 'Referenzen'}
-        ]" (click)="activeTab = tab.id"
-            [class]="activeTab === tab.id ? 
+        ]" (click)="setActiveTab(tab.id)"
+            [class]="activeTab() === tab.id ? 
             'px-4 py-2 rounded-lg bg-brand-500/10 text-brand-600 border border-brand-500/20 text-sm font-semibold whitespace-nowrap shadow-sm' : 
             'px-4 py-2 rounded-lg hover:bg-canvas/5 text-neutral-500 hover:text-neutral-900 text-sm font-medium transition-all duration-[180ms] whitespace-nowrap'">
             {{tab.label}}
@@ -27,50 +26,45 @@
     <div class="space-y-8 animate-in fade-in duration-500 pb-20">
 
         <!-- Tab: Basics -->
-        <div *ngIf="activeTab === 'basics'" class="space-y-6">
-            <app-person-expert-basics-tab [person]="p" (changed)="markDirty(); savePerson()"
+        <div *ngIf="activeTab() === 'basics'" class="space-y-6">
+            <app-person-expert-basics-tab [person]="p" [participations]="participations()" (changed)="markDirty(); savePerson()"
                 (deleteRequested)="openDeleteModal()"></app-person-expert-basics-tab>
         </div>
 
         <!-- TIMELINE TAB -->
-        <div *ngIf="activeTab === 'timeline'" class="space-y-6">
+        <div *ngIf="activeTab() === 'timeline'" class="space-y-6">
             <app-person-expert-timeline-tab [ctx]="self"></app-person-expert-timeline-tab>
         </div>
 
         <!-- RELATIONS TAB -->
-        <div *ngIf="activeTab === 'relations'" class="space-y-6">
+        <div *ngIf="activeTab() === 'relations'" class="space-y-6">
             <app-person-expert-relations-tab [ctx]="self"></app-person-expert-relations-tab>
         </div>
 
         <!-- NAMES TAB -->
-        <div *ngIf="activeTab === 'names'" class="space-y-6">
+        <div *ngIf="activeTab() === 'names'" class="space-y-6">
             <app-person-tab-names [person]="p" (changed)="markDirty(); savePerson()"></app-person-tab-names>
         </div>
 
-        <!-- ASSOCIATIONS TAB -->
-        <div *ngIf="activeTab === 'associations'" class="space-y-6">
-            <app-person-tab-associations [person]="p" [allPersonsOptions]="allPersonsOptions()"
-                (changed)="markDirty(); savePerson()"></app-person-tab-associations>
-        </div>
 
         <!-- DNA TAB -->
-        <div *ngIf="activeTab === 'dna'" class="space-y-6">
+        <div *ngIf="activeTab() === 'dna'" class="space-y-6">
             <app-person-tab-dna [person]="p" (changed)="markDirty(); savePerson()"></app-person-tab-dna>
         </div>
 
         <!-- MEDIA TAB -->
-        <div *ngIf="activeTab === 'media'" class="space-y-6">
+        <div *ngIf="activeTab() === 'media'" class="space-y-6">
             <app-person-tab-media [person]="p" [treeId]="treeData()?.meta?.treeId || ''"
                 (changed)="markDirty(); savePerson()"></app-person-tab-media>
         </div>
 
         <!-- NOTES TAB -->
-        <div *ngIf="activeTab === 'notes'" class="space-y-6">
+        <div *ngIf="activeTab() === 'notes'" class="space-y-6">
             <app-person-tab-notes [person]="p" (changed)="markDirty(); savePerson()"></app-person-tab-notes>
         </div>
 
         <!-- CITATIONS TAB -->
-        <div *ngIf="activeTab === 'citations'" class="space-y-6">
+        <div *ngIf="activeTab() === 'citations'" class="space-y-6">
             <app-person-tab-citations [person]="p" [availableSources]="availableSources()"
                 (changed)="markDirty(); savePerson()"></app-person-tab-citations>
         </div>
@@ -136,6 +130,7 @@
         [visible]="showTimelineCreateModal()" 
         [item]="newTimelineDraft()" 
         [isNew]="true"
+        [allPersonsOptions]="allPersonsOptions()"
         (close)="closeTimelineCreateModal()" 
         (save)="confirmAddTimelineItem()"
         (addCitation)="addNewTimelineCitation()"
@@ -153,6 +148,7 @@
         [visible]="showTimelineItemModal()" 
         [item]="activeTimelineItem()" 
         [isNew]="false"
+        [allPersonsOptions]="allPersonsOptions()"
         [showDelete]="!!activeTimelineItem() && !isTimelineItemLocked(activeTimelineItem()!)"
         (close)="closeTimelineItemModal()"
         (save)="saveTimelineItemModal()"

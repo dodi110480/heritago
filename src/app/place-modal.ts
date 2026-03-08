@@ -6,13 +6,15 @@ import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
 import { AppModalShell } from './ui/app-modal-shell';
 import { PlaceDisplayPipe } from './place-display.pipe';
+import { AppNotesList } from './ui/app-notes-list';
+import { DisplayNote, NoteCategory } from './models';
 
 declare const L: any;
 
 @Component({
     selector: 'app-place-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell],
+    imports: [CommonModule, FormsModule, AppModalShell, AppNotesList],
     templateUrl: './place-modal.html'
 })
 export class PlaceModal implements OnInit {
@@ -36,6 +38,18 @@ export class PlaceModal implements OnInit {
     currentTree = signal<string | null>(null);
     availableParents = signal<any[]>([]);
 
+    // Notes signal
+    notes = signal<DisplayNote[]>([]);
+    showNoteSubModal = signal(false);
+    activeNoteIndex = signal<number | null>(null);
+    noteDraft = signal<DisplayNote>({
+        id: '',
+        text: '',
+        noteType: 'COMMENT',
+        createdAt: new Date(),
+        isPrivate: false
+    });
+
     modalData = {
         description: '',
         city: '',
@@ -56,7 +70,7 @@ export class PlaceModal implements OnInit {
         formTemplate: '',
         translations: [] as any[],
         identifiers: [] as any[],
-        notes: [] as string[]
+        notes: [] as any[]
     };
 
     placeLevels = [
@@ -69,9 +83,9 @@ export class PlaceModal implements OnInit {
     mergeTargetId = signal<string>('');
     reassignTargetId = signal<string>('');
     showMap = signal(true);
-    activeTab = signal<'basics' | 'languages' | 'location' | 'maintenance'>('basics');
+    activeTab = signal<'basics' | 'languages' | 'location' | 'notes' | 'maintenance'>('basics');
 
-    setTab(tab: 'basics' | 'languages' | 'location' | 'maintenance') {
+    setTab(tab: 'basics' | 'languages' | 'location' | 'notes' | 'maintenance') {
         this.activeTab.set(tab);
         if (tab === 'location' && this.showMap()) {
             setTimeout(() => this.initMap(), 50);
@@ -101,38 +115,54 @@ export class PlaceModal implements OnInit {
             this.destroyMap();
             this.resetForm();
             if (this.initialData) {
-                if (typeof this.initialData === 'string') {
+                if (this.mode === 'edit' && this.initialData.id) {
+                    const tree = this.authService.currentTree();
+                    if (tree) {
+                        this.gedcomService.getPlace(tree.name, this.initialData.id).subscribe({
+                            next: (res: any) => {
+                                if (res.success && res.place) {
+                                    const p = res.place;
+                                    this.modalData.latitude = p.latitude?.toString() || '';
+                                    this.modalData.longitude = p.longitude?.toString() || '';
+                                    this.modalData.jurisdiction = p.jurisdiction || '';
+                                    this.modalData.historicNames = Array.isArray(p.historicNames)
+                                        ? p.historicNames.join(', ')
+                                        : '';
+                                    this.modalData.parentId = p.parentId || '';
+                                    this.modalData.old_name = p.name || '';
+                                    this.modalData.form = p.form || '';
+                                    this.modalData.phrase = p.phrase || '';
+                                    this.modalData.level = p.level || 'CITY';
+                                    this.modalData.lang = p.lang || '';
+                                    this.modalData.formTemplate = p.formTemplate || '';
+                                    this.modalData.translations = Array.isArray(p.translations)
+                                        ? p.translations.map((t: any) => ({
+                                            ...t,
+                                            dateStart: t.dateStart ? new Date(t.dateStart).toISOString().split('T')[0] : '',
+                                            dateEnd: t.dateEnd ? new Date(t.dateEnd).toISOString().split('T')[0] : ''
+                                        }))
+                                        : [];
+                                    this.modalData.identifiers = Array.isArray(p.identifiers) ? [...p.identifiers] : [];
+                                    this.notes.set(Array.isArray(p.notes) ? [...p.notes] : []);
+                                    
+                                    this.parsePlaceName(p.name || '');
+                                    this.loadUsage(p.id);
+                                    
+                                    setTimeout(() => this.initMap(), 50);
+                                }
+                            }
+                        });
+                    }
+                } else if (typeof this.initialData === 'string') {
                     // It's just a name string, try to parse or just set as old_name
                     this.parsePlaceName(this.initialData);
                 } else {
-                    // It's a place object
+                    // It's a place object (fallback for add mode or if ID is missing)
                     this.parsePlaceName(this.initialData.name || '');
                     this.modalData.latitude = this.initialData.latitude?.toString() || '';
                     this.modalData.longitude = this.initialData.longitude?.toString() || '';
-                    this.modalData.jurisdiction = this.initialData.jurisdiction || '';
-                    this.modalData.historicNames = Array.isArray(this.initialData.historicNames)
-                        ? this.initialData.historicNames.join(', ')
-                        : '';
-                    this.modalData.parentId = this.initialData.parentId || '';
-                    this.modalData.old_name = this.initialData.name || '';
-                    this.modalData.form = this.initialData.form || '';
-                    this.modalData.phrase = this.initialData.phrase || '';
-                    this.modalData.level = this.initialData.level || 'CITY';
-                    this.modalData.lang = this.initialData.lang || '';
-                    this.modalData.formTemplate = this.initialData.formTemplate || '';
-                    this.modalData.translations = Array.isArray(this.initialData.translations)
-                        ? this.initialData.translations.map((t: any) => ({
-                            ...t,
-                            dateStart: t.dateStart ? new Date(t.dateStart).toISOString().split('T')[0] : '',
-                            dateEnd: t.dateEnd ? new Date(t.dateEnd).toISOString().split('T')[0] : ''
-                        }))
-                        : [];
-                    this.modalData.identifiers = Array.isArray(this.initialData.identifiers) ? [...this.initialData.identifiers] : [];
-                    this.modalData.notes = Array.isArray(this.initialData.notes) ? [...this.initialData.notes] : [];
-
-                    if (this.mode === 'edit' && this.initialData.id) {
-                        this.loadUsage(this.initialData.id);
-                    }
+                    this.modalData.notes = [];
+                    this.notes.set([]);
                 }
             }
             setTimeout(() => this.initMap(), 50);
@@ -218,12 +248,60 @@ export class PlaceModal implements OnInit {
         this.modalData.identifiers.splice(index, 1);
     }
 
-    addNote() {
-        this.modalData.notes.push('');
+    onNoteCreateRequested() {
+        this.activeNoteIndex.set(null);
+        this.noteDraft.set({
+            id: 'note-' + Date.now(),
+            text: '',
+            noteType: 'COMMENT' as NoteCategory,
+            createdAt: new Date(),
+            isPrivate: false
+        });
+        this.showNoteSubModal.set(true);
     }
 
-    removeNote(index: number) {
-        this.modalData.notes.splice(index, 1);
+    onNoteEditRequested(note: DisplayNote) {
+        const index = this.notes().findIndex(n => n.id === note.id);
+        if (index !== -1) {
+            this.activeNoteIndex.set(index);
+            this.noteDraft.set({ ...note });
+            this.showNoteSubModal.set(true);
+        }
+    }
+
+    onNoteSave() {
+        const draft = this.noteDraft();
+        if (!draft.text.trim()) return;
+
+        const currentNotes = [...this.notes()];
+        const index = this.activeNoteIndex();
+
+        if (index !== null) {
+            currentNotes[index] = draft;
+        } else {
+            currentNotes.push(draft);
+        }
+
+        this.notes.set(currentNotes);
+        this.showNoteSubModal.set(false);
+    }
+
+    onNoteDeleted(noteId: string) {
+        if (confirm('Möchtest du diese Notiz wirklich löschen?')) {
+            this.notes.update(notes => notes.filter(n => n.id !== noteId));
+        }
+    }
+
+    onNoteDeleteFromModal() {
+        const idx = this.activeNoteIndex();
+        if (idx !== null) {
+            this.notes.update(notes => {
+                const n = [...notes];
+                n.splice(idx, 1);
+                return n;
+            });
+            this.showNoteSubModal.set(false);
+        }
     }
 
     private loadUsage(id: string) {
@@ -268,7 +346,7 @@ export class PlaceModal implements OnInit {
             formTemplate: this.modalData.formTemplate || null,
             translations: this.modalData.translations,
             identifiers: this.modalData.identifiers,
-            notes: this.modalData.notes
+            notes: this.notes()
         };
 
         this.isSaving.set(true);

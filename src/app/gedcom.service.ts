@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, switchMap, of, catchError } from 'rxjs';
-import { TreeData } from './models';
+import { Observable, switchMap, of, catchError, tap } from 'rxjs';
+import { TreeData, DisplayNote } from './models';
 import { AuthService } from './auth.service';
 import { environment } from './environment';
 
@@ -142,7 +142,7 @@ export class GedcomService {
         dimensions?: string,
         fileFormat?: string,
         identifiers?: any[],
-        notes?: string[],
+        notes?: DisplayNote[],
         citations?: any[]
     }): Observable<any> {
         return this.http.put<any>(`${environment.apiUrl}/media/${id}`, data, { withCredentials: true });
@@ -187,7 +187,17 @@ export class GedcomService {
     }
 
     savePerson(treeName: string, data: any): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/person`, data, { withCredentials: true });
+        try {
+            console.log('[GedcomService] savePerson payload', { treeName, data });
+        } catch (e) {}
+
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/person`, data, { withCredentials: true }).pipe(
+            tap({
+                next: (res) => console.log('[GedcomService] savePerson response', res),
+                error: (err) => console.error('[GedcomService] savePerson error', err)
+            }),
+            catchError(err => { throw err; })
+        );
     }
 
     deletePerson(treeName: string, id: string): Observable<any> {
@@ -215,6 +225,10 @@ export class GedcomService {
 
     getPlaces(treeName: string): Observable<any> {
         return this.http.get<any>(`${this.baseApiUrl}${treeName}/place`, { withCredentials: true });
+    }
+
+    getPlace(treeName: string, placeId: string): Observable<any> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/place/${placeId}`, { withCredentials: true });
     }
 
     getPlaceUsage(treeName: string, placeId: string): Observable<any> {

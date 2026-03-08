@@ -22,10 +22,15 @@
       </button>
       <button (click)="setTab('location')" 
           [class]="activeTab() === 'location' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" 
-          class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Position & Struktur</button>
+          class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Position</button>
+      <button (click)="setTab('notes')" 
+          [class]="activeTab() === 'notes' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" 
+          class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">
+          Notizen <span class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{notes().length}}</span>
+      </button>
       <button (click)="setTab('maintenance')" 
           [class]="activeTab() === 'maintenance' ? 'border-b-2 border-brand-500 text-brand-500' : 'text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'" 
-          class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Notizen & Wartung</button>
+          class="px-4 py-3 text-sm font-bold uppercase tracking-wider transition-all">Wartung</button>
     </div>
 
     <!-- Tab Content -->
@@ -179,29 +184,23 @@
         </div>
       </div>
 
+      <!-- Tab: Notizen -->
+      <div *ngIf="activeTab() === 'notes'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+        <app-notes-list
+          [entityId]="initialData?.id || ''"
+          [entityType]="'PLACE'"
+          [notesDisplay]="notes()"
+          [allowCreate]="true"
+          [allowEdit]="true"
+          [placeholder]="'Orts-Notizen durchsuchen...'"
+          (noteCreateRequested)="onNoteCreateRequested()"
+          (noteEditRequested)="onNoteEditRequested($event)"
+          (noteDeleted)="onNoteDeleted($event)"
+        ></app-notes-list>
+      </div>
+
       <!-- Tab: Wartung -->
       <div *ngIf="activeTab() === 'maintenance'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-        
-        <!-- Notizen -->
-        <div class="space-y-4">
-          <div class="flex justify-between items-center">
-            <h4 class="text-sm font-bold text-neutral-800 dark:text-white uppercase tracking-wider">Interne Notizen</h4>
-            <button (click)="addNote()" class="btn-brand-soft !w-auto !py-1.5 !px-3 text-xs">
-              + Notiz
-            </button>
-          </div>
-          <div *ngFor="let note of modalData.notes; let i = index" class="relative group">
-            <textarea [(ngModel)]="modalData.notes[i]" class="form-input min-h-[100px] !bg-canvas/5 dark:!bg-white/5 !rounded-2xl"
-              placeholder="Interne Notiz zum Ort..."></textarea>
-            <button (click)="removeNote(i)"
-              class="absolute top-2 right-2 text-neutral-400 hover:text-accent-danger-500 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>
-          </div>
-          <div *ngIf="!modalData.notes?.length" class="text-center py-8 bg-canvas/5 dark:bg-white/5 rounded-2xl border border-dashed border-canvas/10 dark:border-white/10">
-            <p class="text-sm text-neutral-500 italic">Keine Notizen vorhanden.</p>
-          </div>
-        </div>
 
         <!-- Verwendungsnachweise -->
         <div class="space-y-4 pt-4 border-t border-canvas/10 dark:border-white/10" *ngIf="mode === 'edit' && usage()">
@@ -281,6 +280,55 @@
         </div>
       </div>
 
+    </div>
+  </div>
+</app-modal-shell>
+
+<!-- NOTE EDIT SUB-MODAL -->
+<app-modal-shell 
+  [visible]="showNoteSubModal()" 
+  [title]="activeNoteIndex() !== null ? 'Notiz bearbeiten' : 'Neue Notiz'" 
+  icon="📝" 
+  size="md"
+  [showSave]="true" 
+  [showDelete]="activeNoteIndex() !== null" 
+  (close)="showNoteSubModal.set(false)"
+  (save)="onNoteSave()"
+  (delete)="onNoteDeleteFromModal()"
+>
+  <div class="space-y-4">
+    <div class="form-group mb-0">
+      <label class="form-label">Kategorie / Typ</label>
+      <select [(ngModel)]="noteDraft().noteType" class="form-input">
+        <option value="COMMENT">Kommentar</option>
+        <option value="TRANSCRIPTION">Transkription</option>
+        <option value="RESEARCH">Forschung / Quellenkritik</option>
+        <option value="QUESTION">Offene Frage</option>
+        <option value="TODO">Aufgabe / To-Do</option>
+        <option value="HINT">Hinweis</option>
+        <option value="OTHER">Andere</option>
+      </select>
+    </div>
+
+    <div class="form-group mb-0">
+      <label class="form-label">Inhalt</label>
+      <textarea 
+        [(ngModel)]="noteDraft().text" 
+        class="form-input min-h-[160px] font-body" 
+        placeholder="Schreibe deine Notiz hier..."
+      ></textarea>
+    </div>
+
+    <div class="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-xl border border-neutral-200 dark:border-neutral-800">
+      <div class="flex-1">
+        <div class="text-sm font-bold text-neutral-900">Private Notiz</div>
+        <div class="text-[10px] text-neutral-500">Nur für dich (und eingeladene Bearbeiter) sichtbar.</div>
+      </div>
+      <input 
+        type="checkbox" 
+        [(ngModel)]="noteDraft().isPrivate"
+        class="checkbox checkbox-brand"
+      >
     </div>
   </div>
 </app-modal-shell>

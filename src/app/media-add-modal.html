@@ -149,19 +149,18 @@
       </div>
 
       <!-- Notes Tab -->
-      <div *ngIf="activeTab() === 'notes'">
-        <div class="glass-card space-y-4">
-          <div class="flex justify-between items-center border-b border-white/10 pb-2">
-            <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">Notizen</h3>
-            <button (click)="addNote()" class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+ Hinzufügen</button>
-          </div>
-          <div class="space-y-3">
-            <div *ngFor="let note of notes(); let i = index" class="relative">
-              <textarea [ngModel]="notes()[i]" (ngModelChange)="updateNote(i, $event)" class="form-input text-sm min-h-[80px]" placeholder="Deine Notiz..."></textarea>
-              <button (click)="removeNote(i)" class="absolute top-2 right-2 text-neutral-500 hover:text-accent-danger-500 transition-colors">✕</button>
-            </div>
-          </div>
-        </div>
+      <div *ngIf="activeTab() === 'notes'" class="animate-in fade-in slide-in-from-top-2 duration-300">
+        <app-notes-list
+          [entityId]="id()"
+          [entityType]="'MEDIA'"
+          [notesDisplay]="notes()"
+          [allowCreate]="true"
+          [allowEdit]="true"
+          [placeholder]="'Medien-Notizen durchsuchen...'"
+          (noteCreateRequested)="onNoteCreateRequested()"
+          (noteEditRequested)="onNoteEditRequested($event)"
+          (noteDeleted)="onNoteDeleted($event)"
+        ></app-notes-list>
       </div>
     </div>
   </div>
@@ -181,6 +180,55 @@
     </div>
   </div>
 
+</app-modal-shell>
+
+<!-- NOTE EDIT SUB-MODAL -->
+<app-modal-shell 
+  [visible]="showNoteSubModal()" 
+  [title]="activeNoteIndex() !== null ? 'Notiz bearbeiten' : 'Neue Notiz'" 
+  icon="📝" 
+  size="md"
+  [showSave]="true" 
+  [showDelete]="activeNoteIndex() !== null" 
+  (close)="showNoteSubModal.set(false)"
+  (save)="onNoteSave()"
+  (delete)="onNoteDeleteFromModal()"
+>
+  <div class="space-y-4">
+    <div class="form-group mb-0">
+      <label class="form-label">Kategorie / Typ</label>
+      <select [(ngModel)]="noteDraft().noteType" class="form-input">
+        <option value="COMMENT">Kommentar</option>
+        <option value="TRANSCRIPTION">Transkription</option>
+        <option value="RESEARCH">Forschung / Quellenkritik</option>
+        <option value="QUESTION">Offene Frage</option>
+        <option value="TODO">Aufgabe / To-Do</option>
+        <option value="HINT">Hinweis</option>
+        <option value="OTHER">Andere</option>
+      </select>
+    </div>
+
+    <div class="form-group mb-0">
+      <label class="form-label">Inhalt</label>
+      <textarea 
+        [(ngModel)]="noteDraft().text" 
+        class="form-input min-h-[160px] font-body" 
+        placeholder="Schreibe deine Notiz hier..."
+      ></textarea>
+    </div>
+
+    <div class="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-xl border border-neutral-200 dark:border-neutral-800">
+      <div class="flex-1">
+        <div class="text-sm font-bold text-neutral-900">Private Notiz</div>
+        <div class="text-[10px] text-neutral-500">Nur für dich (und eingeladene Bearbeiter) sichtbar.</div>
+      </div>
+      <input 
+        type="checkbox" 
+        [(ngModel)]="noteDraft().isPrivate"
+        class="checkbox checkbox-brand"
+      >
+    </div>
+  </div>
 </app-modal-shell>
 
 <app-image-cropper *ngIf="showCropper()"

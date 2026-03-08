@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,7 +25,6 @@ import { PersonTabMediaComponent } from './person-tab-media';
 import { PersonTabNotesComponent } from './person-tab-notes';
 import { PersonTabCitationsComponent } from './person-tab-citations';
 import { PersonTabNamesComponent } from './person-tab-names';
-import { PersonTabAssociationsComponent } from './person-tab-associations';
 import { PersonTabDnaComponent } from './person-tab-dna';
 
 interface TimelineItem {
@@ -43,6 +42,7 @@ interface TimelineItem {
     media?: any[];
     notes?: string[];
     citations?: any[];
+    associations?: any[];
     expanded?: boolean;
     editing?: boolean;
 }
@@ -65,7 +65,6 @@ interface TimelineItem {
         PersonTabNotesComponent,
         PersonTabCitationsComponent,
         PersonTabNamesComponent,
-        PersonTabAssociationsComponent,
         PersonTabDnaComponent,
         MediaSelector,
         MediaAddModal,
@@ -79,6 +78,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     private readonly FOCUS_PERSON_KEY = 'heritago_last_focus_person';
     private route = inject(ActivatedRoute);
     private router = inject(Router);
+    private cdr = inject(ChangeDetectorRef);
     private gedcomService = inject(GedcomService);
     public authService = inject(AuthService);
     readonly self = this;
@@ -103,7 +103,12 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         return this.isSaving;
     }
 
-    activeTab: 'basics' | 'timeline' | 'relations' | 'media' | 'notes' | 'citations' | 'names' | 'associations' | 'dna' = 'basics';
+    activeTab = signal<'basics' | 'timeline' | 'relations' | 'media' | 'notes' | 'citations' | 'names' | 'dna'>('basics');
+
+    setActiveTab(tab: any) {
+        this.activeTab.set(tab);
+        this.cdr.detectChanges();
+    }
 
     // --- Relation Modal State ---
     showRelationModal = signal(false);
@@ -117,6 +122,34 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
     // Die verschmolzene Liste aus Events und Fakten
     timeline = signal<TimelineItem[]>([]);
+    
+    participations = computed(() => {
+        const data = this.treeData();
+        const pid = this.personId;
+        if (!data || !pid) return [];
+
+        const results: any[] = [];
+        data.individuals.forEach(ind => {
+            if (ind.events) {
+                ind.events.forEach(ev => {
+                    if (ev.associations) {
+                        ev.associations.forEach(assoc => {
+                            if (assoc.associatedPersonId === pid) {
+                                results.push({
+                                    role: assoc.role,
+                                    eventTag: ev.type,
+                                    eventDate: ev.date || (ev as any).dateText,
+                                    subjectPersonId: ind.id,
+                                    subjectPersonName: this.getPrimaryName(ind)
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        return results;
+    });
 
     // Beziehungen
     relations = signal<{ type: string; personId: string; personName?: string; familyId?: string }[]>([]);
@@ -155,18 +188,6 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     showCitationCreateModal = signal(false);
     newCitationDraft = signal<{ sourceId: string, confidence?: string, page?: string, dateText?: string }>({ sourceId: '' });
     citationEditDraft = signal<{ index?: number, sourceId: string, confidence?: string, page?: string, dateText?: string }>({ sourceId: '' });
-    showAssociationCreateModal = signal(false);
-    showAssociationEditModal = signal(false);
-    activeAssociationIndex = signal<number | null>(null);
-    editAssociationDraft = signal<any>({});
-    newAssociationDraft = signal<{ role: string; personInput: string; relationText: string; dateText: string; confidence: string; notes: string }>({
-        role: 'OTHER',
-        personInput: '',
-        relationText: '',
-        dateText: '',
-        confidence: '',
-        notes: ''
-    });
     showDnaMatchCreateModal = signal(false);
     showDnaMatchEditModal = signal(false);
     activeDnaMatchIndex = signal<number | null>(null);
@@ -440,11 +461,12 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                     // Load available sources for citation dropdowns
                     const treeName = data.meta?.tree;
                     if (treeName) {
-                        this.gedcomService.getSources(treeName).subscribe({
-                            next: (res: any) => {
-                                if (res.success) this.availableSources.set(res.sources || []);
-                            }
-                        });
+                    this.gedcomService.getSources(treeName).subscribe({
+                        next: (res: any) => {
+                            if (res.success) this.availableSources.set(res.sources || []);
+                            this.cdr.detectChanges();
+                        }
+                    });
                     }
                     const found = data.individuals.find(i => i.id === this.personId);
                     if (found) {
@@ -474,15 +496,20 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                         // for family events (e.g. marriage, child births).
                         this.buildRelations();
                         this.buildTimeline();
+                        try {
+                            console.log('[PersonDetail] reloaded timeline events summary', (this.timeline() || []).map((t: any, i: number) => ({ idx: i, tag: t.tag, notesCount: (t.notes || []).length, notesPreview: (t.notes || []).slice(0,2) })));
+                        } catch (e) {}
                     } else {
                         // Person not found
                         this.router.navigate(['/persons']);
                     }
                 }
                 this.loading.set(false);
+                this.cdr.detectChanges();
             },
             error: () => {
                 this.loading.set(false);
+                this.cdr.detectChanges();
                 this.router.navigate(['/persons']);
             }
         });
@@ -537,6 +564,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                     media: (ev as any).media || [],
                     notes: (ev as any).notes || [],
                     citations: (ev as any).citations || [],
+                    associations: (ev as any).associations || [],
                     editing: false
                 });
             });
@@ -555,6 +583,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                     media: (fact as any).media || [],
                     notes: (fact as any).notes || [],
                     citations: (fact as any).citations || [],
+                    associations: (fact as any).associations || [],
                     editing: false
                 });
             });
@@ -577,6 +606,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                             media: (ef as any).media || [],
                             notes: (ef as any).notes || [],
                             citations: (ef as any).citations || [],
+                            associations: (ef as any).associations || [],
                             editing: false
                         });
                     });
@@ -767,6 +797,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             this.buildTimeline();
         }
     }
+
 
     goToPerson(id?: string) {
         if (!id || this.isEditingFamily()) return;
@@ -1247,126 +1278,6 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         this.savePerson();
     }
 
-    // --- Association Management ---
-    addAssociation() {
-        this.newAssociationDraft.set({
-            role: 'OTHER',
-            personInput: '',
-            relationText: '',
-            dateText: '',
-            confidence: '',
-            notes: ''
-        });
-        this.showAssociationCreateModal.set(true);
-    }
-
-    closeAssociationModal() {
-        this.showAssociationCreateModal.set(false);
-    }
-
-    openAssociationEditModal(index: number) {
-        const p = this.person();
-        if (!p || !p.associations) return;
-        this.activeAssociationIndex.set(index);
-        this.editAssociationDraft.set({ ...p.associations[index] });
-        this.showAssociationEditModal.set(true);
-    }
-
-    closeAssociationEditModal() {
-        this.showAssociationEditModal.set(false);
-        this.activeAssociationIndex.set(null);
-    }
-
-    saveAssociationEditModal() {
-        const p = this.person();
-        const idx = this.activeAssociationIndex();
-        if (!p || !p.associations || idx === null) return;
-
-        const draft = this.editAssociationDraft();
-        const personInput = (draft._tempTargetName || draft.associatedPersonName || '').trim();
-        const match = this.allPersonsOptions().find(opt => opt.displayName === personInput);
-        const associatedPersonId = match?.id || null;
-        const associatedPersonName = match
-            ? match.displayName.replace(` (${match.id})`, '')
-            : personInput;
-
-        p.associations[idx] = {
-            ...p.associations[idx],
-            ...draft,
-            associatedPersonId,
-            associatedPersonName,
-            _tempTargetName: personInput
-        };
-
-        this.person.set({ ...p });
-        this.markDirty();
-        this.closeAssociationEditModal();
-        this.savePerson();
-    }
-
-    confirmAddAssociation() {
-        const p = this.person();
-        if (p) {
-            const draft = this.newAssociationDraft();
-            const personInput = (draft.personInput || '').trim();
-            const match = this.allPersonsOptions().find(opt => opt.displayName === personInput);
-            const associatedPersonId = match?.id || null;
-            const associatedPersonName = match
-                ? match.displayName.replace(` (${match.id})`, '')
-                : (personInput || '');
-
-            if (!p.associations) p.associations = [];
-            p.associations.push({
-                role: draft.role || 'OTHER',
-                associatedPersonId,
-                associatedPersonName,
-                _tempTargetName: personInput,
-                relationText: draft.relationText || '',
-                dateText: draft.dateText || '',
-                confidence: draft.confidence || '',
-                notes: draft.notes || ''
-            } as any);
-            this.person.set({ ...p });
-            this.markDirty();
-            this.showAssociationCreateModal.set(false);
-            this.savePerson();
-        }
-    }
-
-    removeAssociation(index: number) {
-        const p = this.person();
-        if (p) {
-            p.associations!.splice(index, 1);
-            this.person.set({ ...p });
-            this.markDirty();
-        }
-    }
-
-    updateAssociatedPerson(assoc: any, text: string) {
-        if (!text) {
-            assoc.associatedPersonId = null;
-            assoc.associatedPersonName = null;
-            this.markDirty();
-            return;
-        }
-
-        const list = this.allPersonsOptions();
-        const match = list.find(opt => opt.displayName === text);
-
-        if (match) {
-            assoc.associatedPersonId = match.id;
-            assoc.associatedPersonName = match.displayName.replace(` (${match.id})`, '');
-        } else {
-            // Freitext-Eingabe (Achtung: Prisma speichert dies nur, 
-            // wenn das Backend freie Namensverknüpfungen zulässt. 
-            // Falls nicht, wird es als relationText gespeichert/übertragen.
-            assoc.associatedPersonId = null;
-            assoc.associatedPersonName = text;
-            assoc.relationText = assoc.relationText ? assoc.relationText : text;
-        }
-
-        this.markDirty();
-    }
 
     // updatePersonNote kept for backward compat but notes are now objects
     updatePersonNote(index: number, val: string) {
@@ -1740,8 +1651,9 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             description: '',
             media: [],
             citations: [],
-            notes: []
-        });
+            notes: [],
+            associations: []
+        } as any);
         this.timelineModalTab.set('basics');
         this.showTimelineCreateModal.set(true);
     }
@@ -1751,7 +1663,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     }
 
     confirmAddTimelineItem() {
-        const draft = this.newTimelineDraft();
+        const draft = this.newTimelineDraft() as any;
         const isFact = draft.itemKind === 'fact';
         const text = (draft.description || '').trim();
 
@@ -1767,6 +1679,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
             media: draft.media || [],
             notes: draft.notes || [],
             citations: draft.citations || [],
+            associations: draft.associations || [],
             editing: false,
             expanded: true
         }]);
@@ -1977,6 +1890,9 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
     saveTimelineItemModal() {
         const idx = this.activeTimelineItemIndex();
+        try {
+            console.log('[PersonDetail] saveTimelineItemModal invoked', { idx, item: this.activeTimelineItem() ? { tag: this.activeTimelineItem()?.tag, notesLength: this.activeTimelineItem()?.notes?.length || 0 } : null });
+        } catch (e) {}
         if (idx === null) return;
         const current = this.timeline();
         if (!current[idx]) return;
@@ -2245,6 +2161,14 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                         dateText: c.dateText || null,
                         confidence: c.confidence || null,
                         text: c.text || null
+                    })),
+                    associations: (t.associations || []).map((a: any) => ({
+                        role: a.role || 'OTHER',
+                        associatedPersonId: a.associatedPersonId || null,
+                        relationText: a.relationText || '',
+                        dateText: a.dateText || '',
+                        confidence: a.confidence || null,
+                        notes: a.notes || ''
                     }))
                 });
             } else {
@@ -2279,6 +2203,14 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                         dateText: c.dateText || null,
                         confidence: c.confidence || null,
                         text: c.text || null
+                    })),
+                    associations: (t.associations || []).map((a: any) => ({
+                        role: a.role || 'OTHER',
+                        associatedPersonId: a.associatedPersonId || null,
+                        relationText: a.relationText || '',
+                        dateText: a.dateText || '',
+                        confidence: a.confidence || null,
+                        notes: a.notes || ''
                     }))
                 });
             }

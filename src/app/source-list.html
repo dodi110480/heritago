@@ -26,14 +26,14 @@
 <div class="flex gap-8 mb-8 border-b border-canvas-white/5 overflow-x-auto no-scrollbar">
     <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
         [class.text-brand-400]="activeTab() === 'sources'" [class.text-neutral-800 dark:text-neutral-200]="activeTab() !== 'sources'"
-        (click)="activeTab.set('sources')">
+        (click)="setActiveTab('sources')">
         Quellen
         <div *ngIf="activeTab() === 'sources'"
             class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
     </button>
     <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
         [class.text-brand-400]="activeTab() === 'repositories'"
-        [class.text-neutral-800 dark:text-neutral-200]="activeTab() !== 'repositories'" (click)="activeTab.set('repositories')">
+        [class.text-neutral-800 dark:text-neutral-200]="activeTab() !== 'repositories'" (click)="setActiveTab('repositories')">
         Archive
         <div *ngIf="activeTab() === 'repositories'"
             class="absolute bottom-0 left-0 w-full h-0.5 bg-brand-500 shadow-brand-glow"></div>
@@ -43,7 +43,7 @@
 <!-- CONTENT -->
 <div class="relative w-full">
     <!-- Sources Tab -->
-    <ng-container *ngIf="activeTab() === 'sources'">
+    <div [class.hidden]="activeTab() !== 'sources'">
         
         <!-- Search Bar (always visible when sources tab active) -->
         <div class="search-wrapper w-full !max-w-none mb-4">
@@ -78,15 +78,15 @@
             </app-entity-card>
 
         </app-list-view>
-    </ng-container>
+    </div>
 
     <!-- Repositories Tab -->
-    <ng-container *ngIf="activeTab() === 'repositories'">
+    <div [class.hidden]="activeTab() !== 'repositories'">
         <app-repository-list [currentTree]="currentTree()"></app-repository-list>
-    </ng-container>
+    </div>
 </div>
 
-<app-source-modal *ngIf="isModalOpen" [mode]="modalMode" [sourceData]="selectedSourceData" [currentTree]="currentTree()"
+<app-source-modal *ngIf="isModalOpen()" [mode]="modalMode()" [sourceData]="selectedSourceData()" [currentTree]="currentTree()"
     [allSources]="sources()" (closeModal)="closeModal()" (saved)="onSourceSaved()" (deleted)="onSourceDeleted($event)"
     (merged)="onSourceMerged($event)">
 </app-source-modal>

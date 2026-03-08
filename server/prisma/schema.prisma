@@ -118,6 +118,7 @@ enum AssociationRole {
   GODPARENT
   WITNESS
   CLERGY
+  INFORMANT
   EMPLOYER
   FRIEND
   OTHER
@@ -298,6 +299,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   media     Media[]
+  notes     SharedNote[] @relation("NoteAuthor")
 }
 
 model TreePermission {
@@ -400,6 +402,8 @@ model Family {
   updatedAt  DateTime  @updatedAt
   chanDate   DateTime?
   extensions Json?
+
+  associations Association[]
 
   @@unique([treeId, gedcomId])
   @@index([treeId])
@@ -557,6 +561,7 @@ model Fact {
   citations  Citation[]
   mediaLinks MediaLink[]
   noteLinks  NoteLink[]
+  associations Association[]
   extensions Json?
 
   @@index([treeId])
@@ -922,6 +927,10 @@ model SharedNote {
   person     Person?   @relation(fields: [personId], references: [id])
   personId   String?
 
+  userId     String?
+  createdBy  User?     @relation(name: "NoteAuthor", fields: [userId], references: [id], onDelete: SetNull)
+
+
   @@index([treeId])
   @@index([treeId, researchStatus])
   @@index([treeId, noteType])
@@ -1035,10 +1044,12 @@ model Association {
   treeId String
   tree   Tree   @relation(fields: [treeId], references: [id], onDelete: Cascade)
 
-  personId           String
-  associatedPersonId String
-  person             Person @relation("PersonAssociations", fields: [personId], references: [id], onDelete: Cascade)
-  associated         Person @relation("AssociatedPerson", fields: [associatedPersonId], references: [id], onDelete: Cascade)
+  personId           String?
+  familyId           String?
+  associatedPersonId String?
+  person             Person? @relation("PersonAssociations", fields: [personId], references: [id], onDelete: Cascade)
+  family             Family? @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  associated         Person? @relation("AssociatedPerson", fields: [associatedPersonId], references: [id], onDelete: Cascade)
 
   role         AssociationRole  @default(OTHER)
   relationText String?
@@ -1048,8 +1059,10 @@ model Association {
   notes        String?
 
   eventId String?
+  factId  String?
   placeId String?
   event   Event?  @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  fact    Fact?   @relation(fields: [factId], references: [id], onDelete: SetNull)
   place   Place?  @relation(fields: [placeId], references: [id], onDelete: SetNull)
 
   citations Citation[]
@@ -1057,11 +1070,12 @@ model Association {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([treeId, personId, associatedPersonId, role])
+  @@unique([treeId, personId, familyId, associatedPersonId, role, eventId, factId])
   @@index([treeId])
   @@index([personId])
   @@index([associatedPersonId])
   @@index([eventId])
+  @@index([factId])
   @@index([placeId])
 }
 

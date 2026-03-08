@@ -4,11 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { AppModalShell } from './ui/app-modal-shell';
+import { AppNotesList } from './ui/app-notes-list';
+import { DisplayNote, NoteCategory } from './models';
 
 @Component({
     selector: 'app-source-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, AppModalShell],
+    imports: [CommonModule, FormsModule, RouterLink, AppModalShell, AppNotesList],
     templateUrl: './source-modal.html'
 })
 export class SourceModal implements OnInit {
@@ -37,9 +39,21 @@ export class SourceModal implements OnInit {
     publication = signal('');
     repositoryId = signal('');
 
-    // Actions
     mergeTargetId = signal('');
     reassignTargetId = signal('');
+
+    // Notes State (Standardized)
+    notes = signal<DisplayNote[]>([]);
+    showNoteSubModal = signal(false);
+    activeNoteIndex = signal<number | null>(null);
+    noteDraft = signal<{ text: string, noteType: NoteCategory, isPrivate: boolean }>({
+        text: '',
+        noteType: 'OTHER',
+        isPrivate: false
+    });
+    
+    // Tab State
+    activeTab = signal<'details' | 'notes'>('details');
 
     ngOnInit() {
         if (this.mode === 'edit' && this.sourceData) {
@@ -58,6 +72,15 @@ export class SourceModal implements OnInit {
             });
 
             if (this.mode === 'edit' && this.sourceData?.id) {
+                // Fetch full source data including notes
+                this.gedcomService.getSource(this.currentTree, this.sourceData.id).subscribe({
+                    next: (res) => {
+                        if (res.success && res.source) {
+                            this.notes.set(res.source.notes || []);
+                        }
+                    }
+                });
+
                 this.isLoadingUsage.set(true);
                 this.gedcomService.getSourceUsage(this.currentTree, this.sourceData.id).subscribe({
                     next: (res) => {
@@ -69,6 +92,71 @@ export class SourceModal implements OnInit {
                     error: () => this.isLoadingUsage.set(false)
                 });
             }
+        }
+    }
+
+    // Note Management
+    onNoteCreateRequested() {
+        this.activeNoteIndex.set(null);
+        this.noteDraft.set({ text: '', noteType: 'OTHER', isPrivate: false });
+        this.showNoteSubModal.set(true);
+    }
+
+    onNoteEditRequested(note: DisplayNote) {
+        const idx = this.notes().findIndex(n => n.id === note.id);
+        if (idx !== -1) {
+            this.activeNoteIndex.set(idx);
+            this.noteDraft.set({
+                text: note.text,
+                noteType: note.noteType || 'OTHER',
+                isPrivate: !!note.isPrivate
+            });
+            this.showNoteSubModal.set(true);
+        }
+    }
+
+    onNoteSave() {
+        const draft = this.noteDraft();
+        if (!draft.text.trim()) return;
+
+        const currentNotes = [...this.notes()];
+        const idx = this.activeNoteIndex();
+
+        if (idx !== null) {
+            currentNotes[idx] = {
+                ...currentNotes[idx],
+                text: draft.text.trim(),
+                noteType: draft.noteType as NoteCategory,
+                isPrivate: draft.isPrivate,
+                updatedAt: new Date()
+            };
+        } else {
+            currentNotes.push({
+                id: `note-${Date.now()}`,
+                text: draft.text.trim(),
+                noteType: draft.noteType as NoteCategory,
+                isPrivate: draft.isPrivate,
+                createdAt: new Date()
+            });
+        }
+
+        this.notes.set(currentNotes);
+        this.showNoteSubModal.set(false);
+    }
+
+    onNoteDeleted(noteId: string) {
+        if (confirm('Möchtest du diese Notiz wirklich löschen?')) {
+            this.notes.set(this.notes().filter(n => n.id !== noteId));
+        }
+    }
+
+    onNoteDeleteFromModal() {
+        const idx = this.activeNoteIndex();
+        if (idx !== null) {
+            const currentNotes = [...this.notes()];
+            currentNotes.splice(idx, 1);
+            this.notes.set(currentNotes);
+            this.showNoteSubModal.set(false);
         }
     }
 
@@ -94,6 +182,7 @@ export class SourceModal implements OnInit {
             author: this.author().trim() || null,
             publication: this.publication().trim() || null,
             repositoryId: this.repositoryId() || null,
+            notes: this.notes()
         };
 
         if (this.mode === 'edit' && this.sourceData) {

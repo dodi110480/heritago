@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, ViewEncapsulation, ViewChild } from '@angular/core';
+import { Component, inject, signal, OnInit, ViewEncapsulation, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -19,6 +19,7 @@ import { AppListViewComponent } from './ui/app-list-view';
 export class SourceList implements OnInit {
     private gedcomService = inject(GedcomService);
     private router = inject(Router);
+    private cdr = inject(ChangeDetectorRef);
 
     @ViewChild(RepositoryList) repositoryListRef?: RepositoryList;
 
@@ -33,10 +34,15 @@ export class SourceList implements OnInit {
     // Tab State
     activeTab = signal<'sources' | 'repositories'>('sources');
 
+    setActiveTab(tab: 'sources' | 'repositories') {
+        this.activeTab.set(tab);
+        this.cdr.detectChanges();
+    }
+
     // Modal State
-    isModalOpen = false;
-    modalMode: 'add' | 'edit' = 'add';
-    selectedSourceData: any = null;
+    isModalOpen = signal(false);
+    modalMode = signal<'add' | 'edit'>('add');
+    selectedSourceData = signal<any>(null);
 
     ngOnInit() {
         this.loadSources();
@@ -48,8 +54,10 @@ export class SourceList implements OnInit {
             if (treeData && treeData.meta && treeData.meta.tree) {
                 this.currentTree.set(treeData.meta.tree);
                 this.refreshList();
+                this.cdr.detectChanges();
             } else {
                 this.loading.set(false);
+                this.cdr.detectChanges();
             }
         });
     }
@@ -69,8 +77,12 @@ export class SourceList implements OnInit {
                     const refreshed = items.find((s: any) => s.id === sel.id) || null;
                     this.selectedSource.set(refreshed);
                 }
+                this.cdr.detectChanges();
             },
-            error: () => this.loading.set(false)
+            error: () => {
+                this.loading.set(false);
+                this.cdr.detectChanges();
+            }
         });
     }
 
@@ -91,29 +103,32 @@ export class SourceList implements OnInit {
 
 
     openAddModal() {
-        this.modalMode = 'add';
-        this.selectedSourceData = null;
-        this.isModalOpen = true;
+        this.modalMode.set('add');
+        this.selectedSourceData.set(null);
+        this.isModalOpen.set(true);
+        this.cdr.detectChanges();
     }
 
     openEditModal(source: any) {
-        this.modalMode = 'edit';
-        this.selectedSourceData = source;
-        this.isModalOpen = true;
+        this.modalMode.set('edit');
+        this.selectedSourceData.set(source);
+        this.isModalOpen.set(true);
+        this.cdr.detectChanges();
     }
 
     closeModal() {
-        this.isModalOpen = false;
+        this.isModalOpen.set(false);
+        this.cdr.detectChanges();
     }
 
     openAddRepositoryModal() {
-        this.activeTab.set('repositories');
+        this.setActiveTab('repositories');
         // Kleine Verzögerung damit der Tab-Wechsel ViewChild initialisieren kann
         setTimeout(() => this.repositoryListRef?.openAddModal(), 50);
     }
 
     navigateToRepository(repositoryId: string) {
-        this.activeTab.set('repositories');
+        this.setActiveTab('repositories');
     }
 
     onSourceSaved() {
@@ -155,7 +170,7 @@ export class SourceList implements OnInit {
 
     onSourceMerged(payload: { sourceId: string, targetId: string }) {
         const { sourceId, targetId } = payload;
-        const sourceData = this.selectedSourceData || this.selectedSource();
+        const sourceData = this.selectedSourceData() || this.selectedSource();
         const tree = this.currentTree();
         if (!sourceId || !targetId || !tree) return;
         if (!confirm(`Quelle "${sourceData?.title || 'diese'}" in Ziel-Quelle zusammenführen?`)) return;

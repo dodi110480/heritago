@@ -7,163 +7,247 @@
             {{ errorMessage() }}
         </div>
 
-        <!-- Title -->
-        <div class="space-y-1.5">
-            <label class="form-label">Titel / Name *</label>
-            <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)" class="form-input"
-                placeholder="z.B. Heiratsurkunde Max Mustermann...">
+        <!-- Tab Switcher -->
+        <div class="flex p-1 bg-neutral-100 dark:bg-neutral-900 rounded-xl mb-2">
+            <button
+                (click)="activeTab.set('details')"
+                class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
+                [ngClass]="activeTab() === 'details' ? 'bg-white dark:bg-neutral-800 text-brand-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-700'"
+            >
+                Details
+            </button>
+            <button
+                (click)="activeTab.set('notes')"
+                class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
+                [ngClass]="activeTab() === 'notes' ? 'bg-white dark:bg-neutral-800 text-brand-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-700'"
+            >
+                Notizen ({{ notes().length }})
+            </button>
         </div>
 
-        <!-- Short Title -->
-        <div class="space-y-1.5">
-            <label class="form-label">Kurztitel</label>
-            <input type="text" [ngModel]="shortTitle()" (ngModelChange)="shortTitle.set($event)" class="form-input"
-                placeholder="z.B. Heirat Mustermann 1920">
-        </div>
-
-        <!-- Author -->
-        <div class="space-y-1.5">
-            <label class="form-label">Autor / Urheber</label>
-            <input type="text" [ngModel]="author()" (ngModelChange)="author.set($event)" class="form-input"
-                placeholder="z.B. Standesamt Berlin I">
-        </div>
-
-        <!-- Publication -->
-        <div class="space-y-1.5">
-            <label class="form-label">Publikationsdetails</label>
-            <input type="text" [ngModel]="publication()" (ngModelChange)="publication.set($event)" class="form-input"
-                placeholder="z.B. Band 4, Seite 12...">
-        </div>
-
-        <!-- Repository -->
-        <div class="space-y-1.5">
-            <label class="form-label">
-                Archiv / Repositorium
-                <span class="text-neutral-800 dark:text-neutral-200 font-normal">(optional)</span>
-            </label>
-            <select [ngModel]="repositoryId()" (ngModelChange)="repositoryId.set($event)" class="form-input">
-                <option value="">— Kein Archiv —</option>
-                <option *ngFor="let r of repositories()" [value]="r.id">
-                    {{ r.name }}{{ r.address ? ' · ' + r.address : '' }}
-                </option>
-            </select>
-            <p class="text-xs text-neutral-800 dark:text-neutral-200" *ngIf="repositories().length === 0">
-                Noch keine Archive angelegt. Erstelle zuerst ein Archiv unter "Archive".
-            </p>
-        </div>
-
-        <!-- Advanced Actions for Edit Mode -->
-        <ng-container *ngIf="mode === 'edit'">
-            <div class="mt-6 border-t border-canvas-white/10 pt-6 space-y-6">
-
-                <!-- Merge Section -->
-                <div class="bg-brand-100/50 p-4 rounded-xl border border-neutral-300/30 space-y-3">
-                    <div>
-                        <h4 class="text-sm font-semibold text-neutral-900">In andere Quelle zusammenführen</h4>
-                        <p class="text-xs text-neutral-800 dark:text-neutral-200 mt-1">Überträgt alle Zitate dieser Quelle auf eine andere
-                            und
-                            löscht diese hier.</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <select [ngModel]="mergeTargetId()" (ngModelChange)="mergeTargetId.set($event)"
-                            class="form-input form-input-sm flex-1">
-                            <option value="">-- Ziel-Quelle wählen --</option>
-                            <ng-container *ngFor="let s of allSources">
-                                <option *ngIf="s.id !== sourceData?.id" [value]="s.id">
-                                    {{ s.title }} {{ s.author ? '('+s.author+')' : '' }}
-                                </option>
-                            </ng-container>
-                        </select>
-                        <button (click)="mergeSource()" [disabled]="!mergeTargetId()"
-                            class="btn-secondary !w-auto !py-2 !px-4 disabled:opacity-50">
-                            Merge
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Delete Section -->
-                <div class="bg-accent-danger-500/5 border border-accent-danger-500/10 p-4 rounded-xl space-y-3">
-                    <div>
-                        <h4 class="text-sm font-semibold text-accent-danger-500">Quelle löschen</h4>
-                        <p class="text-xs text-accent-danger-500/70 mt-1">Achtung: Dies entfernt die Quelle endgültig.
-                            Zitate
-                            können wahlweise umgehängt werden.</p>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                        <select [ngModel]="reassignTargetId()" (ngModelChange)="reassignTargetId.set($event)"
-                            class="form-input form-input-sm w-full border-accent-danger-500/20">
-                            <option value="">-- Ohne Ersatz löschen (Zitate werden entfernt) --</option>
-                            <ng-container *ngFor="let s of allSources">
-                                <option *ngIf="s.id !== sourceData?.id" [value]="s.id">
-                                    Zitate umhängen auf: {{ s.title }}
-                                </option>
-                            </ng-container>
-                        </select>
-                        <button (click)="deleteSource()"
-                            class="w-full px-4 py-2.5 bg-accent-danger-500/20 hover:bg-accent-danger-500/30 text-accent-danger-400 rounded-lg text-sm font-semibold transition-colors border border-accent-danger-500/20">
-                            {{ reassignTargetId() ? 'Umhängen & Löschen' : 'Unwiderruflich Löschen' }}
-                        </button>
-                    </div>
-                </div>
-
+        <div *ngIf="activeTab() === 'details'" class="animate-in fade-in slide-in-from-left-2 duration-300 space-y-4">
+            <!-- Title -->
+            <div class="space-y-1.5">
+                <label class="form-label">Titel / Name *</label>
+                <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)" class="form-input"
+                    placeholder="z.B. Heiratsurkunde Max Mustermann...">
             </div>
 
-            <!-- Usages Section -->
-            <div class="mt-8 border-t border-canvas-white/10 pt-6">
-                <h4 class="text-base font-bold text-neutral-900 mb-4 flex items-center justify-between">
-                    <span>Verwendungsnachweise</span>
-                    <span class="text-xs font-normal text-neutral-500 bg-neutral-100/50 px-2 py-0.5 rounded-full">{{ usages().length }} Einträge</span>
-                </h4>
-                
-                <div *ngIf="isLoadingUsage()" class="text-center py-4 text-neutral-500 text-sm">
-                    Lade Zitate...
-                </div>
-                
-                <div *ngIf="!isLoadingUsage() && usages().length === 0" class="text-center py-4 text-neutral-500 text-sm bg-neutral-50/50 rounded-xl border border-neutral-100">
-                    Diese Quelle wird aktuell nirgends verwendet.
-                </div>
-                
-                <div class="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2" *ngIf="usages().length > 0">
-                    <ng-container *ngFor="let u of usages()">
-                        <div class="glass-card !p-3 !rounded-xl text-sm flex flex-col gap-1 transition-all">
-                            <div class="flex items-start justify-between">
-                                <span class="font-bold text-neutral-900">
-                                    <ng-container *ngIf="u.entityId && (u.entityType === 'person' || u.entityType === 'family'); else noLink">
-                                        <a [routerLink]="['/' + u.entityType, u.entityId]" (click)="close()" class="text-brand-600 hover:text-brand-700 hover:underline cursor-pointer">
-                                            {{ u.contextLabel }}
-                                        </a>
-                                    </ng-container>
-                                    <ng-template #noLink>
-                                        {{ u.contextLabel }}
-                                    </ng-template>
-                                </span>
-                                <span class="text-[10px] font-bold tracking-widest uppercase text-neutral-400 opacity-60 bg-neutral-100 px-1.5 py-0.5 rounded-md">{{ u.context }}</span>
-                            </div>
-                            
-                            <div class="flex items-center gap-3 mt-1 text-xs text-neutral-600">
-                                <span *ngIf="u.dateText" class="flex items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                                    {{ u.dateText }}
-                                </span>
-                                <span *ngIf="u.page" class="flex items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
-                                    S. {{ u.page }}
-                                </span>
-                                <span *ngIf="u.confidence" class="flex items-center gap-1 text-[10px] ml-auto">
-                                    <span class="w-1.5 h-1.5 rounded-full" 
-                                        [ngClass]="{
-                                            'bg-accent-success-500': u.confidence === 'CERTAIN' || u.confidence === 'VERY_LIKELY',
-                                            'bg-accent-highlight-500': u.confidence === 'LIKELY' || u.confidence === 'POSSIBLE',
-                                            'bg-accent-danger-500': u.confidence === 'UNLIKELY'
-                                        }"></span>
-                                    {{ u.confidence }}
-                                </span>
-                            </div>
+            <!-- Short Title -->
+            <div class="space-y-1.5">
+                <label class="form-label">Kurztitel</label>
+                <input type="text" [ngModel]="shortTitle()" (ngModelChange)="shortTitle.set($event)" class="form-input"
+                    placeholder="z.B. Heirat Mustermann 1920">
+            </div>
+
+            <!-- Author -->
+            <div class="space-y-1.5">
+                <label class="form-label">Autor / Urheber</label>
+                <input type="text" [ngModel]="author()" (ngModelChange)="author.set($event)" class="form-input"
+                    placeholder="z.B. Standesamt Berlin I">
+            </div>
+
+            <!-- Publication -->
+            <div class="space-y-1.5">
+                <label class="form-label">Publikationsdetails</label>
+                <input type="text" [ngModel]="publication()" (ngModelChange)="publication.set($event)" class="form-input"
+                    placeholder="band 4, Seite 12...">
+            </div>
+
+            <!-- Repository -->
+            <div class="space-y-1.5">
+                <label class="form-label">
+                    Archiv / Repositorium
+                    <span class="text-neutral-800 dark:text-neutral-200 font-normal">(optional)</span>
+                </label>
+                <select [ngModel]="repositoryId()" (ngModelChange)="repositoryId.set($event)" class="form-input">
+                    <option value="">— Kein Archiv —</option>
+                    <option *ngFor="let r of repositories()" [value]="r.id">
+                        {{ r.name }}{{ r.address ? ' · ' + r.address : '' }}
+                    </option>
+                </select>
+                <p class="text-xs text-neutral-800 dark:text-neutral-200" *ngIf="repositories().length === 0">
+                    Noch keine Archive angelegt. Erstelle zuerst ein Archiv unter "Archive".
+                </p>
+            </div>
+
+            <!-- Advanced Actions for Edit Mode -->
+            <ng-container *ngIf="mode === 'edit'">
+                <div class="mt-6 border-t border-canvas-white/10 pt-6 space-y-6">
+
+                    <!-- Merge Section -->
+                    <div class="bg-brand-100/50 p-4 rounded-xl border border-neutral-300/30 space-y-3">
+                        <div>
+                            <h4 class="text-sm font-semibold text-neutral-900">In andere Quelle zusammenführen</h4>
+                            <p class="text-xs text-neutral-800 dark:text-neutral-200 mt-1">Überträgt alle Zitate dieser Quelle auf eine andere
+                                und
+                                löscht diese hier.</p>
                         </div>
-                    </ng-container>
+                        <div class="flex gap-2">
+                            <select [ngModel]="mergeTargetId()" (ngModelChange)="mergeTargetId.set($event)"
+                                class="form-input form-input-sm flex-1">
+                                <option value="">-- Ziel-Quelle wählen --</option>
+                                <ng-container *ngFor="let s of allSources">
+                                    <option *ngIf="s.id !== sourceData?.id" [value]="s.id">
+                                        {{ s.title }} {{ s.author ? '('+s.author+')' : '' }}
+                                    </option>
+                                </ng-container>
+                            </select>
+                            <button (click)="mergeSource()" [disabled]="!mergeTargetId()"
+                                class="btn-secondary !w-auto !py-2 !px-4 disabled:opacity-50">
+                                Merge
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Delete Section -->
+                    <div class="bg-accent-danger-500/5 border border-accent-danger-500/10 p-4 rounded-xl space-y-3">
+                        <div>
+                            <h4 class="text-sm font-semibold text-accent-danger-500">Quelle löschen</h4>
+                            <p class="text-xs text-accent-danger-500/70 mt-1">Achtung: Dies entfernt die Quelle endgültig.
+                                Zitate
+                                können wahlweise umgehängt werden.</p>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <select [ngModel]="reassignTargetId()" (ngModelChange)="reassignTargetId.set($event)"
+                                class="form-input form-input-sm w-full border-accent-danger-500/20">
+                                <option value="">-- Ohne Ersatz löschen (Zitate werden entfernt) --</option>
+                                <ng-container *ngFor="let s of allSources">
+                                    <option *ngIf="s.id !== sourceData?.id" [value]="s.id">
+                                        Zitate umhängen auf: {{ s.title }}
+                                    </option>
+                                </ng-container>
+                            </select>
+                            <button (click)="deleteSource()"
+                                class="w-full px-4 py-2.5 bg-accent-danger-500/20 hover:bg-accent-danger-500/30 text-accent-danger-400 rounded-lg text-sm font-semibold transition-colors border border-accent-danger-500/20">
+                                {{ reassignTargetId() ? 'Umhängen & Löschen' : 'Unwiderruflich Löschen' }}
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
-            </div>
-        </ng-container>
+
+                <!-- Usages Section -->
+                <div class="mt-8 border-t border-canvas-white/10 pt-6">
+                    <h4 class="text-base font-bold text-neutral-900 mb-4 flex items-center justify-between">
+                        <span>Verwendungsnachweise</span>
+                        <span class="text-xs font-normal text-neutral-500 bg-neutral-100/50 px-2 py-0.5 rounded-full">{{ usages().length }} Einträge</span>
+                    </h4>
+                    
+                    <div *ngIf="isLoadingUsage()" class="text-center py-4 text-neutral-500 text-sm">
+                        Lade Zitate...
+                    </div>
+                    
+                    <div *ngIf="!isLoadingUsage() && usages().length === 0" class="text-center py-4 text-neutral-500 text-sm bg-neutral-50/50 rounded-xl border border-neutral-100">
+                        Diese Quelle wird aktuell nirgends verwendet.
+                    </div>
+                    
+                    <div class="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2" *ngIf="usages().length > 0">
+                        <ng-container *ngFor="let u of usages()">
+                            <div class="glass-card !p-3 !rounded-xl text-sm flex flex-col gap-1 transition-all">
+                                <div class="flex items-start justify-between">
+                                    <span class="font-bold text-neutral-900">
+                                        <ng-container *ngIf="u.entityId && (u.entityType === 'person' || u.entityType === 'family'); else noLink">
+                                            <a [routerLink]="['/' + u.entityType, u.entityId]" (click)="close()" class="text-brand-600 hover:text-brand-700 hover:underline cursor-pointer">
+                                                {{ u.contextLabel }}
+                                            </a>
+                                        </ng-container>
+                                        <ng-template #noLink>
+                                            {{ u.contextLabel }}
+                                        </ng-template>
+                                    </span>
+                                    <span class="text-[10px] font-bold tracking-widest uppercase text-neutral-400 opacity-60 bg-neutral-100 px-1.5 py-0.5 rounded-md">{{ u.context }}</span>
+                                </div>
+                                
+                                <div class="flex items-center gap-3 mt-1 text-xs text-neutral-600">
+                                    <span *ngIf="u.dateText" class="flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                        {{ u.dateText }}
+                                    </span>
+                                    <span *ngIf="u.page" class="flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                                        S. {{ u.page }}
+                                    </span>
+                                    <span *ngIf="u.confidence" class="flex items-center gap-1 text-[10px] ml-auto">
+                                        <span class="w-1.5 h-1.5 rounded-full" 
+                                            [ngClass]="{
+                                                'bg-accent-success-500': u.confidence === 'CERTAIN' || u.confidence === 'VERY_LIKELY',
+                                                'bg-accent-highlight-500': u.confidence === 'LIKELY' || u.confidence === 'POSSIBLE',
+                                                'bg-accent-danger-500': u.confidence === 'UNLIKELY'
+                                            }"></span>
+                                        {{ u.confidence }}
+                                    </span>
+                                </div>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+
+        <!-- Notes Tab -->
+        <div *ngIf="activeTab() === 'notes'" class="animate-in fade-in slide-in-from-right-2 duration-300">
+            <app-notes-list
+                [entityId]="sourceData?.id || ''"
+                [entityType]="'SOURCE'"
+                [notesDisplay]="notes()"
+                [allowCreate]="true"
+                [allowEdit]="true"
+                [placeholder]="'Quellen-Notizen durchsuchen...'"
+                (noteCreateRequested)="onNoteCreateRequested()"
+                (noteEditRequested)="onNoteEditRequested($event)"
+                (noteDeleted)="onNoteDeleted($event)"
+            ></app-notes-list>
+        </div>
 
     </div>
+</app-modal-shell>
+
+<!-- NOTE EDIT SUB-MODAL -->
+<app-modal-shell 
+  [visible]="showNoteSubModal()" 
+  [title]="activeNoteIndex() !== null ? 'Notiz bearbeiten' : 'Neue Notiz'" 
+  icon="📝" 
+  size="md"
+  [showSave]="true" 
+  [showDelete]="activeNoteIndex() !== null" 
+  (close)="showNoteSubModal.set(false)"
+  (save)="onNoteSave()"
+  (delete)="onNoteDeleteFromModal()"
+>
+  <div class="space-y-4">
+    <div class="form-group mb-0">
+      <label class="form-label">Kategorie / Typ</label>
+      <select [(ngModel)]="noteDraft().noteType" class="form-input">
+        <option value="COMMENT">Kommentar</option>
+        <option value="TRANSCRIPTION">Transkription</option>
+        <option value="RESEARCH">Forschung / Quellenkritik</option>
+        <option value="QUESTION">Offene Frage</option>
+        <option value="TODO">Aufgabe / To-Do</option>
+        <option value="HINT">Hinweis</option>
+        <option value="OTHER">Andere</option>
+      </select>
+    </div>
+
+    <div class="form-group mb-0">
+      <label class="form-label">Inhalt</label>
+      <textarea 
+        [(ngModel)]="noteDraft().text" 
+        class="form-input min-h-[160px] font-body" 
+        placeholder="Schreibe deine Notiz hier..."
+      ></textarea>
+    </div>
+
+    <div class="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-xl border border-neutral-200 dark:border-neutral-800">
+      <div class="flex-1">
+        <div class="text-sm font-bold text-neutral-900">Private Notiz</div>
+        <div class="text-[10px] text-neutral-500">Nur für dich (und eingeladene Bearbeiter) sichtbar.</div>
+      </div>
+      <input 
+        type="checkbox" 
+        [(ngModel)]="noteDraft().isPrivate"
+        class="checkbox checkbox-brand"
+      >
+    </div>
+  </div>
 </app-modal-shell>

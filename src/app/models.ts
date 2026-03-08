@@ -1,3 +1,19 @@
+export type NoteCategory = 'RESEARCH' | 'HINT' | 'QUESTION' | 'TRANSCRIPTION' | 'TODO' | 'COMMENT' | 'OTHER';
+
+export interface DisplayNote {
+    id: string;
+    text: string;
+    noteType?: NoteCategory;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    createdBy?: { id: string; username: string; avatarUrl?: string };
+    linkedEntity?: { type: string; id: string; label: string; url?: string | any[] };
+    isPrivate?: boolean;
+    tags?: string[];
+    isArchived?: boolean;
+    priority?: number;
+}
+
 export interface Name {
     id?: string;
     type?: string; // BIRTH, MARRIED, AKA, etc.
@@ -66,7 +82,7 @@ export interface Individual {
     facts: Fact[];
     citations: Citation[];
     media: Media[];
-    notes: string[];
+    notes: DisplayNote[];
     extensions: { key: string; value: string }[];
     updatedAt?: string;
     isLiving?: boolean;
@@ -102,6 +118,13 @@ export interface Individual {
             isTriangulated?: boolean;
         }[];
     }[];
+    participations?: {
+        role: string;
+        eventTag: string;
+        eventDate?: string;
+        subjectPersonId: string;
+        subjectPersonName: string;
+    }[];
 
     // Legacy/Derived fields for easier access in tree
     firstName?: string;
@@ -135,10 +158,11 @@ export interface LifeEvent {
     description?: string;
     subType?: string;
     media?: Media[];
-    notes?: string[];
+    notes?: DisplayNote[];
     citations?: Citation[];
     age?: string;
     isPrimary: boolean;
+    associations?: any[]; // For event participants
 }
 
 export interface Family {
@@ -148,6 +172,7 @@ export interface Family {
     children: string[]; // Individual IDs
     events?: LifeEvent[];
     media?: Media[];
+    notes?: DisplayNote[];
 }
 
 export interface TreeData {

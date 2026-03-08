@@ -6,11 +6,13 @@ import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
 import { ImageCropper } from './image-cropper';
 import { AppModalShell } from './ui/app-modal-shell';
+import { AppNotesList } from './ui/app-notes-list';
+import { DisplayNote, NoteCategory } from './models';
 
 @Component({
     selector: 'app-media-add-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, ImageCropper, AppModalShell],
+    imports: [CommonModule, FormsModule, ImageCropper, AppModalShell, AppNotesList],
     templateUrl: './media-add-modal.html'
 })
 export class MediaAddModal {
@@ -29,7 +31,13 @@ export class MediaAddModal {
             this.mediaType.set(val.mediaType || 'PHOTO');
             this.links.set(Array.isArray(val.links) ? [...val.links] : []);
             this.identifiers.set(Array.isArray(val.identifiers) ? val.identifiers.map((i: any) => ({ type: i.type, value: i.value })) : []);
-            this.notes.set(Array.isArray(val.noteLinks) ? val.noteLinks.map((nl: any) => nl.note?.text || '') : []);
+            this.notes.set(Array.isArray(val.noteLinks) ? val.noteLinks.map((nl: any) => ({
+                id: nl.note?.id || `note-${Math.random()}`,
+                text: nl.note?.text || '',
+                noteType: nl.note?.noteType || 'OTHER',
+                createdAt: nl.note?.createdAt || new Date(),
+                isPrivate: nl.note?.privacyLevel === 'PRIVATE'
+            })) : []);
             this.citations.set(Array.isArray(val.citations) ? val.citations.map((c: any) => ({ sourceId: c.sourceId, page: c.page })) : []);
             this.cropX.set(val.cropX ?? null);
             this.cropY.set(val.cropY ?? null);
@@ -60,11 +68,84 @@ export class MediaAddModal {
     currentFileUrl = signal('');
     uploading = signal(false);
 
-    // Advanced Data
+    // Advanced Data (Standardized)
+    notes = signal<DisplayNote[]>([]);
     identifiers = signal<any[]>([]);
-    notes = signal<string[]>([]);
     citations = signal<any[]>([]);
     links = signal<any[]>([]);
+    
+    // Note Management
+    showNoteSubModal = signal(false);
+    activeNoteIndex = signal<number | null>(null);
+    noteDraft = signal<{ text: string, noteType: NoteCategory, isPrivate: boolean }>({
+        text: '',
+        noteType: 'OTHER',
+        isPrivate: false
+    });
+
+    onNoteCreateRequested() {
+        this.activeNoteIndex.set(null);
+        this.noteDraft.set({ text: '', noteType: 'OTHER', isPrivate: false });
+        this.showNoteSubModal.set(true);
+    }
+
+    onNoteEditRequested(note: DisplayNote) {
+        const idx = this.notes().findIndex(n => n.id === note.id);
+        if (idx !== -1) {
+            this.activeNoteIndex.set(idx);
+            this.noteDraft.set({
+                text: note.text,
+                noteType: note.noteType || 'OTHER',
+                isPrivate: !!note.isPrivate
+            });
+            this.showNoteSubModal.set(true);
+        }
+    }
+
+    onNoteSave() {
+        const draft = this.noteDraft();
+        if (!draft.text.trim()) return;
+
+        const currentNotes = [...this.notes()];
+        const idx = this.activeNoteIndex();
+
+        if (idx !== null) {
+            currentNotes[idx] = {
+                ...currentNotes[idx],
+                text: draft.text.trim(),
+                noteType: draft.noteType,
+                isPrivate: draft.isPrivate,
+                updatedAt: new Date()
+            };
+        } else {
+            currentNotes.push({
+                id: `note-${Date.now()}`,
+                text: draft.text.trim(),
+                noteType: draft.noteType,
+                isPrivate: draft.isPrivate,
+                createdAt: new Date()
+            });
+        }
+
+        this.notes.set(currentNotes);
+        this.showNoteSubModal.set(false);
+    }
+
+    onNoteDeleted(noteId: string) {
+        if (confirm('Möchtest du diese Notiz wirklich löschen?')) {
+            this.notes.set(this.notes().filter(n => n.id !== noteId));
+        }
+    }
+
+    onNoteDeleteFromModal() {
+        const idx = this.activeNoteIndex();
+        if (idx !== null) {
+            const currentNotes = [...this.notes()];
+            currentNotes.splice(idx, 1);
+            this.notes.set(currentNotes);
+            this.showNoteSubModal.set(false);
+        }
+    }
 
     cropX = signal<number | null>(null);
     cropY = signal<number | null>(null);
@@ -384,14 +465,6 @@ export class MediaAddModal {
         this.identifiers.set(idens);
     }
     removeIdentifier(i: number) { this.identifiers.set(this.identifiers().filter((_, idx) => idx !== i)); }
-
-    addNote() { this.notes.set([...this.notes(), '']); }
-    updateNote(i: number, val: string) {
-        const n = [...this.notes()];
-        n[i] = val;
-        this.notes.set(n);
-    }
-    removeNote(i: number) { this.notes.set(this.notes().filter((_, idx) => idx !== i)); }
 
     addCitation() { this.citations.set([...this.citations(), { sourceId: '', page: '' }]); }
     updateCitation(i: number, field: 'sourceId' | 'page', val: string) {

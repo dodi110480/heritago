@@ -1,4 +1,4 @@
-import { Component, inject, signal, Input, OnInit } from '@angular/core';
+import { Component, inject, signal, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GedcomService } from './gedcom.service';
@@ -12,9 +12,22 @@ import { AppModalShell } from './ui/app-modal-shell';
     templateUrl: './repository-list.html'
 })
 export class RepositoryList implements OnInit {
-    @Input() currentTree: string | null = null;
+    private _currentTree: string | null = null;
+    @Input() set currentTree(val: string | null) {
+        if (val !== this._currentTree) {
+            this._currentTree = val;
+            if (val) {
+                this.loadRepositories();
+                this.cdr.detectChanges();
+            }
+        }
+    }
+    get currentTree(): string | null {
+        return this._currentTree;
+    }
 
     private gedcomService = inject(GedcomService);
+    private cdr = inject(ChangeDetectorRef);
 
     repositories = signal<any[]>([]);
     loading = signal(true);
@@ -34,7 +47,6 @@ export class RepositoryList implements OnInit {
     formWebsite = signal('');
 
     ngOnInit() {
-        this.loadRepositories();
     }
 
     loadRepositories() {
@@ -44,8 +56,12 @@ export class RepositoryList implements OnInit {
             next: (res: any) => {
                 if (res.success) this.repositories.set(res.repositories);
                 this.loading.set(false);
+                this.cdr.detectChanges();
             },
-            error: () => this.loading.set(false)
+            error: () => {
+                this.loading.set(false);
+                this.cdr.detectChanges();
+            }
         });
     }
 
@@ -55,6 +71,7 @@ export class RepositoryList implements OnInit {
         this.resetForm();
         this.errorMessage.set(null);
         this.modalVisible = true;
+        this.cdr.detectChanges();
     }
 
     openEditModal(repo: any) {
@@ -67,10 +84,12 @@ export class RepositoryList implements OnInit {
         this.formWebsite.set(repo.website || '');
         this.errorMessage.set(null);
         this.modalVisible = true;
+        this.cdr.detectChanges();
     }
 
     closeModal() {
         this.modalVisible = false;
+        this.cdr.detectChanges();
     }
 
     resetForm() {
@@ -112,10 +131,12 @@ export class RepositoryList implements OnInit {
                 } else {
                     this.errorMessage.set(res.message || 'Fehler beim Speichern.');
                 }
+                this.cdr.detectChanges();
             },
             error: (err: any) => {
                 this.isSaving.set(false);
                 this.errorMessage.set(err.error?.message || 'Netzwerkfehler.');
+                this.cdr.detectChanges();
             }
         });
     }
@@ -131,6 +152,7 @@ export class RepositoryList implements OnInit {
                     this.modalVisible = false;
                 }
                 this.loadRepositories();
+                this.cdr.detectChanges();
             }
         });
     }

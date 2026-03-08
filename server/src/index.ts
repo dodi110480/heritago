@@ -275,6 +275,83 @@ export class GedcomManager {
         return /^@[^@\s]+@$/.test(id.trim());
     }
 
+    static async processSharedNotes(tx: any, treeId: string, notes: any[], entityLinks: any, currentUserId?: string) {
+        if (!notes || !Array.isArray(notes)) return;
+
+        try {
+            console.log('[API] processSharedNotes called', { treeId, entityLinks, notesCount: Array.isArray(notes) ? notes.length : 0, currentUserId });
+        } catch (e) {
+            // ignore logging errors
+        }
+
+        // Clean existing note links for this entity (except for events/facts which are usually recreated)
+        if (entityLinks.personId && !entityLinks.eventId && !entityLinks.factId) {
+            await tx.noteLink.deleteMany({ where: { treeId, personId: entityLinks.personId, eventId: null, factId: null } });
+        } else if (entityLinks.familyId && !entityLinks.eventId) {
+            await tx.noteLink.deleteMany({ where: { treeId, familyId: entityLinks.familyId, eventId: null } });
+        } else if (entityLinks.sourceId) {
+            await tx.noteLink.deleteMany({ where: { treeId, sourceId: entityLinks.sourceId } });
+        } else if (entityLinks.placeId) {
+            await tx.noteLink.deleteMany({ where: { treeId, placeId: entityLinks.placeId } });
+        }
+
+        for (const noteData of notes) {
+            const isString = typeof noteData === 'string';
+            const noteText = isString ? noteData : (noteData?.text || '');
+            if (!noteText.trim()) continue;
+
+            const noteType = isString ? 'OTHER' : (noteData?.noteType || 'OTHER');
+            const pLevel: 'PRIVATE' | 'PUBLIC' = (!isString && (noteData?.isPrivate || noteData?.privacyLevel === 'PRIVATE')) ? 'PRIVATE' : 'PUBLIC';
+            
+            let note;
+            // Attempt to update by ID if available
+            if (!isString && noteData?.id && !noteData.id.startsWith('note-')) {
+                note = await tx.sharedNote.findUnique({ where: { id: noteData.id } });
+                if (note) {
+                    note = await tx.sharedNote.update({
+                        where: { id: note.id },
+                        data: { 
+                            text: noteText, 
+                            noteType, 
+                            privacyLevel: pLevel,
+                            updatedAt: new Date()
+                        }
+                    });
+                }
+            }
+
+            if (!note) {
+                note = await tx.sharedNote.create({
+                    data: {
+                        treeId,
+                        text: noteText,
+                        noteType,
+                        privacyLevel: pLevel,
+                        userId: currentUserId || null
+                    }
+                });
+            }
+
+            try {
+                console.log('[API] processSharedNotes - created/updated note summary', {
+                    noteId: note?.id || null,
+                    isString,
+                    textPreview: String(noteText).slice(0, 200),
+                    noteType,
+                    privacyLevel: pLevel
+                });
+            } catch (e) {}
+
+            await tx.noteLink.create({
+                data: {
+                    treeId,
+                    ...entityLinks,
+                    noteId: note.id
+                }
+            });
+        }
+    }
+
     private static fixMojibake(value?: string | null): string {
         if (!value) return '';
         const input = String(value);
@@ -462,7 +539,7 @@ export class GedcomManager {
         return clean;
     }
 
-    static async createPerson(prisma: PrismaClient, treeId: string, data: any) {
+    static async createPerson(prisma: PrismaClient, treeId: string, data: any, currentUserId?: string) {
         const xref = data.id || `@I${Date.now()}@`;
 
         const person = await prisma.person.upsert({
@@ -547,6 +624,8 @@ export class GedcomManager {
                     }
                 });
 
+                if (e.notes) await this.processSharedNotes(prisma, treeId, e.notes, { eventId: createdEvent.id }, currentUserId);
+
                 if (e.media && Array.isArray(e.media)) {
                     for (const med of e.media) {
                         const mediaObj = await this.ensureMediaObject(prisma, treeId, med);
@@ -585,6 +664,37 @@ export class GedcomManager {
                                 }
                             });
                         }
+                    }
+                }
+
+                // Event Associations (Beteiligte)
+                if (e.associations && Array.isArray(e.associations)) {
+                    for (const assoc of e.associations) {
+                        let associatedId: string | null = null;
+                        if (assoc.associatedPersonId) {
+                            const associated = await prisma.person.findUnique({
+                                where: { treeId_gedcomId: { treeId, gedcomId: assoc.associatedPersonId } }
+                            });
+                            associatedId = associated?.id || null;
+                        }
+                        
+                        const associationData: any = {
+                            tree: { connect: { id: treeId } },
+                            person: { connect: { id: person.id } },
+                            event: { connect: { id: createdEvent.id } },
+                            role: assoc.role || 'OTHER',
+                            relationText: assoc.relationText || null,
+                            dateText: assoc.dateText || null,
+                            confidence: assoc.confidence || null,
+                            notes: assoc.notes || null
+                        };
+                        if (associatedId) {
+                            associationData.associated = { connect: { id: associatedId } };
+                        }
+                        
+                        await prisma.association.create({
+                            data: associationData
+                        });
                     }
                 }
             }
@@ -636,32 +746,65 @@ export class GedcomManager {
                         }
                     }
                 }
-                // Fact Notes
-                if (f.notes && Array.isArray(f.notes)) {
-                    for (const noteText of f.notes) {
-                        const t = String(noteText || '').trim();
-                        if (!t) continue;
-                        const note = await prisma.sharedNote.findFirst({ where: { treeId, text: t } })
-                            || await prisma.sharedNote.create({ data: { treeId, text: t } });
-                        await prisma.noteLink.create({ data: { treeId, eventId: createdFact.id, noteId: note.id } });
+                if (f.notes) await this.processSharedNotes(prisma, treeId, f.notes, { factId: createdFact.id }, currentUserId);
+                // Fact Associations (Beteiligte)
+                if (f.associations && Array.isArray(f.associations)) {
+                    for (const assoc of f.associations) {
+                        let associatedId: string | null = null;
+                        if (assoc.associatedPersonId) {
+                            const associated = await prisma.person.findFirst({
+                                where: { 
+                                    treeId,
+                                    OR: [
+                                        { gedcomId: assoc.associatedPersonId },
+                                        { id: assoc.associatedPersonId }
+                                    ]
+                                }
+                            });
+                            associatedId = associated?.id || null;
+                        }
+                        
+                        const associationData: any = {
+                            tree: { connect: { id: treeId } },
+                            person: { connect: { id: person.id } },
+                            fact: { connect: { id: createdFact.id } },
+                            role: assoc.role || 'OTHER',
+                            relationText: assoc.relationText || null,
+                            dateText: assoc.dateText || null,
+                            confidence: assoc.confidence || null,
+                            notes: assoc.notes || null
+                        };
+                        if (associatedId) {
+                            associationData.associated = { connect: { id: associatedId } };
+                        }
+                        
+                        await prisma.association.create({
+                            data: associationData
+                        });
                     }
                 }
             }
         }
 
-        await prisma.association.deleteMany({ where: { treeId, personId: person.id } });
+        await prisma.association.deleteMany({ where: { treeId, personId: person.id, eventId: null } });
         if (data.associations && Array.isArray(data.associations)) {
             for (const assoc of data.associations) {
                 if (!assoc?.associatedPersonId) continue;
-                const associated = await prisma.person.findUnique({
-                    where: { treeId_gedcomId: { treeId, gedcomId: assoc.associatedPersonId } }
+                const associated = await prisma.person.findFirst({
+                    where: { 
+                        treeId,
+                        OR: [
+                            { gedcomId: assoc.associatedPersonId },
+                            { id: assoc.associatedPersonId }
+                        ]
+                    }
                 });
                 if (!associated) continue;
                 await prisma.association.create({
                     data: {
-                        treeId,
-                        personId: person.id,
-                        associatedPersonId: associated.id,
+                        tree: { connect: { id: treeId } },
+                        person: { connect: { id: person.id } },
+                        associated: { connect: { id: associated.id } },
                         role: assoc.role || 'OTHER',
                         relationText: assoc.relationText || null,
                         dateText: assoc.dateText || null,
@@ -768,37 +911,8 @@ export class GedcomManager {
             }
         }
 
-        // 7. Notes (Person-Level)
-        await prisma.noteLink.deleteMany({ where: { personId: person.id } });
-        if (data.notes && Array.isArray(data.notes)) {
-            for (const noteData of data.notes) {
-                // Support both string (legacy/GEDCOM) and object (UI)
-                const noteText = typeof noteData === 'string' ? noteData : (noteData?.text || '');
-                const noteType = typeof noteData === 'object' ? (noteData?.noteType || 'GENERAL') : 'GENERAL';
-                const researchStatus = typeof noteData === 'object' ? (noteData?.researchStatus || 'OPEN') : 'OPEN';
-                const privacyLevel = typeof noteData === 'object' ? (noteData?.privacyLevel || 'PRIVATE') : 'PRIVATE';
-                if (!noteText.trim()) continue;
-                // Try to find existing note by id, else find/create by text
-                let note;
-                if (noteData?.id) {
-                    note = await prisma.sharedNote.findUnique({ where: { id: noteData.id } });
-                    if (note) {
-                        note = await prisma.sharedNote.update({
-                            where: { id: note.id },
-                            data: { text: noteText, noteType, researchStatus: researchStatus as any, privacyLevel: privacyLevel as any }
-                        });
-                    }
-                }
-                if (!note) {
-                    note = await prisma.sharedNote.create({
-                        data: { treeId, text: noteText, noteType, researchStatus: researchStatus as any, privacyLevel: privacyLevel as any }
-                    });
-                }
-                await prisma.noteLink.create({
-                    data: { treeId, personId: person.id, noteId: note.id }
-                });
-            }
-        }
+        // 7. Notes (Person-Level, Standardized)
+        if (data.notes) await this.processSharedNotes(prisma, treeId, data.notes, { personId: person.id }, currentUserId);
 
         // 8. Family memberships (new schema)
         if (data.families && Array.isArray(data.families)) {
@@ -863,7 +977,7 @@ export class GedcomManager {
             include: {
                 names: true,
                 events: { include: { place: true, citations: { include: { source: true } }, mediaLinks: { include: { media: true } }, noteLinks: { include: { note: true } } } },
-                facts: { include: { place: true, citations: { include: { source: true } } } },
+                facts: { include: { place: true, noteLinks: { include: { note: true } }, citations: { include: { source: true } } } },
                 mediaLinks: { include: { media: true } },
                 noteLinks: { include: { note: true } },
                 citations: { include: { source: true } },
@@ -926,13 +1040,28 @@ export class GedcomManager {
                     isPrimary: !!ml.isPrimary,
                     mimeType: ml.media?.mimeType
                 })),
-                notes: (e.noteLinks || []).map((nl: any) => nl.note?.text).filter(Boolean),
+                notes: (e.noteLinks || []).map((nl: any) => ({
+                    id: nl.note?.id,
+                    text: nl.note?.text || '',
+                    noteType: nl.note?.noteType || 'GENERAL',
+                    researchStatus: nl.note?.researchStatus || 'OPEN',
+                    privacyLevel: nl.note?.privacyLevel || 'PRIVATE'
+                })).filter((n: any) => n.text),
                 citations: (e.citations || []).map((c: any) => ({
                     sourceId: c.source?.id || c.sourceId || '',
                     sourceTitle: c.source?.title || '',
                     page: c.page || '',
                     confidence: c.confidence || '',
                     dateText: c.dateText || ''
+                })),
+                associations: (e.associations || []).map((a: any) => ({
+                    associatedPersonId: a.associated?.gedcomId || a.associatedPersonId,
+                    associatedName: a.associated ? `${a.associated.names?.[0]?.given || ''} ${a.associated.names?.[0]?.surname || ''}`.trim() : null,
+                    role: a.role,
+                    relationText: a.relationText,
+                    notes: a.notes,
+                    confidence: a.confidence,
+                    dateText: a.dateText
                 }))
             })),
             facts: person.facts?.map((f: any) => ({
@@ -941,12 +1070,28 @@ export class GedcomManager {
                 date: f.dateText || '',
                 dateText: f.dateText || '',
                 place: f.place?.name || '',
+                notes: (f.noteLinks || []).map((nl: any) => ({
+                    id: nl.note?.id,
+                    text: nl.note?.text || '',
+                    noteType: nl.note?.noteType || 'GENERAL',
+                    researchStatus: nl.note?.researchStatus || 'OPEN',
+                    privacyLevel: nl.note?.privacyLevel || 'PRIVATE'
+                })).filter((n: any) => n.text),
                 citations: (f.citations || []).map((c: any) => ({
                     sourceId: c.source?.id || c.sourceId || '',
                     sourceTitle: c.source?.title || '',
                     page: c.page || '',
                     confidence: c.confidence || '',
                     dateText: c.dateText || ''
+                })),
+                associations: (f.associations || []).map((a: any) => ({
+                    associatedPersonId: a.associated?.gedcomId || a.associatedPersonId,
+                    associatedName: a.associated ? `${a.associated.names?.[0]?.given || ''} ${a.associated.names?.[0]?.surname || ''}`.trim() : null,
+                    role: a.role,
+                    relationText: a.relationText,
+                    notes: a.notes,
+                    confidence: a.confidence,
+                    dateText: a.dateText
                 }))
             })) || [],
             media: person.mediaLinks?.map((ml: any) => ({
@@ -1014,7 +1159,7 @@ export class GedcomManager {
         };
     }
 
-    static async saveFamily(prisma: PrismaClient, treeId: string, data: any) {
+    static async saveFamily(prisma: PrismaClient, treeId: string, data: any, currentUserId?: string) {
         const xref = (data?.id || '').trim();
         if (!xref) throw new Error("Family ID is required for save");
         if (!this.isGedcomXref(xref)) {
@@ -1156,23 +1301,7 @@ export class GedcomManager {
                         }
                     }
 
-                    if (Array.isArray(e?.notes)) {
-                        for (const noteText of e.notes) {
-                            if (!noteText || !String(noteText).trim()) continue;
-                            const note = await tx.sharedNote.findFirst({
-                                where: { treeId, text: String(noteText).trim() }
-                            }) || await tx.sharedNote.create({
-                                data: { treeId, text: String(noteText).trim() }
-                            });
-                            await tx.noteLink.create({
-                                data: {
-                                    treeId,
-                                    eventId: createdEvent.id,
-                                    noteId: note.id
-                                }
-                            });
-                        }
-                    }
+                    if (e.notes) await this.processSharedNotes(tx, treeId, e.notes, { eventId: createdEvent.id }, currentUserId);
 
                     if (Array.isArray(e?.citations)) {
                         for (const cit of e.citations) {
@@ -1199,34 +1328,48 @@ export class GedcomManager {
                             });
                         }
                     }
+
+                    // Event Associations (Beteiligte)
+                    if (Array.isArray(e.associations)) {
+                        for (const assoc of e.associations) {
+                            let associatedId: string | null = null;
+                            if (assoc.associatedPersonId) {
+                                const associated = await tx.person.findFirst({
+                                    where: { 
+                                        treeId,
+                                        OR: [
+                                            { gedcomId: assoc.associatedPersonId },
+                                            { id: assoc.associatedPersonId }
+                                        ]
+                                    }
+                                });
+                                associatedId = associated?.id || null;
+                            }
+                            
+                            const associationData: any = {
+                                tree: { connect: { id: treeId } },
+                                family: { connect: { id: family.id } },
+                                event: { connect: { id: createdEvent.id } },
+                                role: assoc.role || 'OTHER',
+                                relationText: assoc.relationText || null,
+                                dateText: assoc.dateText || null,
+                                confidence: assoc.confidence || null,
+                                notes: assoc.notes || null
+                            };
+                            if (associatedId) {
+                                associationData.associated = { connect: { id: associatedId } };
+                            }
+                            
+                            await tx.association.create({
+                                data: associationData
+                            });
+                        }
+                    }
                 }
             }
 
             // Family-Level Notes
-            await tx.noteLink.deleteMany({ where: { familyId: family.id, eventId: null } });
-            if (Array.isArray(data?.notes)) {
-                for (const noteData of data.notes) {
-                    const noteText = typeof noteData === 'string' ? noteData : (noteData?.text || '');
-                    const noteType = typeof noteData === 'object' ? (noteData?.noteType || 'GENERAL') : 'GENERAL';
-                    const researchStatus = typeof noteData === 'object' ? (noteData?.researchStatus || 'OPEN') : 'OPEN';
-                    const privacyLevel = typeof noteData === 'object' ? (noteData?.privacyLevel || 'PRIVATE') : 'PRIVATE';
-                    if (!noteText.trim()) continue;
-                    let note;
-                    if (noteData?.id) {
-                        note = await tx.sharedNote.findUnique({ where: { id: noteData.id } });
-                        if (note) {
-                            note = await tx.sharedNote.update({
-                                where: { id: note.id },
-                                data: { text: noteText, noteType, researchStatus: researchStatus as any, privacyLevel: privacyLevel as any }
-                            });
-                        }
-                    }
-                    if (!note) {
-                        note = await tx.sharedNote.create({ data: { treeId, text: noteText, noteType, researchStatus: researchStatus as any, privacyLevel: privacyLevel as any } });
-                    }
-                    await tx.noteLink.create({ data: { treeId, familyId: family.id, noteId: note.id } });
-                }
-            }
+            if (data.notes) await this.processSharedNotes(tx, treeId, data.notes, { familyId: family.id }, currentUserId);
 
             const childCount = await tx.familyMember.count({ where: { familyId: family.id, role: 'CHILD' } });
             const eventCount = await tx.event.count({ where: { familyId: family.id } });
@@ -1281,7 +1424,13 @@ export class GedcomManager {
                     isPrimary: !!ml.isPrimary,
                     mimeType: ml.media?.mimeType
                 })),
-                notes: (e.noteLinks || []).map((nl: any) => nl.note?.text).filter(Boolean),
+                notes: (e.noteLinks || []).map((nl: any) => ({
+                    id: nl.note?.id,
+                    text: nl.note?.text || '',
+                    noteType: nl.note?.noteType || 'GENERAL',
+                    researchStatus: nl.note?.researchStatus || 'OPEN',
+                    privacyLevel: nl.note?.privacyLevel || 'PRIVATE'
+                })).filter((n: any) => n.text),
                 citations: (e.citations || []).map((c: any) => ({
                     sourceId: c.source?.id,
                     sourceTitle: c.source?.title || '',
@@ -1289,6 +1438,15 @@ export class GedcomManager {
                     date: c.dateText || '',
                     text: c.text || '',
                     quality: c.quality || 2
+                })),
+                associations: (e.associations || []).map((a: any) => ({
+                    associatedPersonId: a.associated?.gedcomId || a.associatedPersonId,
+                    associatedName: a.associated ? `${a.associated.names?.[0]?.given || ''} ${a.associated.names?.[0]?.surname || ''}`.trim() : null,
+                    role: a.role,
+                    relationText: a.relationText,
+                    notes: a.notes,
+                    confidence: a.confidence,
+                    dateText: a.dateText
                 }))
             })),
             husband: husband?.gedcomId,
@@ -2110,13 +2268,17 @@ app.get('/api/tree/:tree', async (req, res) => {
                         include: {
                             place: true,
                             mediaLinks: { include: { media: true } },
-                            citations: { include: { source: true } }
+                            noteLinks: { include: { note: true } },
+                            citations: { include: { source: true } },
+                            associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } }
                         }
                     },
                     facts: {
                         include: {
                             place: true,
-                            citations: { include: { source: true } }
+                            noteLinks: { include: { note: true } },
+                            citations: { include: { source: true } },
+                            associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } }
                         }
                     },
                     citations: { include: { source: true } },
@@ -2135,7 +2297,8 @@ app.get('/api/tree/:tree', async (req, res) => {
                             place: true,
                             mediaLinks: { include: { media: true } },
                             noteLinks: { include: { note: true } },
-                            citations: { include: { source: true } }
+                            citations: { include: { source: true } },
+                            associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } }
                         }
                     },
                     familyMembers: { include: { person: true } },
@@ -2177,6 +2340,35 @@ app.get('/api/tree/:tree/changelog', async (req, res) => {
 app.post('/api/tree/:tree/person', async (req, res) => {
     const { tree: treeName } = req.params;
     const { mode, id } = req.body;
+
+    try {
+        console.log('[API] POST /api/tree/%s/person called', treeName, {
+            mode: mode || null,
+            id: id || null,
+            notesCount: Array.isArray(req.body?.notes) ? req.body.notes.length : 0,
+            eventsNotes: Array.isArray(req.body?.events) ? req.body.events.map((e: any) => Array.isArray(e.notes) ? e.notes.length : 0) : []
+        });
+    } catch (e) {
+        // ignore logging errors
+    }
+    try {
+        const events = Array.isArray(req.body?.events) ? req.body.events : [];
+        const eventsSummary = events.map((e: any, i: number) => ({
+            idx: i,
+            id: e?.id || null,
+            type: e?.type || null,
+            description: e?.description ? String(e.description).slice(0, 200) : null,
+            notesCount: Array.isArray(e?.notes) ? e.notes.length : 0,
+            notesPreview: (Array.isArray(e?.notes) ? e.notes : []).map((n: any) => (typeof n === 'string' ? String(n).slice(0,120) : String(n?.text || '').slice(0,120)))
+        }));
+        console.log('[API] incoming events summary:', JSON.stringify(eventsSummary, null, 2));
+        if (Array.isArray(req.body?.notes)) {
+            const topNotes = req.body.notes.slice(0,10).map((n: any) => (typeof n === 'string' ? String(n).slice(0,200) : { id: n?.id || null, text: String(n?.text || '').slice(0,200) }));
+            console.log('[API] top-level notes preview (first 10):', JSON.stringify(topNotes, null, 2));
+        }
+    } catch (e) {
+        // ignore
+    }
 
     const tree = await prisma.tree.findUnique({ where: { name: treeName } });
     if (!tree) return res.status(404).json({ success: false });
@@ -2221,7 +2413,11 @@ app.post('/api/tree/:tree/person', async (req, res) => {
     // Nach dem Speichern den neuen Stand für das Log holen
     const afterState = await prisma.person.findUnique({
         where: { id: record.id },
-        include: { names: true, events: true, facts: true }
+        include: { 
+            names: true, 
+            events: { include: { place: true, mediaLinks: { include: { media: true } }, citations: { include: { source: true } }, associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } } } }, 
+            facts: { include: { place: true, citations: { include: { source: true } }, associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } } } } 
+        }
     });
 
     await prisma.changeLog.create({
@@ -2319,7 +2515,11 @@ app.post('/api/tree/:tree/family', async (req, res) => {
         if (result && !('deleted' in result)) {
             const familyAfter = await prisma.family.findUnique({
                 where: { id: result.id },
-                include: { familyMembers: { include: { person: { include: { names: true } } } }, events: true, noteLinks: { include: { note: true } } }
+                include: { 
+                    familyMembers: { include: { person: { include: { names: true } } } }, 
+                    events: { include: { place: true, mediaLinks: { include: { media: true } }, noteLinks: { include: { note: true } }, citations: { include: { source: true } }, associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } } } }, 
+                    noteLinks: { include: { note: true } } 
+                }
             });
 
             const action = beforeState ? 'UPDATE' : 'CREATE';
@@ -2404,6 +2604,44 @@ app.get('/api/tree/:tree/place', async (req, res) => {
             longitude: p.longitude,
             usage: usageById.get(p.id) || { eventCount: 0, factCount: 0, associationCount: 0, total: 0 }
         }))
+    });
+});
+
+app.get('/api/tree/:tree/place/:id', async (req, res) => {
+    const { tree: treeName, id } = req.params;
+    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+    if (!tree) return res.status(404).json({ success: false });
+
+    const place = await prisma.place.findUnique({
+        where: { id, treeId: tree.id },
+        include: {
+            parent: { select: { id: true, name: true } },
+            translations: true,
+            identifiers: true,
+            noteLinks: {
+                include: {
+                    note: true
+                }
+            }
+        }
+    });
+
+    if (!place) return res.status(404).json({ success: false, message: 'Place not found' });
+
+    res.json({
+        success: true,
+        place: {
+            ...place,
+                notes: place.noteLinks.map(nl => ({
+                id: nl.note.id,
+                text: nl.note.text,
+                noteType: nl.note.noteType,
+                privacyLevel: nl.note.privacyLevel,
+                createdAt: nl.note.createdAt,
+                updatedAt: nl.note.updatedAt,
+                createdBy: null
+            }))
+        }
     });
 });
 
@@ -2758,19 +2996,41 @@ app.post('/api/tree/:tree/place', async (req, res) => {
 
             if (notes && Array.isArray(notes)) {
                 await prisma.noteLink.deleteMany({ where: { placeId: targetPlaceId } });
-                for (const noteText of notes) {
-                    if (typeof noteText !== 'string' || !noteText.trim()) continue;
-                    const sharedNote = await prisma.sharedNote.create({
-                        data: {
-                            treeId: tree.id,
-                            text: noteText.trim()
+                for (const noteData of notes) {
+                    const isString = typeof noteData === 'string';
+                    const noteText = isString ? noteData : (noteData?.text || '');
+                    if (!noteText.trim()) continue;
+
+                    const noteType = isString ? 'OTHER' : (noteData?.noteType || 'OTHER');
+                    const pLevel = (!isString && noteData?.isPrivate) ? 'PRIVATE' : 'PUBLIC';
+                    
+                    let note;
+                    if (!isString && noteData?.id && !noteData.id.startsWith('note-')) {
+                        note = await prisma.sharedNote.findUnique({ where: { id: noteData.id } });
+                        if (note) {
+                            note = await prisma.sharedNote.update({
+                                where: { id: note.id },
+                                data: { text: noteText, noteType, privacyLevel: pLevel as any }
+                            });
                         }
-                    });
+                    }
+                    
+                    if (!note) {
+                        note = await prisma.sharedNote.create({
+                            data: {
+                                treeId: tree.id,
+                                text: noteText,
+                                noteType,
+                                privacyLevel: pLevel as any
+                            }
+                        });
+                    }
+                    
                     await prisma.noteLink.create({
                         data: {
                             treeId: tree.id,
                             placeId: targetPlaceId,
-                            noteId: sharedNote.id
+                            noteId: note.id
                         }
                     });
                 }
@@ -2844,6 +3104,46 @@ app.get('/api/tree/:tree/source', async (req, res) => {
             repositoryName: s.repository?.name || null,
             usageCount: s._count.citations + s._count.mediaLinks + s._count.noteLinks
         }))
+    });
+});
+
+app.get('/api/tree/:tree/source/:id', async (req, res) => {
+    const { tree: treeName, id } = req.params;
+    const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+    if (!tree) return res.status(404).json({ success: false });
+
+    const source = await prisma.source.findFirst({
+        where: { id, treeId: tree.id },
+        include: {
+            repository: { select: { id: true, name: true } },
+            noteLinks: {
+                include: {
+                    note: {
+                        include: {
+                            createdBy: { select: { id: true, username: true } }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!source) return res.status(404).json({ success: false, message: 'Source not found' });
+
+    res.json({
+        success: true,
+        source: {
+            ...source,
+            notes: source.noteLinks.map(nl => ({
+                id: nl.note.id,
+                text: nl.note.text,
+                noteType: nl.note.noteType,
+                privacyLevel: nl.note.privacyLevel,
+                createdAt: nl.note.createdAt,
+                updatedAt: nl.note.updatedAt,
+                createdBy: nl.note.createdBy
+            }))
+        }
     });
 });
 
@@ -2968,11 +3268,12 @@ app.post('/api/tree/:tree/source/merge', async (req, res) => {
 
 app.post('/api/tree/:tree/source', async (req, res) => {
     const { tree: treeName } = req.params;
-    const { id, title, shortTitle, author, publication, repositoryId, mode, reassignToId } = req.body;
+    const { id, title, shortTitle, author, publication, repositoryId, mode, reassignToId, notes } = req.body;
 
     const tree = await prisma.tree.findUnique({ where: { name: treeName } });
     if (!tree) return res.status(404).json({ success: false });
-
+    const treeId = tree.id;
+    
     try {
         if (mode === 'delete' && id) {
             const sourceToDelete = await prisma.source.findFirst({ where: { id, treeId: tree.id } });
@@ -3020,14 +3321,58 @@ app.post('/api/tree/:tree/source', async (req, res) => {
             repositoryId: repositoryId || null
         };
 
+        let resultSource;
         if (id) {
             const existing = await prisma.source.findFirst({ where: { id, treeId: tree.id } });
             if (!existing) return res.status(404).json({ success: false, message: 'Source not found' });
-            await prisma.source.update({ where: { id }, data });
+            resultSource = await prisma.source.update({ where: { id }, data });
         } else {
-            await prisma.source.create({
+            resultSource = await prisma.source.create({
                 data: { ...data, treeId: tree.id }
             });
+        }
+
+        // Processing Notes (Standardized)
+        if (notes && Array.isArray(notes)) {
+            await prisma.noteLink.deleteMany({ where: { sourceId: resultSource.id } });
+            for (const noteData of notes) {
+                const isString = typeof noteData === 'string';
+                const noteText = isString ? noteData : (noteData?.text || '');
+                if (!noteText.trim()) continue;
+
+                const noteType = isString ? 'OTHER' : (noteData?.noteType || 'OTHER');
+                const pLevel = (!isString && noteData?.isPrivate) ? 'PRIVATE' : 'PUBLIC';
+                
+                let note;
+                if (!isString && noteData?.id && !noteData.id.startsWith('note-')) {
+                    note = await prisma.sharedNote.findUnique({ where: { id: noteData.id } });
+                    if (note) {
+                        note = await prisma.sharedNote.update({
+                            where: { id: note.id },
+                            data: { text: noteText, noteType, privacyLevel: pLevel as any }
+                        });
+                    }
+                }
+                
+                if (!note) {
+                    note = await prisma.sharedNote.create({
+                        data: {
+                            treeId,
+                            text: noteText,
+                            noteType,
+                            privacyLevel: pLevel as any
+                        }
+                    });
+                }
+                
+                await prisma.noteLink.create({
+                    data: {
+                        treeId,
+                        sourceId: resultSource.id,
+                        noteId: note.id
+                    }
+                });
+            }
         }
 
         res.json({ success: true });
@@ -3804,17 +4149,23 @@ app.put('/api/media/:id', async (req, res) => {
                 }
             }
 
-            // 3. Notes
+            // 3. Notes (Standardized)
             if (notes !== undefined) {
                 // Remove old links
                 await tx.noteLink.deleteMany({ where: { mediaId } });
                 if (Array.isArray(notes)) {
-                    for (const noteText of notes) {
-                        if (typeof noteText !== 'string' || !noteText.trim()) continue;
+                    for (const noteData of notes) {
+                        const isString = typeof noteData === 'string';
+                        const text = isString ? noteData.trim() : (noteData.text || '').trim();
+                        if (!text) continue;
+
                         const sharedNote = await tx.sharedNote.create({
                             data: {
                                 treeId,
-                                text: noteText.trim()
+                                text,
+                                noteType: isString ? 'OTHER' : (noteData.noteType || 'OTHER'),
+                                privacyLevel: (!isString && noteData.isPrivate) ? 'PRIVATE' : 'PUBLIC',
+                                researchStatus: 'OPEN' // Default for now
                             }
                         });
                         await tx.noteLink.create({

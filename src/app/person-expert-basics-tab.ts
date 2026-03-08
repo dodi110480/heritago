@@ -66,6 +66,28 @@ import { AppModalShell } from './ui/app-modal-shell';
                             </div>
                         </div>
                     </div>
+
+                    <div class="mt-8 border-t border-canvas-white/5 pt-8" *ngIf="participations && participations.length > 0">
+                        <h3 class="text-sm font-semibold mb-4 flex items-center gap-2 text-neutral-800 dark:text-neutral-200">
+                            <span class="w-1.5 h-4 bg-brand-500 rounded-full"></span> Beteiligt als...
+                        </h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            <div *ngFor="let part of participations" class="glass-card !bg-neutral-black/10 !p-3 !rounded-xl border !border-canvas-white/5 flex items-start gap-3">
+                                <div class="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-sm">
+                                    {{ getRoleIcon(part.role) }}
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-bold text-neutral-800 dark:text-neutral-200">
+                                        {{ getRoleLabel(part.role) }}
+                                    </p>
+                                    <p class="text-xs text-neutral-500">
+                                        bei {{ getEventLabel(part.eventTag) }} von {{ part.subjectPersonName }} 
+                                        <span *ngIf="part.eventDate">am {{ part.eventDate }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="pt-2 flex justify-end">
@@ -130,6 +152,7 @@ export class PersonExpertBasicsTabComponent {
     @Input({ required: true }) person!: any;
     @Output() changed = new EventEmitter<void>();
     @Output() deleteRequested = new EventEmitter<void>();
+    @Input() participations: any[] = [];
 
     showBasicsModal = false;
     draft: any = {
@@ -151,6 +174,50 @@ export class PersonExpertBasicsTabComponent {
         if (level === 'PUBLIC') return 'Öffentlich';
         if (level === 'FAMILY') return 'Familie';
         return 'Privat';
+    }
+
+    getRoleLabel(role: string): string {
+        switch (role) {
+            case 'GODPARENT': return 'Pate / Gevatter';
+            case 'WITNESS': return 'Zeuge';
+            case 'CLERGY': return 'Pfarrer / Priester';
+            case 'INFORMANT': return 'Informant';
+            case 'MIDWIFE': return 'Hebamme';
+            case 'DOCTOR': return 'Arzt';
+            case 'UNDERTAKER': return 'Bestatter';
+            case 'OTHER': return 'Andere / Beteiligter';
+            default: return role;
+        }
+    }
+
+    getRoleIcon(role: string): string {
+        switch (role) {
+            case 'GODPARENT': return '🕊️';
+            case 'WITNESS': return '📜';
+            case 'CLERGY': return '⛪';
+            case 'INFORMANT': return '📢';
+            case 'MIDWIFE': return '👶';
+            case 'DOCTOR': return '🩺';
+            case 'UNDERTAKER': return '⚰️';
+            default: return '👤';
+        }
+    }
+
+    getEventLabel(tag: string): string {
+        const labels: { [key: string]: string } = {
+            'BIRT': 'Geburt',
+            'CHR': 'Taufe',
+            'DEAT': 'Tod',
+            'BURI': 'Begräbnis',
+            'MARR': 'Heirat',
+            'OCCU': 'Beruf',
+            'ADOP': 'Adoption',
+            'CENS': 'Volkszählung',
+            'RELI': 'Religion',
+            'EVEN': 'Ereignis',
+            'DIV': 'Scheidung'
+        };
+        return labels[tag] || tag;
     }
 
     openBasicsModal() {

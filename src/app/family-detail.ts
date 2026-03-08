@@ -17,6 +17,9 @@ import { MediaSelector } from './media-selector';
 import { MediaAddModal } from './media-add-modal';
 import { EventModal } from './event-modal';
 import { ImageViewer } from './image-viewer';
+import { SourceModal } from './source-modal';
+import { AppNotesList } from './ui/app-notes-list';
+import { DisplayNote, NoteCategory } from './models';
 
 @Component({
     selector: 'app-family-detail',
@@ -34,7 +37,9 @@ import { ImageViewer } from './image-viewer';
         MediaSelector,
         MediaAddModal,
         EventModal,
-        ImageViewer
+        ImageViewer,
+        SourceModal,
+        AppNotesList
     ],
     templateUrl: './family-detail.html'
 })
@@ -70,7 +75,89 @@ export class FamilyDetail implements OnInit, OnDestroy {
     eventDraft = signal<any>(null);
 
     activeNoteIndex = signal<number | null>(null);
-    noteDraft = signal<any>(null);
+    noteDraft = signal<any>({
+        id: '',
+        text: '',
+        noteType: 'COMMENT' as NoteCategory,
+        createdAt: new Date(),
+        isPrivate: false
+    });
+
+    onNoteCreateRequested() {
+        this.activeNoteIndex.set(null);
+        this.noteDraft.set({
+            id: 'note-' + Date.now(),
+            text: '',
+            noteType: 'COMMENT' as NoteCategory,
+            createdAt: new Date(),
+            isPrivate: false
+        });
+        this.showNoteModal.set(true);
+    }
+
+    onNoteEditRequested(note: DisplayNote) {
+        const fam = this.family();
+        if (!fam || !fam.notes) return;
+        const index = fam.notes.findIndex(n => n.id === note.id);
+        if (index !== -1) {
+            this.activeNoteIndex.set(index);
+            this.noteDraft.set({ ...note });
+            this.showNoteModal.set(true);
+        }
+    }
+
+    onNoteSave() {
+        const draft = this.noteDraft();
+        if (!draft?.text?.trim()) return;
+
+        this.family.update(fam => {
+            if (!fam) return fam;
+            const notes = [...(fam.notes || [])];
+            const index = this.activeNoteIndex();
+            
+            if (index !== null) {
+                notes[index] = draft;
+            } else {
+                notes.push(draft);
+            }
+            
+            return { ...fam, notes };
+        });
+
+        this.isDirty.set(true);
+        this.showNoteModal.set(false);
+        this.save();
+    }
+
+    onNoteDeletedFamily(noteId: string) {
+        this.family.update(fam => {
+            if (!fam) return fam;
+            if (confirm('Möchtest du diese Notiz wirklich löschen?')) {
+                return {
+                    ...fam,
+                    notes: (fam.notes || []).filter(n => n.id !== noteId)
+                };
+            }
+            return fam;
+        });
+        this.isDirty.set(true);
+        this.save();
+    }
+
+    onNoteDeleteFromModal() {
+        const idx = this.activeNoteIndex();
+        if (idx !== null) {
+            this.family.update(fam => {
+                if (!fam || !fam.notes) return fam;
+                const notes = [...fam.notes];
+                notes.splice(idx, 1);
+                return { ...fam, notes };
+            });
+            this.isDirty.set(true);
+            this.showNoteModal.set(false);
+            this.save();
+        }
+    }
 
     activeCitationIndex = signal<number | null>(null);
     citationDraft = signal<any>(null);
@@ -96,6 +183,14 @@ export class FamilyDetail implements OnInit, OnDestroy {
     pendingReopenEventModal = false;
 
     private sub = new Subscription();
+
+    // Signal for the event modal search feature
+    allPersonsOptions = computed(() => {
+        return this.individuals().map(ind => ({
+            id: ind.id,
+            displayName: `${ind.firstName || ''} ${ind.lastName || ''} (${ind.id})`
+        }));
+    });
 
     // Helper for easier access in template
     get self() { return this; }
@@ -209,7 +304,8 @@ export class FamilyDetail implements OnInit, OnDestroy {
             isPrimary: false, 
             media: [], 
             notes: [], 
-            citations: [] 
+            citations: [],
+            associations: []
         });
         this.eventModalTab.set('basics');
         this.showEventModal.set(true);
@@ -224,6 +320,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
         if (!event.media) event.media = [];
         if (!event.notes) event.notes = [];
         if (!event.citations) event.citations = [];
+        if (!event.associations) event.associations = [];
         this.eventDraft.set(event);
         this.eventModalTab.set('basics');
         this.showEventModal.set(true);
