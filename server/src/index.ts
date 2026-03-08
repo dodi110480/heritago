@@ -3351,7 +3351,7 @@ app.post('/api/tree/:tree/source', async (req, res) => {
         // Processing Notes (Standardized)
         if (notes && Array.isArray(notes)) {
             await prisma.noteLink.deleteMany({ where: { sourceId: resultSource.id } });
-            await this.processSharedNotes(prisma, tree.id, notes, { sourceId: resultSource.id }, currentUserId);
+            await GedcomManager.processSharedNotes(prisma, tree.id, notes, { sourceId: resultSource.id }, currentUserId);
         }
 
         res.json({ success: true });
