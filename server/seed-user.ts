@@ -13,7 +13,9 @@ async function seed() {
         const dodi = await prisma.user.create({
             data: {
                 username: 'Dodi',
-                password: 'heritago123'
+                email: 'dodi@heritago.de',
+                password: 'heritago123',
+                globalRole: 'ADMIN'
             }
         });
         console.log('User Dodi created:', dodi.id);
