@@ -187,13 +187,10 @@ export class GedcomService {
     }
 
     savePerson(treeName: string, data: any): Observable<any> {
-        try {
-            console.log('[GedcomService] savePerson payload', { treeName, data });
-        } catch (e) { }
+
 
         return this.http.post<any>(`${this.baseApiUrl}${treeName}/person`, data, { withCredentials: true }).pipe(
             tap({
-                next: (res) => console.log('[GedcomService] savePerson response', res),
                 error: (err) => console.error('[GedcomService] savePerson error', err)
             }),
             catchError(err => { throw err; })

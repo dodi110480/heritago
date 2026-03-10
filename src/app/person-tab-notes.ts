@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { AppModalShell } from './ui/app-modal-shell';
+
 import { AppNotesList } from './ui/app-notes-list';
 import { AppNoteModal } from './ui/app-note-modal';
 import { AppSectionHeaderComponent } from './ui/app-section-header';
@@ -11,7 +11,7 @@ import { DisplayNote, NoteCategory } from './models';
 @Component({
     selector: 'app-person-tab-notes',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell, AppNotesList, AppNoteModal, AppSectionHeaderComponent],
+    imports: [CommonModule, FormsModule, AppNotesList, AppNoteModal, AppSectionHeaderComponent],
     template: `
         <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">

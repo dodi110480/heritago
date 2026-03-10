@@ -53,7 +53,6 @@ export class MediaGallery implements OnInit {
             return;
         }
 
-        console.log(`[MediaGallery] Loading media for tree: ${tree.id}, filter: ${this.filterType()}, search: "${this.searchQuery()}"`);
         this.loading.set(true);
         const backendType = this.filterType();
 

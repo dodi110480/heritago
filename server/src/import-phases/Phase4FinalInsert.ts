@@ -166,7 +166,6 @@ export class Phase4FinalInsert {
                 // It's a local path. We SKIP creating the Media record to avoid "77 ghosts".
                 // Instead, we can store it in the XrefMap as a special "GHOST" ID or just not resolve it.
                 // However, we want to keep the info.
-                console.log(`[Import]: Skipping Media record for local path: ${filePathRaw}`);
                 continue; 
             }
 

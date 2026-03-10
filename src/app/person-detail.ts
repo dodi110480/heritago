@@ -18,9 +18,7 @@ import { ImageViewer } from './image-viewer';
 
 import { AppPageHeaderComponent } from './ui/app-page-header';
 import { AppModalShell } from './ui/app-modal-shell';
-import { PersonExpertBasicsTabComponent } from './person-expert-basics-tab';
-import { PersonExpertTimelineTabComponent } from './person-expert-timeline-tab';
-import { PersonExpertRelationsTabComponent } from './person-expert-relations-tab';
+
 import { PersonTabMediaComponent } from './person-tab-media';
 import { PersonTabNotesComponent } from './person-tab-notes';
 import { PersonTabCitationsComponent } from './person-tab-citations';
@@ -58,9 +56,7 @@ interface TimelineItem {
         PersonCreateModal,
         AppPageHeaderComponent,
         AppModalShell,
-        PersonExpertBasicsTabComponent,
-        PersonExpertTimelineTabComponent,
-        PersonExpertRelationsTabComponent,
+
         PersonTabMediaComponent,
         PersonTabNotesComponent,
         PersonTabCitationsComponent,
@@ -108,6 +104,101 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     setActiveTab(tab: any) {
         this.activeTab.set(tab);
         this.cdr.detectChanges();
+    }
+
+    // --- Basics Modal State & Helpers ---
+    showBasicsModal = false;
+    basicsDraft: any = {
+        gender: 'U',
+        isLiving: true,
+        privacyLevel: 'PRIVATE',
+        firstName: '',
+        lastName: ''
+    };
+
+    genderLabel(gender?: string): string {
+        if (gender === 'M') return 'Männlich';
+        if (gender === 'F') return 'Weiblich';
+        if (gender === 'X') return 'Divers';
+        return 'Unbekannt';
+    }
+
+    privacyLabel(level?: string): string {
+        if (level === 'PUBLIC') return 'Öffentlich';
+        if (level === 'FAMILY') return 'Familie';
+        return 'Privat';
+    }
+
+    getRoleLabel(role: string): string {
+        switch (role) {
+            case 'GODPARENT': return 'Pate / Gevatter';
+            case 'WITNESS': return 'Zeuge';
+            case 'CLERGY': return 'Pfarrer / Priester';
+            case 'INFORMANT': return 'Informant';
+            case 'MIDWIFE': return 'Hebamme';
+            case 'DOCTOR': return 'Arzt';
+            case 'UNDERTAKER': return 'Bestatter';
+            case 'OTHER': return 'Andere / Beteiligter';
+            default: return role;
+        }
+    }
+
+    getRoleIcon(role: string): string {
+        switch (role) {
+            case 'GODPARENT': return '🕊️';
+            case 'WITNESS': return '📜';
+            case 'CLERGY': return '⛪';
+            case 'INFORMANT': return '📢';
+            case 'MIDWIFE': return '👶';
+            case 'DOCTOR': return '🩺';
+            case 'UNDERTAKER': return '⚰️';
+            default: return '👤';
+        }
+    }
+
+    getEventLabel(tag: string): string {
+        const labels: { [key: string]: string } = {
+            'BIRT': 'Geburt',
+            'CHR': 'Taufe',
+            'DEAT': 'Tod',
+            'BURI': 'Begräbnis',
+            'MARR': 'Heirat',
+            'OCCU': 'Beruf',
+            'ADOP': 'Adoption',
+            'CENS': 'Volkszählung',
+            'RELI': 'Religion',
+            'EVEN': 'Ereignis',
+            'DIV': 'Scheidung'
+        };
+        return labels[tag] || tag;
+    }
+
+    openBasicsModal() {
+        const p = this.person();
+        if (!p) return;
+        this.basicsDraft.firstName = p.firstName || '';
+        this.basicsDraft.lastName = p.lastName || '';
+        this.basicsDraft.gender = p.gender || 'U';
+        this.basicsDraft.isLiving = !!p.isLiving;
+        this.basicsDraft.privacyLevel = p.privacyLevel || 'PRIVATE';
+        this.showBasicsModal = true;
+    }
+
+    closeBasicsModal() {
+        this.showBasicsModal = false;
+    }
+
+    saveBasicsModal() {
+        const p = this.person();
+        if (!p) return;
+        p.firstName = this.basicsDraft.firstName || '';
+        p.lastName = this.basicsDraft.lastName || '';
+        p.gender = this.basicsDraft.gender;
+        p.isLiving = this.basicsDraft.isLiving;
+        p.privacyLevel = this.basicsDraft.privacyLevel;
+        this.markDirty();
+        this.savePerson();
+        this.showBasicsModal = false;
     }
 
     // --- Relation Modal State ---
@@ -500,9 +591,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                         // for family events (e.g. marriage, child births).
                         this.buildRelations();
                         this.buildTimeline();
-                        try {
-                            console.log('[PersonDetail] reloaded timeline events summary', (this.timeline() || []).map((t: any, i: number) => ({ idx: i, tag: t.tag, notesCount: (t.notes || []).length, notesPreview: (t.notes || []).slice(0,2) })));
-                        } catch (e) {}
+
                     } else {
                         // Person not found
                         this.router.navigate(['/persons']);
@@ -1858,9 +1947,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
     saveTimelineItemModal() {
         const idx = this.activeTimelineItemIndex();
-        try {
-            console.log('[PersonDetail] saveTimelineItemModal invoked', { idx, item: this.activeTimelineItem() ? { tag: this.activeTimelineItem()?.tag, notesLength: this.activeTimelineItem()?.notes?.length || 0 } : null });
-        } catch (e) {}
+
         if (idx === null) return;
         const current = this.timeline();
         if (!current[idx]) return;

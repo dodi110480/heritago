@@ -27,18 +27,326 @@
 
         <!-- Tab: Basics -->
         <div *ngIf="activeTab() === 'basics'" class="space-y-6">
-            <app-person-expert-basics-tab [person]="p" [participations]="participations()" (changed)="markDirty(); savePerson()"
-                (deleteRequested)="openDeleteModal()"></app-person-expert-basics-tab>
+            <div class="glass-card shadow-sm flex flex-col">
+                <div class="p-0 space-y-6">
+                    <div class="glass-card !bg-canvas-white/3 !rounded-2xl !p-5 cursor-pointer hover:bg-canvas-white/5 transition-all"
+                        (click)="openBasicsModal()">
+                        <app-section-header title="Basisdaten" icon="🧾">
+                            <span actions class="text-[10px] uppercase tracking-widest text-neutral-800 dark:text-neutral-200">Klick zum Bearbeiten</span>
+                        </app-section-header>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <div class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Vorname</div>
+                                <div class="text-sm text-neutral-800 dark:text-neutral-200">{{ p.firstName || '-' }}</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Nachname</div>
+                                <div class="text-sm text-neutral-800 dark:text-neutral-200">{{ p.lastName || '-' }}</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Geschlecht</div>
+                                <div class="text-sm text-neutral-800 dark:text-neutral-200">{{ genderLabel(p.gender) }}</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Status</div>
+                                <div class="text-sm text-neutral-800 dark:text-neutral-200">{{ p.isLiving ? 'Lebend' : 'Verstorben' }}</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-1">Datenschutz</div>
+                                <div class="text-sm text-neutral-800 dark:text-neutral-200">{{ privacyLabel(p.privacyLevel) }}</div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 border-t border-canvas-white/5 pt-8">
+                            <h3 class="text-sm font-semibold mb-3 flex items-center gap-2 text-neutral-800 dark:text-neutral-200">
+                                <span class="w-1.5 h-4 bg-canvas-white rounded-full"></span> System-Info
+                            </h3>
+                            <div class="glass-card !bg-neutral-black/20 p-4 space-y-3 !rounded-xl border !border-canvas-white/5 max-w-2xl">
+                                <div class="space-y-2 text-xs text-neutral-400">
+                                    <div class="flex justify-between items-center" *ngIf="p.createdAt">
+                                        <span>Erstellt:</span>
+                                        <span class="text-neutral-800 dark:text-neutral-200">{{ p.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center" *ngIf="p.updatedAt">
+                                        <span>Zuletzt geändert:</span>
+                                        <span class="text-neutral-800 dark:text-neutral-200">{{ p.updatedAt | date:'dd.MM.yyyy HH:mm' }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center" *ngIf="p.chanDate">
+                                        <span>Letzte GEDCOM Änd.:</span>
+                                        <span class="text-neutral-800 dark:text-neutral-200">{{ p.chanDate | date:'dd.MM.yyyy' }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center pt-2 mt-2 border-t border-canvas-white/5">
+                                        <span>Ex-ID:</span>
+                                        <span class="font-mono text-accent-highlight-400">{{ p.exid || '-' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 border-t border-canvas-white/5 pt-8" *ngIf="participations() && participations().length > 0">
+                            <h3 class="text-sm font-semibold mb-4 flex items-center gap-2 text-neutral-800 dark:text-neutral-200">
+                                <span class="w-1.5 h-4 bg-brand-500 rounded-full"></span> Beteiligt als...
+                            </h3>
+                            <div class="grid grid-cols-1 gap-3">
+                                <div *ngFor="let part of participations()" class="glass-card !bg-neutral-black/10 !p-3 !rounded-xl border !border-canvas-white/5 flex items-start gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center text-sm">
+                                        {{ getRoleIcon(part.role) }}
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-bold text-neutral-800 dark:text-neutral-200">
+                                            {{ getRoleLabel(part.role) }}
+                                        </p>
+                                        <p class="text-xs text-neutral-500">
+                                            bei {{ getEventLabel(part.eventTag) }} von {{ part.subjectPersonName }} 
+                                            <span *ngIf="part.eventDate">am {{ part.eventDate }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex justify-end">
+                        <button type="button" (click)="openDeleteModal()"
+                            class="p-2 rounded-lg text-accent-danger-400 hover:bg-accent-danger-500/10 transition-all"
+                            title="Person löschen">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <app-modal-shell [visible]="showBasicsModal" title="Basisdaten bearbeiten" icon="🧾" size="md"
+                [showSave]="true" saveText="Speichern" [showDelete]="false"
+                (close)="closeBasicsModal()" (save)="saveBasicsModal()">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-group mb-0">
+                            <label class="form-label">Vorname</label>
+                            <input type="text" [(ngModel)]="basicsDraft.firstName" class="form-input">
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="form-label">Nachname</label>
+                            <input type="text" [(ngModel)]="basicsDraft.lastName" class="form-input">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group mb-0">
+                            <label class="form-label">Geschlecht</label>
+                            <select [(ngModel)]="basicsDraft.gender" class="form-input !py-2.5">
+                                <option value="M">Männlich</option>
+                                <option value="F">Weiblich</option>
+                                <option value="X">Divers</option>
+                                <option value="U">Unbekannt</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="form-label">Status</label>
+                            <select [(ngModel)]="basicsDraft.isLiving" class="form-input !py-2.5">
+                                <option [ngValue]="true">Lebend</option>
+                                <option [ngValue]="false">Verstorben</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label class="form-label">Datenschutz</label>
+                            <select [(ngModel)]="basicsDraft.privacyLevel" class="form-input !py-2.5">
+                                <option value="PUBLIC">Öffentlich</option>
+                                <option value="FAMILY">Familie</option>
+                                <option value="PRIVATE">Privat</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </app-modal-shell>
         </div>
 
         <!-- TIMELINE TAB -->
         <div *ngIf="activeTab() === 'timeline'" class="space-y-6">
-            <app-person-expert-timeline-tab [ctx]="self"></app-person-expert-timeline-tab>
+            <div class="glass-card shadow-sm flex flex-col">
+                <div class="!p-4 md:!p-5">
+                    <app-section-header title="Lebenslauf" icon="⏳">
+                        <button actions (click)="addTimelineItem()" class="btn-primary !w-auto !py-1.5 !px-3 text-xs">
+                            + Ereignis/Fakt
+                        </button>
+                    </app-section-header>
+
+                    <div
+                        class="relative pl-6 space-y-4 before:absolute before:left-2 before:top-1 before:bottom-1 before:w-0.5 before:bg-canvas-white/10">
+                        <div *ngFor="let item of timeline(); let i = index" class="relative group/item">
+                            <div
+                                class="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-brand-500 border-2 border-neutral-900 z-10 transition-transform group-hover/item:scale-125">
+                            </div>
+
+                            <div class="glass-card !p-3 !bg-canvas-white/5 !rounded-xl transition-all shadow-sm cursor-pointer hover:bg-canvas-white/10"
+                                (click)="!isTimelineItemLocked(item) && openTimelineItemModal(i)"
+                                [class.ring-2]="item.editing" [class.ring-brand-500/50]="item.editing">
+                                <div *ngIf="!item.editing" class="space-y-2">
+                                    <div class="flex justify-between items-start">
+                                        <div class="space-y-1">
+                                            <div class="text-[10px] font-bold text-neutral-800 uppercase tracking-widest">
+                                                {{ getTagLabel(item.tag) }}</div>
+                                            <div class="text-sm font-semibold text-neutral-800 dark:text-neutral-200">{{ item.date || 'Kein Datum'
+                                                }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2" *ngIf="item.place">
+                                        <span
+                                            class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-canvas-white/5 text-neutral-600 text-xs border border-canvas-white/5">
+                                            <span class="text-xs">📍</span> {{ item.place }}
+                                        </span>
+                                    </div>
+                                    <div class="text-xs text-neutral-800 leading-relaxed"
+                                        *ngIf="item.value || item.description">
+                                        {{ item.value || item.description }}
+                                    </div>
+
+                                    <div class="flex flex-wrap gap-2" *ngIf="item.media?.length">
+                                        <div *ngFor="let med of item.media" (click)="$event.stopPropagation(); openViewer(med)"
+                                            class="w-12 h-12 rounded-lg overflow-hidden cursor-pointer ring-1 ring-white/10 hover:ring-brand-500 transition-all hover:scale-105 active:scale-95">
+                                            <img [src]="getMediaUrl(med.id || med.url, 'thumbs')" [alt]="med.title"
+                                                class="w-full h-full object-cover">
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-wrap gap-2">
+                                        <span *ngIf="isTimelineItemLocked(item)" class="badge badge-primary">🔒 Nur lesen</span>
+                                        <span *ngIf="item.media?.length" class="badge badge-primary">🖼 {{
+                                            item.media?.length }}</span>
+                                        <span *ngIf="item.citations?.length" class="badge badge-success">📖 {{
+                                            item.citations?.length }}</span>
+                                        <span *ngIf="item.notes?.length" class="badge badge-highlight">📝 {{
+                                            item.notes?.length }}</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <app-empty-state *ngIf="timeline().length === 0"
+                        icon="⏳" 
+                        title="Lebenslauf leer" 
+                        message="Anhand von Daten und Fakten entsteht ein Bild der Person. Füge das erste Ereignis hinzu.">
+                    </app-empty-state>
+                </div>
+            </div>
         </div>
 
         <!-- RELATIONS TAB -->
         <div *ngIf="activeTab() === 'relations'" class="space-y-6">
-            <app-person-expert-relations-tab [ctx]="self"></app-person-expert-relations-tab>
+            <div class="glass-card shadow-sm flex flex-col">
+                <div class="p-0">
+                    <app-section-header title="Familie & Beziehungen" icon="👨‍👩‍👧‍👦" description="Verwalte Ehepartner, Eltern und Kinder.">
+                        <div actions class="flex items-center gap-3">
+                            <button (click)="toggleFamilyEdit()" [class.bg-brand-500]="isEditingFamily()"
+                                [class.text-neutral-800 dark:text-neutral-200]="isEditingFamily()" [class.bg-canvas-white/5]="!isEditingFamily()"
+                                [class.text-neutral-400]="!isEditingFamily()"
+                                class="p-2.5 rounded-xl transition-all hover:bg-brand-500/20" title="Bearbeiten">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button (click)="addRelation()" class="btn-primary !w-auto !py-2">
+                                + Beziehung
+                            </button>
+                        </div>
+                    </app-section-header>
+
+                    <div *ngIf="relations().length > 0" class="space-y-3">
+                        <div *ngFor="let rel of relations(); let i = index"
+                            (click)="!isEditingFamily() && rel.personId && goToPerson(rel.personId)"
+                            [class.cursor-pointer]="rel.personId && !isEditingFamily()"
+                            class="group relative glass-card !p-4 flex items-center gap-4 hover:bg-canvas-white/10 transition-all border-l-4"
+                            [class.border-l-brand-500]="rel.type === 'SPOUSE'"
+                            [class.border-l-indigo-500]="rel.type === 'FATHER' || rel.type === 'MOTHER'"
+                            [class.border-l-emerald-500]="rel.type === 'CHILD'">
+
+                            <div *ngIf="isEditingFamily(); else relRead"
+                                class="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1">
+                                <select [(ngModel)]="rel.type" class="form-input !w-32 !py-2">
+                                    <option value="SPOUSE">Partner</option>
+                                    <option value="FATHER">Vater</option>
+                                    <option value="MOTHER">Mutter</option>
+                                    <option value="CHILD">Kind</option>
+                                </select>
+
+                                <div class="relative flex-1 group/search">
+                                    <input type="text" [(ngModel)]="rel.personName"
+                                        (input)="searchIndividuals(i, rel.personName!)"
+                                        (focus)="searchIndividuals(i, rel.personName!)" placeholder="Person suchen..."
+                                        class="form-input !py-2">
+
+                                    <div class="absolute top-full left-0 w-full mt-2 bg-surface-dark border border-canvas-white/10 rounded-xl shadow-2xl z-50 overflow-hidden"
+                                        *ngIf="showIndividualResults() === i && individualSearchResults().length > 0">
+                                        <div *ngFor="let ind of individualSearchResults()"
+                                            (click)="selectIndividual(i, ind)"
+                                            class="px-4 py-2.5 text-sm text-neutral-300 hover:bg-brand-500/20 hover:text-neutral-800 dark:text-neutral-200 cursor-pointer border-b border-canvas-white/5 last:border-0 transition-colors">
+                                            👤 {{ ind.firstName }} {{ ind.lastName }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div *ngIf="rel.type === 'SPOUSE'" class="flex gap-2 flex-1 md:max-w-xs">
+                                    <input type="text" class="form-input !py-2 !text-xs"
+                                        [ngModel]="getFamilyWeddingDate(rel.familyId)"
+                                        (ngModelChange)="updateFamilyWeddingByFamilyId(rel.familyId, 'date', $event)"
+                                        placeholder="💍 Datum">
+                                    <input type="text" class="form-input !py-2 !text-xs"
+                                        [ngModel]="getFamilyWeddingPlace(rel.familyId)"
+                                        (ngModelChange)="updateFamilyWeddingByFamilyId(rel.familyId, 'place', $event)"
+                                        placeholder="📍 Ort">
+                                </div>
+
+                                <button (click)="removeRelation(i)"
+                                    class="p-2 ml-auto text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-colors">✕</button>
+                            </div>
+
+                            <ng-template #relRead>
+                                <div class="flex items-center gap-3 flex-1">
+                                    <app-avatar 
+                                        [imageUrl]="getPersonAvatarData(rel.personId).url" 
+                                        [gender]="getPersonAvatarData(rel.personId).gender" 
+                                        size="sm"
+                                        class="shrink-0"
+                                    ></app-avatar>
+                                    <div class="w-24 text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest shrink-0">
+                                        {{ getRelationLabel(rel.type) }}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-sm font-semibold text-neutral-800 dark:text-neutral-200 mb-0.5 group-hover:text-brand-400 transition-colors truncate">
+                                            {{ rel.personName }}
+                                        </div>
+                                        <div *ngIf="rel.type === 'SPOUSE' && getFamilyWedding(rel.familyId)"
+                                            class="text-[10px] text-neutral-400 flex items-center gap-1.5 truncate">
+                                            <span class="text-xs">💍</span> {{ getFamilyWedding(rel.familyId) }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    class="text-neutral-600 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </ng-template>
+                        </div>
+                    </div>
+
+                    <app-empty-state *ngIf="relations().length === 0"
+                        icon="👨‍👩‍👧‍👦" 
+                        title="Keine Beziehungen" 
+                        message="Verknüpfe diese Person mit Eltern, Partnern oder Kindern, um den Stammbaum aufzubauen.">
+                    </app-empty-state>
+                </div>
+            </div>
         </div>
 
         <!-- NAMES TAB -->

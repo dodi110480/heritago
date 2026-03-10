@@ -2,7 +2,6 @@ import { Component, Input, Output, EventEmitter, signal, computed } from '@angul
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { AppModalShell } from './ui/app-modal-shell';
 import { AppSectionHeaderComponent } from './ui/app-section-header';
 import { AppSourcesListComponent } from './ui/app-sources-list/app-sources-list';
 import { CitationModalComponent } from './ui/citation-modal/citation-modal';
@@ -11,7 +10,7 @@ import { DisplaySource, Citation } from './models';
 @Component({
     selector: 'app-person-tab-citations',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell, AppSectionHeaderComponent, AppSourcesListComponent, CitationModalComponent],
+    imports: [CommonModule, FormsModule, AppSectionHeaderComponent, AppSourcesListComponent, CitationModalComponent],
     template: `
         <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">

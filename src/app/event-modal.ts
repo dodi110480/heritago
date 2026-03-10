@@ -85,9 +85,7 @@ export class EventModal {
             this.item.notes.push(newNote);
         }
 
-        try {
-            console.log('[EventModal] note saved locally', { itemId: this.item?.id, note: newNote, notesCount: this.item?.notes?.length });
-        } catch (e) {}
+
 
         this.showNoteSubModal.set(false);
     }

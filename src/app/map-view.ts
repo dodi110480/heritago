@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, OnInit, ElementRef, ViewChild } fr
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
-import { AppEntityCard } from './ui/app-entity-card';
+
 import { AppPageHeaderComponent } from './ui/app-page-header';
 
 declare const L: any;
@@ -10,7 +10,7 @@ declare const L: any;
 @Component({
     selector: 'app-map-view',
     standalone: true,
-    imports: [CommonModule, RouterLink, AppEntityCard, AppPageHeaderComponent],
+    imports: [CommonModule, RouterLink, AppPageHeaderComponent],
     templateUrl: './map-view.html'
 })
 export class MapView implements OnInit {

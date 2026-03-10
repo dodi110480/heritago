@@ -112,7 +112,6 @@ export class Phase2Import {
         const buffer = this.buffers[tag];
         if (buffer.length === 0) return;
 
-        console.log(`Phase 2: Flushing ${buffer.length} records for ${tag}`);
 
         switch (tag) {
             case 'INDI':

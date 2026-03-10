@@ -48,7 +48,6 @@ export class Phase3Resolver {
 
         if (records.length === 0) return;
 
-        console.log(`Phase 3: Resolving ${records.length} records for ${entityType}`);
 
         const mappings = records.map((r: any) => ({
             treeId: this.treeId,
