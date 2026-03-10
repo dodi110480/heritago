@@ -1,20 +1,21 @@
-import { Component, inject, signal, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GedcomService } from './gedcom.service';
-import { AuthService } from './auth.service';
-import { AppModalShell } from './ui/app-modal-shell';
-import { PlaceDisplayPipe } from './place-display.pipe';
-import { AppNotesList } from './ui/app-notes-list';
-import { DisplayNote, NoteCategory } from './models';
+import { GedcomService } from '../../gedcom.service';
+import { AuthService } from '../../auth.service';
+import { AppModalShell } from '../app-modal-shell';
+import { PlaceDisplayPipe } from '../../place-display.pipe';
+import { AppNotesList } from '../app-notes-list/app-notes-list';
+import { AppUsageList } from '../app-usage-list/app-usage-list';
+import { DisplayNote, NoteCategory } from '../../models';
 
 declare const L: any;
 
 @Component({
     selector: 'app-place-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell, AppNotesList],
+    imports: [CommonModule, FormsModule, AppNotesList, AppUsageList, AppModalShell],
     templateUrl: './place-modal.html'
 })
 export class PlaceModal implements OnInit {
@@ -51,6 +52,7 @@ export class PlaceModal implements OnInit {
     });
 
     modalData = {
+        id: '',
         description: '',
         city: '',
         district: '',
@@ -74,22 +76,45 @@ export class PlaceModal implements OnInit {
     };
 
     placeLevels = [
-        'BUILDING', 'STREET', 'DISTRICT', 'CITY', 'MUNICIPALITY', 'REGION', 'STATE', 'COUNTRY', 'CONTINENT'
+        { value: 'BUILDING', label: 'Gebäude' },
+        { value: 'STREET', label: 'Straße' },
+        { value: 'DISTRICT', label: 'Bezirk' },
+        { value: 'CITY', label: 'Stadt' },
+        { value: 'MUNICIPALITY', label: 'Gemeinde' },
+        { value: 'REGION', label: 'Region' },
+        { value: 'STATE', label: 'Bundesland' },
+        { value: 'COUNTRY', label: 'Land' },
+        { value: 'CONTINENT', label: 'Kontinent' }
     ];
 
-    usage = signal<any>(null);
-
+    usages = signal<any[]>([]);
+    isLoadingUsage = signal(false);
     locationLabel = signal('');
-    mergeTargetId = signal<string>('');
-    reassignTargetId = signal<string>('');
     showMap = signal(true);
-    activeTab = signal<'basics' | 'languages' | 'location' | 'notes' | 'maintenance'>('basics');
+    activeTab = signal<'basics' | 'languages' | 'location' | 'notes' | 'links'>('basics');
 
-    setTab(tab: 'basics' | 'languages' | 'location' | 'notes' | 'maintenance') {
+    setTab(tab: 'basics' | 'languages' | 'location' | 'notes' | 'links') {
         this.activeTab.set(tab);
         if (tab === 'location' && this.showMap()) {
             setTimeout(() => this.initMap(), 50);
         }
+        if (tab === 'links') {
+            this.fetchUsage();
+        }
+    }
+
+    private fetchUsage() {
+        const tree = this.currentTree();
+        if (!tree || !this.initialData?.id || this.mode !== 'edit') return;
+
+        this.isLoadingUsage.set(true);
+        this.gedcomService.getPlaceUsage(tree, this.initialData.id).subscribe({
+            next: (res) => {
+                this.isLoadingUsage.set(false);
+                if (res.success) this.usages.set(res.usage || []);
+            },
+            error: () => this.isLoadingUsage.set(false)
+        });
     }
 
     toggleMap() {
@@ -109,8 +134,8 @@ export class PlaceModal implements OnInit {
         }
     }
 
-    ngOnChanges() {
-        if (this.visible) {
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes['visible'] && this.visible) {
             // Recreate map each time the modal opens to avoid stale Leaflet container references.
             this.destroyMap();
             this.resetForm();
@@ -122,12 +147,14 @@ export class PlaceModal implements OnInit {
                             next: (res: any) => {
                                 if (res.success && res.place) {
                                     const p = res.place;
+                                    this.modalData.id = p.id;
+                                    this.modalData.description = p.name || '';
                                     this.modalData.latitude = p.latitude?.toString() || '';
                                     this.modalData.longitude = p.longitude?.toString() || '';
                                     this.modalData.jurisdiction = p.jurisdiction || '';
                                     this.modalData.historicNames = Array.isArray(p.historicNames)
                                         ? p.historicNames.join(', ')
-                                        : '';
+                                        : (p.historicNames || '');
                                     this.modalData.parentId = p.parentId || '';
                                     this.modalData.old_name = p.name || '';
                                     this.modalData.form = p.form || '';
@@ -145,30 +172,55 @@ export class PlaceModal implements OnInit {
                                     this.modalData.identifiers = Array.isArray(p.identifiers) ? [...p.identifiers] : [];
                                     this.notes.set(Array.isArray(p.notes) ? [...p.notes] : []);
                                     
+                                    // Parse name into components, but keep full name as description fallback
                                     this.parsePlaceName(p.name || '');
-                                    this.loadUsage(p.id);
                                     
                                     setTimeout(() => this.initMap(), 50);
+                                } else {
+                                    console.warn('Backend returned success:false for place fetch', res);
+                                    this.fallbackToInitialData();
+                                    setTimeout(() => this.initMap(), 50);
                                 }
+                            },
+                            error: (err) => {
+                                console.error('Error loading place from backend:', err);
+                                this.fallbackToInitialData();
+                                this.errorMessage.set('Details konnten nicht vom Server geladen werden. Zeige lokale Daten.');
+                                setTimeout(() => this.initMap(), 50);
                             }
                         });
+                    } else {
+                        this.fallbackToInitialData();
+                        setTimeout(() => this.initMap(), 50);
                     }
-                } else if (typeof this.initialData === 'string') {
-                    // It's just a name string, try to parse or just set as old_name
-                    this.parsePlaceName(this.initialData);
                 } else {
-                    // It's a place object (fallback for add mode or if ID is missing)
-                    this.parsePlaceName(this.initialData.name || '');
+                    // Pre-fill for add mode or fallback
+                    const name = this.initialData.name || (typeof this.initialData === 'string' ? this.initialData : '');
+                    this.parsePlaceName(name);
                     this.modalData.latitude = this.initialData.latitude?.toString() || '';
                     this.modalData.longitude = this.initialData.longitude?.toString() || '';
-                    this.modalData.notes = [];
                     this.notes.set([]);
+                    setTimeout(() => this.initMap(), 50);
                 }
+            } else {
+                setTimeout(() => this.initMap(), 50);
             }
-            setTimeout(() => this.initMap(), 50);
-        } else {
+        } else if (changes['visible'] && !this.visible) {
             this.destroyMap();
         }
+    }
+
+    private fallbackToInitialData() {
+        if (!this.initialData) return;
+        const p = this.initialData;
+        this.modalData.id = p.id || '';
+        this.modalData.description = p.name || '';
+        this.modalData.latitude = p.latitude?.toString() || '';
+        this.modalData.longitude = p.longitude?.toString() || '';
+        this.modalData.parentId = p.parentId || '';
+        this.modalData.level = p.level || 'CITY';
+        this.modalData.lang = p.lang || '';
+        this.parsePlaceName(p.name || '');
     }
 
     private parsePlaceName(name: string) {
@@ -179,13 +231,19 @@ export class PlaceModal implements OnInit {
         this.modalData.district = parts[2] || '';
         this.modalData.city = parts[3] || '';
 
-        this.modalData.description = parts.slice(4).join(', ').trim();
+        // If we only have one part, use it as description/name
+        if (parts.length === 1) {
+            this.modalData.description = parts[0];
+        } else {
+            this.modalData.description = parts.slice(4).join(', ').trim() || parts[parts.length - 1];
+        }
         this.modalData.old_name = name;
         this.locationLabel.set([this.modalData.city, this.modalData.district, this.modalData.region, this.modalData.country].filter(Boolean).join(', '));
     }
 
     resetForm() {
         this.modalData = {
+            id: '',
             description: '',
             city: '',
             district: '',
@@ -206,11 +264,9 @@ export class PlaceModal implements OnInit {
             identifiers: [],
             notes: []
         };
-        this.usage.set(null);
         this.errorMessage.set(null);
         this.locationLabel.set('');
-        this.mergeTargetId.set('');
-        this.reassignTargetId.set('');
+        this.usages.set([]);
     }
 
     closeModal() {
@@ -304,14 +360,7 @@ export class PlaceModal implements OnInit {
         }
     }
 
-    private loadUsage(id: string) {
-        const tree = this.currentTree();
-        if (!tree) return;
-        this.gedcomService.getPlaceUsage(tree, id).subscribe({
-            next: (res) => this.usage.set(res),
-            error: () => this.usage.set(null)
-        });
-    }
+
 
     save() {
         const tree = this.currentTree();
@@ -330,7 +379,7 @@ export class PlaceModal implements OnInit {
         ].filter(Boolean).join(', ');
 
         const payload = {
-            id: this.initialData?.id || undefined,
+            id: this.modalData.id || this.initialData?.id || undefined,
             name: name,
             old_name: this.mode === 'edit' ? this.modalData.old_name : undefined,
             parentId: this.modalData.parentId || null,
@@ -452,51 +501,7 @@ export class PlaceModal implements OnInit {
         }
     }
 
-    deletePlace() {
-        if (!confirm(`Möchten Sie den Ort "${this.initialData?.name}" wirklich löschen?`)) return;
 
-        const tree = this.currentTree();
-        if (!tree || !this.initialData?.id) return;
-
-        const payload: any = { mode: 'delete', id: this.initialData.id, name: this.initialData.name };
-        if (this.reassignTargetId()) payload.reassignToId = this.reassignTargetId();
-
-        this.gedcomService.savePlace(tree, payload).subscribe({
-            next: (res: any) => {
-                if (res.success) {
-                    this.deleted.emit();
-                } else {
-                    this.errorMessage.set('Fehler beim Löschen: ' + res.message);
-                }
-            },
-            error: (err: any) => {
-                const usage = err.error?.usage;
-                const msg = usage
-                    ? `${err.error?.message}\nVerknüpfungen: ${usage.totalLinks}, Unterorte: ${usage.childCount}\nWähle einen Zielort zum Umhängen oder merge zuerst.`
-                    : (err.error?.message || 'Unbekannter Fehler');
-                this.errorMessage.set('Fehler beim Löschen: ' + msg);
-            }
-        });
-    }
-
-    mergeSelected() {
-        const sourceId = this.initialData?.id;
-        const targetId = this.mergeTargetId();
-        const tree = this.currentTree();
-        if (!sourceId || !targetId || !tree) return;
-        if (!confirm(`Ort "${this.initialData.name}" in Zielort zusammenführen?`)) return;
-
-        this.gedcomService.mergePlaces(tree, sourceId, targetId).subscribe({
-            next: (res: any) => {
-                if (res.success) {
-                    this.merged.emit();
-                } else {
-                    this.errorMessage.set('Merge fehlgeschlagen: ' + (res.message || 'Unbekannter Fehler'));
-                }
-            },
-            error: (err: any) => this.errorMessage.set('Merge fehlgeschlagen: ' + (err.error?.message || 'Unbekannter Fehler'))
-        });
-    }
 
     openPersonProfile(personId?: string | null) {
         if (!personId) return;

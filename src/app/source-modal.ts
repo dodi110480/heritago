@@ -1,16 +1,16 @@
 import { Component, Input, Output, EventEmitter, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { AppModalShell } from './ui/app-modal-shell';
-import { AppNotesList } from './ui/app-notes-list';
+import { AppNotesList } from './ui/app-notes-list/app-notes-list';
+import { AppUsageList } from './ui/app-usage-list/app-usage-list';
 import { DisplayNote, NoteCategory } from './models';
 
 @Component({
     selector: 'app-source-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterLink, AppModalShell, AppNotesList],
+    imports: [CommonModule, FormsModule, AppModalShell, AppNotesList, AppUsageList],
     templateUrl: './source-modal.html'
 })
 export class SourceModal implements OnInit {

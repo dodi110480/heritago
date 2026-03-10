@@ -4,9 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
-import { Individual, TreeData, Family } from './models';
+import { Individual, TreeData, Family, TimelineItem } from './models';
 import { CleanDatePipe } from './clean-date.pipe';
-import { PlaceModal } from './place-modal';
+import { PlaceModal } from './ui/place-modal/place-modal';
 import { PersonCreateModal } from './person-create-modal';
 import { CanComponentDeactivate } from './unsaved-changes.guard';
 import { forkJoin, of, switchMap } from 'rxjs';
@@ -24,26 +24,9 @@ import { PersonTabNotesComponent } from './person-tab-notes';
 import { PersonTabCitationsComponent } from './person-tab-citations';
 import { PersonTabNamesComponent } from './person-tab-names';
 import { PersonTabDnaComponent } from './person-tab-dna';
+import { PersonTimelineService } from './person-timeline.service';
 
-interface TimelineItem {
-    originalType: 'event' | 'fact' | 'family-event';
-    originalIndex: number;
-    familyId?: string;
-    sourcePersonId?: string;
-    sourcePersonName?: string;
-    tag: string;
-    date?: string;
-    place?: string;
-    description?: string; // Für Events
-    value?: string; // Für Fakten
-    // Erweitert für Gramps-Style:
-    media?: any[];
-    notes?: string[];
-    citations?: any[];
-    associations?: any[];
-    expanded?: boolean;
-    editing?: boolean;
-}
+
 
 @Component({
     selector: 'app-person-detail',
@@ -76,6 +59,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     private router = inject(Router);
     private cdr = inject(ChangeDetectorRef);
     private gedcomService = inject(GedcomService);
+    public personTimelineService = inject(PersonTimelineService);
     public authService = inject(AuthService);
     readonly self = this;
 
@@ -116,62 +100,11 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         lastName: ''
     };
 
-    genderLabel(gender?: string): string {
-        if (gender === 'M') return 'Männlich';
-        if (gender === 'F') return 'Weiblich';
-        if (gender === 'X') return 'Divers';
-        return 'Unbekannt';
-    }
-
-    privacyLabel(level?: string): string {
-        if (level === 'PUBLIC') return 'Öffentlich';
-        if (level === 'FAMILY') return 'Familie';
-        return 'Privat';
-    }
-
-    getRoleLabel(role: string): string {
-        switch (role) {
-            case 'GODPARENT': return 'Pate / Gevatter';
-            case 'WITNESS': return 'Zeuge';
-            case 'CLERGY': return 'Pfarrer / Priester';
-            case 'INFORMANT': return 'Informant';
-            case 'MIDWIFE': return 'Hebamme';
-            case 'DOCTOR': return 'Arzt';
-            case 'UNDERTAKER': return 'Bestatter';
-            case 'OTHER': return 'Andere / Beteiligter';
-            default: return role;
-        }
-    }
-
-    getRoleIcon(role: string): string {
-        switch (role) {
-            case 'GODPARENT': return '🕊️';
-            case 'WITNESS': return '📜';
-            case 'CLERGY': return '⛪';
-            case 'INFORMANT': return '📢';
-            case 'MIDWIFE': return '👶';
-            case 'DOCTOR': return '🩺';
-            case 'UNDERTAKER': return '⚰️';
-            default: return '👤';
-        }
-    }
-
-    getEventLabel(tag: string): string {
-        const labels: { [key: string]: string } = {
-            'BIRT': 'Geburt',
-            'CHR': 'Taufe',
-            'DEAT': 'Tod',
-            'BURI': 'Begräbnis',
-            'MARR': 'Heirat',
-            'OCCU': 'Beruf',
-            'ADOP': 'Adoption',
-            'CENS': 'Volkszählung',
-            'RELI': 'Religion',
-            'EVEN': 'Ereignis',
-            'DIV': 'Scheidung'
-        };
-        return labels[tag] || tag;
-    }
+    genderLabel = (gender?: string) => this.personTimelineService.genderLabel(gender);
+    privacyLabel = (level?: string) => this.personTimelineService.privacyLabel(level);
+    getRoleLabel = (role: string) => this.personTimelineService.getRoleLabel(role);
+    getRoleIcon = (role: string) => this.personTimelineService.getRoleIcon(role);
+    getEventLabel = (tag: string) => this.personTimelineService.getEventLabel(tag);
 
     openBasicsModal() {
         const p = this.person();
@@ -215,31 +148,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     timeline = signal<TimelineItem[]>([]);
     
     participations = computed(() => {
-        const data = this.treeData();
-        const pid = this.personId;
-        if (!data || !pid) return [];
-
-        const results: any[] = [];
-        data.individuals.forEach(ind => {
-            if (ind.events) {
-                ind.events.forEach(ev => {
-                    if (ev.associations) {
-                        ev.associations.forEach(assoc => {
-                            if (assoc.associatedPersonId === pid) {
-                                results.push({
-                                    role: assoc.role,
-                                    eventTag: ev.type,
-                                    eventDate: ev.date || (ev as any).dateText,
-                                    subjectPersonId: ind.id,
-                                    subjectPersonName: this.getPrimaryName(ind)
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-        });
-        return results;
+        return this.personTimelineService.getParticipations(this.personId, this.treeData());
     });
 
     // Beziehungen
@@ -375,86 +284,14 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     showLeaveModal = signal(false);
     private leaveResolver: ((value: boolean) => void) | null = null;
 
-    getTagLabel(tag: string): string {
-        const labels: { [key: string]: string } = {
-            'BIRT': 'Geburt',
-            'CHR': 'Taufe',
-            'DEAT': 'Tod',
-            'BURI': 'Begräbnis',
-            'CREM': 'Einäscherung',
-            'EMIG': 'Auswanderung',
-            'IMMI': 'Einwanderung',
-            'OCCU': 'Beruf',
-            'RELI': 'Religion',
-            'EDUC': 'Bildung',
-            'RESI': 'Wohnsitz',
-            'TITL': 'Titel',
-            'NATI': 'Nationalität',
-            'DSCR': 'Körperl. Merkmale',
-            'FACT': 'Fakt'
-        };
-        return labels[tag] || tag;
-    }
-
-    getPersonName(id: string | undefined): string {
-        if (!id) return '';
-        const data = this.treeData();
-        if (!data) return id;
-        const p = data.individuals.find(i => i.id === id);
-        if (!p) return id;
-        const given = p.names?.[0]?.given || p.firstName || '';
-        const sur = p.names?.[0]?.surname || p.lastName || '';
-        return `${given} ${sur}`.trim() || id;
-    }
-
-    getPrimaryName(person: Individual): string {
-        if (!person) return '';
-        const primaryName = person.names?.find(n => n.isPrimary);
-        if (primaryName) {
-            return `${primaryName.given || ''} ${primaryName.surname || ''}`.trim();
-        }
-        return `${person.firstName || ''} ${person.lastName || ''}`.trim() || person.id;
-    }
-
-    getProfileImage(person: Individual): string | null {
-        if (!person.media || person.media.length === 0) return null;
-        const primary = person.media.find(m => m.isPrimary) || person.media[0];
-        return primary?.id ? this.gedcomService.getMediaUrl(primary.id, 'thumbs') : null;
-    }
-
-    getPersonAvatarData(personId: string | undefined): { url: string | null, gender: string } {
-        if (!personId) return { url: null, gender: 'U' };
-        const p = this.treeData()?.individuals.find(i => i.id === personId);
-        if (!p) return { url: null, gender: 'U' };
-        const primaryMedia = p.media && p.media.length > 0 ? (p.media.find(m => m.isPrimary) || p.media[0]) : null;
-        const url = primaryMedia?.id ? this.gedcomService.getMediaUrl(primaryMedia.id, 'thumbs') : null;
-        return { url, gender: p.gender || 'U' };
-    }
-
-    getFamilyWedding(familyId: string | undefined): string {
-        if (!familyId) return '';
-        const fam = this.treeData()?.families.find(f => f.id === familyId);
-        if (!fam || !fam.events) return '';
-        const marr = fam.events.find(e => e.type === 'MARR');
-        if (!marr) return '';
-        const date = marr.date || (marr as any).dateText || '';
-        const place = marr.place || (marr as any).placeName || '';
-        return date + (place ? ` in ${place}` : '');
-    }
-
-    getFamilyWeddingDate(familyId: string | undefined): string {
-        if (!familyId) return '';
-        const fam = this.treeData()?.families.find(f => f.id === familyId);
-        const marr = fam?.events?.find(e => e.type === 'MARR');
-        return marr?.date || (marr as any)?.dateText || '';
-    }
-
-    getFamilyWeddingPlace(familyId: string | undefined): string {
-        if (!familyId) return '';
-        const fam = this.treeData()?.families.find(f => f.id === familyId);
-        const marr = fam?.events?.find(e => e.type === 'MARR');
-        return marr?.place || (marr as any)?.placeName || '';
-    }
+    getTagLabel = (tag: string) => this.personTimelineService.getTagLabel(tag);
+    getPersonName = (id: string | undefined) => this.personTimelineService.getPersonName(this.treeData(), id);
+    getPrimaryName = (person: Individual) => this.personTimelineService.getPrimaryName(person);
+    getProfileImage = (person: Individual) => this.personTimelineService.getProfileImage(person);
+    getPersonAvatarData = (personId: string | undefined) => this.personTimelineService.getPersonAvatarData(this.treeData(), personId);
+    getFamilyWedding = (familyId: string | undefined) => this.personTimelineService.getFamilyWedding(this.treeData(), familyId);
+    getFamilyWeddingDate = (familyId: string | undefined) => this.personTimelineService.getFamilyWeddingDate(this.treeData(), familyId);
+    getFamilyWeddingPlace = (familyId: string | undefined) => this.personTimelineService.getFamilyWeddingPlace(this.treeData(), familyId);
 
     updateFamilyWedding(fIdx: number, field: 'date' | 'place', val: string) {
         const p = this.person();
@@ -641,254 +478,21 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     buildTimeline() {
         const p = this.person();
         if (!p) return;
-
-        let merged: TimelineItem[] = [];
-
-        // Events hinzufügen
-        if (p.events) {
-            p.events.forEach((ev, i) => {
-                merged.push({
-                    originalType: 'event',
-                    originalIndex: i,
-                    tag: ev.type,
-                    date: ev.date || (ev as any).dateText,
-                    place: ev.place,
-                    description: ev.description,
-                    media: (ev as any).media || [],
-                    notes: (ev as any).notes || [],
-                    citations: (ev as any).citations || [],
-                    associations: (ev as any).associations || [],
-                    editing: false
-                });
-            });
-        }
-
-        // Fakten hinzufügen
-        if (p.facts) {
-            p.facts.forEach((fact, i) => {
-                merged.push({
-                    originalType: 'fact',
-                    originalIndex: i,
-                    tag: fact.type,
-                    date: (fact as any).date || fact.dateText,
-                    place: (fact as any).place || fact.placeName,
-                    value: fact.value,
-                    media: (fact as any).media || [],
-                    notes: (fact as any).notes || [],
-                    citations: (fact as any).citations || [],
-                    associations: (fact as any).associations || [],
-                    editing: false
-                });
-            });
-        }
-        // Familien-Events (Heirat, etc.) hinzufügen
-        if (p.familiesAsSpouse) {
-            const childBirthSeen = new Set<string>();
-            p.familiesAsSpouse.forEach((famLink) => {
-                const fullFam = this.treeData()?.families.find(f => f.id === famLink.familyId);
-                if (fullFam && fullFam.events) {
-                    fullFam.events.forEach((ef, idx) => {
-                        merged.push({
-                            originalType: 'family-event',
-                            originalIndex: idx,
-                            familyId: famLink.familyId,
-                            tag: ef.type,
-                            date: ef.date || (ef as any).dateText,
-                            place: ef.place || (ef as any).placeName,
-                            description: ef.description || (ef.type === 'MARR' ? `Heirat mit ${famLink.spouseName}` : ''),
-                            media: (ef as any).media || [],
-                            notes: (ef as any).notes || [],
-                            citations: (ef as any).citations || [],
-                            associations: (ef as any).associations || [],
-                            editing: false
-                        });
-                    });
-                }
-
-                // Abgeleitete Eltern-Ereignisse: Geburt/Heirat/Tod des Kindes
-                if (famLink.children && famLink.children.length > 0) {
-                    famLink.children.forEach((childRef) => {
-                        const child = this.treeData()?.individuals.find(i => i.id === childRef.id);
-                        if (!child || !child.events) return;
-
-                        const derivedChildEvents = [
-                            { tag: 'BIRT', label: 'Geburt' },
-                            { tag: 'MARR', label: 'Heirat' },
-                            { tag: 'DEAT', label: 'Tod' }
-                        ];
-
-                        derivedChildEvents.forEach((spec) => {
-                            const ev = child.events!.find(e => e.type === spec.tag);
-                            if (!ev) return;
-
-                            const childDate = ev.date || (ev as any).dateText;
-                            const childPlace = ev.place || (ev as any).placeName;
-                            const key = `${famLink.familyId || ''}:${child.id}:${spec.tag}:${childDate || ''}:${childPlace || ''}`;
-                            if (childBirthSeen.has(key)) return;
-                            childBirthSeen.add(key);
-
-                            merged.push({
-                                originalType: 'family-event',
-                                originalIndex: -1,
-                                familyId: famLink.familyId,
-                                sourcePersonId: child.id,
-                                sourcePersonName: childRef.name || this.getPersonName(child.id) || 'Person',
-                                tag: spec.tag,
-                                date: childDate,
-                                place: childPlace,
-                                description: `${spec.label} von ${childRef.name || this.getPersonName(child.id) || 'Kind'}`,
-                                media: [],
-                                notes: [],
-                                citations: [],
-                                editing: false
-                            });
-                        });
-                    });
-                }
-            });
-        }
-
-        // Sort timeline by date
-        merged.sort((a, b) => {
-            const dateA = this.parseToComparableDate(a.date);
-            const dateB = this.parseToComparableDate(b.date);
-            return dateA.getTime() - dateB.getTime();
-        });
-
+        const merged = this.personTimelineService.buildTimeline(p, this.treeData(), (id: string) => this.getPersonName(id));
         this.timeline.set(merged);
     }
 
-    private parseToComparableDate(dateStr: string | undefined): Date {
-        if (!dateStr) return new Date(9999, 11, 31); // No date -> last
-
-        const months: { [key: string]: number } = {
-            'JAN': 0, 'FEB': 1, 'MAR': 2, 'APR': 3, 'MAY': 4, 'JUN': 5,
-            'JUL': 6, 'AUG': 7, 'SEP': 8, 'OCT': 9, 'NOV': 10, 'DEC': 11
-        };
-
-        // Try "DD MMM YYYY"
-        const dmy = dateStr.match(/(\d{1,2})\s+([A-Z]{3})\s+(\d{4})/i);
-        if (dmy) {
-            const day = parseInt(dmy[1]);
-            const month = months[dmy[2].toUpperCase()] || 0;
-            const year = parseInt(dmy[3]);
-            return new Date(year, month, day);
-        }
-
-        // Try "MMM YYYY"
-        const my = dateStr.match(/([A-Z]{3})\s+(\d{4})/i);
-        if (my) {
-            const month = months[my[1].toUpperCase()] || 0;
-            const year = parseInt(my[2]);
-            return new Date(year, month, 1);
-        }
-
-        // Try "YYYY"
-        const y = dateStr.match(/(\d{4})/);
-        if (y) {
-            return new Date(parseInt(y[1]), 0, 1);
-        }
-
-        return new Date(9999, 11, 31);
-    }
 
     buildRelations() {
         const p = this.person();
         const data = this.treeData();
         if (!p || !data) return;
 
-        const rels: { type: string; personId: string; personName?: string; familyId?: string }[] = [];
-        const relSeen = new Set<string>();
-
-        data.families.forEach(fam => {
-            if (fam.children.includes(p.id)) {
-                if (fam.husband) {
-                    const key = `FATHER:${fam.husband}`;
-                    if (!relSeen.has(key)) {
-                        relSeen.add(key);
-                        rels.push({ type: 'FATHER', personId: fam.husband });
-                    }
-                }
-                if (fam.wife) {
-                    const key = `MOTHER:${fam.wife}`;
-                    if (!relSeen.has(key)) {
-                        relSeen.add(key);
-                        rels.push({ type: 'MOTHER', personId: fam.wife });
-                    }
-                }
-            }
-            if (fam.husband === p.id || fam.wife === p.id) {
-                const partner = fam.husband === p.id ? fam.wife : fam.husband;
-                if (partner) {
-                    const key = `SPOUSE:${partner}`;
-                    if (!relSeen.has(key)) {
-                        relSeen.add(key);
-                        rels.push({ type: 'SPOUSE', personId: partner, familyId: fam.id });
-                    }
-                }
-                fam.children.forEach(child => {
-                    const key = `CHILD:${child}`;
-                    if (!relSeen.has(key)) {
-                        relSeen.add(key);
-                        rels.push({ type: 'CHILD', personId: child, familyId: fam.id });
-                    }
-                });
-            }
-        });
-
-        // Resolve names and set initial search query
-        // Resolve names and set initial search query
-        rels.forEach(r => r.personName = this.getPersonName(r.personId));
-        this.relations.set(rels);
-
-        // Populate Simple Mode specialized fields on the person object
-        const pVal = this.person();
-        if (pVal) {
-            const updatedPerson = { ...pVal };
-            updatedPerson.familiesAsSpouse = [];
-
-            // A map to keep track of unique families to avoid duplicates
-            // Especially when a person is husband/wife in multiple families
-            const seenFamilyKeys = new Set<string>();
-
-            data.families.forEach(fam => {
-                // Parents (Child in this family)
-                if (fam.children.includes(pVal.id)) {
-                    if (fam.husband) {
-                        updatedPerson.fatherId = fam.husband;
-                        updatedPerson.fatherName = this.getPersonName(fam.husband);
-                    }
-                    if (fam.wife) {
-                        updatedPerson.motherId = fam.wife;
-                        updatedPerson.motherName = this.getPersonName(fam.wife);
-                    }
-                }
-
-                // Partners & Children (Spouse in this family)
-                if (fam.husband === pVal.id || fam.wife === pVal.id) {
-                    const familyKey = [fam.husband || '', fam.wife || '', ...(fam.children || []).slice().sort()].join('|');
-                    if (seenFamilyKeys.has(familyKey)) return;
-                    seenFamilyKeys.add(familyKey);
-
-                    const spouseId = fam.husband === pVal.id ? fam.wife : fam.husband;
-
-                    if (!updatedPerson.familiesAsSpouse) updatedPerson.familiesAsSpouse = [];
-
-                    updatedPerson.familiesAsSpouse.push({
-                        familyId: fam.id, // Storing familyId for deletion
-                        spouseId: spouseId,
-                        spouseName: spouseId ? this.getPersonName(spouseId) : 'Unbekannt',
-                        children: Array.from(new Set(fam.children || [])).map(childId => ({
-                            id: childId,
-                            name: this.getPersonName(childId)
-                        }))
-                    });
-                }
-            });
-            this.person.set(updatedPerson);
-            // Rebuild timeline after relation-derived fields were refreshed.
-            this.buildTimeline();
-        }
+        const { relations, enrichedPerson } = this.personTimelineService.enrichPersonRelations(p, data);
+        
+        this.relations.set(relations);
+        this.person.set(enrichedPerson);
+        this.buildTimeline();
     }
 
 
@@ -1164,19 +768,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         this.showMediaSelector.set(true);
     }
 
-    getRelationLabel(type: string): string {
-        const map: any = {
-            'SPOUSE': 'Partner/in',
-            'FATHER': 'Vater',
-            'MOTHER': 'Mutter',
-            'CHILD': 'Kind',
-            'SON': 'Sohn',
-            'DAUGHTER': 'Tochter',
-            'HUSBAND': 'Ehemann',
-            'WIFE': 'Ehefrau'
-        };
-        return map[type] || type;
-    }
+    getRelationLabel = (type: string) => this.personTimelineService.getRelationLabel(type);
 
     onMediaSelected(mediaObj: any) {
         if (!mediaObj) return;
@@ -1475,44 +1067,10 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         this.savePerson();
     }
 
-    getSourceTitle(sourceId?: string): string {
-        if (!sourceId) return 'Ohne Quelle';
-        const src = this.availableSources().find((s: any) => s.id === sourceId);
-        return src ? src.title : sourceId;
-    }
-
-    getNoteTypeLabel(type?: string): string {
-        const map: Record<string, string> = {
-            GENERAL: 'Allgemein',
-            RESEARCH: 'Recherche',
-            TRANSCRIPTION: 'Transkript',
-            ANALYSIS: 'Analyse',
-            TODO: 'ToDo'
-        };
-        return map[type || ''] || (type || 'Allgemein');
-    }
-
-    getConfidenceLabel(conf: string): string {
-        switch (conf) {
-            case 'CERTAIN': return 'Sicher';
-            case 'VERY_LIKELY': return 'Sehr wahrscheinlich';
-            case 'LIKELY': return 'Wahrscheinlich';
-            case 'POSSIBLE': return 'Möglich';
-            case 'UNLIKELY': return 'Unwahrscheinlich';
-            default: return 'Keine Angabe';
-        }
-    }
-
-    getConfidenceColorClass(conf: string): string {
-        switch (conf) {
-            case 'CERTAIN': return 'badge-success';
-            case 'VERY_LIKELY': return 'bg-emerald-500/10 text-emerald-500'; // Success, but slightly different
-            case 'LIKELY': return 'badge-highlight';
-            case 'POSSIBLE': return 'badge-warn';
-            case 'UNLIKELY': return 'badge-danger';
-            default: return 'bg-neutral-950/10 text-neutral-400';
-        }
-    }
+    getSourceTitle = (sourceId?: string) => this.personTimelineService.getSourceTitle(this.availableSources(), sourceId);
+    getNoteTypeLabel = (type?: string) => this.personTimelineService.getNoteTypeLabel(type);
+    getConfidenceLabel = (conf: string) => this.personTimelineService.getConfidenceLabel(conf);
+    getConfidenceColorClass = (conf: string) => this.personTimelineService.getConfidenceColorClass(conf);
 
     addName() {
         this.openNameModal();

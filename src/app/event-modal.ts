@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppModalShell } from './ui/app-modal-shell';
 import { GedcomService } from './gedcom.service';
-import { AppNotesList } from './ui/app-notes-list';
+import { AppNotesList } from './ui/app-notes-list/app-notes-list';
 import { AppSourcesListComponent } from './ui/app-sources-list/app-sources-list';
 import { DisplayNote, NoteCategory, DisplaySource } from './models';
 

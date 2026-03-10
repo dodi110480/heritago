@@ -1,18 +1,16 @@
-import { Component, computed, inject, signal, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { GedcomService } from './gedcom.service';
-import { PlaceModal } from './place-modal';
-import { PlaceDisplayPipe } from './place-display.pipe';
-import { AppEntityCard } from './ui/app-entity-card';
+import { PlaceModal } from './ui/place-modal/place-modal';
 import { AppPageHeaderComponent } from './ui/app-page-header';
-import { AppListViewComponent } from './ui/app-list-view';
+import { AppPlacesList } from './ui/app-places-list/app-places-list';
 
 @Component({
     selector: 'app-place-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, PlaceModal, PlaceDisplayPipe, AppEntityCard, AppPageHeaderComponent, AppListViewComponent],
+    imports: [CommonModule, FormsModule, PlaceModal, AppPageHeaderComponent, AppPlacesList],
     templateUrl: './place-list.html',
     encapsulation: ViewEncapsulation.None
 })
@@ -26,36 +24,11 @@ export class PlaceList {
     isSaving = signal(false);
     currentTree = signal<string | null>(null);
     errorMessage = signal<string | null>(null);
-    searchQuery = signal('');
-
-    filteredHierarchy = computed(() => {
-        const query = this.searchQuery().toLowerCase().trim();
-        if (!query) return this.hierarchy();
-
-        const filterNodes = (nodes: any[]): any[] => {
-            return nodes
-                .map(node => {
-                    const matches = 
-                        node.name.toLowerCase().includes(query) || 
-                        (node.phrase && node.phrase.toLowerCase().includes(query));
-                    
-                    const filteredChildren = node.children ? filterNodes(node.children) : [];
-                    
-                    if (matches || filteredChildren.length > 0) {
-                        return { ...node, children: filteredChildren };
-                    }
-                    return null;
-                })
-                .filter((n): n is any => n !== null);
-        };
-
-        return filterNodes(this.hierarchy());
-    });
 
     // Modal State
-    isModalOpen = false;
-    modalMode: 'add' | 'edit' = 'add';
-    selectedPlaceData: any = null;
+    isModalOpen = signal(false);
+    modalMode = signal<'add' | 'edit'>('add');
+    selectedPlaceData = signal<any>(null);
 
     ngOnInit() {
         this.loadPlaces();
@@ -84,10 +57,10 @@ export class PlaceList {
                 this.hierarchy.set(this.buildHierarchy(items));
                 this.loading.set(false);
                 // Refresh current modal data if open
-                if (this.isModalOpen && this.selectedPlaceData?.id) {
-                    const refreshed = items.find((p: any) => p.id === this.selectedPlaceData.id) || null;
+                if (this.isModalOpen() && this.selectedPlaceData()?.id) {
+                    const refreshed = items.find((p: any) => p.id === this.selectedPlaceData().id) || null;
                     if (refreshed) {
-                        this.selectedPlaceData = refreshed;
+                        this.selectedPlaceData.set(refreshed);
                     } else {
                         this.closeModal();
                     }
@@ -114,29 +87,20 @@ export class PlaceList {
         return roots;
     }
 
-    flattenHierarchy(nodes: any[], depth = 0): any[] {
-        const out: any[] = [];
-        for (const n of nodes) {
-            out.push({ ...n, depth });
-            out.push(...this.flattenHierarchy(n.children || [], depth + 1));
-        }
-        return out;
-    }
-
     openAddModal() {
-        this.modalMode = 'add';
-        this.selectedPlaceData = null;
-        this.isModalOpen = true;
+        this.modalMode.set('add');
+        this.selectedPlaceData.set(null);
+        this.isModalOpen.set(true);
     }
 
     openEditModal(place: any) {
-        this.modalMode = 'edit';
-        this.selectedPlaceData = place;
-        this.isModalOpen = true;
+        this.modalMode.set('edit');
+        this.selectedPlaceData.set(place);
+        this.isModalOpen.set(true);
     }
 
     closeModal() {
-        this.isModalOpen = false;
+        this.isModalOpen.set(false);
     }
 
     onPlaceSaved() {

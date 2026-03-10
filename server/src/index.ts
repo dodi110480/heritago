@@ -97,16 +97,30 @@ app.use('/api/auth', authRoutes(prisma));
 app.use('/api/person', personRoutes(prisma));
 app.use('/api/family', familyRoutes(prisma));
 app.use('/api/media', mediaRoutes(prisma));
-app.use('/api/tree', gedcomRoutes(prisma));
-app.use('/api/tree/:tree/search', searchRoutes(prisma));
-app.use('/api', treeRoutes(prisma));
+app.use('/api/system', systemRoutes());
+
+// Specific Tree Sub-Routes (most specific first)
 app.use('/api/tree/:tree/place', placeRoutes(prisma));
 app.use('/api/tree/:tree/source', sourceRoutes(prisma));
 app.use('/api/tree/:tree/repository', repositoryRoutes(prisma));
-app.use('/api/system', systemRoutes());
+app.use('/api/tree/:tree/search', searchRoutes(prisma));
+
+// General Tree & GEDCOM Routes
+app.use('/api/tree', gedcomRoutes(prisma));
+app.use('/api', treeRoutes(prisma));
 
 // Health & Info
 app.get('/api/health', (req, res) => res.json({ status: 'ok', stack: 'TS/Postgres' }));
+
+// --- Global Error Handler ---
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error(`[GlobalError] ${req.method} ${req.originalUrl}:`, err);
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || 'Ein unerwarteter Serverfehler ist aufgetreten.',
+        ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+    });
+});
 
 app.listen(port, () => {
     console.log(`[server]: Heritago GEDCOM-Compliant Backend running at http://localhost:${port}`);

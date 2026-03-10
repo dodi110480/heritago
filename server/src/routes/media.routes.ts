@@ -452,6 +452,110 @@ export const mediaRoutes = (prisma: PrismaClient) => {
         }
     });
 
+    router.get('/:id/usage', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const media = await prisma.media.findUnique({
+                where: { id },
+                include: {
+                    links: {
+                        include: {
+                            person: { include: { names: { where: { isPrimary: true }, take: 1 } } },
+                            family: true,
+                            source: true,
+                            event: true,
+                            fact: true
+                        }
+                    },
+                    citations: {
+                        include: {
+                            person: { include: { names: { where: { isPrimary: true }, take: 1 } } },
+                            family: true,
+                            event: true,
+                            fact: true
+                        }
+                    }
+                }
+            });
+
+            if (!media) return res.status(404).json({ success: false, message: 'Media not found' });
+
+            const personLabel = (p: any) =>
+                p ? `${p.names?.[0]?.given || ''} ${p.names?.[0]?.surname || ''}`.trim() || p.gedcomId || p.id : null;
+
+            const results = [];
+
+            // Add direct links
+            for (const l of media.links) {
+                if (l.person) {
+                    results.push({
+                        context: 'Person',
+                        contextLabel: personLabel(l.person),
+                        entityId: l.person.id,
+                        entityType: 'person'
+                    });
+                } else if (l.family) {
+                    results.push({
+                        context: 'Familie',
+                        contextLabel: l.family.gedcomId || l.family.id,
+                        entityId: l.family.id,
+                        entityType: 'family'
+                    });
+                } else if (l.source) {
+                    results.push({
+                        context: 'Quelle',
+                        contextLabel: l.source.title,
+                        entityId: l.source.id,
+                        entityType: 'source'
+                    });
+                }
+            }
+
+            // Add citation usages
+            for (const c of media.citations) {
+                let context = 'Beleg';
+                let contextLabel = 'Unbekannt';
+                let entityId = null;
+                let entityType = null;
+
+                if (c.person) {
+                    context = 'Beleg (Person)';
+                    contextLabel = personLabel(c.person);
+                    entityId = c.person.id;
+                    entityType = 'person';
+                } else if (c.family) {
+                    context = 'Beleg (Familie)';
+                    contextLabel = c.family.gedcomId || c.family.id;
+                    entityId = c.family.id;
+                    entityType = 'family';
+                } else if (c.event) {
+                    context = `Beleg (Ereignis: ${c.event.type})`;
+                    contextLabel = personLabel(c.person) || (c.family as any)?.gedcomId || 'Unbekannt';
+                    entityId = c.personId || c.familyId;
+                    entityType = c.personId ? 'person' : (c.familyId ? 'family' : null);
+                } else if (c.fact) {
+                    context = `Beleg (Fakt: ${c.fact.type})`;
+                    contextLabel = personLabel(c.person) || (c.family as any)?.gedcomId || 'Unbekannt';
+                    entityId = c.personId || c.familyId;
+                    entityType = c.personId ? 'person' : (c.familyId ? 'family' : null);
+                }
+
+                results.push({
+                    context,
+                    contextLabel,
+                    entityId,
+                    entityType,
+                    page: c.page,
+                    dateText: c.dateText
+                });
+            }
+
+            res.json({ success: true, usage: results });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
     router.get('/:id', async (req, res) => {
         try {
             const media = await prisma.media.findUnique({

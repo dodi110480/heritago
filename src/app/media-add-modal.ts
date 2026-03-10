@@ -6,14 +6,15 @@ import { GedcomService } from './gedcom.service';
 import { AuthService } from './auth.service';
 import { ImageCropper } from './image-cropper';
 import { AppModalShell } from './ui/app-modal-shell';
-import { AppNotesList } from './ui/app-notes-list';
+import { AppNotesList } from './ui/app-notes-list/app-notes-list';
 import { AppSourcesListComponent } from './ui/app-sources-list/app-sources-list';
+import { AppUsageList } from './ui/app-usage-list/app-usage-list';
 import { DisplayNote, NoteCategory, DisplaySource } from './models';
 
 @Component({
     selector: 'app-media-add-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, ImageCropper, AppModalShell, AppNotesList, AppSourcesListComponent],
+    imports: [CommonModule, FormsModule, ImageCropper, AppModalShell, AppNotesList, AppUsageList, AppSourcesListComponent],
     templateUrl: './media-add-modal.html'
 })
 export class MediaAddModal {
@@ -75,6 +76,27 @@ export class MediaAddModal {
     identifiers = signal<any[]>([]);
     citations = signal<any[]>([]);
     links = signal<any[]>([]);
+    usages = signal<any[]>([]);
+    isLoadingUsage = signal(false);
+
+    setTab(tab: 'preview' | 'basics' | 'citations' | 'identifiers' | 'links' | 'notes') {
+        this.activeTab.set(tab);
+        if (tab === 'links') {
+            this.fetchUsage();
+        }
+    }
+
+    private fetchUsage() {
+        if (!this.id() || !this.isEditing()) return;
+        this.isLoadingUsage.set(true);
+        this.gedcomService.getMediaUsage(this.id()).subscribe({
+            next: (res) => {
+                this.isLoadingUsage.set(false);
+                if (res.success) this.usages.set(res.usage || []);
+            },
+            error: () => this.isLoadingUsage.set(false)
+        });
+    }
     
     // Note Management
     showNoteSubModal = signal(false);

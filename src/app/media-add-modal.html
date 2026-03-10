@@ -17,17 +17,19 @@
   <!-- Tabbed single-column layout to match event modal -->
   <div class="flex flex-col h-[600px] max-h-[70vh]">
     <div class="flex border-b border-canvas/10 mb-4 shrink-0 gap-2">
-      <button (click)="activeTab.set('preview')"
+      <button (click)="setTab('preview')"
         [class]="activeTab() === 'preview' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Vorschau</button>
-      <button (click)="activeTab.set('basics')"
+      <button (click)="setTab('basics')"
         [class]="activeTab() === 'basics' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Basis</button>
-      <button (click)="activeTab.set('citations')"
+      <button (click)="setTab('citations')"
         [class]="activeTab() === 'citations' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Belege</button>
-      <button (click)="activeTab.set('identifiers')"
+      <button (click)="setTab('identifiers')"
         [class]="activeTab() === 'identifiers' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Identifikatoren</button>
-      <button (click)="activeTab.set('links')"
-        [class]="activeTab() === 'links' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Verknüpfungen</button>
-      <button (click)="activeTab.set('notes')"
+      <button (click)="setTab('links')"
+        [class]="activeTab() === 'links' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase transition-all' : 'px-4 py-3 text-sm text-neutral-500'">
+        Links <span *ngIf="isEditing()" class="ml-1 px-1.5 py-0.5 bg-neutral-100 dark:bg-neutral-800 rounded-full text-[10px]">{{usages().length}}</span>
+      </button>
+      <button (click)="setTab('notes')"
         [class]="activeTab() === 'notes' ? 'border-b-2 border-brand-500 text-brand-500 px-4 py-3 text-sm font-bold uppercase' : 'px-4 py-3 text-sm text-neutral-500'">Notizen</button>
     </div>
 
@@ -111,47 +113,35 @@
       </div>
 
       <!-- Links Tab -->
-      <div *ngIf="activeTab() === 'links'">
-        <div class="glass-card space-y-4">
-          <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest border-b border-white/10 pb-2">
-            Verknüpfungen</h3>
-          <div class="space-y-3">
-            <div *ngFor="let link of links(); let i = index"
-              class="flex items-center gap-2 p-2 bg-neutral-50/5 rounded-lg text-xs">
-              <button (click)="navigateToLink(link)"
-                class="flex-1 text-left truncate text-brand-600 font-medium hover:underline">
-                {{ formatLinkLabel(link) }}
-              </button>
-              <span class="text-[10px] uppercase font-bold text-neutral-500">{{ link.person || link.personId ? 'Person'
-                : (link.family || link.familyId ? 'Familie' : 'Sonstiges') }}</span>
-              <button (click)="removeLink(i)" class="btn-icon text-accent-danger-500">✕</button>
+      <div *ngIf="activeTab() === 'links'" class="animate-in fade-in slide-in-from-top-2 duration-300">
+        <app-usage-list [usages]="usages()" [isLoading]="isLoadingUsage()" [title]="'Verknüpfungen & Verwendung'"
+          [emptyMessage]="'Dieses Medium ist aktuell nirgends verknüpft.'" (linkClick)="close()"></app-usage-list>
+          
+        <!-- Manual Linking (Keep for new uploads or quick links) -->
+        <div class="mt-8 border-t border-neutral-100 dark:border-neutral-800 pt-6">
+          <h4 class="text-sm font-bold text-neutral-900 dark:text-white mb-4">Manuelle Verknüpfung hinzufügen</h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1.5">
+              <label class="form-label text-xs">Person auswählen</label>
+              <select [ngModel]="selectedPersonId()" (ngModelChange)="selectedPersonId.set($event)"
+                class="form-input text-sm">
+                <option value="">-- Person wählen --</option>
+                <option *ngFor="let p of personOptions()" [value]="p.id">{{ p.name }}</option>
+              </select>
             </div>
-            <p *ngIf="links().length === 0" class="text-xs text-neutral-500 italic">Noch keine Verknüpfungen.</p>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-              <div>
-                <label class="form-label text-xs">Person hinzufügen</label>
-                <select [ngModel]="selectedPersonId()" (ngModelChange)="selectedPersonId.set($event)"
-                  class="form-input text-sm">
-                  <option value="">-- Person wählen --</option>
-                  <option *ngFor="let p of personOptions()" [value]="p.id">{{ p.name }}</option>
-                </select>
-              </div>
-              <div>
-                <label class="form-label text-xs">Familie hinzufügen</label>
-                <select [ngModel]="selectedFamilyId()" (ngModelChange)="selectedFamilyId.set($event)"
-                  class="form-input text-sm">
-                  <option value="">-- Familie wählen --</option>
-                  <option *ngFor="let f of familyOptions()" [value]="f.id">{{ f.label }}</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="pt-2">
-              <button (click)="addLink()" class="btn-secondary !text-[10px] !py-2 w-full uppercase tracking-widest">Link
-                hinzufügen</button>
+            <div class="space-y-1.5">
+              <label class="form-label text-xs">Familie auswählen</label>
+              <select [ngModel]="selectedFamilyId()" (ngModelChange)="selectedFamilyId.set($event)"
+                class="form-input text-sm">
+                <option value="">-- Familie wählen --</option>
+                <option *ngFor="let f of familyOptions()" [value]="f.id">{{ f.label }}</option>
+              </select>
             </div>
           </div>
+          <button (click)="addLink()" [disabled]="!selectedPersonId() && !selectedFamilyId()"
+            class="btn-secondary !text-[10px] !py-3 w-full uppercase tracking-widest mt-4">
+            Link jetzt hinzufügen
+          </button>
         </div>
       </div>
 

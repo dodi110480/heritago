@@ -2,8 +2,8 @@ import { Component, input, output, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppModalShell } from '../app-modal-shell';
-import { AppNotesList } from '../app-notes-list';
-import { AppNoteModal } from '../app-note-modal';
+import { AppNotesList } from '../app-notes-list/app-notes-list';
+import { AppNoteModal } from '../app-note-modal/app-note-modal';
 import { Citation, DisplayNote, NoteCategory } from '../../models';
 
 @Component({

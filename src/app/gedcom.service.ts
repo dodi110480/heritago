@@ -131,6 +131,10 @@ export class GedcomService {
         return this.http.delete<any>(`${environment.apiUrl}/media/${mediaId}/crop`, { withCredentials: true });
     }
 
+    getMediaUsage(id: string): Observable<any> {
+        return this.http.get<any>(`${environment.apiUrl}/media/${id}/usage`, { withCredentials: true });
+    }
+
     deleteMedia(id: string): Observable<any> {
         return this.http.delete<any>(`${environment.apiUrl}/media/${id}`, { withCredentials: true });
     }

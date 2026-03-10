@@ -12,12 +12,12 @@ import { AppAvatarComponent } from './ui/app-avatar';
 import { AppModalShell } from './ui/app-modal-shell';
 import { AppEmptyStateComponent } from './ui/app-empty-state';
 import { AppSectionHeaderComponent } from './ui/app-section-header';
-import { PlaceModal } from './place-modal';
+import { PlaceModal } from './ui/place-modal/place-modal';
 import { MediaSelector } from './media-selector';
 import { MediaAddModal } from './media-add-modal';
 import { EventModal } from './event-modal';
 import { ImageViewer } from './image-viewer';
-import { AppNotesList } from './ui/app-notes-list';
+import { AppNotesList } from './ui/app-notes-list/app-notes-list';
 import { DisplayNote, NoteCategory, DisplaySource } from './models';
 import { AppSourcesListComponent } from './ui/app-sources-list/app-sources-list';
 

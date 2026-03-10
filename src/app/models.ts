@@ -264,3 +264,22 @@ export interface TreeData {
         gedcom?: string;
     };
 }
+
+export interface TimelineItem {
+    originalType: 'event' | 'fact' | 'family-event';
+    originalIndex: number;
+    familyId?: string;
+    sourcePersonId?: string;
+    sourcePersonName?: string;
+    tag: string;
+    date?: string;
+    place?: string;
+    description?: string; // Für Events
+    value?: string; // Für Fakten
+    media?: any[];
+    notes?: string[];
+    citations?: any[];
+    associations?: any[];
+    expanded?: boolean;
+    editing?: boolean;
+}

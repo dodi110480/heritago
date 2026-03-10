@@ -41,6 +41,41 @@ export const placeRoutes = (prisma: PrismaClient) => {
         res.json({ success: true });
     });
 
+    router.get('/', async (req, res) => {
+        const treeName = (req.params as any).tree as string;
+        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+        if (!tree) return res.status(404).json({ success: false });
+
+        const places = await prisma.place.findMany({
+            where: { treeId: tree.id },
+            include: {
+                _count: {
+                    select: {
+                        events: true,
+                        facts: true,
+                        associations: true,
+                        children: true
+                    }
+                }
+            },
+            orderBy: { name: 'asc' }
+        });
+
+        res.json({
+            success: true,
+            places: places.map(p => ({
+                ...p,
+                usage: {
+                    eventCount: p._count.events,
+                    factCount: p._count.facts,
+                    associationCount: p._count.associations,
+                    childCount: p._count.children,
+                    total: p._count.events + p._count.facts + p._count.associations
+                }
+            }))
+        });
+    });
+
     router.get('/search', async (req, res) => {
         const treeName = (req.params as any).tree as string;
         const { q } = req.query;
@@ -58,6 +93,122 @@ export const placeRoutes = (prisma: PrismaClient) => {
         });
 
         res.json({ success: true, results: places.map(p => p.name) });
+    });
+
+    router.get('/:id/usage', async (req, res) => {
+        const treeName = (req.params as any).tree as string;
+        const { id } = req.params;
+        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+        if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
+
+        const [events, facts, children, associations] = await Promise.all([
+            prisma.event.findMany({
+                where: { placeId: id, treeId: tree.id },
+                include: {
+                    person: { include: { names: { where: { isPrimary: true }, take: 1 } } },
+                    family: true
+                }
+            }),
+            prisma.fact.findMany({
+                where: { placeId: id, treeId: tree.id },
+                include: {
+                    person: { include: { names: { where: { isPrimary: true }, take: 1 } } },
+                    family: true
+                }
+            }),
+            prisma.place.findMany({
+                where: { parentId: id, treeId: tree.id }
+            }),
+            prisma.association.findMany({
+                where: { placeId: id, treeId: tree.id },
+                include: {
+                    person: { include: { names: { where: { isPrimary: true }, take: 1 } } },
+                    family: true
+                }
+            })
+        ]);
+
+        const personLabel = (p: any) =>
+            p ? `${p.names?.[0]?.given || ''} ${p.names?.[0]?.surname || ''}`.trim() || p.gedcomId || p.id : null;
+
+        const results = [];
+
+        for (const e of events) {
+            results.push({
+                context: `Ereignis (${e.type})`,
+                contextLabel: personLabel(e.person) || e.family?.gedcomId || 'Unbekannt',
+                entityId: e.personId || e.familyId,
+                entityType: e.personId ? 'person' : (e.familyId ? 'family' : null),
+                dateText: e.dateText
+            });
+        }
+
+        for (const f of facts) {
+            results.push({
+                context: `Fakt (${f.type})`,
+                contextLabel: personLabel(f.person) || f.family?.gedcomId || 'Unbekannt',
+                entityId: f.personId || f.familyId,
+                entityType: f.personId ? 'person' : (f.familyId ? 'family' : null),
+                dateText: f.dateText
+            });
+        }
+
+        for (const a of associations) {
+            results.push({
+                context: `Verknüpfung (${a.role})`,
+                contextLabel: personLabel(a.person) || a.family?.gedcomId || 'Unbekannt',
+                entityId: a.personId || a.familyId,
+                entityType: a.personId ? 'person' : (a.familyId ? 'family' : null),
+                dateText: a.dateText
+            });
+        }
+
+        for (const c of children) {
+            results.push({
+                context: 'Untergeordneter Ort',
+                contextLabel: c.name,
+                entityId: c.id,
+                entityType: 'place-detail', // Use this type to trigger navigation in my future standardized list
+                dateText: null
+            });
+        }
+
+        res.json({
+            success: true,
+            usage: results
+        });
+    });
+
+    router.get('/:id', async (req, res) => {
+        const treeName = (req.params as any).tree as string;
+        const { id } = req.params;
+        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
+        if (!tree) return res.status(404).json({ success: false });
+
+        const place = await prisma.place.findFirst({
+            where: { id, treeId: tree.id },
+            include: {
+                translations: true,
+                identifiers: true,
+                noteLinks: { include: { note: true } }
+            }
+        });
+
+        if (!place) return res.status(404).json({ success: false, message: 'Place not found' });
+
+        res.json({
+            success: true,
+            place: {
+                ...place,
+                notes: place.noteLinks.map(nl => ({
+                    id: nl.note.id,
+                    text: nl.note.text,
+                    noteType: nl.note.noteType,
+                    privacyLevel: nl.note.privacyLevel,
+                    isPrivate: nl.note.privacyLevel === 'PRIVATE'
+                }))
+            }
+        });
     });
 
     router.post('/', async (req, res) => {
