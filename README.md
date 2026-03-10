@@ -1,5 +1,9 @@
 # 🌳 Heritago
 
+> [!WARNING]
+> **Projektstatus: Alpha-Stadium.**  
+> Heritago befindet sich aktuell in einer aktiven Entwicklungsphase. Funktionen können sich ohne Vorankündigung ändern oder unvollständig sein. Die Nutzung für produktive Daten geschieht auf eigene Gefahr.
+
 ![Heritago Hero Banner](docs/assets/hero-banner.png)
 
 **Heritago** ist eine hochmoderne, webbasierte Genealogie-Plattform, die Eleganz mit technischer Präzision verbindet. Entwickelt für Familienforscher, die Wert auf erstklassige User Experience und strikte Einhaltung moderner Standards legen.
