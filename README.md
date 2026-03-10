@@ -1,67 +1,72 @@
-# Heritago
+# 🌳 Heritago
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.4.
+![Heritago Hero Banner](docs/assets/hero-banner.png)
 
-## Development server
+**Heritago** ist eine hochmoderne, webbasierte Genealogie-Plattform, die Eleganz mit technischer Präzision verbindet. Entwickelt für Familienforscher, die Wert auf erstklassige User Experience und strikte Einhaltung moderner Standards legen.
 
-To start a local development server, run:
+---
 
-```bash
-ng serve
-```
+## ✨ Highlights
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+*   **Premium UI/UX**: Ein flüssiges Interface im Glassmorphismus-Design, optimiert für schnelles Arbeiten und ästhetische Freude.
+*   **Volle GEDCOM 7.0 Kompatibilität**: Zukunftssichere Datenhaltung nach dem aktuellsten Industriestandard.
+*   **Intelligentes Medien-Management**: Integriertes Zuschneiden (Cropping), Varianten-Generierung und nahtlose Verknüpfung mit Personen, Quellen und Ereignissen.
+*   **Orts-Hierarchien & Mapping**: Verwaltung komplexer Ortsstrukturen mit automatischer Geokodierung und visueller Darstellung.
+*   **Reaktive Architektur**: Blitzschnelle UI-Updates dank Angular Signals – keine unnötigen Wartezeiten.
 
-## Code scaffolding
+---
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## 🚀 Technische Features
 
-```bash
-ng generate component component-name
-```
+### Frontend (Modern Angular)
+- **Framework**: Angular 19+ mit Standalone Components.
+- **State Management**: Konsequente Nutzung von **Signals** für maximale Performance.
+- **Design**: Vanilla CSS mit Fokus auf moderne Aesthetics (Gradients, Blur-Effekte, Micro-Animations).
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Backend (Robust & Skalierbar)
+- **Runtime**: Node.js mit Express.
+- **Datenbank**: PostgreSQL via **Prisma ORM** für typsichere Abfragen.
+- **Dateisystem**: Strukturiertes Storage-System für Originalmedien, Thumbnails und Dokumente.
 
-```bash
-ng generate --help
-```
+---
 
-## Building
+## 🛠 Installation & Entwicklung
 
-To build the project run:
+### Voraussetzungen
+- Node.js (v18+)
+- PostgreSQL Instanz
 
-```bash
-ng build
-```
+### Setup
+1. Repository klonen:
+   ```bash
+   git clone https://github.com/dodi110480/heritago.git
+   cd heritago
+   ```
+2. Abhängigkeiten installieren:
+   ```bash
+   npm install
+   cd server && npm install
+   ```
+3. Umgebungsvariablen konfigurieren:
+   Erstelle eine `.env` im `server` Verzeichnis mit `DATABASE_URL`.
+4. Datenbank migrieren:
+   ```bash
+   npx prisma migrate dev
+   ```
+5. Development Server starten:
+   ```bash
+   # Im Hauptverzeichnis
+   npm run dev
+   ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+---
 
-## Running unit tests
+## 📜 Standards & Compliance
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+Dieses Projekt folgt strikt der **FamilySearch GEDCOM 7.0** Spezifikation. Jede Erweiterung des Datenmodells wird gegen diese Standards geprüft, um maximale Interoperabilität zu gewährleisten.
 
-```bash
-ng test
-```
+---
 
-## Running end-to-end tests
+## 🛡 Lizenz
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
-
-## Project Standards
-
-### GEDCOM 7.0 Compliance
-This project strictly follows the **FamilySearch GEDCOM 7.0** specification. 
-- Technical specifications are located in the `gedcom_specification/` folder.
-- AI assistants must adhere to the standards defined in `.agent/workflows/gedcom-compliance.md`.
-
+© 2026 Heritago Team. Alle Rechte vorbehalten.
