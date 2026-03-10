@@ -82,38 +82,11 @@
 
       <!-- Citations Tab -->
       <div *ngIf="activeTab() === 'citations'">
-        <div class="glass-card space-y-4">
-          <div class="flex justify-between items-center border-b border-white/10 pb-2">
-            <h3 class="text-xs font-bold text-neutral-400 uppercase tracking-widest">Belege & Quellen</h3>
-            <button (click)="addCitation()"
-              class="text-brand-400 hover:text-brand-300 text-xs font-bold uppercase transition-colors">+
-              Hinzufügen</button>
-          </div>
-          <div class="space-y-4">
-            <div *ngFor="let cit of citations(); let i = index"
-              class="p-3 bg-neutral-50/5 rounded-lg border border-white/5 space-y-3 relative">
-              <button (click)="removeCitation(i)"
-                class="absolute top-2 right-2 text-neutral-500 hover:text-accent-danger-500 transition-colors">
-                ✕
-              </button>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="space-y-1.5">
-                  <label class="form-label">Quelle</label>
-                  <select [ngModel]="cit.sourceId" (ngModelChange)="updateCitation(i, 'sourceId', $event)"
-                    class="form-input text-sm">
-                    <option value="">Wähle eine Quelle...</option>
-                    <option *ngFor="let s of sourceOptions()" [value]="s.id">{{ s.title }}</option>
-                  </select>
-                </div>
-                <div class="space-y-1.5">
-                  <label class="form-label">Seite / Fundstelle</label>
-                  <input type="text" [ngModel]="cit.page" (ngModelChange)="updateCitation(i, 'page', $event)"
-                    class="form-input text-sm" placeholder="S. 123, Archiv-Info...">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <app-sources-list [entityId]="id() || ''" [entityType]="'MEDIA'" [sourcesDisplay]="normalizedSources()"
+          [allowCreate]="true" [allowEdit]="true" [placeholder]="'Medien-Quellen durchsuchen...'"
+          (sourceCreateRequested)="onSourceCreateRequested()" (sourceEditRequested)="onSourceEditRequested($event)"
+          (sourceDeleted)="onSourceDeleted($event)" (masterSaved)="masterSaved.emit()">
+        </app-sources-list>
       </div>
 
       <!-- Identifiers Tab -->
@@ -251,6 +224,45 @@
         <div class="text-[10px] text-neutral-500">Nur für dich (und eingeladene Bearbeiter) sichtbar.</div>
       </div>
       <input type="checkbox" [(ngModel)]="noteDraft().isPrivate" class="checkbox checkbox-brand">
+    </div>
+  </div>
+</app-modal-shell>
+
+<!-- SOURCE EDIT SUB-MODAL -->
+<app-modal-shell [visible]="showSourceSubModal()" [title]="activeSourceIndex() !== null ? 'Quellenbeleg bearbeiten' : 'Neuer Quellenbeleg'"
+  icon="📖" size="md" [showSave]="true" [showDelete]="activeSourceIndex() !== null" (close)="showSourceSubModal.set(false)"
+  (save)="onSourceSave()" (delete)="onSourceDeleteFromModal()">
+  <div class="space-y-4">
+    <div class="form-group mb-0">
+      <label class="form-label text-[10px]">Quelle</label>
+      <select [(ngModel)]="sourceDraft().sourceId" class="form-input !py-1.5 text-sm">
+        <option value="">-- Quelle wählen --</option>
+        <option *ngFor="let s of sourceOptions()" [value]="s.id">{{s.title}}</option>
+      </select>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="form-group mb-0">
+        <label class="form-label text-[10px]">Seite/Ort</label>
+        <input type="text" [(ngModel)]="sourceDraft().page" class="form-input !py-1.5 text-sm" placeholder="z.B. S. 12">
+      </div>
+      <div class="form-group mb-0">
+        <label class="form-label text-[10px]">Datum im Beleg</label>
+        <input type="text" [(ngModel)]="sourceDraft().dateText" class="form-input !py-1.5 text-sm" placeholder="z.B. 1900">
+      </div>
+    </div>
+    <div class="form-group mb-0">
+      <label class="form-label text-[10px]">Qualität</label>
+      <select [(ngModel)]="sourceDraft().confidence" class="form-input !py-1.5 text-sm">
+        <option value="">Wählen...</option>
+        <option value="CERTAIN">Sicher (3)</option>
+        <option value="VERY_LIKELY">Sehr wahrscheinlich (2)</option>
+        <option value="LIKELY">Wahrscheinlich (1)</option>
+        <option value="UNLIKELY">Unzuverlässig (0)</option>
+      </select>
+    </div>
+    <div class="form-group mb-0">
+      <label class="form-label text-[10px]">Zitat / Ausschnitt</label>
+      <input type="text" [(ngModel)]="sourceDraft().text" class="form-input !py-1.5 text-sm" placeholder="Zitierter Text">
     </div>
   </div>
 </app-modal-shell>

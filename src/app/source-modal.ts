@@ -38,6 +38,8 @@ export class SourceModal implements OnInit {
     author = signal('');
     publication = signal('');
     repositoryId = signal('');
+    sourceType = signal<string>('ANDERE');
+    category = signal<string>('SECONDARY');
 
     mergeTargetId = signal('');
     reassignTargetId = signal('');
@@ -62,6 +64,8 @@ export class SourceModal implements OnInit {
             this.author.set(this.sourceData.author || '');
             this.publication.set(this.sourceData.publication || '');
             this.repositoryId.set(this.sourceData.repositoryId || '');
+            this.sourceType.set(this.sourceData.sourceType || 'ANDERE');
+            this.category.set(this.sourceData.category || 'SECONDARY');
         }
 
         if (this.currentTree) {
@@ -181,6 +185,8 @@ export class SourceModal implements OnInit {
             shortTitle: this.shortTitle().trim() || null,
             author: this.author().trim() || null,
             publication: this.publication().trim() || null,
+            sourceType: this.sourceType() || null,
+            category: this.category() || null,
             repositoryId: this.repositoryId() || null,
             notes: this.notes()
         };

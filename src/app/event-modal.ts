@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { AppModalShell } from './ui/app-modal-shell';
 import { GedcomService } from './gedcom.service';
 import { AppNotesList } from './ui/app-notes-list';
-import { DisplayNote, NoteCategory } from './models';
+import { AppSourcesListComponent } from './ui/app-sources-list/app-sources-list';
+import { DisplayNote, NoteCategory, DisplaySource } from './models';
 
 @Component({
     selector: 'app-event-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell, AppNotesList],
+    imports: [CommonModule, FormsModule, AppModalShell, AppNotesList, AppSourcesListComponent],
     templateUrl: './event-modal.html'
 })
 export class EventModal {
@@ -23,8 +24,6 @@ export class EventModal {
     @Output() delete = new EventEmitter<void>();
 
     // action outputs for citations/media/notes
-    @Output() addCitation = new EventEmitter<void>();
-    @Output() removeCitation = new EventEmitter<number>();
 
     @Output() addMedia = new EventEmitter<void>();
     @Output() removeMedia = new EventEmitter<number>();
@@ -35,6 +34,7 @@ export class EventModal {
     @Output() openUpload = new EventEmitter<void>();
     @Output() openGallery = new EventEmitter<void>();
     @Output() openViewer = new EventEmitter<any>();
+    @Output() masterSaved = new EventEmitter<void>();
 
     activeTab = signal<'basics' | 'participants' | 'citations' | 'media' | 'notes'>('basics');
 
@@ -92,6 +92,99 @@ export class EventModal {
         this.showNoteSubModal.set(false);
     }
 
+    // Source Sub-Modal State
+    showSourceSubModal = signal(false);
+    activeSourceIndex = signal<number | null>(null);
+    sourceDraft = signal<{ sourceId: string; confidence?: string; whereInSource?: string; date?: string; text?: string }>({
+        sourceId: '', whereInSource: '', confidence: '', date: '', text: ''
+    });
+    @Input() availableSources: any[] = [];
+
+    onSourceCreateRequested() {
+        this.sourceDraft.set({ sourceId: '', whereInSource: '', confidence: '', date: '', text: '' });
+        this.activeSourceIndex.set(null);
+        this.showSourceSubModal.set(true);
+    }
+
+    onSourceEditRequested(source: DisplaySource & { _originalIndex?: number }) {
+        if (source._originalIndex === undefined) return;
+        const cit = this.item.citations[source._originalIndex];
+        if (cit) {
+            this.sourceDraft.set({
+                sourceId: cit.sourceId || '',
+                whereInSource: cit.whereInSource || '',
+                confidence: cit.confidence || '',
+                date: cit.date || '',
+                text: cit.text || ''
+            });
+            this.activeSourceIndex.set(source._originalIndex);
+            this.showSourceSubModal.set(true);
+        }
+    }
+
+    onSourceSave() {
+        const draft = this.sourceDraft();
+        if (!draft.sourceId) {
+            alert('Bitte wählen Sie eine gültige Quelle aus.');
+            return;
+        }
+
+        if (!this.item.citations) this.item.citations = [];
+
+        const newCit = {
+            sourceId: draft.sourceId,
+            whereInSource: draft.whereInSource || '',
+            confidence: draft.confidence || '',
+            date: draft.date || '',
+            text: draft.text || ''
+        };
+
+        const idx = this.activeSourceIndex();
+        if (idx !== null) {
+            this.item.citations[idx] = { ...this.item.citations[idx], ...newCit };
+        } else {
+            this.item.citations.push(newCit);
+        }
+
+        this.showSourceSubModal.set(false);
+    }
+
+    normalizedSources(): (DisplaySource & { _originalIndex?: number })[] {
+        if (!this.item || !this.item.citations) return [];
+        return this.item.citations.map((c: any, i: number) => {
+            const rawSource = this.availableSources.find(s => s.id === c.sourceId);
+            return {
+                id: c.id || `cit-${i}`,
+                title: rawSource ? rawSource.title : 'Unbekannte Quelle',
+                author: rawSource ? rawSource.author : undefined,
+                publication: rawSource ? rawSource.publication : undefined,
+                confidence: c.confidence as any,
+                whereInSource: c.whereInSource || c.page,
+                description: (c.whereInSource || c.page) ? `Fundstelle: ${c.whereInSource || c.page}` : '',
+                text: c.text,
+                createdAt: (c.date || c.dateText) ? new Date(c.date || c.dateText) : new Date(),
+                _originalIndex: i
+            };
+        });
+    }
+
+    onSourceDeleted(sourceId: string) {
+        const idx = this.item.citations.findIndex((c: any, i: number) => (c.id || `cit-${i}`) === sourceId);
+        if (idx !== -1) {
+            if (confirm('Möchtest du diesen Beleg wirklich löschen?')) {
+                this.item.citations.splice(idx, 1);
+            }
+        }
+    }
+
+    onSourceDeleteFromModal() {
+        const idx = this.activeSourceIndex();
+        if (idx !== null && this.item.citations && this.item.citations[idx]) {
+            this.item.citations.splice(idx, 1);
+            this.showSourceSubModal.set(false);
+        }
+    }
+
     // Normalize legacy notes (strings) to DisplayNote objects for the notes list
     normalizedNotes(): DisplayNote[] {
         if (!this.item || !this.item.notes) return [];
@@ -140,9 +233,6 @@ export class EventModal {
     emitClose() { this.close.emit(); }
     emitSave() { this.save.emit(); }
     emitDelete() { this.delete.emit(); }
-
-    emitAddCitation() { this.addCitation.emit(); }
-    emitRemoveCitation(i: number) { this.removeCitation.emit(i); }
 
     emitAddMedia() { this.addMedia.emit(); }
     emitRemoveMedia(i: number) { this.removeMedia.emit(i); }

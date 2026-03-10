@@ -14,7 +14,7 @@
             {id: 'dna', label: 'DNA'},
             {id: 'media', label: 'Medien'},
             {id: 'notes', label: 'Notizen'},
-            {id: 'citations', label: 'Referenzen'}
+            {id: 'citations', label: 'Quellen'}
         ]" (click)="setActiveTab(tab.id)"
             [class]="activeTab() === tab.id ? 
             'px-4 py-2 rounded-lg bg-brand-500/10 text-brand-600 border border-brand-500/20 text-sm font-semibold whitespace-nowrap shadow-sm' : 
@@ -66,7 +66,7 @@
         <!-- CITATIONS TAB -->
         <div *ngIf="activeTab() === 'citations'" class="space-y-6">
             <app-person-tab-citations [person]="p" [availableSources]="availableSources()"
-                (changed)="markDirty(); savePerson()"></app-person-tab-citations>
+                (changed)="markDirty(); savePerson()" (masterSaved)="loadAvailableSources()"></app-person-tab-citations>
         </div>
 
     </div>
@@ -130,38 +130,38 @@
         [visible]="showTimelineCreateModal()" 
         [item]="newTimelineDraft()" 
         [isNew]="true"
+        [availableSources]="availableSources()"
         [allPersonsOptions]="allPersonsOptions()"
         (close)="closeTimelineCreateModal()" 
         (save)="confirmAddTimelineItem()"
-        (addCitation)="addNewTimelineCitation()"
-        (removeCitation)="removeNewTimelineCitation($event)"
         (openUpload)="openNewTimelineMediaAdd()"
         (openGallery)="openNewTimelineMediaSelector()"
         (addNote)="addNewTimelineNote()"
         (removeNote)="removeNewTimelineNote($event)"
         (addMedia)="addNewTimelineMedia()"
-        (removeMedia)="removeNewTimelineMedia($event)"
-        (openViewer)="openViewer($event)">
+        (removeMedia)="addNewTimelineMedia($event)"
+        (openViewer)="openViewer($event)"
+        (masterSaved)="loadAvailableSources()">
     </app-event-modal>
 
     <app-event-modal 
         [visible]="showTimelineItemModal()" 
         [item]="activeTimelineItem()" 
         [isNew]="false"
+        [availableSources]="availableSources()"
         [allPersonsOptions]="allPersonsOptions()"
         [showDelete]="!!activeTimelineItem() && !isTimelineItemLocked(activeTimelineItem()!)"
         (close)="closeTimelineItemModal()"
         (save)="saveTimelineItemModal()"
         (delete)="removeTimelineItemModal()"
-        (addCitation)="addTimelineCitation()"
-        (removeCitation)="removeTimelineCitation($event)"
         (openUpload)="openTimelineMediaAdd()"
         (openGallery)="openTimelineMediaSelector()"
         (addNote)="addEventNote()"
         (removeNote)="removeEventNote($event)"
         (addMedia)="addEventMedia()"
         (removeMedia)="removeEventMedia($event)"
-        (openViewer)="openViewer($event)">
+        (openViewer)="openViewer($event)"
+        (masterSaved)="loadAvailableSources()">
     </app-event-modal>
     
 
@@ -173,7 +173,8 @@
         [visible]="true"
         [treeId]="authService.currentTree()?.id || ''"
         (closed)="showMediaAddModal.set(false)" 
-        (saved)="onMediaAddUploaded($event)">
+        (saved)="onMediaAddUploaded($event)"
+        (masterSaved)="loadAvailableSources()">
     </app-media-add-modal>
 
     <app-media-selector 

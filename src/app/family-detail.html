@@ -12,7 +12,7 @@
             {id: 'children', label: 'Kinder'},
             {id: 'events', label: 'Ereignisse'},
             {id: 'notes', label: 'Notizen'},
-            {id: 'citations', label: 'Referenzen'},
+            {id: 'citations', label: 'Quellen'},
             {id: 'media', label: 'Medien'}
         ]" (click)="activeTab.set(tab.id)"
             [class]="activeTab() === tab.id ? 
@@ -174,49 +174,73 @@
 
         <!-- Tab: Notizen -->
         <div *ngIf="activeTab() === 'notes'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-            <app-notes-list [entityId]="familyId() || ''" [entityType]="'FAMILY'" [notesDisplay]="family()?.notes || []"
-                [allowCreate]="true" [allowEdit]="true" [placeholder]="'Familiennotizen durchsuchen...'"
-                (noteCreateRequested)="onNoteCreateRequested()" (noteEditRequested)="onNoteEditRequested($event)"
-                (noteDeleted)="onNoteDeletedFamily($event)"></app-notes-list>
-        </div>
-
-        <!-- Tab: Referenzen -->
-        <div *ngIf="activeTab() === 'citations'" class="space-y-6">
-            <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
-                <app-section-header title="Quellennachweise" icon="📚">
-                    <button actions class="btn-primary !w-auto !py-1.5 text-sm" (click)="openAddCitationModal()">+
-                        Referenz</button>
-                </app-section-header>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" *ngIf="family()?.citations?.length">
-                    <div *ngFor="let cite of family()?.citations; let i = index" (click)="openEditCitationModal(i)"
-                        class="glass-card !p-5 !rounded-2xl group hover:scale-[1.02] transition-transform cursor-pointer border border-canvas/10 dark:border-white/10">
-                        <div class="flex justify-between items-start mb-2">
-                            <span
-                                class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">{{
-                                getSourceTitle(cite.sourceId) }}</span>
-                            <button (click)="$event.stopPropagation(); removeCitation(i)"
-                                class="p-1.5 text-neutral-400 hover:text-accent-danger-500 rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M3 6h18"></path>
-                                    <path
-                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                    </path>
-                                </svg>
+            <div class="glass-card shadow-sm flex flex-col">
+                <div class="p-0">
+                    <app-section-header title="Notizen" icon="📝">
+                        <div actions class="flex items-center gap-3">
+                            <div class="relative hidden md:block w-64">
+                                <input 
+                                    type="text" 
+                                    [ngModel]="noteSearchQuery()"
+                                    (ngModelChange)="noteSearchQuery.set($event)"
+                                    placeholder="Notizen durchsuchen..."
+                                    class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
+                                >
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                </span>
+                            </div>
+                            <button (click)="onNoteCreateRequested()" class="btn-primary !w-auto !py-2">
+                                + Notiz
                             </button>
                         </div>
-                        <div class="text-sm text-neutral-800 dark:text-neutral-200">
-                            <p *ngIf="cite.page">Seite/Ort: <span class="font-medium">{{ cite.page }}</span></p>
-                            <p *ngIf="cite.dateText" class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">Datum:
-                                {{ cite.dateText }}</p>
-                        </div>
-                    </div>
-                </div>
+                    </app-section-header>
 
-                <app-empty-state *ngIf="!family()?.citations || family()?.citations?.length === 0" icon="📚"
-                    title="Keine Referenzen" message="Verknüpfe Quellen, um deine Forschung zu belegen.">
-                </app-empty-state>
+                    <app-notes-list [entityId]="familyId() || ''" [entityType]="'FAMILY'" [notesDisplay]="family()?.notes || []"
+                        [allowCreate]="true" [allowEdit]="true" [showHeader]="false" [searchTerm]="noteSearchQuery()"
+                        (noteCreateRequested)="onNoteCreateRequested()" (noteEditRequested)="onNoteEditRequested($event)"
+                        (noteDeleted)="onNoteDeletedFamily($event)"></app-notes-list>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Quellen -->
+        <div *ngIf="activeTab() === 'citations'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div class="glass-card shadow-sm flex flex-col">
+                <div class="p-0">
+                    <app-section-header title="Quellen" icon="📖">
+                        <div actions class="flex items-center gap-3">
+                            <div class="relative hidden md:block w-64">
+                                <input 
+                                    type="text" 
+                                    [ngModel]="sourceSearchQuery()"
+                                    (ngModelChange)="sourceSearchQuery.set($event)"
+                                    placeholder="Quellen durchsuchen..."
+                                    class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
+                                >
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                </span>
+                            </div>
+                            <button (click)="onSourceCreateRequested()" class="btn-primary !w-auto !py-2">
+                                + Beleg
+                            </button>
+                        </div>
+                    </app-section-header>
+
+                    <app-sources-list
+                        [entityId]="familyId() || ''"
+                        entityType="FAMILY"
+                        [sourcesDisplay]="mappedSources()"
+                        [allowCreate]="true"
+                        [allowEdit]="true"
+                        [showHeader]="false"
+                        [searchTerm]="sourceSearchQuery()"
+                        (sourceCreateRequested)="onSourceCreateRequested()"
+                        (sourceEditRequested)="onSourceEditRequested($event)"
+                        (masterSaved)="loadAvailableSources()">
+                    </app-sources-list>
+                </div>
             </div>
         </div>
 
@@ -308,19 +332,20 @@
     </app-media-selector>
 
     <app-media-add-modal [visible]="showMediaAddModal()" [treeId]="authService.currentTree()?.name || ''"
-        (closed)="showMediaAddModal.set(false)" (saved)="onMediaAddUploaded($event)">
+        (closed)="showMediaAddModal.set(false)" (saved)="onMediaAddUploaded($event)" (masterSaved)="loadAvailableSources()">
     </app-media-add-modal>
 
     <app-image-viewer [url]="viewerUrl()" [title]="viewerTitle()" (closed)="viewerUrl.set(null)"></app-image-viewer>
 
     <!-- Event Modal (reusable component) -->
     <app-event-modal [visible]="showEventModal()" [item]="eventDraft()" [isNew]="activeEventIndex() === null"
+        [availableSources]="availableSources()"
         [allPersonsOptions]="allPersonsOptions()" [showDelete]="activeEventIndex() !== null"
         (close)="showEventModal.set(false)" (save)="confirmSaveEvent()" (delete)="removeEvent(activeEventIndex()!)"
         (addCitation)="addEventCitation()" (removeCitation)="removeEventCitation($event)"
         (openUpload)="openMediaAddModal()" (openGallery)="openMediaSelector()" (addNote)="addEventNote()"
         (removeNote)="removeEventNote($event)" (addMedia)="addEventMedia()" (removeMedia)="removeEventMedia($event)"
-        (openViewer)="openViewer($event)">
+        (openViewer)="openViewer($event)" (masterSaved)="loadAvailableSources()">
     </app-event-modal>
 
     <!-- Globaler Place Modal Integration -->
@@ -386,35 +411,6 @@
         </div>
     </app-modal-shell>
 
-    <!-- Source Citation Modal -->
-    <app-modal-shell [visible]="showCitationModal()"
-        [title]="activeCitationIndex() !== null ? 'Referenz bearbeiten' : 'Neue Referenz'" icon="📚" size="md"
-        [showSave]="true" (close)="showCitationModal.set(false)" (save)="confirmSaveCitation()">
-        <div *ngIf="citationDraft() as draft" class="space-y-4">
-            <div class="form-group">
-                <label class="form-label">Quelle auswählen</label>
-                <select [(ngModel)]="draft.sourceId" class="form-input">
-                    <option value="">-- Bitte wählen --</option>
-                    <option *ngFor="let s of availableSources()" [value]="s.id">{{ s.title }} ({{ s.id }})</option>
-                </select>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="form-group">
-                    <label class="form-label">Seite / Ort</label>
-                    <input type="text" [(ngModel)]="draft.page" class="form-input" placeholder="z.B. Seite 45">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Datum</label>
-                    <input type="text" [(ngModel)]="draft.dateText" class="form-input" placeholder="z.B. 1900">
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Qualität/Glaubwürdigkeit (0-3)</label>
-                <input type="text" [(ngModel)]="draft.confidence" class="form-input"
-                    placeholder="0 = unzuverlässig, 3 = primär">
-            </div>
-        </div>
-    </app-modal-shell>
 
     <!-- Abbrechen Bestätigen Modal -->
     <app-modal-shell [visible]="showCancelConfirmModal()" title="Änderungen verwerfen?" icon="⚠️" size="sm"
@@ -422,6 +418,57 @@
         (delete)="confirmCancel()">
         <p class="p-4 text-neutral-600 dark:text-neutral-300 text-center">Möchten Sie alle ungespeicherten Änderungen
             wirklich verwerfen?</p>
+    </app-modal-shell>
+
+    <!-- Source Modal -->
+    <app-modal-shell [visible]="showSourceModal()" 
+        [title]="activeSourceIndex() !== null ? 'Beleg bearbeiten' : 'Beleg hinzufügen'" 
+        icon="📖" 
+        size="md" 
+        [showSave]="true"
+        [showDelete]="activeSourceIndex() !== null" 
+        [saveText]="activeSourceIndex() !== null ? 'Speichern' : 'Hinzufügen'"
+        (close)="showSourceModal.set(false)" 
+        (save)="onSourceSave()" 
+        (delete)="onSourceDeleteFromModal()">
+        
+        <div *ngIf="sourceDraft() as draft" class="space-y-4">
+            <div class="form-group mb-0">
+                <label class="form-label text-[10px]">Quelle</label>
+                <select [(ngModel)]="draft.sourceId" class="form-input !py-1.5 text-sm">
+                    <option value="">— Quelle wählen —</option>
+                    <option *ngFor="let s of availableSources()" [value]="s.id">
+                        {{ s.title }}{{ s.author ? ' · ' + s.author : '' }}
+                    </option>
+                </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="form-group mb-0">
+                    <label class="form-label text-[10px]">Seite/Ort</label>
+                    <input type="text" [(ngModel)]="draft.whereInSource" class="form-input !py-1.5 text-sm" placeholder="z.B. S. 12">
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label text-[10px]">Datum im Beleg</label>
+                    <input type="text" [(ngModel)]="draft.date" class="form-input !py-1.5 text-sm" placeholder="z.B. 1900">
+                </div>
+            </div>
+            <div class="form-group mb-0">
+                <label class="form-label text-[10px]">Qualität</label>
+                <select [(ngModel)]="draft.confidence" class="form-input !py-1.5 text-sm">
+                    <option value="">Wählen...</option>
+                    <option value="CERTAIN">Sicher (3)</option>
+                    <option value="VERY_LIKELY">Sehr wahrscheinlich (2)</option>
+                    <option value="LIKELY">Wahrscheinlich (1)</option>
+                    <option value="UNLIKELY">Unzuverlässig (0)</option>
+                </select>
+            </div>
+            <div class="form-group mb-0">
+                <label class="form-label text-[10px]">Zitat / Ausschnitt</label>
+                <textarea [(ngModel)]="draft.text" 
+                    class="form-input !py-1.5 text-sm min-h-[80px]"
+                    placeholder="Zitierter Text"></textarea>
+            </div>
+        </div>
     </app-modal-shell>
 
 </ng-container>

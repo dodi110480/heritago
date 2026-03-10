@@ -266,6 +266,18 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     // Available sources for citation dropdowns
     availableSources = signal<any[]>([]);
 
+    loadAvailableSources() {
+        const treeName = this.authService.currentTree()?.name;
+        if (treeName) {
+            this.gedcomService.getSources(treeName).subscribe({
+                next: (res: any) => {
+                    if (res.success) this.availableSources.set(res.sources || []);
+                    this.cdr.detectChanges();
+                }
+            });
+        }
+    }
+
     // Unsaved Changes Guard
     isDirty = false;
     hasSaved = false;
@@ -459,15 +471,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                 if (data) {
                     this.treeData.set(data);
                     // Load available sources for citation dropdowns
-                    const treeName = data.meta?.tree;
-                    if (treeName) {
-                    this.gedcomService.getSources(treeName).subscribe({
-                        next: (res: any) => {
-                            if (res.success) this.availableSources.set(res.sources || []);
-                            this.cdr.detectChanges();
-                        }
-                    });
-                    }
+                    this.loadAvailableSources();
                     const found = data.individuals.find(i => i.id === this.personId);
                     if (found) {
                         // Deep copy to avoid direct mutation before save
@@ -1714,21 +1718,6 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         });
     }
 
-    addNewTimelineCitation() {
-        this.newTimelineDraft.update(v => ({
-            ...v,
-            citations: [...v.citations, { sourceId: '', confidence: '', page: '', text: '' }]
-        }));
-    }
-
-    removeNewTimelineCitation(idx: number) {
-        this.newTimelineDraft.update(v => {
-            const citations = [...v.citations];
-            citations.splice(idx, 1);
-            return { ...v, citations };
-        });
-    }
-
     addNewTimelineNote() {
         this.newTimelineDraft.update(v => ({
             ...v,
@@ -1794,27 +1783,6 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         const current = this.timeline();
         if (current[itemIdx].media) {
             current[itemIdx].media!.splice(idx, 1);
-            this.timeline.set([...current]);
-            this.markDirty();
-        }
-    }
-
-    addTimelineItemCitation() {
-        const itemIdx = this.activeTimelineItemIndex();
-        if (itemIdx === null) return;
-        const current = this.timeline();
-        current[itemIdx].citations = current[itemIdx].citations || [];
-        current[itemIdx].citations!.push({ sourceId: '', confidence: '', page: '', text: '' });
-        this.timeline.set([...current]);
-        this.markDirty();
-    }
-
-    removeTimelineItemCitation(idx: number) {
-        const itemIdx = this.activeTimelineItemIndex();
-        if (itemIdx === null) return;
-        const current = this.timeline();
-        if (current[itemIdx].citations) {
-            current[itemIdx].citations!.splice(idx, 1);
             this.timeline.set([...current]);
             this.markDirty();
         }
@@ -1941,19 +1909,6 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     toggleExpand(index: number) {
         const current = this.timeline();
         current[index].expanded = !current[index].expanded;
-        this.timeline.set([...current]);
-    }
-
-    addEventCitation(index: number) {
-        const current = this.timeline();
-        if (!current[index].citations) current[index].citations = [];
-        current[index].citations!.push({ sourceId: '', confidence: '', page: '', text: '' });
-        this.timeline.set([...current]);
-    }
-
-    removeEventCitation(itemIndex: number, citIndex: number) {
-        const current = this.timeline();
-        current[itemIndex].citations!.splice(citIndex, 1);
         this.timeline.set([...current]);
     }
 

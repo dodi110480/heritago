@@ -98,8 +98,6 @@ export class PersonExpertTimelineTabComponent {
     openMediaAddModal(i: number) { this.ctx.openMediaAddModal(i); }
     openMediaSelector(i: number) { this.ctx.openMediaSelector(i); }
     removeEventMedia(i: number, m: number) { this.ctx.removeEventMedia(i, m); }
-    addEventCitation(i: number) { this.ctx.addEventCitation(i); }
-    removeEventCitation(i: number, c: number) { this.ctx.removeEventCitation(i, c); }
     addEventNote(i: number) { this.ctx.addEventNote(i); }
     updateEventNote(i: number, n: number, value: string) { this.ctx.updateEventNote(i, n, value); }
     removeEventNote(i: number, n: number) { this.ctx.removeEventNote(i, n); }

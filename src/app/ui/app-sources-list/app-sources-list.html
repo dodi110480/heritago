@@ -1,0 +1,174 @@
+<div class="space-y-6">
+
+  <!-- Header -->
+  @if (showHeader()) {
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex-1 max-w-sm relative">
+        <input
+          *ngIf="!readOnly()"
+          type="text"
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="onSearchChange()"
+          [placeholder]="placeholder()"
+          class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
+        >
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </span>
+      </div>
+
+      <button
+        *ngIf="allowCreate() && !readOnly()"
+        (click)="sourceCreateRequested.emit()"
+        class="btn-primary !w-auto !py-2 shadow-brand-sm transition-all flex items-center gap-2 whitespace-nowrap"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>Neuer Beleg</span>
+      </button>
+    </div>
+  }
+
+  <!-- Empty State -->
+  <div *ngIf="filteredSources().length === 0" class="text-center py-12 text-neutral-500">
+    <p>Keine Quellen hinzugefügt.</p>
+  </div>
+
+  <!-- Quellenliste -->
+  <div class="space-y-3" 
+       cdkDropList 
+       [cdkDropListDisabled]="!enableDragDrop()" 
+       (cdkDropListDropped)="drop($event)">
+
+    @for (source of visibleSources(); track trackSource($index, source)) {
+      <app-glass-card
+        variant="note"
+        cdkDrag
+        [clickable]="true"
+        [borderColor]="getSourceTypeBorder(source.sourceType)"
+        (cardClicked)="sourceEditRequested.emit(source)"
+      >
+
+        <div class="flex flex-col gap-2">
+
+          <div class="flex items-center gap-2 flex-wrap">
+            @if (source.sourceType) {
+              <span class="badge badge-xs" [ngClass]="getSourceTypeClass(source.sourceType)">
+                <i class="feather icon-{{ getSourceTypeIcon(source.sourceType) }}"></i>
+                {{ source.sourceType }}
+              </span>
+            }
+            @if (source.category) {
+              <span class="badge badge-outline text-xs">{{ source.category === 'PRIMARY' ? 'Primär' : 'Sekundär' }}</span>
+            }
+            @for (tag of source.tags; track tag) {
+              <span class="badge badge-outline text-xs">#{{ tag }}</span>
+            }
+            @if (source.confidence) {
+              <span class="badge text-[10px] px-2 py-0.5 rounded-full border font-bold" [ngClass]="getConfidenceClass(source.confidence)">
+                {{ getConfidenceLabel(source.confidence) }}
+              </span>
+            }
+          </div>
+
+          <div class="text-sm font-semibold text-neutral-900 mt-1">
+            {{ source | sourceSummary:source.title }}
+          </div>
+          
+          @if (source.text) {
+            <div class="text-sm border-l-2 border-brand-500/20 pl-3 py-1 text-neutral-600 bg-neutral-500/5 rounded-r-lg italic">
+              « {{
+                source.text.length > 300 && !expandedSources().has(source.id)
+                ? (source.text | slice:0:300) + '...'
+                : source.text
+              }} »
+
+              <button
+                *ngIf="source.text.length > 300"
+                (click)="toggleExpanded(source.id); $event.stopPropagation()"
+                class="text-[10px] text-brand-600 font-bold ml-1 uppercase tracking-wider"
+              >
+                {{ expandedSources().has(source.id) ? 'Weniger' : 'Ganzes Zitat' }}
+              </button>
+            </div>
+          }
+
+          @if (source.description) {
+            <div class="text-sm whitespace-pre-line text-neutral-700">
+              {{
+                source.description.length > 220 && !expandedSources().has(source.id)
+                ? (source.description | slice:0:220) + '...'
+                : source.description
+              }}
+
+              <button
+                *ngIf="source.description.length > 220"
+                (click)="toggleExpanded(source.id); $event.stopPropagation()"
+                class="text-xs text-brand-600 ml-1"
+              >
+                {{ expandedSources().has(source.id) ? 'Weniger' : 'Mehr anzeigen' }}
+              </button>
+            </div>
+          }
+
+          <div class="text-xs text-neutral-500 flex justify-between mt-2">
+            <span>
+              <span *ngIf="showCreatedBy() && source.createdBy">
+                von {{ source.createdBy.username }} ·
+              </span>
+              {{ source.createdAt | date:'dd.MM.yyyy' }}
+            </span>
+
+            <span *ngIf="showLinkedEntity() && source.linkedEntity">
+              <a
+                [routerLink]="source.linkedEntity.url"
+                class="text-brand-600 hover:underline flex items-center gap-1.5"
+                (click)="$event.stopPropagation()"
+              >
+                <i class="feather icon-arrow-right size-3"></i>
+                {{ source.linkedEntity.label }}
+              </a>
+            </span>
+          </div>
+
+        </div>
+
+        <ng-container actions>
+          <button
+            *ngIf="allowEdit() && !readOnly()"
+            (click)="onEditMaster(source); $event.stopPropagation()"
+            class="btn btn-xs btn-ghost text-brand-600 mr-1"
+            title="Master-Daten bearbeiten"
+          >
+            <i class="feather icon-edit-3"></i>
+          </button>
+          <button
+            (click)="copySource(source); $event.stopPropagation()"
+            class="btn btn-xs btn-ghost text-neutral-500 mr-1"
+            title="Quelle kopieren"
+          >
+            <i class="feather icon-copy"></i>
+          </button>
+          <button
+            *ngIf="allowEdit() && !readOnly()"
+            (click)="deleteSource(source.id); $event.stopPropagation()"
+            class="btn btn-xs btn-ghost text-red-500"
+            title="Quelle löschen"
+          >
+            <i class="feather icon-trash-2"></i>
+          </button>
+        </ng-container>
+
+      </app-glass-card>
+    }
+  </div>
+
+  <app-source-modal *ngIf="showSourceMasterModal()" 
+    [mode]="'edit'" 
+    [sourceData]="selectedSourceForMaster()" 
+    [currentTree]="authService.currentTree()?.name || null"
+    [allSources]="allSourcesForMaster()" 
+    (closeModal)="showSourceMasterModal.set(false)" 
+    (saved)="onSourceMasterSaved()" 
+    (deleted)="onSourceMasterDeleted($event)">
+  </app-source-modal>
+</div>

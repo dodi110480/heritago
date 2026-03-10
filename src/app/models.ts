@@ -1,5 +1,83 @@
 export type NoteCategory = 'RESEARCH' | 'HINT' | 'QUESTION' | 'TRANSCRIPTION' | 'TODO' | 'COMMENT' | 'OTHER';
 
+export type SourceType =
+  | 'BUCH'
+  | 'WEBSEITE'
+  | 'DOKUMENT'
+  | 'ZEITUNG'
+  | 'ARCHIV'
+  | 'FOTO'
+  | 'AUDIO'
+  | 'VIDEO'
+  | 'PERIODISCH'
+  | 'KIRCHBUCH'
+  | 'VOLKSZAEHLUNG'
+  | 'ANDERE';
+
+export type SourceCategory = 'PRIMARY' | 'SECONDARY';
+
+export type ConfidenceLevel = 'CERTAIN' | 'VERY_LIKELY' | 'LIKELY' | 'POSSIBLE' | 'UNLIKELY';
+
+export type EntityType = 'PERSON' | 'EVENT' | 'FACT' | 'FAMILY' | 'SOURCE' | 'PLACE' | 'RESEARCH_LOG' | 'MEDIA' | 'CITATION' | 'REPOSITORY' | 'NOTE';
+
+export interface DisplaySource {
+  readonly id: string;
+  readonly gedcomId?: string;
+
+  readonly title: string;
+  readonly shortTitle?: string;
+
+  readonly author?: string;
+  readonly publication?: string;
+
+  readonly repository?: {
+    readonly id: string;
+    readonly gedcomId?: string;
+    readonly name: string;
+    readonly address?: string;
+    readonly phone?: string;
+    readonly email?: string;
+    readonly website?: string;
+  };
+
+  readonly sourceType?: SourceType;
+  readonly category?: SourceCategory;
+
+  readonly url?: string;
+  readonly description?: string;
+
+  readonly confidence?: ConfidenceLevel;
+
+  readonly citationCount?: number;
+  readonly mediaCount?: number;
+  readonly noteCount?: number;
+
+  readonly createdAt: Date;
+  readonly updatedAt?: Date;
+  readonly chanDate?: Date;
+
+  readonly createdBy?: {
+    id: string;
+    username: string;
+    avatarUrl?: string;
+  };
+
+  readonly linkedEntity?: {
+    type: EntityType;
+    id: string;
+    label: string;
+    url?: string;
+  };
+
+  readonly isPrivate?: boolean;
+  readonly tags?: string[];
+
+  readonly isArchived?: boolean;
+
+  readonly text?: string;
+  readonly priority?: number;
+}
+
 export interface DisplayNote {
     id: string;
     text: string;
@@ -35,6 +113,7 @@ export interface Citation {
     date?: string;
     text?: string;
     quality?: number;
+    notes?: DisplayNote[];
 }
 
 export interface Media {
@@ -173,6 +252,7 @@ export interface Family {
     events?: LifeEvent[];
     media?: Media[];
     notes?: DisplayNote[];
+    citations?: Citation[];
 }
 
 export interface TreeData {

@@ -20,29 +20,31 @@ export type EntityType = 'PERSON' | 'EVENT' | 'FACT' | 'FAMILY' | 'SOURCE' | 'PL
   template: `
     <div class="space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between gap-4">
-        <div class="flex-1 max-w-sm relative">
-          <input
-            *ngIf="!readOnly()"
-            type="text"
-            [(ngModel)]="searchQuery"
-            [placeholder]="placeholder()"
-            class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
-          >
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          </span>
-        </div>
+      @if (showHeader()) {
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex-1 max-w-sm relative">
+            <input
+              *ngIf="!readOnly()"
+              type="text"
+              [(ngModel)]="searchQuery"
+              [placeholder]="placeholder()"
+              class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
+            >
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </span>
+          </div>
 
-        <button
-          *ngIf="allowCreate() && !readOnly()"
-          (click)="noteCreateRequested.emit()"
-          class="px-4 py-2 bg-brand-600 hover:bg-brand-500 active:scale-95 text-white rounded-btn font-bold text-sm shadow-brand-sm transition-all flex items-center gap-2 whitespace-nowrap"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          <span>Neue Notiz</span>
-        </button>
-      </div>
+          <button
+            *ngIf="allowCreate() && !readOnly()"
+            (click)="noteCreateRequested.emit()"
+            class="btn-primary !w-auto !py-2 shadow-brand-sm transition-all flex items-center gap-2 whitespace-nowrap"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>Neue Notiz</span>
+          </button>
+        </div>
+      }
 
       <!-- Empty State -->
       <div *ngIf="filteredNotes().length === 0" class="flex flex-col items-center justify-center py-16 text-neutral-500 bg-neutral-50/50 dark:bg-neutral-900/20 rounded-card border-2 border-dashed border-neutral-200 dark:border-neutral-800">
@@ -145,6 +147,8 @@ export class AppNotesList {
   readOnly = input<boolean>(false);
   showCreatedBy = input<boolean>(true);
   placeholder = input<string>('Notizen durchsuchen...');
+  showHeader = input<boolean>(true);
+  searchTerm = input<string>('');
 
   noteEditRequested = output<DisplayNote>();
   noteCreateRequested = output<void>();
@@ -154,7 +158,7 @@ export class AppNotesList {
   searchQuery = '';
 
   filteredNotes = computed(() => {
-    const query = this.searchQuery.toLowerCase().trim();
+    const query = (this.searchQuery.toLowerCase().trim() || this.searchTerm().toLowerCase().trim());
     const notes = this.notesDisplay();
     if (!query) return notes;
     return notes.filter(n => 

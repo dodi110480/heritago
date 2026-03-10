@@ -435,7 +435,8 @@ export class GedcomManager {
         return `${dir}${Math.abs(value).toFixed(6)}`;
     }
 
-    private static personEventOrder(tag: string): number {
+    private static personEventOrder(tag?: string | null): number {
+        if (!tag) return 999;
         const t = tag.toUpperCase();
         const order: Record<string, number> = {
             BIRT: 10,
@@ -449,7 +450,8 @@ export class GedcomManager {
         return order[t] ?? 999;
     }
 
-    private static familyEventOrder(tag: string): number {
+    private static familyEventOrder(tag?: string | null): number {
+        if (!tag) return 999;
         const t = tag.toUpperCase();
         const order: Record<string, number> = {
             MARR: 10,
@@ -1576,7 +1578,7 @@ export class GedcomManager {
             }
 
             const seenPersonEventKeys = new Set<string>();
-            const sortedPersonEvents = [...person.events].sort((a: any, b: any) => {
+            const sortedPersonEvents = (person.events || []).sort((a: any, b: any) => {
                 const oa = this.personEventOrder(this.cleanGedText(a.type));
                 const ob = this.personEventOrder(this.cleanGedText(b.type));
                 if (oa !== ob) return oa - ob;
@@ -3112,6 +3114,8 @@ app.get('/api/tree/:tree/source', async (req, res) => {
             shortTitle: s.shortTitle,
             author: s.author,
             publication: s.publication,
+            sourceType: s.sourceType,
+            category: s.category,
             repositoryId: s.repositoryId,
             repositoryName: s.repository?.name || null,
             usageCount: s._count.citations + s._count.mediaLinks + s._count.noteLinks
@@ -3283,7 +3287,7 @@ app.post('/api/tree/:tree/source/merge', async (req, res) => {
 
 app.post('/api/tree/:tree/source', async (req, res) => {
     const { tree: treeName } = req.params;
-    const { id, title, shortTitle, author, publication, repositoryId, mode, reassignToId, notes, userId: bodyUserId } = req.body;
+    const { id, title, shortTitle, author, publication, sourceType, category, repositoryId, mode, reassignToId, notes, userId: bodyUserId } = req.body;
     const currentUserId = bodyUserId || (req as any).user?.id;
 
     const tree = await prisma.tree.findUnique({ where: { name: treeName } });
@@ -3334,6 +3338,8 @@ app.post('/api/tree/:tree/source', async (req, res) => {
             shortTitle: shortTitle || null,
             author: author || null,
             publication: publication || null,
+            sourceType: sourceType || null,
+            category: category || null,
             repositoryId: repositoryId || null
         };
 

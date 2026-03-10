@@ -7,12 +7,13 @@ import { AuthService } from './auth.service';
 import { ImageCropper } from './image-cropper';
 import { AppModalShell } from './ui/app-modal-shell';
 import { AppNotesList } from './ui/app-notes-list';
-import { DisplayNote, NoteCategory } from './models';
+import { AppSourcesListComponent } from './ui/app-sources-list/app-sources-list';
+import { DisplayNote, NoteCategory, DisplaySource } from './models';
 
 @Component({
     selector: 'app-media-add-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, ImageCropper, AppModalShell, AppNotesList],
+    imports: [CommonModule, FormsModule, ImageCropper, AppModalShell, AppNotesList, AppSourcesListComponent],
     templateUrl: './media-add-modal.html'
 })
 export class MediaAddModal {
@@ -53,6 +54,7 @@ export class MediaAddModal {
 
     @Output() closed = new EventEmitter<void>();
     @Output() saved = new EventEmitter<any>();
+    @Output() masterSaved = new EventEmitter<void>();
 
     private authService = inject(AuthService);
     private router = inject(Router);
@@ -144,6 +146,101 @@ export class MediaAddModal {
             currentNotes.splice(idx, 1);
             this.notes.set(currentNotes);
             this.showNoteSubModal.set(false);
+        }
+    }
+
+    // Source Management
+    showSourceSubModal = signal(false);
+    activeSourceIndex = signal<number | null>(null);
+    sourceDraft = signal<{ sourceId: string; page: string; confidence: string; dateText: string; text: string }>({
+        sourceId: '', page: '', confidence: '', dateText: '', text: ''
+    });
+
+    onSourceCreateRequested() {
+        this.sourceDraft.set({ sourceId: '', page: '', confidence: '', dateText: '', text: '' });
+        this.activeSourceIndex.set(null);
+        this.showSourceSubModal.set(true);
+    }
+
+    onSourceEditRequested(source: DisplaySource & { _originalIndex?: number }) {
+        if (source._originalIndex === undefined) return;
+        const cit = this.citations()[source._originalIndex];
+        if (cit) {
+            this.sourceDraft.set({
+                sourceId: cit.sourceId || '',
+                page: cit.page || '',
+                confidence: cit.confidence || '',
+                dateText: cit.dateText || '',
+                text: cit.text || ''
+            });
+            this.activeSourceIndex.set(source._originalIndex);
+            this.showSourceSubModal.set(true);
+        }
+    }
+
+    onSourceSave() {
+        const draft = this.sourceDraft();
+        if (!draft.sourceId) {
+            alert('Bitte wählen Sie eine gültige Quelle aus.');
+            return;
+        }
+
+        const currentCitations = [...this.citations()];
+        const newCit = {
+            sourceId: draft.sourceId,
+            page: draft.page || '',
+            confidence: draft.confidence || '',
+            dateText: draft.dateText || '',
+            text: draft.text || ''
+        };
+
+        const idx = this.activeSourceIndex();
+        if (idx !== null) {
+            currentCitations[idx] = { ...currentCitations[idx], ...newCit };
+        } else {
+            currentCitations.push(newCit);
+        }
+
+        this.citations.set(currentCitations);
+        this.showSourceSubModal.set(false);
+    }
+
+    normalizedSources(): (DisplaySource & { _originalIndex?: number })[] {
+        const cits = this.citations();
+        if (!cits) return [];
+        return cits.map((c: any, i: number) => {
+            const rawSource = this.sourceOptions().find(s => s.id === c.sourceId);
+            return {
+                id: c.id || `cit-${i}`,
+                title: rawSource ? rawSource.title : 'Unbekannte Quelle',
+                author: rawSource ? rawSource.author : undefined,
+                publication: rawSource ? rawSource.publication : undefined,
+                confidence: c.confidence as any,
+                description: c.page ? `Fundstelle: ${c.page}` : '',
+                createdAt: c.dateText ? new Date(c.dateText) : new Date(),
+                _originalIndex: i
+            };
+        });
+    }
+
+    onSourceDeleted(sourceId: string) {
+        const idx = this.citations().findIndex((c: any, i: number) => (c.id || `cit-${i}`) === sourceId);
+        if (idx !== -1) {
+            if (confirm('Möchtest du diesen Beleg wirklich löschen?')) {
+                const currentCitations = [...this.citations()];
+                currentCitations.splice(idx, 1);
+                this.citations.set(currentCitations);
+            }
+        }
+    }
+
+    onSourceDeleteFromModal() {
+        const idx = this.activeSourceIndex();
+        if (idx !== null) {
+            const currentCitations = [...this.citations()];
+            currentCitations.splice(idx, 1);
+            this.citations.set(currentCitations);
+            this.showSourceSubModal.set(false);
         }
     }
 
@@ -465,14 +562,6 @@ export class MediaAddModal {
         this.identifiers.set(idens);
     }
     removeIdentifier(i: number) { this.identifiers.set(this.identifiers().filter((_, idx) => idx !== i)); }
-
-    addCitation() { this.citations.set([...this.citations(), { sourceId: '', page: '' }]); }
-    updateCitation(i: number, field: 'sourceId' | 'page', val: string) {
-        const cits = [...this.citations()];
-        cits[i][field] = val;
-        this.citations.set(cits);
-    }
-    removeCitation(i: number) { this.citations.set(this.citations().filter((_, idx) => idx !== i)); }
 
     download() {
         const url = this.currentFileUrl();

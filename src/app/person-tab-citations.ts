@@ -1,142 +1,94 @@
-import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { AppModalShell } from './ui/app-modal-shell';
-import { AppEmptyStateComponent } from './ui/app-empty-state';
 import { AppSectionHeaderComponent } from './ui/app-section-header';
+import { AppSourcesListComponent } from './ui/app-sources-list/app-sources-list';
+import { CitationModalComponent } from './ui/citation-modal/citation-modal';
+import { DisplaySource, Citation } from './models';
 
 @Component({
     selector: 'app-person-tab-citations',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell, AppEmptyStateComponent, AppSectionHeaderComponent],
+    imports: [CommonModule, FormsModule, AppModalShell, AppSectionHeaderComponent, AppSourcesListComponent, CitationModalComponent],
     template: `
         <div class="glass-card shadow-sm flex flex-col">
             <div class="p-0">
-                <app-section-header title="Allgemeine Quellen" icon="📖" description="Allgemeine Belege zur Person (nicht ereignis-spezifisch).">
-                    <button actions (click)="addPersonCitation()" class="btn-primary !w-auto !py-2">
-                        + Beleg
-                    </button>
+                <app-section-header title="Quellen" icon="📖">
+                    <div actions class="flex items-center gap-3">
+                        <div class="relative hidden md:block w-64">
+                            <input 
+                                type="text" 
+                                [(ngModel)]="searchText"
+                                placeholder="Quellen durchsuchen..."
+                                class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
+                            >
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            </span>
+                        </div>
+                        <button (click)="addPersonCitation()" class="btn-primary !w-auto !py-2">
+                            + Beleg
+                        </button>
+                    </div>
                 </app-section-header>
 
-                <div *ngIf="person?.citations && person.citations.length > 0" class="space-y-3">
-                    <div *ngFor="let cit of person.citations; let i = index"
-                        class="!p-4 glass-card !bg-brand-50 !rounded-2xl space-y-3 cursor-pointer hover:bg-neutral-100 transition-all"
-                        (click)="openPersonCitationModal(i)">
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="text-sm font-semibold text-neutral-900 truncate">{{ getSourceTitle(cit.sourceId) }}</div>
-                            <span class="badge {{ getConfidenceColorClass(cit.confidence) }} text-xs">{{
-                                getConfidenceLabel(cit.confidence) }}</span>
-                        </div>
-                        <div class="text-xs text-neutral-800 dark:text-neutral-200">Fundstelle: {{ cit.page || '-' }}</div>
-                    </div>
-                </div>
-
-                <app-empty-state *ngIf="!person?.citations || person.citations.length === 0"
-                    icon="📖" 
-                    title="Keine allgemeinen Quellen" 
-                    message="Ereignis-spezifische Belege findest du direkt in der Timeline. Hier können allgemeine Quellen zur ganzen Person hinterlegt werden.">
-                </app-empty-state>
+                <app-sources-list
+                    [entityId]="person.id"
+                    [entityType]="'PERSON'"
+                    [sourcesDisplay]="mappedSources()"
+                    [allowCreate]="true"
+                    [allowEdit]="true"
+                    [showHeader]="false"
+                    [searchTerm]="searchText"
+                    (sourceEditRequested)="openPersonCitationModal($event)"
+                    (sourceCreateRequested)="addPersonCitation()"
+                    (sourceDeleted)="onSourceDeleted($event)"
+                    (masterSaved)="changed.emit()"
+                ></app-sources-list>
             </div>
         </div>
 
-        <!-- CITATION CREATE MODAL -->
-        <app-modal-shell [visible]="showCitationCreateModal()" title="Beleg hinzufügen" icon="📖" size="md"
-            [showSave]="true" saveText="Beleg hinzufügen" [showDelete]="false" (close)="closeCitationModal()"
-            (save)="confirmAddPersonCitation()">
-            <div class="space-y-4">
-                <div class="form-group mb-0">
-                    <label class="form-label">Quelle</label>
-                    <select [ngModel]="newCitationDraft().sourceId"
-                        (ngModelChange)="newCitationDraft.update(v => ({ ...v, sourceId: $event }))"
-                        class="form-input !py-2.5">
-                        <option value="">— Quelle wählen —</option>
-                        <option *ngFor="let s of availableSources" [value]="s.id">
-                            {{ s.title }}{{ s.author ? ' · ' + s.author : '' }}
-                        </option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group mb-0">
-                        <label class="form-label">Fundstelle</label>
-                        <input type="text" [ngModel]="newCitationDraft().page"
-                            (ngModelChange)="newCitationDraft.update(v => ({ ...v, page: $event }))" class="form-input"
-                            placeholder="z.B. Seite 42">
-                    </div>
-                    <div class="form-group mb-0">
-                        <label class="form-label">Konfidenz</label>
-                        <select [ngModel]="newCitationDraft().confidence"
-                            (ngModelChange)="newCitationDraft.update(v => ({ ...v, confidence: $event }))"
-                            class="form-input !py-2.5">
-                            <option value="">Bitte wählen</option>
-                            <option value="CERTAIN">✅ Sicher</option>
-                            <option value="VERY_LIKELY">🟩 Sehr wahrscheinlich</option>
-                            <option value="LIKELY">🟨 Wahrscheinlich</option>
-                            <option value="POSSIBLE">🟧 Möglich</option>
-                            <option value="UNLIKELY">🟥 Unwahrscheinlich</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </app-modal-shell>
-
-        <!-- CITATION EDIT MODAL -->
-        <app-modal-shell [visible]="showCitationEditModal()" title="Beleg bearbeiten" icon="📖" size="md" [showSave]="true"
-            saveText="Speichern" [showDelete]="true" deleteText="Beleg löschen" (close)="closePersonCitationModal()"
-            (save)="savePersonCitationModal()" (delete)="removePersonCitationModal()">
-            <div class="space-y-4">
-                <div class="form-group mb-0">
-                    <label class="form-label">Quelle</label>
-                    <select [ngModel]="citationEditDraft().sourceId"
-                        (ngModelChange)="citationEditDraft.update(v => ({ ...v, sourceId: $event }))"
-                        class="form-input !py-2.5">
-                        <option value="">— Quelle wählen —</option>
-                        <option *ngFor="let s of availableSources" [value]="s.id">
-                            {{ s.title }}{{ s.author ? ' · ' + s.author : '' }}
-                        </option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="form-group mb-0">
-                        <label class="form-label">Fundstelle</label>
-                        <input type="text" [ngModel]="citationEditDraft().page"
-                            (ngModelChange)="citationEditDraft.update(v => ({ ...v, page: $event }))" class="form-input"
-                            placeholder="z.B. Seite 42">
-                    </div>
-                    <div class="form-group mb-0">
-                        <label class="form-label">Konfidenz</label>
-                        <select [ngModel]="citationEditDraft().confidence"
-                            (ngModelChange)="citationEditDraft.update(v => ({ ...v, confidence: $event }))"
-                            class="form-input !py-2.5">
-                            <option value="">Keine Angabe</option>
-                            <option value="CERTAIN">Sicher</option>
-                            <option value="VERY_LIKELY">Sehr wahrscheinlich</option>
-                            <option value="LIKELY">Wahrscheinlich</option>
-                            <option value="POSSIBLE">Möglich</option>
-                            <option value="UNLIKELY">Unwahrscheinlich</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group mb-0">
-                    <label class="form-label">Zitat</label>
-                    <input type="text" [ngModel]="citationEditDraft().text"
-                        (ngModelChange)="citationEditDraft.update(v => ({ ...v, text: $event }))" class="form-input"
-                        placeholder="Zitierter Ausschnitt">
-                </div>
-            </div>
-        </app-modal-shell>
+        <app-citation-modal
+            [visible]="showCitationModal()"
+            [citation]="activeCitation()"
+            [availableSources]="availableSources"
+            (close)="showCitationModal.set(false)"
+            (save)="savePersonCitationModal($event)"
+            (delete)="removePersonCitationModal()"
+        ></app-citation-modal>
     `
 })
 export class PersonTabCitationsComponent {
     @Input({ required: true }) person!: any;
     @Input() availableSources: any[] = [];
     @Output() changed = new EventEmitter<void>();
+    searchText = '';
 
-    showCitationCreateModal = signal(false);
-    showCitationEditModal = signal(false);
-    newCitationDraft = signal<{ sourceId: string; confidence?: string; page?: string; dateText?: string }>({ sourceId: '' });
-    citationEditDraft = signal<{ index?: number; sourceId: string; confidence?: string; page?: string; text?: string; dateText?: string }>({ sourceId: '' });
+    showCitationModal = signal(false);
     activePersonCitationIndex = signal<number | null>(null);
+    activeCitation = signal<Citation | null>(null);
+
+    mappedSources = computed(() => {
+        if (!this.person || !this.person.citations) return [];
+        return this.person.citations.map((cit: any, i: number) => {
+            const rawSource = this.availableSources.find((s: any) => s.id === cit.sourceId);
+            const display: DisplaySource = {
+                id: cit.id || `cit-${i}`,
+                title: rawSource ? rawSource.title : 'Unbekannte Quelle',
+                author: rawSource ? rawSource.author : undefined,
+                publication: rawSource ? rawSource.publication : undefined,
+                confidence: cit.confidence as any,
+                whereInSource: cit.whereInSource || cit.page, // Keep cit.page for backward compatibility if needed, but prefer whereInSource
+                description: (cit.whereInSource || cit.page) ? `Fundstelle: ${cit.whereInSource || cit.page}` : '',
+                text: cit.text,
+                createdAt: (cit.date || cit.dateText) ? new Date(cit.date || cit.dateText) : new Date(), // Keep cit.dateText for backward compatibility
+                _originalIndex: i
+            } as any;
+            return display;
+        });
+    });
 
     getSourceTitle(sourceId?: string): string {
         if (!sourceId) return 'Ohne Quelle';
@@ -167,84 +119,69 @@ export class PersonTabCitationsComponent {
     }
 
     addPersonCitation() {
-        this.newCitationDraft.set({ sourceId: '', page: '', confidence: '', dateText: '' });
-        this.showCitationCreateModal.set(true);
+        this.activePersonCitationIndex.set(null);
+        this.activeCitation.set(null);
+        this.showCitationModal.set(true);
     }
 
-    closeCitationModal() {
-        this.showCitationCreateModal.set(false);
-    }
-
-    confirmAddPersonCitation() {
-        const p = this.person;
-        if (p) {
-            const draft = this.newCitationDraft();
-            if (!draft.sourceId) {
-                alert('Bitte wählen Sie eine gültige Quelle aus.');
-                return;
-            }
-            p.citations = p.citations || [];
-            p.citations.push({
-                sourceId: draft.sourceId,
-                confidence: draft.confidence || '',
-                page: draft.page || '',
-                dateText: draft.dateText || ''
-            } as any);
-            this.changed.emit();
-            this.showCitationCreateModal.set(false);
-        }
-    }
-
-    openPersonCitationModal(index: number) {
+    openPersonCitationModal(sourceOrIndex: any) {
+        let index = typeof sourceOrIndex === 'number' ? sourceOrIndex : sourceOrIndex._originalIndex;
         const p = this.person;
         if (!p || !p.citations || !p.citations[index]) return;
         const cit = p.citations[index] as any;
-        this.citationEditDraft.set({
-            index,
-            sourceId: cit.sourceId,
-            confidence: cit.confidence || '',
-            page: cit.page || '',
-            text: cit.text || '',
-            dateText: cit.dateText || ''
-        });
         this.activePersonCitationIndex.set(index);
-        this.showCitationEditModal.set(true);
+        this.activeCitation.set({
+            sourceId: cit.sourceId,
+            quality: cit.quality ?? 2,
+            whereInSource: cit.whereInSource || cit.page || '',
+            text: cit.text || '',
+            date: cit.date || cit.dateText || '',
+            notes: cit.notes || []
+        });
+        this.showCitationModal.set(true);
     }
 
-    closePersonCitationModal() {
-        this.showCitationEditModal.set(false);
-        this.activePersonCitationIndex.set(null);
-    }
-
-    savePersonCitationModal() {
+    savePersonCitationModal(draft: Citation) {
         const p = this.person;
+        if (!p) return;
+        
         const idx = this.activePersonCitationIndex();
-        if (!p || idx === null || !p.citations || !p.citations[idx]) return;
-        const draft = this.citationEditDraft();
-        if (!draft.sourceId) {
-            alert('Bitte wählen Sie eine gültige Quelle aus.');
-            return;
+        if (idx !== null) {
+            // Edit
+            p.citations[idx] = {
+                ...p.citations[idx],
+                ...draft
+            };
+        } else {
+            // Create
+            p.citations = p.citations || [];
+            p.citations.push({ ...draft });
         }
-        p.citations[idx] = {
-            ...(p.citations[idx] as any),
-            sourceId: draft.sourceId || '',
-            page: draft.page || '',
-            confidence: draft.confidence || '',
-            text: draft.text || '',
-            dateText: draft.dateText || ''
-        } as any;
+        
         this.changed.emit();
-        this.closePersonCitationModal();
+        this.showCitationModal.set(false);
     }
 
     removePersonCitationModal() {
         const idx = this.activePersonCitationIndex();
         if (idx === null) return;
         const p = this.person;
-        if (p) {
-            p.citations!.splice(idx, 1);
+        if (p && p.citations) {
+            p.citations.splice(idx, 1);
             this.changed.emit();
         }
-        this.closePersonCitationModal();
+        this.showCitationModal.set(false);
+    }
+
+    onSourceDeleted(sourceId: string) {
+        const p = this.person;
+        if (!p || !p.citations) return;
+        const idx = p.citations.findIndex((c: any, i: number) => (c.id || `cit-${i}`) === sourceId);
+        if (idx !== -1) {
+            if (confirm('Möchtest du diesen Beleg wirklich löschen?')) {
+                p.citations.splice(idx, 1);
+                this.changed.emit();
+            }
+        }
     }
 }

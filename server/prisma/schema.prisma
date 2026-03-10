@@ -690,6 +690,9 @@ model Source {
   repositoryId String?
   repository   Repository? @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
 
+  sourceType  String? // e.g. 'BUCH', 'WEBSEITE'
+  category    String? // e.g. 'PRIMARY', 'SECONDARY'
+
   citations   Citation[]
   mediaLinks  MediaLink[]
   noteLinks   NoteLink[]

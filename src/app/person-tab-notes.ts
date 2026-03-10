@@ -4,90 +4,68 @@ import { FormsModule } from '@angular/forms';
 
 import { AppModalShell } from './ui/app-modal-shell';
 import { AppNotesList } from './ui/app-notes-list';
+import { AppNoteModal } from './ui/app-note-modal';
+import { AppSectionHeaderComponent } from './ui/app-section-header';
 import { DisplayNote, NoteCategory } from './models';
 
 @Component({
     selector: 'app-person-tab-notes',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell, AppNotesList],
+    imports: [CommonModule, FormsModule, AppModalShell, AppNotesList, AppNoteModal, AppSectionHeaderComponent],
     template: `
-        <div class="space-y-6">
-            <app-notes-list
-                [entityId]="person?.id"
-                [entityType]="'PERSON'"
-                [notesDisplay]="displayNotes"
-                [allowCreate]="true"
-                [allowEdit]="true"
-                [placeholder]="'Notizen zu dieser Person durchsuchen...'"
-                (noteCreateRequested)="onNoteCreateRequested()"
-                (noteEditRequested)="onNoteEditRequested($event)"
-                (noteDeleted)="onNoteDeleted($event)"
-            ></app-notes-list>
+        <div class="glass-card shadow-sm flex flex-col">
+            <div class="p-0">
+                <app-section-header title="Notizen" icon="📝">
+                    <div actions class="flex items-center gap-3">
+                        <div class="relative hidden md:block w-64">
+                            <input 
+                                type="text" 
+                                [(ngModel)]="searchText"
+                                placeholder="Notizen durchsuchen..."
+                                class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
+                            >
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            </span>
+                        </div>
+                        <button (click)="onNoteCreateRequested()" class="btn-primary !w-auto !py-2">
+                            + Notiz
+                        </button>
+                    </div>
+                </app-section-header>
+
+                <app-notes-list
+                    [entityId]="person?.id"
+                    [entityType]="'PERSON'"
+                    [notesDisplay]="displayNotes"
+                    [allowCreate]="true"
+                    [allowEdit]="true"
+                    [showHeader]="false"
+                    [searchTerm]="searchText"
+                    (noteCreateRequested)="onNoteCreateRequested()"
+                    (noteEditRequested)="onNoteEditRequested($event)"
+                    (noteDeleted)="onNoteDeleted($event)"
+                ></app-notes-list>
+            </div>
         </div>
 
-        <!-- NOTE EDIT SUB-MODAL -->
-        <app-modal-shell 
-            [visible]="showNoteSubModal()" 
-            [title]="activeNoteIndex() !== null ? 'Notiz bearbeiten' : 'Neue Notiz'" 
-            icon="📝" 
-            size="md"
-            [showSave]="true" 
-            [showDelete]="activeNoteIndex() !== null" 
+        <app-note-modal
+            [visible]="showNoteSubModal()"
+            [note]="activeNote()"
             (close)="showNoteSubModal.set(false)"
-            (save)="onNoteSave()"
+            (save)="onNoteSave($event)"
             (delete)="onNoteDeleteFromModal()"
-        >
-            <div class="space-y-4">
-                <div class="form-group mb-0">
-                    <label class="form-label text-xs uppercase tracking-wider font-bold text-neutral-500">Kategorie / Typ</label>
-                    <select [(ngModel)]="noteDraft().noteType" class="form-input">
-                        <option value="COMMENT">Kommentar</option>
-                        <option value="TRANSCRIPTION">Transkription</option>
-                        <option value="RESEARCH">Forschung</option>
-                        <option value="QUESTION">Frage</option>
-                        <option value="TODO">Aufgabe</option>
-                        <option value="HINT">Hinweis</option>
-                        <option value="OTHER">Andere</option>
-                    </select>
-                </div>
-
-                <div class="form-group mb-0">
-                    <label class="form-label text-xs uppercase tracking-wider font-bold text-neutral-500">Inhalt</label>
-                    <textarea 
-                        [(ngModel)]="noteDraft().text" 
-                        class="form-input min-h-[160px] font-body" 
-                        placeholder="Deine Gedanken, Forschungsergebnisse oder Entdeckungen..."
-                    ></textarea>
-                </div>
-
-                <div class="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-xl border border-neutral-200 dark:border-neutral-800">
-                    <div class="flex-1">
-                        <div class="text-sm font-bold text-neutral-900 dark:text-white">Private Notiz</div>
-                        <div class="text-[10px] text-neutral-500">Nur für dich und berechtigte Bearbeiter sichtbar.</div>
-                    </div>
-                    <input 
-                        type="checkbox" 
-                        [(ngModel)]="noteDraft().isPrivate"
-                        class="checkbox checkbox-brand"
-                    >
-                </div>
-            </div>
-        </app-modal-shell>
+        ></app-note-modal>
     `
 })
 export class PersonTabNotesComponent {
     @Input({ required: true }) person!: any;
     @Output() changed = new EventEmitter<void>();
+    searchText = '';
 
     showNoteSubModal = signal(false);
     activeNoteIndex = signal<number | null>(null);
-    noteDraft = signal<DisplayNote>({
-        id: '',
-        text: '',
-        noteType: 'COMMENT',
-        createdAt: new Date(),
-        isPrivate: false
-    });
+    activeNote = signal<DisplayNote | null>(null);
 
     get displayNotes(): DisplayNote[] {
         if (!this.person?.notes) return [];
@@ -104,13 +82,7 @@ export class PersonTabNotesComponent {
 
     onNoteCreateRequested() {
         this.activeNoteIndex.set(null);
-        this.noteDraft.set({
-            id: 'note-' + Date.now(),
-            text: '',
-            noteType: 'COMMENT' as NoteCategory,
-            createdAt: new Date(),
-            isPrivate: true // Default to private for persons
-        });
+        this.activeNote.set(null);
         this.showNoteSubModal.set(true);
     }
 
@@ -121,13 +93,12 @@ export class PersonTabNotesComponent {
         const idx = p.notes.findIndex((n: any, i: number) => (n.id || `note-${i}`) === displayNote.id);
         if (idx !== -1) {
             this.activeNoteIndex.set(idx);
-            this.noteDraft.set({ ...displayNote });
+            this.activeNote.set({ ...displayNote });
             this.showNoteSubModal.set(true);
         }
     }
 
-    onNoteSave() {
-        const draft = this.noteDraft();
+    onNoteSave(draft: DisplayNote) {
         if (!draft.text.trim()) return;
 
         const p = this.person;

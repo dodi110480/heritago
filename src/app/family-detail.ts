@@ -17,9 +17,9 @@ import { MediaSelector } from './media-selector';
 import { MediaAddModal } from './media-add-modal';
 import { EventModal } from './event-modal';
 import { ImageViewer } from './image-viewer';
-import { SourceModal } from './source-modal';
 import { AppNotesList } from './ui/app-notes-list';
-import { DisplayNote, NoteCategory } from './models';
+import { DisplayNote, NoteCategory, DisplaySource } from './models';
+import { AppSourcesListComponent } from './ui/app-sources-list/app-sources-list';
 
 @Component({
     selector: 'app-family-detail',
@@ -38,8 +38,8 @@ import { DisplayNote, NoteCategory } from './models';
         MediaAddModal,
         EventModal,
         ImageViewer,
-        SourceModal,
-        AppNotesList
+        AppNotesList,
+        AppSourcesListComponent
     ],
     templateUrl: './family-detail.html'
 })
@@ -57,14 +57,25 @@ export class FamilyDetail implements OnInit, OnDestroy {
     isSaving = signal(false);
     availableSources = signal<any[]>([]);
 
+    loadAvailableSources() {
+        const treeName = this.authService.currentTree()?.name;
+        if (treeName) {
+            this.gedcomService.getSources(treeName).subscribe({
+                next: (res: any) => {
+                    if (res.success) this.availableSources.set(res.sources || []);
+                }
+            });
+        }
+    }
+
     activeTab = signal<'basics' | 'children' | 'events' | 'notes' | 'citations' | 'media'>('basics');
 
     // Modal States
     showEventModal = signal(false);
     showNoteModal = signal(false);
-    showCitationModal = signal(false);
     showMediaModal = signal(false);
     showMediaAddModal = signal(false);
+    showSourceModal = signal(false);
     showAddChildModal = signal(false);
     showCancelConfirmModal = signal(false);
     showPlaceModal = signal(false);
@@ -82,6 +93,11 @@ export class FamilyDetail implements OnInit, OnDestroy {
         createdAt: new Date(),
         isPrivate: false
     });
+
+    activeSourceIndex = signal<number | null>(null);
+    sourceSearchQuery = signal('');
+    noteSearchQuery = signal('');
+    sourceDraft = signal<{ sourceId: string; confidence?: string; whereInSource?: string; text?: string; date?: string }>({ sourceId: '' });
 
     onNoteCreateRequested() {
         this.activeNoteIndex.set(null);
@@ -159,9 +175,6 @@ export class FamilyDetail implements OnInit, OnDestroy {
         }
     }
 
-    activeCitationIndex = signal<number | null>(null);
-    citationDraft = signal<any>(null);
-
     activeMediaIndex = signal<number | null>(null);
     mediaDraft = signal<any>(null);
 
@@ -222,14 +235,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
             next: (data) => {
                 if (data) {
                     this.individuals.set(data.individuals);
-                    const treeName = data.meta?.tree;
-                    if (treeName) {
-                        this.gedcomService.getSources(treeName).subscribe({
-                            next: (res: any) => {
-                                if (res.success) this.availableSources.set(res.sources || []);
-                            }
-                        });
-                    }
+                    this.loadAvailableSources();
                     const fam = data.families.find(f => f.id === this.familyId());
                     if (fam) {
                         const clonedFam = JSON.parse(JSON.stringify(fam));
@@ -507,70 +513,105 @@ export class FamilyDetail implements OnInit, OnDestroy {
         this.save();
     }
 
-    // --- Citations (Modal based) ---
-    openAddCitationModal() {
-        this.activeCitationIndex.set(null);
-        this.citationDraft.set({ sourceId: '', page: '', confidence: '', dateText: '' });
-        this.showCitationModal.set(true);
-    }
-
-    openEditCitationModal(index: number) {
+    mappedSources = computed(() => {
         const fam = this.family() as any;
-        if (!fam || !fam.citations?.[index]) return;
-        this.activeCitationIndex.set(index);
-        this.citationDraft.set(JSON.parse(JSON.stringify(fam.citations[index])));
-        this.showCitationModal.set(true);
+        if (!fam || !fam.citations) return [];
+        return fam.citations.map((cit: any, i: number) => {
+            const rawSource = this.availableSources().find(s => s.id === cit.sourceId);
+            const display: DisplaySource & { _originalIndex?: number } = {
+                id: cit.id || `cit-${i}`,
+                title: rawSource ? rawSource.title : 'Unbekannte Quelle',
+                author: rawSource ? rawSource.author : undefined,
+                publication: rawSource ? rawSource.publication : undefined,
+                confidence: cit.confidence as any,
+                whereInSource: cit.whereInSource || cit.page,
+                date: cit.date || cit.dateText,
+                description: (cit.whereInSource || cit.page) ? `Fundstelle: ${cit.whereInSource || cit.page}` : '',
+                text: cit.text,
+                createdAt: (cit.date || cit.dateText) ? new Date(cit.date || cit.dateText) : new Date(),
+                _originalIndex: i
+            } as any;
+            return display;
+        });
+    });
+
+    onSourceCreateRequested() {
+        this.addSourceDraft();
     }
 
-    confirmSaveCitation() {
-        const draft = this.citationDraft();
-        if (!draft) return;
+    onSourceEditRequested(source: DisplaySource & { _originalIndex?: number }) {
+        let index = source._originalIndex;
+        if (index === undefined) return;
+        const fam = this.family() as any;
+        if (!fam || !fam.citations || !fam.citations[index]) return;
+        
+        const cit = fam.citations[index];
+        this.sourceDraft.set({
+            sourceId: cit.sourceId || '',
+            whereInSource: cit.whereInSource || cit.page || '',
+            confidence: cit.confidence || '',
+            text: cit.text || '',
+            date: cit.date || cit.dateText || ''
+        });
+        this.activeSourceIndex.set(index);
+        this.showSourceModal.set(true);
+    }
+
+    addSourceDraft() {
+        this.sourceDraft.set({ sourceId: '', whereInSource: '', text: '', confidence: '', date: '' });
+        this.activeSourceIndex.set(null);
+        this.showSourceModal.set(true);
+    }
+
+    onSourceSave() {
+        const draft = this.sourceDraft();
+        if (!draft.sourceId) {
+            alert('Bitte wählen Sie eine gültige Quelle aus.');
+            return;
+        }
 
         this.family.update(fam => {
-            const f = fam as any;
-            if (!f) return fam;
+            if (!fam) return fam;
+            const f = { ...fam } as any;
             if (!f.citations) f.citations = [];
-            const idx = this.activeCitationIndex();
-            if (idx !== null) {
-                f.citations[idx] = draft;
+            
+            const citation = {
+                sourceId: draft.sourceId,
+                whereInSource: draft.whereInSource || '',
+                confidence: draft.confidence || '',
+                text: draft.text || '',
+                date: draft.date || ''
+            };
+
+            const index = this.activeSourceIndex();
+            if (index !== null) {
+                f.citations[index] = citation;
             } else {
-                f.citations.push(draft);
+                f.citations.push(citation);
             }
-            return { ...f };
+            return f;
         });
 
         this.isDirty.set(true);
-        this.showCitationModal.set(false);
-        this.citationDraft.set(null);
+        this.showSourceModal.set(false);
         this.save();
     }
 
-    removeCitation(index: number) {
-        this.family.update(fam => {
-            const f = fam as any;
-            if (f?.citations) {
+    onSourceDeleteFromModal() {
+        const index = this.activeSourceIndex();
+        if (index === null) return;
+        
+        if (confirm('Möchtest du diesen Beleg wirklich löschen?')) {
+            this.family.update(fam => {
+                if (!fam || !fam.citations) return fam;
+                const f = { ...fam } as any;
                 f.citations.splice(index, 1);
-            }
-            return { ...f };
-        });
-        this.isDirty.set(true);
-        this.showCitationModal.set(false);
-        this.save();
-    }
-
-    // --- Media (Modal based) ---
-    openAddMediaModal() {
-        this.activeMediaIndex.set(null);
-        this.mediaDraft.set({ url: '', title: '', isPrimary: false });
-        this.showMediaModal.set(true);
-    }
-
-    openEditMediaModal(index: number) {
-        const fam = this.family();
-        if (!fam || !fam.media?.[index]) return;
-        this.activeMediaIndex.set(index);
-        this.mediaDraft.set(JSON.parse(JSON.stringify(fam.media[index])));
-        this.showMediaModal.set(true);
+                return f;
+            });
+            this.isDirty.set(true);
+            this.showSourceModal.set(false);
+            this.save();
+        }
     }
 
     openMediaSelector() {

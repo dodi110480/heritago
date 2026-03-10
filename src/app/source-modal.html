@@ -48,6 +48,34 @@
                     class="form-input" placeholder="band 4, Seite 12...">
             </div>
 
+            <!-- Source Type & Category -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                    <label class="form-label text-xs uppercase tracking-wider font-bold text-neutral-500">Quellentyp</label>
+                    <select [ngModel]="sourceType()" (ngModelChange)="sourceType.set($event)" class="form-input">
+                        <option value="BUCH">📖 Buch</option>
+                        <option value="WEBSEITE">🌐 Webseite</option>
+                        <option value="DOKUMENT">📜 Dokument</option>
+                        <option value="ZEITUNG">📰 Zeitung</option>
+                        <option value="ARCHIV">🏛️ Archiv</option>
+                        <option value="FOTO">📷 Foto</option>
+                        <option value="AUDIO">🔊 Audio</option>
+                        <option value="VIDEO">🎥 Video</option>
+                        <option value="PERIODISCH">📅 Periodisch</option>
+                        <option value="KIRCHBUCH">⛪ Kirchbuch</option>
+                        <option value="VOLKSZAEHLUNG">👥 Volkszählung</option>
+                        <option value="ANDERE">❓ Andere</option>
+                    </select>
+                </div>
+                <div class="space-y-1.5">
+                    <label class="form-label text-xs uppercase tracking-wider font-bold text-neutral-500">Kategorie</label>
+                    <select [ngModel]="category()" (ngModelChange)="category.set($event)" class="form-input">
+                        <option value="PRIMARY">💎 Primärquelle</option>
+                        <option value="SECONDARY">📚 Sekundärquelle</option>
+                    </select>
+                </div>
+            </div>
+
             <!-- Repository -->
             <div class="space-y-1.5">
                 <label class="form-label">

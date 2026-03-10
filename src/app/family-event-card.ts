@@ -1,12 +1,15 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+import { AppSourcesListComponent } from './ui/app-sources-list/app-sources-list';
+import { AppModalShell } from './ui/app-modal-shell';
+import { DisplaySource } from './models';
 
 @Component({
     selector: 'app-family-event-card',
     standalone: true,
-    imports: [CommonModule, FormsModule],
+    imports: [CommonModule, FormsModule, AppSourcesListComponent, AppModalShell],
     template: `
         <div class="glass-card !p-5 !rounded-2xl space-y-5 group">
             <!-- Main Event Row -->
@@ -110,54 +113,76 @@ import { FormsModule } from '@angular/forms';
                     <div class="flex items-center justify-between mb-3">
                         <strong class="text-sm font-semibold text-neutral-700 flex items-center gap-1.5">
                             📖 Quellenbelege
-                            <span *ngIf="event.citations?.length"
+                            <span *ngIf="mappedSources().length"
                                 class="text-xs bg-brand-500/20 text-brand-300 px-1.5 py-0.5 rounded-full">
-                                {{ event.citations?.length }}
+                                {{ mappedSources().length }}
                             </span>
                         </strong>
                         <button class="btn-ghost !w-auto !py-1 text-xs" (click)="addCitation()">+ Beleg</button>
                     </div>
-                    <p *ngIf="!event.citations?.length" class="text-xs text-neutral-800 dark:text-neutral-200 italic">Noch kein Quellbeleg.</p>
-                    <div *ngIf="event.citations && event.citations.length > 0" class="flex flex-col gap-2">
-                        <div *ngFor="let cit of event.citations; let cIndex = index"
-                            class="bg-brand-50/50 border border-neutral-300/20 rounded-xl p-3 space-y-2">
-                            <div class="flex gap-2 items-center">
-                                <select [(ngModel)]="cit.sourceId" (ngModelChange)="change()"
-                                    class="form-input form-input-sm flex-1 min-w-0">
-                                    <option value="">— Quelle wählen —</option>
-                                    <option *ngFor="let s of availableSources" [value]="s.id">
-                                        {{ s.title }}{{ s.author ? ' · ' + s.author : '' }}
-                                    </option>
-                                </select>
-                                <button class="p-1.5 text-neutral-800 dark:text-neutral-200 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-all shrink-0"
-                                    (click)="removeCitation(cIndex)" title="Beleg entfernen">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </button>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <input type="text" [(ngModel)]="cit.page" (ngModelChange)="change()"
-                                    placeholder="Fundstelle / Seite" class="form-input form-input-sm">
-                                <select [(ngModel)]="cit.confidence" (ngModelChange)="change()"
-                                    class="form-input form-input-sm">
-                                    <option value="">Konfidenz wählen</option>
-                                    <option value="CERTAIN">✅ Sicher</option>
-                                    <option value="VERY_LIKELY">🟩 Sehr wahrscheinlich</option>
-                                    <option value="LIKELY">🟨 Wahrscheinlich</option>
-                                    <option value="POSSIBLE">🟧 Möglich</option>
-                                    <option value="UNLIKELY">🟥 Unwahrscheinlich</option>
-                                </select>
-                            </div>
-                            <input type="text" [(ngModel)]="cit.text" (ngModelChange)="change()"
-                                placeholder="Zitierter Ausschnitt (optional)..." class="form-input form-input-sm w-full">
-                        </div>
-                    </div>
+                    
+                    <app-sources-list
+                        *ngIf="mappedSources().length > 0"
+                        [entityId]="event.id || 'new'"
+                        [entityType]="'EVENT'"
+                        [sourcesDisplay]="mappedSources()"
+                        (sourceEditRequested)="openCitationModal($event)"
+                        (sourceCreateRequested)="addCitation()"
+                    ></app-sources-list>
+
+                    <p *ngIf="mappedSources().length === 0" class="text-xs text-neutral-800 dark:text-neutral-200 italic">Noch kein Quellbeleg.</p>
                 </div>
 
             </div>
         </div>
+
+        <!-- CITATION MODAL -->
+        <app-modal-shell [visible]="showCitationModal()" 
+            [title]="activeCitationIndex() === null ? 'Beleg hinzufügen' : 'Beleg bearbeiten'" icon="📖" size="md"
+            [showSave]="true" [saveText]="activeCitationIndex() === null ? 'Beleg hinzufügen' : 'Speichern'" 
+            [showDelete]="activeCitationIndex() !== null" deleteText="Beleg löschen" 
+            (close)="closeCitationModal()" (save)="saveCitation()" (delete)="removeCitationAction()">
+            <div class="space-y-4">
+                <div class="form-group mb-0">
+                    <label class="form-label">Quelle</label>
+                    <select [ngModel]="citationDraft().sourceId"
+                        (ngModelChange)="citationDraft.update(v => ({ ...v, sourceId: $event }))"
+                        class="form-input !py-2.5">
+                        <option value="">— Quelle wählen —</option>
+                        <option *ngFor="let s of availableSources" [value]="s.id">
+                            {{ s.title }}{{ s.author ? ' · ' + s.author : '' }}
+                        </option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-group mb-0">
+                        <label class="form-label">Fundstelle</label>
+                        <input type="text" [ngModel]="citationDraft().page"
+                            (ngModelChange)="citationDraft.update(v => ({ ...v, page: $event }))" class="form-input"
+                            placeholder="z.B. Seite 42">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label">Konfidenz</label>
+                        <select [ngModel]="citationDraft().confidence"
+                            (ngModelChange)="citationDraft.update(v => ({ ...v, confidence: $event }))"
+                            class="form-input !py-2.5">
+                            <option value="">Bitte wählen</option>
+                            <option value="CERTAIN">✅ Sicher</option>
+                            <option value="VERY_LIKELY">🟩 Sehr wahrscheinlich</option>
+                            <option value="LIKELY">🟨 Wahrscheinlich</option>
+                            <option value="POSSIBLE">🟧 Möglich</option>
+                            <option value="UNLIKELY">🟥 Unwahrscheinlich</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label">Zitat</label>
+                    <input type="text" [ngModel]="citationDraft().text"
+                        (ngModelChange)="citationDraft.update(v => ({ ...v, text: $event }))" class="form-input"
+                        placeholder="Zitierter Ausschnitt (optional)...">
+                </div>
+            </div>
+        </app-modal-shell>
     `
 })
 export class FamilyEventCardComponent {
@@ -165,6 +190,28 @@ export class FamilyEventCardComponent {
     @Input() availableSources: any[] = [];
     @Output() changed = new EventEmitter<void>();
     @Output() removeRequested = new EventEmitter<void>();
+
+    showCitationModal = signal(false);
+    activeCitationIndex = signal<number | null>(null);
+    citationDraft = signal<{ sourceId: string; confidence?: string; page?: string; text?: string; dateText?: string }>({ sourceId: '' });
+
+    mappedSources = computed(() => {
+        if (!this.event || !this.event.citations) return [];
+        return this.event.citations.map((cit: any, i: number) => {
+            const rawSource = this.availableSources.find(s => s.id === cit.sourceId);
+            const display: DisplaySource = {
+                id: cit.id || `cit-${i}`,
+                title: rawSource ? rawSource.title : 'Unbekannte Quelle',
+                author: rawSource ? rawSource.author : undefined,
+                publication: rawSource ? rawSource.publication : undefined,
+                confidence: cit.confidence as any,
+                description: cit.page ? `Fundstelle: ${cit.page}` : '',
+                createdAt: cit.dateText ? new Date(cit.dateText) : new Date(),
+                _originalIndex: i
+            } as any;
+            return display;
+        });
+    });
 
     change() {
         this.changed.emit();
@@ -204,13 +251,57 @@ export class FamilyEventCardComponent {
     }
 
     addCitation() {
-        this.event.citations = this.event.citations || [];
-        this.event.citations.push({ sourceId: '', confidence: '', page: '', text: '' });
-        this.change();
+        this.activeCitationIndex.set(null);
+        this.citationDraft.set({ sourceId: '', confidence: '', page: '', text: '' });
+        this.showCitationModal.set(true);
     }
 
-    removeCitation(index: number) {
-        this.event.citations?.splice(index, 1);
+    openCitationModal(sourceOrIndex: any) {
+        let index = typeof sourceOrIndex === 'number' ? sourceOrIndex : sourceOrIndex._originalIndex;
+        if (!this.event || !this.event.citations || !this.event.citations[index]) return;
+        const cit = this.event.citations[index];
+        this.activeCitationIndex.set(index);
+        this.citationDraft.set({
+            sourceId: cit.sourceId || '',
+            confidence: cit.confidence || '',
+            page: cit.page || '',
+            text: cit.text || '',
+            dateText: cit.dateText || ''
+        });
+        this.showCitationModal.set(true);
+    }
+
+    closeCitationModal() {
+        this.showCitationModal.set(false);
+        this.activeCitationIndex.set(null);
+    }
+
+    saveCitation() {
+        this.event.citations = this.event.citations || [];
+        const draft = this.citationDraft();
+        const idx = this.activeCitationIndex();
+
+        if (!draft.sourceId) {
+            alert("Bitte wählen Sie eine gültige Quelle aus.");
+            return;
+        }
+
+        if (idx !== null && this.event.citations[idx]) {
+            this.event.citations[idx] = { ...this.event.citations[idx], ...draft };
+        } else {
+            this.event.citations.push({ ...draft });
+        }
+        
         this.change();
+        this.closeCitationModal();
+    }
+
+    removeCitationAction() {
+        const idx = this.activeCitationIndex();
+        if (idx !== null) {
+            this.event.citations?.splice(idx, 1);
+            this.change();
+        }
+        this.closeCitationModal();
     }
 }
