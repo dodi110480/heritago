@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { GedcomManager } from '../services/gedcom.service';
+import { PersonService } from '../services/person.service';
 
 export const personRoutes = (prisma: PrismaClient) => {
     const router = Router({ mergeParams: true });
@@ -49,7 +49,7 @@ export const personRoutes = (prisma: PrismaClient) => {
         }
 
         const userId = req.body?.userId || (req as any).user?.id;
-        const record = await GedcomManager.createPerson(prisma, tree.id, { ...req.body, currentUserId: userId });
+        const record = await PersonService.savePerson(prisma, tree.id, { ...req.body, currentUserId: userId });
 
         // Nach dem Speichern den neuen Stand für das Log holen
         const afterState = await prisma.person.findUnique({

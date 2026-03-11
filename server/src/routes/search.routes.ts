@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { GedcomManager } from '../services/gedcom.service';
+import { PersonService } from '../services/person.service';
 
 export const searchRoutes = (prisma: PrismaClient) => {
     const router = Router({ mergeParams: true });
@@ -33,7 +34,7 @@ export const searchRoutes = (prisma: PrismaClient) => {
             take: 20
         });
 
-        const results = people.map(p => GedcomManager.formatGedcom(p));
+        const results = people.map(p => PersonService.formatPersonForClient(p));
         res.json({ success: true, results });
     });
 

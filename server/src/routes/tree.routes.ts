@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { STORAGE_ROOT, MEDIA_ROOT } from '../config';
 import { GedcomManager } from '../services/gedcom.service';
+import { PersonService } from '../services/person.service';
 import { analyzeInvalidFamilyIds } from './family.routes';
 
 export const treeRoutes = (prisma: PrismaClient) => {
@@ -46,7 +47,7 @@ export const treeRoutes = (prisma: PrismaClient) => {
 
             // Create the initial person if data is provided
             if (firstName && lastName) {
-                await GedcomManager.createPerson(prisma, tree.id, {
+                await PersonService.savePerson(prisma, tree.id, {
                     firstName,
                     lastName,
                     gender,
@@ -151,7 +152,7 @@ export const treeRoutes = (prisma: PrismaClient) => {
 
         if (!tree) return res.status(404).json({ success: false });
 
-        const individuals = tree.persons.map(i => GedcomManager.formatGedcom(i));
+        const individuals = tree.persons.map(i => PersonService.formatPersonForClient(i));
         const families = tree.families.map(f => GedcomManager.formatFamily(f));
 
 
