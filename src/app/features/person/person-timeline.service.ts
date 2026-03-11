@@ -1,11 +1,14 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Individual, TimelineItem, TreeData } from '../../core/models/models';
 import { GedcomService } from '../../core/services/gedcom.service';
 
+
+import { MediaService } from '../../core/services/media.service';
 @Injectable({
     providedIn: 'root'
 })
 export class PersonTimelineService {
+    public mediaService = inject(MediaService);
 
     constructor(private gedcomService: GedcomService) {}
 
@@ -262,7 +265,7 @@ export class PersonTimelineService {
     getProfileImage(person: Individual | null): string | null {
         if (!person || !person.media || person.media.length === 0) return null;
         const primary = person.media.find(m => m.isPrimary) || person.media[0];
-        return primary?.id ? this.gedcomService.getMediaUrl(primary.id, 'thumbs') : null;
+        return primary?.id ? this.mediaService.getMediaUrl(primary.id, 'thumbs') : null;
     }
 
     getPersonAvatarData(treeData: TreeData | null, personId: string | undefined): { url: string | null, gender: string } {
@@ -270,7 +273,7 @@ export class PersonTimelineService {
         const p = treeData.individuals.find(i => i.id === personId);
         if (!p) return { url: null, gender: 'U' };
         const primaryMedia = p.media && p.media.length > 0 ? (p.media.find(m => m.isPrimary) || p.media[0]) : null;
-        const url = primaryMedia?.id ? this.gedcomService.getMediaUrl(primaryMedia.id, 'thumbs') : null;
+        const url = primaryMedia?.id ? this.mediaService.getMediaUrl(primaryMedia.id, 'thumbs') : null;
         return { url, gender: p.gender || 'U' };
     }
 

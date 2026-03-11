@@ -2,6 +2,8 @@ import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+import { MediaService } from '../../core/services/media.service';
+
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 import { MediaSelector } from '../../media-selector';
 import { ImageViewer } from '../../image-viewer';
@@ -135,6 +137,7 @@ import { inject } from '@angular/core';
     `
 })
 export class PersonTabMediaComponent {
+    public mediaService = inject(MediaService);
     @Input({ required: true }) person!: any;
     @Input() treeId: string = '';
     @Output() changed = new EventEmitter<void>();
@@ -150,15 +153,15 @@ export class PersonTabMediaComponent {
 
     getMediaUrlExt(id: string | undefined, variant?: string): string | null {
         if (!id) return null;
-        return this.gedcomService.getMediaUrl(id, variant);
+        return this.mediaService.getMediaUrl(id, variant);
     }
 
     isImage(m: any): boolean {
-        return this.gedcomService.isImage(m);
+        return this.mediaService.isImage(m);
     }
 
     openViewer(media: any) {
-        this.viewerUrl.set(this.gedcomService.getMediaUrl(media.id));
+        this.viewerUrl.set(this.mediaService.getMediaUrl(media.id));
         this.viewerTitle.set(media.title || 'Bild');
     }
 

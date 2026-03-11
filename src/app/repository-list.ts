@@ -5,6 +5,8 @@ import { GedcomService } from './core/services/gedcom.service';
 import { AppEntityCard } from './shared/components/ui/app-entity-card';
 import { AppModalShell } from './shared/components/ui/app-modal-shell';
 
+
+import { SourceService } from './core/services/source.service';
 @Component({
     selector: 'app-repository-list',
     standalone: true,
@@ -12,6 +14,7 @@ import { AppModalShell } from './shared/components/ui/app-modal-shell';
     templateUrl: './repository-list.html'
 })
 export class RepositoryList implements OnInit {
+    public sourceService = inject(SourceService);
     private _currentTree: string | null = null;
     @Input() set currentTree(val: string | null) {
         if (val !== this._currentTree) {
@@ -52,7 +55,7 @@ export class RepositoryList implements OnInit {
     loadRepositories() {
         if (!this.currentTree) return;
         this.loading.set(true);
-        this.gedcomService.getRepositories(this.currentTree).subscribe({
+        this.sourceService.getRepositories(this.currentTree).subscribe({
             next: (res: any) => {
                 if (res.success) this.repositories.set(res.repositories);
                 this.loading.set(false);
@@ -122,7 +125,7 @@ export class RepositoryList implements OnInit {
             payload.id = this.selectedRepo().id;
         }
 
-        this.gedcomService.saveRepository(this.currentTree, payload).subscribe({
+        this.sourceService.saveRepository(this.currentTree, payload).subscribe({
             next: (res: any) => {
                 this.isSaving.set(false);
                 if (res.success) {
@@ -145,7 +148,7 @@ export class RepositoryList implements OnInit {
         if (!this.currentTree) return;
         if (!confirm(`Archiv "${repo.name}" wirklich löschen? Verknüpfte Quellen werden nicht gelöscht.`)) return;
 
-        this.gedcomService.saveRepository(this.currentTree, { id: repo.id, mode: 'delete' }).subscribe({
+        this.sourceService.saveRepository(this.currentTree, { id: repo.id, mode: 'delete' }).subscribe({
             next: () => {
                 if (this.selectedRepo()?.id === repo.id) {
                     this.selectedRepo.set(null);

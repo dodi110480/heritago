@@ -5,6 +5,8 @@ import { AuthService } from './core/services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { AppModalShell } from './shared/components/ui/app-modal-shell';
 
+
+import { MediaService } from './core/services/media.service';
 @Component({
     selector: 'app-media-selector',
     standalone: true,
@@ -12,6 +14,8 @@ import { AppModalShell } from './shared/components/ui/app-modal-shell';
     templateUrl: './media-selector.html'
 })
 export class MediaSelector implements OnInit, OnChanges {
+    public mediaService = inject(MediaService);
+
     @Input() visible = false;
     @Output() selected = new EventEmitter<any>();
     @Output() closed = new EventEmitter<void>();
@@ -35,12 +39,12 @@ export class MediaSelector implements OnInit, OnChanges {
         const tree = this.authService.currentTree();
         if (!tree) return;
         this.loading.set(true);
-        this.gedcomService.getMedia(tree.id, 'FOTOS', this.searchQuery()).subscribe({
+        this.mediaService.getMedia(tree.id, 'FOTOS', this.searchQuery()).subscribe({
             next: (res: any) => {
                 const items = (res.media || []).map((m: any) => ({
                     ...m,
-                    previewUrl: this.gedcomService.getMediaUrl(m.id, 'thumbs'),
-                    fullUrl: this.gedcomService.getMediaUrl(m.id)
+                    previewUrl: this.mediaService.getMediaUrl(m.id, 'thumbs'),
+                    fullUrl: this.mediaService.getMediaUrl(m.id)
                 }));
                 this.mediaItems.set(items);
                 this.loading.set(false);

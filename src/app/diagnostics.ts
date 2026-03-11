@@ -6,6 +6,8 @@ import { AuthService } from './core/services/auth.service';
 import { GenealogyValidationService, ValidationResult } from './core/services/genealogy-validation.service';
 import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 
+
+import { AnalyticsService } from './core/services/analytics.service';
 interface GedcomError {
     id: string;
     type: string;
@@ -24,6 +26,7 @@ interface GedcomError {
     templateUrl: './diagnostics.html'
 })
 export class Diagnostics implements OnInit {
+    public analyticsService = inject(AnalyticsService);
     private gedcomService = inject(GedcomService);
     private validationService = inject(GenealogyValidationService);
     authService = inject(AuthService);
@@ -46,7 +49,7 @@ export class Diagnostics implements OnInit {
                 const tree = sperlichTree || validTrees[0];
                 this.treeName.set(tree.name);
 
-                this.gedcomService.getDiagnostics(tree.name).subscribe({
+                this.analyticsService.getDiagnostics(tree.name).subscribe({
                     next: (data) => {
                         this.errors.set(data.errors || []);
                         this.isLoading.set(false);

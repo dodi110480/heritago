@@ -11,6 +11,9 @@ import { AppSourcesListComponent } from './shared/components/ui/app-sources-list
 import { AppUsageList } from './shared/components/ui/app-usage-list/app-usage-list';
 import { DisplayNote, NoteCategory, DisplaySource } from './core/models/models';
 
+
+import { MediaService } from './core/services/media.service';
+import { SourceService } from './core/services/source.service';
 @Component({
     selector: 'app-media-add-modal',
     standalone: true,
@@ -18,6 +21,8 @@ import { DisplayNote, NoteCategory, DisplaySource } from './core/models/models';
     templateUrl: './media-add-modal.html'
 })
 export class MediaAddModal {
+    public mediaService = inject(MediaService);
+    public sourceService = inject(SourceService);
     private gedcomService = inject(GedcomService);
 
     @Input() visible = false;
@@ -45,8 +50,8 @@ export class MediaAddModal {
             this.cropY.set(val.cropY ?? null);
             this.cropWidth.set(val.cropWidth ?? null);
             this.cropHeight.set(val.cropHeight ?? null);
-            this.currentFileUrl.set(this.gedcomService.getMediaUrl(val.id || val.path));
-            this.previewUrl.set(this.gedcomService.getMediaUrl(val.id || val.path, 'medium'));
+            this.currentFileUrl.set(this.mediaService.getMediaUrl(val.id || val.path));
+            this.previewUrl.set(this.mediaService.getMediaUrl(val.id || val.path, 'medium'));
             this.loadOptions();
         } else {
             this.reset();
@@ -89,7 +94,7 @@ export class MediaAddModal {
     private fetchUsage() {
         if (!this.id() || !this.isEditing()) return;
         this.isLoadingUsage.set(true);
-        this.gedcomService.getMediaUsage(this.id()).subscribe({
+        this.mediaService.getMediaUsage(this.id()).subscribe({
             next: (res) => {
                 this.isLoadingUsage.set(false);
                 if (res.success) this.usages.set(res.usage || []);
@@ -323,7 +328,7 @@ export class MediaAddModal {
         if (!mid) return;
 
         this.uploading.set(true);
-        this.gedcomService.updateCrop(mid, coords).subscribe({
+        this.mediaService.updateCrop(mid, coords).subscribe({
             next: (res) => {
                 this.uploading.set(false);
                 // Update internal crop state
@@ -334,7 +339,7 @@ export class MediaAddModal {
                 this.cropHeight.set(m.cropHeight);
 
                 // Refresh preview
-                this.previewUrl.set(this.gedcomService.getMediaUrl(mid, 'medium') + '?t=' + Date.now());
+                this.previewUrl.set(this.mediaService.getMediaUrl(mid, 'medium') + '?t=' + Date.now());
                 this.saved.emit(res.media);
             },
             error: () => this.uploading.set(false)
@@ -343,7 +348,7 @@ export class MediaAddModal {
 
     startCropping() {
         if (!this.id()) return;
-        this.cropImageUrl.set(this.gedcomService.getMediaUrl(this.id())); // Use original for cropping
+        this.cropImageUrl.set(this.mediaService.getMediaUrl(this.id())); // Use original for cropping
         this.showCropper.set(true);
     }
 
@@ -372,16 +377,16 @@ export class MediaAddModal {
         }
 
         if (file) {
-            this.gedcomService.uploadMedia(this.treeId(), this.userId(), file, this.title(), this.mediaType()).subscribe({
+            this.mediaService.uploadMedia(this.treeId(), this.userId(), file, this.title(), this.mediaType()).subscribe({
                 next: (res) => {
                     const newMedia = res.media;
                     this.id.set(newMedia.id);
                     this.isEditing.set(true);
                     this.selectedFile.set(null);
-                    this.previewUrl.set(this.gedcomService.getMediaUrl(newMedia.id, 'medium'));
+                    this.previewUrl.set(this.mediaService.getMediaUrl(newMedia.id, 'medium'));
 
                     // Update metadata (notes, identifiers, citations) right after upload
-                    this.gedcomService.updateMedia(newMedia.id, data).subscribe({
+                    this.mediaService.updateMedia(newMedia.id, data).subscribe({
                         next: (updRes) => {
                             if (this.mediaType() === 'PHOTO') {
                                 this.startCropping();
@@ -425,7 +430,7 @@ export class MediaAddModal {
     private loadOptions() {
         if (!this.treeId() || this.treeId() === this.loadedOptionsTreeId) return;
         this.loadedOptionsTreeId = this.treeId();
-        this.gedcomService.getSources(this.treeId()).subscribe(res => {
+        this.sourceService.getSources(this.treeId()).subscribe(res => {
             if (res.success) this.sourceOptions.set(res.sources || []);
         });
         this.gedcomService.getTreeData().subscribe(data => {
@@ -502,7 +507,7 @@ export class MediaAddModal {
     }
 
     private updateMetadata(id: string, data: any) {
-        this.gedcomService.updateMedia(id, data).subscribe({
+        this.mediaService.updateMedia(id, data).subscribe({
             next: (res) => {
                 // Ensure any pending (local) links are persisted
                 this.syncLinks(id).then(() => {
@@ -531,7 +536,7 @@ export class MediaAddModal {
                 if (l.sourceId) payload.sourceId = l.sourceId;
                 if (l.isPrimary) payload.isPrimary = l.isPrimary;
 
-                this.gedcomService.linkMedia(mediaId, payload).subscribe({
+                this.mediaService.linkMedia(mediaId, payload).subscribe({
                     next: (res) => {
                         const link = res?.link || res;
                         // Replace the first non-persisted entry with the returned link
@@ -561,8 +566,8 @@ export class MediaAddModal {
         this.uploading.set(true);
 
         const obs = this.isOrphan() 
-            ? this.gedcomService.deleteOrphanFile(this.currentPath())
-            : this.gedcomService.deleteMedia(this.id());
+            ? this.mediaService.deleteOrphanFile(this.currentPath())
+            : this.mediaService.deleteMedia(this.id());
 
         obs.subscribe({
             next: () => {
@@ -606,7 +611,7 @@ export class MediaAddModal {
             if (person) payload.personId = person.id;
             if (family) payload.familyId = family.id;
 
-            this.gedcomService.linkMedia(this.id(), payload).subscribe({
+            this.mediaService.linkMedia(this.id(), payload).subscribe({
                 next: (res) => {
                     const link = res?.link || res;
                     this.links.set([...this.links(), link]);
@@ -631,7 +636,7 @@ export class MediaAddModal {
         if (!l) return;
 
         if (l.id) {
-            this.gedcomService.unlinkMedia(l.id).subscribe({
+            this.mediaService.unlinkMedia(l.id).subscribe({
                 next: () => {
                     this.links.set(this.links().filter((_, idx) => idx !== i));
                 },

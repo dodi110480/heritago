@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { GedcomService } from './core/services/gedcom.service';
 
+
+import { AnalyticsService } from './core/services/analytics.service';
 @Component({
     selector: 'app-activity-feed',
     standalone: true,
@@ -93,6 +95,7 @@ import { GedcomService } from './core/services/gedcom.service';
     `]
 })
 export class ActivityFeed implements OnInit {
+    public analyticsService = inject(AnalyticsService);
     private gedcomService = inject(GedcomService);
     private router = inject(Router);
 
@@ -107,7 +110,7 @@ export class ActivityFeed implements OnInit {
     loadLogs() {
         this.gedcomService.getTreeData().subscribe(treeData => {
             if (treeData && treeData.meta && treeData.meta.tree) {
-                this.gedcomService.getChangeLog(treeData.meta.tree).subscribe({
+                this.analyticsService.getChangeLog(treeData.meta.tree).subscribe({
                     next: (logs) => {
                         this.logs.set(logs);
                         this.groupedLogs.set(this.groupLogs(logs));

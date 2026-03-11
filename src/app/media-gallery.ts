@@ -8,6 +8,8 @@ import { AppEntityCard } from './shared/components/ui/app-entity-card';
 import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 import { AppListViewComponent } from './shared/components/ui/app-list-view';
 
+
+import { MediaService } from './core/services/media.service';
 @Component({
     selector: 'app-media-gallery',
     standalone: true,
@@ -15,6 +17,7 @@ import { AppListViewComponent } from './shared/components/ui/app-list-view';
     templateUrl: './media-gallery.html'
 })
 export class MediaGallery implements OnInit {
+    public mediaService = inject(MediaService);
     private gedcomService = inject(GedcomService);
     private authService = inject(AuthService);
 
@@ -56,12 +59,12 @@ export class MediaGallery implements OnInit {
         this.loading.set(true);
         const backendType = this.filterType();
 
-        this.gedcomService.getMedia(tree.id, backendType, this.searchQuery()).subscribe({
+        this.mediaService.getMedia(tree.id, backendType, this.searchQuery()).subscribe({
             next: (res: any) => {
                 const items = (res.media || []).map((m: any) => {
                     return {
                         ...m,
-                        previewUrl: this.gedcomService.getMediaUrl(m.id || m.path, 'thumbs')
+                        previewUrl: this.mediaService.getMediaUrl(m.id || m.path, 'thumbs')
                     };
                 });
                 this.mediaItems.set(items);
@@ -93,8 +96,8 @@ export class MediaGallery implements OnInit {
         if (!confirm(`Medium "${item.title || item.path || item.id}" wirklich löschen?`)) return;
 
         const obs = item.orphanFile 
-            ? this.gedcomService.deleteOrphanFile(item.path)
-            : this.gedcomService.deleteMedia(item.id);
+            ? this.mediaService.deleteOrphanFile(item.path)
+            : this.mediaService.deleteMedia(item.id);
 
         obs.subscribe({
             next: () => {
@@ -107,10 +110,10 @@ export class MediaGallery implements OnInit {
     }
 
     isImage(item: any): boolean {
-        return this.gedcomService.isImage(item);
+        return this.mediaService.isImage(item);
     }
 
     isPdf(item: any): boolean {
-        return this.gedcomService.isPdf(item);
+        return this.mediaService.isPdf(item);
     }
 }

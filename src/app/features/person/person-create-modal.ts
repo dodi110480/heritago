@@ -6,6 +6,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { Individual } from '../../core/models/models';
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 
+
+import { PersonService } from '../../core/services/person.service';
 @Component({
     selector: 'app-person-create-modal',
     standalone: true,
@@ -13,6 +15,7 @@ import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
     templateUrl: './person-create-modal.html'
 })
 export class PersonCreateModal {
+    public personService = inject(PersonService);
     private gedcomService = inject(GedcomService);
     private authService = inject(AuthService);
 
@@ -60,7 +63,7 @@ export class PersonCreateModal {
         const tree = this.authService.currentTree();
         if (!tree) return;
 
-        this.gedcomService.searchIndividuals(tree.name, query).subscribe(res => {
+        this.personService.searchIndividuals(tree.name, query).subscribe(res => {
             this.searchResults.set(res.results || []);
             this.showResults.set(true);
         });
@@ -85,7 +88,7 @@ export class PersonCreateModal {
             facts: []
         };
 
-        this.gedcomService.savePerson(tree.name, payload).subscribe({
+        this.personService.savePerson(tree.name, payload).subscribe({
             next: (res: any) => {
                 this.isSaving.set(false);
                 if (res && res.success && res.person) {

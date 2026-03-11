@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { GedcomService } from '../../core/services/gedcom.service';
 import { transformToFamilyChart } from './family-chart-transformer';
 import * as d3 from 'd3';
+
+import { MediaService } from '../../core/services/media.service';
 // @ts-ignore
 import * as f3 from 'family-chart';
 import 'family-chart/styles/family-chart.css';
@@ -306,6 +308,8 @@ import 'family-chart/styles/family-chart.css';
     `]
 })
 export class FamilyChartComponent implements OnInit, AfterViewInit {
+    public mediaService = inject(MediaService);
+
   @ViewChild('familyChart') chartElement!: ElementRef;
 
   private gedcomService = inject(GedcomService);
@@ -383,7 +387,7 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
     // Resolve avatar URLs
     data.forEach((d: any) => {
       if (d.data.avatar) {
-        d.data.avatar = this.gedcomService.getMediaUrl(d.data.avatar, 'thumbs');
+        d.data.avatar = this.mediaService.getMediaUrl(d.data.avatar, 'thumbs');
       } else {
         const gender = d.data.gender === 'M' ? 'male' : (d.data.gender === 'F' ? 'female' : 'unknown');
         d.data.avatar = `assets/avatars/${gender}.svg`;

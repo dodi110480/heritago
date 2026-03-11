@@ -9,6 +9,11 @@ import { AuthService } from '../../core/services/auth.service';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 import { AppAvatarComponent } from '../../shared/components/ui/app-avatar';
 
+import { FamilyService } from '../../core/services/family.service';
+import { PlaceService } from '../../core/services/place.service';
+import { MediaService } from '../../core/services/media.service';
+import { SourceService } from '../../core/services/source.service';
+
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-state';
 import { AppSectionHeaderComponent } from '../../shared/components/ui/app-section-header';
@@ -44,6 +49,11 @@ import { AppSourcesListComponent } from '../../shared/components/ui/app-sources-
     templateUrl: './family-detail.html'
 })
 export class FamilyDetail implements OnInit, OnDestroy {
+    public familyService = inject(FamilyService);
+    public mediaService = inject(MediaService);
+    public placeService = inject(PlaceService);
+    public sourceService = inject(SourceService);
+
     private gedcomService = inject(GedcomService);
     public authService = inject(AuthService);
     private router = inject(Router);
@@ -60,7 +70,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
     loadAvailableSources() {
         const treeName = this.authService.currentTree()?.name;
         if (treeName) {
-            this.gedcomService.getSources(treeName).subscribe({
+            this.sourceService.getSources(treeName).subscribe({
                 next: (res: any) => {
                     if (res.success) this.availableSources.set(res.sources || []);
                 }
@@ -223,7 +233,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
 
     openViewer(media: any) {
         if (!media) return;
-        const url = media.id ? this.gedcomService.getMediaUrl(media.id) : (media.url ? this.gedcomService.getMediaUrl(media.url) : null);
+        const url = media.id ? this.mediaService.getMediaUrl(media.id) : (media.url ? this.mediaService.getMediaUrl(media.url) : null);
         if (!url) return;
         this.viewerUrl.set(url);
         this.viewerTitle.set(media.title || 'Bild');
@@ -277,8 +287,8 @@ export class FamilyDetail implements OnInit, OnDestroy {
         if (!p) return 'assets/avatars/unknown.svg';
         if (p.media && p.media.length > 0) {
             const primary = p.media.find(m => m.isPrimary) || p.media[0];
-        if (primary?.id) return this.gedcomService.getMediaUrl(primary.id, 'thumbs');
-        if (primary?.url) return this.gedcomService.getMediaUrl(primary.url, 'thumbs');
+        if (primary?.id) return this.mediaService.getMediaUrl(primary.id, 'thumbs');
+        if (primary?.url) return this.mediaService.getMediaUrl(primary.url, 'thumbs');
         }
         const gender = p.gender === 'M' ? 'male' : (p.gender === 'F' ? 'female' : 'unknown');
         return `assets/avatars/${gender}.svg`;
@@ -432,7 +442,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
             return;
         }
 
-        this.gedcomService.searchPlaces(tree.name, query).subscribe({
+        this.placeService.searchPlaces(tree.name, query).subscribe({
             next: (res: any) => {
                 this.placeSearchResults.set(res.places || []);
                 this.showPlaceSuggestions.set(true);
@@ -630,7 +640,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
             draft.media = draft.media || [];
             draft.media.push({
                 id: mediaObj.id,
-                url: this.gedcomService.getMediaUrl(mediaObj.id),
+                url: this.mediaService.getMediaUrl(mediaObj.id),
                 title: mediaObj.title || mediaObj.path || '',
                 isPrimary: draft.media.length === 0,
                 mimeType: mediaObj.mimeType
@@ -645,7 +655,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
                     title: mediaObj.title || mediaObj.path || '',
                     isPrimary: f.media.length === 0,
                     mimeType: mediaObj.mimeType,
-                    url: this.gedcomService.getMediaUrl(mediaObj.id)
+                    url: this.mediaService.getMediaUrl(mediaObj.id)
                 });
                 this.family.set({ ...f });
             }
@@ -672,14 +682,14 @@ export class FamilyDetail implements OnInit, OnDestroy {
         if (this.pendingReopenEventModal && this.eventDraft()) {
             const draft = this.eventDraft();
             draft.media = draft.media || [];
-            draft.media.push({ id: media.id, url: this.gedcomService.getMediaUrl(media.id), title: media.title || media.path || '', isPrimary: draft.media.length === 0, mimeType: media.mimeType });
+            draft.media.push({ id: media.id, url: this.mediaService.getMediaUrl(media.id), title: media.title || media.path || '', isPrimary: draft.media.length === 0, mimeType: media.mimeType });
             this.eventDraft.set({ ...draft });
             this.isDirty.set(true);
         } else {
             const f = this.family();
             if (f) {
                 f.media = f.media || [];
-                f.media.push({ id: media.id, title: media.title || media.path || '', isPrimary: f.media.length === 0, mimeType: media.mimeType, url: this.gedcomService.getMediaUrl(media.id) });
+                f.media.push({ id: media.id, title: media.title || media.path || '', isPrimary: f.media.length === 0, mimeType: media.mimeType, url: this.mediaService.getMediaUrl(media.id) });
                 this.family.set({ ...f });
                 this.isDirty.set(true);
             }
@@ -823,7 +833,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
         if (!fam || !tree || this.isSaving()) return;
 
         this.isSaving.set(true);
-        this.gedcomService.saveFamily(tree.name, fam).subscribe({
+        this.familyService.saveFamily(tree.name, fam).subscribe({
             next: (res) => {
                 this.isDirty.set(false);
                 this.isSaving.set(false);

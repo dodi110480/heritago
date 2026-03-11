@@ -7,6 +7,8 @@ import { AppNotesList } from './shared/components/ui/app-notes-list/app-notes-li
 import { AppUsageList } from './shared/components/ui/app-usage-list/app-usage-list';
 import { DisplayNote, NoteCategory } from './core/models/models';
 
+
+import { SourceService } from './core/services/source.service';
 @Component({
     selector: 'app-source-modal',
     standalone: true,
@@ -14,6 +16,7 @@ import { DisplayNote, NoteCategory } from './core/models/models';
     templateUrl: './source-modal.html'
 })
 export class SourceModal implements OnInit {
+    public sourceService = inject(SourceService);
     @Input() mode: 'add' | 'edit' = 'add';
     @Input() sourceData: any = null;
     @Input() currentTree: string | null = null;
@@ -69,7 +72,7 @@ export class SourceModal implements OnInit {
         }
 
         if (this.currentTree) {
-            this.gedcomService.getRepositories(this.currentTree).subscribe({
+            this.sourceService.getRepositories(this.currentTree).subscribe({
                 next: (res: any) => {
                     if (res.success) this.repositories.set(res.repositories);
                 }
@@ -77,7 +80,7 @@ export class SourceModal implements OnInit {
 
             if (this.mode === 'edit' && this.sourceData?.id) {
                 // Fetch full source data including notes
-                this.gedcomService.getSource(this.currentTree, this.sourceData.id).subscribe({
+                this.sourceService.getSource(this.currentTree, this.sourceData.id).subscribe({
                     next: (res) => {
                         if (res.success && res.source) {
                             this.notes.set(res.source.notes || []);
@@ -86,7 +89,7 @@ export class SourceModal implements OnInit {
                 });
 
                 this.isLoadingUsage.set(true);
-                this.gedcomService.getSourceUsage(this.currentTree, this.sourceData.id).subscribe({
+                this.sourceService.getSourceUsage(this.currentTree, this.sourceData.id).subscribe({
                     next: (res) => {
                         this.isLoadingUsage.set(false);
                         if (res.success && res.usage) {
@@ -195,7 +198,7 @@ export class SourceModal implements OnInit {
             payload.id = this.sourceData.id;
         }
 
-        this.gedcomService.saveSource(tree, payload).subscribe({
+        this.sourceService.saveSource(tree, payload).subscribe({
             next: (res: any) => {
                 this.isSaving.set(false);
                 if (res.success) {

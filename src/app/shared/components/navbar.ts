@@ -6,6 +6,8 @@ import { GedcomService } from '../../core/services/gedcom.service';
 import { signal, effect } from '@angular/core';
 import { filter } from 'rxjs/operators';
 
+
+import { AnalyticsService } from '../../core/services/analytics.service';
 @Component({
     selector: 'app-navbar',
     standalone: true,
@@ -14,6 +16,7 @@ import { filter } from 'rxjs/operators';
     encapsulation: ViewEncapsulation.None
 })
 export class Navbar {
+    public analyticsService = inject(AnalyticsService);
     authService = inject(AuthService);
     private gedcomService = inject(GedcomService);
     private router = inject(Router);
@@ -42,7 +45,7 @@ export class Navbar {
     updateDiagnostics() {
         const activeTree = this.authService.currentTree();
         if (activeTree) {
-            this.gedcomService.getDiagnostics(activeTree.name).subscribe({
+            this.analyticsService.getDiagnostics(activeTree.name).subscribe({
                 next: (data) => {
                     this.errorCount.set(data.count || 0);
                 },

@@ -8,6 +8,8 @@ import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { inject } from '@angular/core';
 
+import { SourceService } from '../../../../core/services/source.service';
+
 import { GlassCardComponent } from '../app-glass-card';
 import { SourceSummaryPipe } from '../source-summary-pipe';
 import { SourceModal } from '../../../../source-modal';
@@ -34,6 +36,7 @@ import { DisplaySource, EntityType, SourceType } from '../../../../core/models/m
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppSourcesListComponent {
+    public sourceService = inject(SourceService);
 
   // ---------------------------
   // Signal Inputs (Angular 17+)
@@ -205,7 +208,7 @@ export class AppSourcesListComponent {
     // Wir brauchen eine Liste aller Quellen für das Modal (z.B. für Merge)
     const tree = this.authService.currentTree();
     if (tree) {
-      this.gedcomService.getSources(tree.name).subscribe(res => {
+      this.sourceService.getSources(tree.name).subscribe(res => {
         if (res.success) {
           this.allSourcesForMaster.set(res.sources);
         }
@@ -228,7 +231,7 @@ export class AppSourcesListComponent {
     if (!tree) return;
 
     if (confirm('Möchtest du diese Quelle wirklich UNWIDERRUFLICH aus dem gesamten Stammbaum löschen? Alle Belege an Personen und Ereignissen gehen verloren.')) {
-        this.gedcomService.saveSource(tree.name, { id: payload.source.id, mode: 'delete', reassignToId: payload.reassignToId }).subscribe(res => {
+        this.sourceService.saveSource(tree.name, { id: payload.source.id, mode: 'delete', reassignToId: payload.reassignToId }).subscribe(res => {
             if (res.success) {
                 this.showSourceMasterModal.set(false);
                 this.masterSaved.emit();

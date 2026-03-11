@@ -11,6 +11,12 @@ import { PersonCreateModal } from './person-create-modal';
 import { CanComponentDeactivate } from '../../core/guards/unsaved-changes.guard';
 import { forkJoin, of, switchMap } from 'rxjs';
 
+import { PersonService } from '../../core/services/person.service';
+import { FamilyService } from '../../core/services/family.service';
+import { PlaceService } from '../../core/services/place.service';
+import { MediaService } from '../../core/services/media.service';
+import { SourceService } from '../../core/services/source.service';
+
 import { MediaSelector } from '../../media-selector';
 import { MediaAddModal } from '../../media-add-modal';
 import { EventModal } from '../../event-modal';
@@ -54,6 +60,12 @@ import { PersonTimelineService } from './person-timeline.service';
     encapsulation: ViewEncapsulation.None
 })
 export class PersonDetail implements OnInit, CanComponentDeactivate {
+    public personService = inject(PersonService);
+    public familyService = inject(FamilyService);
+    public mediaService = inject(MediaService);
+    public placeService = inject(PlaceService);
+    public sourceService = inject(SourceService);
+
     private readonly FOCUS_PERSON_KEY = 'heritago_last_focus_person';
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -269,7 +281,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     loadAvailableSources() {
         const treeName = this.authService.currentTree()?.name;
         if (treeName) {
-            this.gedcomService.getSources(treeName).subscribe({
+            this.sourceService.getSources(treeName).subscribe({
                 next: (res: any) => {
                     if (res.success) this.availableSources.set(res.sources || []);
                     this.cdr.detectChanges();
@@ -375,7 +387,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         }
 
         this.isSaving = true; // Changed from isDeleting to isSaving
-        this.gedcomService.deletePerson(tree.name, this.personId).subscribe({
+        this.personService.deletePerson(tree.name, this.personId).subscribe({
             next: (res) => {
                 this.isSaving = false; // Changed from isDeleting to isSaving
                 if (res?.success) {
@@ -633,7 +645,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
     getMediaUrlExt(idOrUrl: string | undefined, variant?: string): string | null {
         if (!idOrUrl) return null;
-        return this.gedcomService.getMediaUrl(idOrUrl, variant || 'thumbs');
+        return this.mediaService.getMediaUrl(idOrUrl, variant || 'thumbs');
     }
 
     isImage(m: any): boolean {
@@ -643,7 +655,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
     }
 
     getMediaUrl(idOrUrl: string | undefined, variant?: string): string {
-        return this.gedcomService.getMediaUrl(idOrUrl, variant);
+        return this.mediaService.getMediaUrl(idOrUrl, variant);
     }
 
     openViewer(media: any) {
@@ -1598,7 +1610,7 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
         const data = this.treeData();
         const treeName = data?.meta?.tree || '';
 
-        this.gedcomService.searchPlaces(treeName, query).subscribe(res => {
+        this.placeService.searchPlaces(treeName, query).subscribe(res => {
             this.placeSearchResults.set(res.results || []);
             this.showPlaceResults.set(index);
         });
@@ -1903,11 +1915,11 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
 
         const treeName = treeSnapshot.meta?.tree || '';
         const saveFamilies$ = changedFamilies.size > 0
-            ? forkJoin(Array.from(changedFamilies.values()).map(f => this.gedcomService.saveFamily(treeName, f)))
+            ? forkJoin(Array.from(changedFamilies.values()).map(f => this.familyService.saveFamily(treeName, f)))
             : of([]);
 
         saveFamilies$.pipe(
-            switchMap(() => this.gedcomService.savePerson(treeName, payload))
+            switchMap(() => this.personService.savePerson(treeName, payload))
         ).subscribe({
             next: () => {
                 this.isSaving = false;

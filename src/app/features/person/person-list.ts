@@ -10,6 +10,8 @@ import { AppEntityCard } from '../../shared/components/ui/app-entity-card';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 import { AppListViewComponent } from '../../shared/components/ui/app-list-view';
 
+
+import { MediaService } from '../../core/services/media.service';
 @Component({
     selector: 'app-person-list',
     standalone: true,
@@ -18,6 +20,7 @@ import { AppListViewComponent } from '../../shared/components/ui/app-list-view';
     encapsulation: ViewEncapsulation.None
 })
 export class PersonList {
+    public mediaService = inject(MediaService);
     private readonly FOCUS_PERSON_KEY = 'heritago_last_focus_person';
     private gedcomService = inject(GedcomService);
     private router = inject(Router);
@@ -35,7 +38,7 @@ export class PersonList {
 
     getAvatarUrl(person: Individual): string {
         if (!person.profileImageUrl) return '';
-        return this.gedcomService.getMediaUrl(person.profileImageUrl, 'thumbs');
+        return this.mediaService.getMediaUrl(person.profileImageUrl, 'thumbs');
     }
 
     filteredIndividuals = computed(() => {

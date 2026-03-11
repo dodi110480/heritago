@@ -4,6 +4,8 @@ import { GedcomService } from './core/services/gedcom.service';
 import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 import { AppStatCardComponent } from './shared/components/ui/app-stat-card';
 
+
+import { AnalyticsService } from './core/services/analytics.service';
 @Component({
     selector: 'app-statistics',
     standalone: true,
@@ -11,6 +13,7 @@ import { AppStatCardComponent } from './shared/components/ui/app-stat-card';
     templateUrl: './statistics.html'
 })
 export class StatisticsDashboard implements OnInit {
+    public analyticsService = inject(AnalyticsService);
     private gedcomService = inject(GedcomService);
 
     stats = signal<any>(null);
@@ -26,7 +29,7 @@ export class StatisticsDashboard implements OnInit {
         this.gedcomService.getTreeData().subscribe(treeData => {
             if (treeData && treeData.meta && treeData.meta.tree) {
                 this.treeName.set(treeData.meta.tree);
-                this.gedcomService.getStatistics(treeData.meta.tree).subscribe({
+                this.analyticsService.getStatistics(treeData.meta.tree).subscribe({
                     next: (res: any) => {
                         this.stats.set(res);
                         this.loading.set(false);

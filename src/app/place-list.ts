@@ -7,6 +7,8 @@ import { PlaceModal } from './shared/components/ui/place-modal/place-modal';
 import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 import { AppPlacesList } from './shared/components/ui/app-places-list/app-places-list';
 
+
+import { PlaceService } from './core/services/place.service';
 @Component({
     selector: 'app-place-list',
     standalone: true,
@@ -15,6 +17,7 @@ import { AppPlacesList } from './shared/components/ui/app-places-list/app-places
     encapsulation: ViewEncapsulation.None
 })
 export class PlaceList {
+    public placeService = inject(PlaceService);
     private gedcomService = inject(GedcomService);
     private router = inject(Router);
 
@@ -50,7 +53,7 @@ export class PlaceList {
         const tree = this.currentTree();
         if (!tree) return;
 
-        this.gedcomService.getPlaces(tree).subscribe({
+        this.placeService.getPlaces(tree).subscribe({
             next: (res: any) => {
                 const items = res.places || [];
                 this.places.set(items);

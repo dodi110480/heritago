@@ -7,6 +7,9 @@ import { AppNotesList } from './shared/components/ui/app-notes-list/app-notes-li
 import { AppSourcesListComponent } from './shared/components/ui/app-sources-list/app-sources-list';
 import { DisplayNote, NoteCategory, DisplaySource } from './core/models/models';
 
+
+import { PlaceService } from './core/services/place.service';
+import { MediaService } from './core/services/media.service';
 @Component({
     selector: 'app-event-modal',
     standalone: true,
@@ -14,6 +17,8 @@ import { DisplayNote, NoteCategory, DisplaySource } from './core/models/models';
     templateUrl: './event-modal.html'
 })
 export class EventModal {
+    public placeService = inject(PlaceService);
+    public mediaService = inject(MediaService);
     @Input() visible = false;
     @Input() item: any = null; // draft
     @Input() isNew = false;
@@ -225,7 +230,7 @@ export class EventModal {
 
     getMediaUrl(idOrUrl: string | undefined, variant?: string) {
         if (!idOrUrl) return null;
-        return this.gedcomService.getMediaUrl(idOrUrl, variant || 'thumbs');
+        return this.mediaService.getMediaUrl(idOrUrl, variant || 'thumbs');
     }
 
     emitClose() { this.close.emit(); }
@@ -292,7 +297,7 @@ export class EventModal {
             return;
         }
 
-        this.gedcomService.searchPlaces(treeName, query).subscribe(res => {
+        this.placeService.searchPlaces(treeName, query).subscribe(res => {
             this.placeSearchResults.set(res.results || []);
             this.showPlaceResults.set(true);
         });

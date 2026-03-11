@@ -10,6 +10,8 @@ import { AppNotesList } from '../app-notes-list/app-notes-list';
 import { AppUsageList } from '../app-usage-list/app-usage-list';
 import { DisplayNote, NoteCategory } from '../../../../core/models/models';
 
+
+import { PlaceService } from '../../../../core/services/place.service';
 declare const L: any;
 
 @Component({
@@ -19,6 +21,7 @@ declare const L: any;
     templateUrl: './place-modal.html'
 })
 export class PlaceModal implements OnInit {
+    public placeService = inject(PlaceService);
     private gedcomService = inject(GedcomService);
     private authService = inject(AuthService);
     private router = inject(Router);
@@ -108,7 +111,7 @@ export class PlaceModal implements OnInit {
         if (!tree || !this.initialData?.id || this.mode !== 'edit') return;
 
         this.isLoadingUsage.set(true);
-        this.gedcomService.getPlaceUsage(tree, this.initialData.id).subscribe({
+        this.placeService.getPlaceUsage(tree, this.initialData.id).subscribe({
             next: (res) => {
                 this.isLoadingUsage.set(false);
                 if (res.success) this.usages.set(res.usage || []);
@@ -143,7 +146,7 @@ export class PlaceModal implements OnInit {
                 if (this.mode === 'edit' && this.initialData.id) {
                     const tree = this.authService.currentTree();
                     if (tree) {
-                        this.gedcomService.getPlace(tree.name, this.initialData.id).subscribe({
+                        this.placeService.getPlace(tree.name, this.initialData.id).subscribe({
                             next: (res: any) => {
                                 if (res.success && res.place) {
                                     const p = res.place;
@@ -277,7 +280,7 @@ export class PlaceModal implements OnInit {
     private loadParentOptions() {
         const tree = this.currentTree();
         if (!tree) return;
-        this.gedcomService.getPlaces(tree).subscribe({
+        this.placeService.getPlaces(tree).subscribe({
             next: (res: any) => this.availableParents.set(res?.places || []),
             error: () => this.availableParents.set([])
         });
@@ -401,7 +404,7 @@ export class PlaceModal implements OnInit {
         this.isSaving.set(true);
         this.errorMessage.set(null);
 
-        this.gedcomService.savePlace(tree, payload).subscribe({
+        this.placeService.savePlace(tree, payload).subscribe({
             next: (res: any) => {
                 this.isSaving.set(false);
                 if (res.success) {

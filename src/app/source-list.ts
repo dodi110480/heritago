@@ -9,6 +9,8 @@ import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 import { RepositoryList } from './repository-list';
 import { AppListViewComponent } from './shared/components/ui/app-list-view';
 
+
+import { SourceService } from './core/services/source.service';
 @Component({
     selector: 'app-source-list',
     standalone: true,
@@ -17,6 +19,7 @@ import { AppListViewComponent } from './shared/components/ui/app-list-view';
     encapsulation: ViewEncapsulation.None
 })
 export class SourceList implements OnInit {
+    public sourceService = inject(SourceService);
     private gedcomService = inject(GedcomService);
     private router = inject(Router);
     private cdr = inject(ChangeDetectorRef);
@@ -66,7 +69,7 @@ export class SourceList implements OnInit {
         const tree = this.currentTree();
         if (!tree) return;
 
-        this.gedcomService.getSources(tree).subscribe({
+        this.sourceService.getSources(tree).subscribe({
             next: (res: any) => {
                 const items = res.sources || [];
                 // Client-side sorting is already done from backend, but could be dynamic
@@ -146,7 +149,7 @@ export class SourceList implements OnInit {
         const reqPayload: any = { mode: 'delete', id: source.id };
         if (reassignToId) reqPayload.reassignToId = reassignToId;
 
-        this.gedcomService.saveSource(tree, reqPayload).subscribe({
+        this.sourceService.saveSource(tree, reqPayload).subscribe({
             next: (res: any) => {
                 if (res.success) {
                     if (this.selectedSource()?.id === source.id) {
@@ -175,7 +178,7 @@ export class SourceList implements OnInit {
         if (!sourceId || !targetId || !tree) return;
         if (!confirm(`Quelle "${sourceData?.title || 'diese'}" in Ziel-Quelle zusammenführen?`)) return;
 
-        this.gedcomService.mergeSources(tree, sourceId, targetId).subscribe({
+        this.sourceService.mergeSources(tree, sourceId, targetId).subscribe({
             next: (res: any) => {
                 if (res.success) {
                     this.selectedSource.set(null);

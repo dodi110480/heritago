@@ -9,6 +9,8 @@ import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 import { AppStatCardComponent } from './shared/components/ui/app-stat-card';
 import * as d3 from 'd3';
 
+
+import { AnalyticsService } from './core/services/analytics.service';
 @Component({
     selector: 'app-dashboard',
     standalone: true,
@@ -17,6 +19,7 @@ import * as d3 from 'd3';
     encapsulation: ViewEncapsulation.None
 })
 export class Dashboard implements AfterViewInit {
+    public analyticsService = inject(AnalyticsService);
     @ViewChild('miniTree') miniTreeSvg!: ElementRef<SVGSVGElement>;
     authService = inject(AuthService);
     private gedcomService = inject(GedcomService);
@@ -100,7 +103,7 @@ export class Dashboard implements AfterViewInit {
                         }
                     }
 
-                    this.gedcomService.getStatistics(meta.tree).subscribe({
+                    this.analyticsService.getStatistics(meta.tree).subscribe({
                         next: (res) => {
                             this.stats.set(res);
                             this.loading.set(false);

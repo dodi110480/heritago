@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { GedcomService } from './core/services/gedcom.service';
 
+import { MediaService } from './core/services/media.service';
+import { AnalyticsService } from './core/services/analytics.service';
+
 import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 
 declare const L: any;
@@ -14,6 +17,8 @@ declare const L: any;
     templateUrl: './map-view.html'
 })
 export class MapView implements OnInit {
+    public mediaService = inject(MediaService);
+    public analyticsService = inject(AnalyticsService);
     private gedcomService = inject(GedcomService);
 
     @ViewChild('mapContainer') mapContainer!: ElementRef;
@@ -40,14 +45,14 @@ export class MapView implements OnInit {
     }
 
     getAvatarUrl(profileImageUrl: string | undefined): string {
-        return this.gedcomService.getMediaUrl(profileImageUrl, 'thumbs');
+        return this.mediaService.getMediaUrl(profileImageUrl, 'thumbs');
     }
 
     loadMapData() {
         this.loading.set(true);
         this.gedcomService.getTreeData().subscribe(treeData => {
             if (treeData && treeData.meta && treeData.meta.tree) {
-                this.gedcomService.getMapData(treeData.meta.tree).subscribe({
+                this.analyticsService.getMapData(treeData.meta.tree).subscribe({
                     next: (res: any) => {
                         this.markers.set(res.markers || []);
                         this.persons.set(res.persons || []);
