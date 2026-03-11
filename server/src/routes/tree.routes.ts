@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
-import { STORAGE_ROOT, MEDIA_ROOT } from '../index';
+import { STORAGE_ROOT, MEDIA_ROOT } from '../config';
 import { GedcomManager } from '../services/gedcom.service';
 import { analyzeInvalidFamilyIds } from './family.routes';
 

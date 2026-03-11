@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import { GedcomManager } from '../services/gedcom.service';
 import { GedcomImportEngine } from '../import-phases/GedcomImportEngine.service';
-import { upload } from '../index';
+import { upload } from '../config';
 
 export const gedcomRoutes = (prisma: PrismaClient) => {
     const router = Router();

@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
 import { MediaService } from '../services/media.service';
-import { STORAGE_ROOT, MEDIA_ROOT, USERS_DIR, TEMP_DIR, upload } from '../index';
+import { STORAGE_ROOT, MEDIA_ROOT, USERS_DIR, TEMP_DIR, upload } from '../config';
 
 export const mediaRoutes = (prisma: PrismaClient) => {
     const router = Router();
