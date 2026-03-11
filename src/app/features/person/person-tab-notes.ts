@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 
-import { AppNotesList } from '../../ui/app-notes-list/app-notes-list';
-import { AppNoteModal } from '../../ui/app-note-modal/app-note-modal';
-import { AppSectionHeaderComponent } from '../../ui/app-section-header';
-import { DisplayNote, NoteCategory } from '../../models';
+import { AppNotesList } from '../../shared/components/ui/app-notes-list/app-notes-list';
+import { AppNoteModal } from '../../shared/components/ui/app-note-modal/app-note-modal';
+import { AppSectionHeaderComponent } from '../../shared/components/ui/app-section-header';
+import { DisplayNote, NoteCategory } from '../../core/models/models';
 
 @Component({
     selector: 'app-person-tab-notes',

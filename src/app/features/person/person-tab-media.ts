@@ -2,13 +2,13 @@ import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { AppModalShell } from '../../ui/app-modal-shell';
+import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 import { MediaSelector } from '../../media-selector';
 import { ImageViewer } from '../../image-viewer';
 import { MediaAddModal } from '../../media-add-modal';
-import { AppEmptyStateComponent } from '../../ui/app-empty-state';
-import { AppSectionHeaderComponent } from '../../ui/app-section-header';
-import { GedcomService } from '../../gedcom.service';
+import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-state';
+import { AppSectionHeaderComponent } from '../../shared/components/ui/app-section-header';
+import { GedcomService } from '../../core/services/gedcom.service';
 import { inject } from '@angular/core';
 
 @Component({

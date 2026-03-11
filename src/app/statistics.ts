@@ -1,8 +1,8 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { GedcomService } from './gedcom.service';
-import { AppPageHeaderComponent } from './ui/app-page-header';
-import { AppStatCardComponent } from './ui/app-stat-card';
+import { GedcomService } from './core/services/gedcom.service';
+import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
+import { AppStatCardComponent } from './shared/components/ui/app-stat-card';
 
 @Component({
     selector: 'app-statistics',

@@ -1,10 +1,10 @@
 import { Component, inject, signal, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from '../../gedcom.service';
-import { AuthService } from '../../auth.service';
-import { Individual } from '../../models';
-import { AppModalShell } from '../../ui/app-modal-shell';
+import { GedcomService } from '../../core/services/gedcom.service';
+import { AuthService } from '../../core/services/auth.service';
+import { Individual } from '../../core/models/models';
+import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 
 @Component({
     selector: 'app-person-create-modal',

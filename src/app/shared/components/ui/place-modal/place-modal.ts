@@ -2,13 +2,13 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChange
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GedcomService } from '../../gedcom.service';
-import { AuthService } from '../../auth.service';
+import { GedcomService } from '../../../../core/services/gedcom.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { AppModalShell } from '../app-modal-shell';
-import { PlaceDisplayPipe } from '../../place-display.pipe';
+import { PlaceDisplayPipe } from '../../../pipes/place-display.pipe';
 import { AppNotesList } from '../app-notes-list/app-notes-list';
 import { AppUsageList } from '../app-usage-list/app-usage-list';
-import { DisplayNote, NoteCategory } from '../../models';
+import { DisplayNote, NoteCategory } from '../../../../core/models/models';
 
 declare const L: any;
 

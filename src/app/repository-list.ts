@@ -1,9 +1,9 @@
 import { Component, inject, signal, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from './gedcom.service';
-import { AppEntityCard } from './ui/app-entity-card';
-import { AppModalShell } from './ui/app-modal-shell';
+import { GedcomService } from './core/services/gedcom.service';
+import { AppEntityCard } from './shared/components/ui/app-entity-card';
+import { AppModalShell } from './shared/components/ui/app-modal-shell';
 
 @Component({
     selector: 'app-repository-list',

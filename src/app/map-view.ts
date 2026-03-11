@@ -1,9 +1,9 @@
 import { Component, inject, signal, computed, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { GedcomService } from './gedcom.service';
+import { GedcomService } from './core/services/gedcom.service';
 
-import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 
 declare const L: any;
 

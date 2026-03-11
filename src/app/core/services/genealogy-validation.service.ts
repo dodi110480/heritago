@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Individual, Family, TreeData } from './models';
+import { Individual, Family, TreeData } from '../models/models';
 
 export interface ValidationResult {
     type: 'error' | 'warning';

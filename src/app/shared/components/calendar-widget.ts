@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { GedcomService } from './gedcom.service';
+import { GedcomService } from '../../core/services/gedcom.service';
 
 @Component({
     selector: 'app-calendar-widget',

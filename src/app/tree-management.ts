@@ -2,8 +2,8 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { AuthService, Tree } from './auth.service';
-import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AuthService, Tree } from './core/services/auth.service';
+import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 
 @Component({
     selector: 'app-tree-management',

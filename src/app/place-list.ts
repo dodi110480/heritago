@@ -2,10 +2,10 @@ import { Component, inject, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GedcomService } from './gedcom.service';
-import { PlaceModal } from './ui/place-modal/place-modal';
-import { AppPageHeaderComponent } from './ui/app-page-header';
-import { AppPlacesList } from './ui/app-places-list/app-places-list';
+import { GedcomService } from './core/services/gedcom.service';
+import { PlaceModal } from './shared/components/ui/place-modal/place-modal';
+import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
+import { AppPlacesList } from './shared/components/ui/app-places-list/app-places-list';
 
 @Component({
     selector: 'app-place-list',

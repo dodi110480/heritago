@@ -2,7 +2,7 @@ import { Component, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppModalShell } from '../app-modal-shell';
-import { DisplayNote, NoteCategory } from '../../models';
+import { DisplayNote, NoteCategory } from '../../../../core/models/models';
 
 @Component({
   selector: 'app-note-modal',

@@ -1,9 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, switchMap, of, catchError, tap } from 'rxjs';
-import { TreeData, DisplayNote } from './models';
+import { TreeData, DisplayNote } from '../models/models';
 import { AuthService } from './auth.service';
-import { environment } from './environment';
+import { environment } from '../../environment';
 
 @Injectable({
     providedIn: 'root'

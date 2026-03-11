@@ -2,14 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from './gedcom.service';
-import { AuthService } from './auth.service';
+import { GedcomService } from './core/services/gedcom.service';
+import { AuthService } from './core/services/auth.service';
 import { ImageCropper } from './image-cropper';
-import { AppModalShell } from './ui/app-modal-shell';
-import { AppNotesList } from './ui/app-notes-list/app-notes-list';
-import { AppSourcesListComponent } from './ui/app-sources-list/app-sources-list';
-import { AppUsageList } from './ui/app-usage-list/app-usage-list';
-import { DisplayNote, NoteCategory, DisplaySource } from './models';
+import { AppModalShell } from './shared/components/ui/app-modal-shell';
+import { AppNotesList } from './shared/components/ui/app-notes-list/app-notes-list';
+import { AppSourcesListComponent } from './shared/components/ui/app-sources-list/app-sources-list';
+import { AppUsageList } from './shared/components/ui/app-usage-list/app-usage-list';
+import { DisplayNote, NoteCategory, DisplaySource } from './core/models/models';
 
 @Component({
     selector: 'app-media-add-modal',

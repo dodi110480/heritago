@@ -1,12 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from './gedcom.service';
+import { GedcomService } from './core/services/gedcom.service';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from './environment';
 import { RouterLink } from '@angular/router';
-import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 
 @Component({
     selector: 'app-gedcom-io',

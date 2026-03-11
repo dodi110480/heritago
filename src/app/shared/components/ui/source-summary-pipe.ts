@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DisplaySource } from '../models';
+import { DisplaySource } from '../../../core/models/models';
 
 @Pipe({
   name: 'sourceSummary',

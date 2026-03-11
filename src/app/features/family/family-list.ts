@@ -1,12 +1,12 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { GedcomService } from '../../gedcom.service';
-import { Individual, Family, TreeData } from '../../models';
+import { GedcomService } from '../../core/services/gedcom.service';
+import { Individual, Family, TreeData } from '../../core/models/models';
 import { FormsModule } from '@angular/forms';
-import { AppEntityCard } from '../../ui/app-entity-card';
-import { AppPageHeaderComponent } from '../../ui/app-page-header';
-import { AppListViewComponent } from '../../ui/app-list-view';
+import { AppEntityCard } from '../../shared/components/ui/app-entity-card';
+import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
+import { AppListViewComponent } from '../../shared/components/ui/app-list-view';
 
 @Component({
     selector: 'app-family-list',

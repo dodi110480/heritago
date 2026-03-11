@@ -1,7 +1,7 @@
 import { Component, computed, input, output, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { PlaceDisplayPipe } from '../../place-display.pipe';
+import { PlaceDisplayPipe } from '../../../pipes/place-display.pipe';
 import { AppEntityCard } from '../app-entity-card';
 import { AppListViewComponent } from '../app-list-view';
 

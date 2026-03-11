@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { GedcomService } from './gedcom.service';
+import { GedcomService } from './core/services/gedcom.service';
 
 @Component({
     selector: 'app-activity-feed',

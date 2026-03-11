@@ -1,12 +1,12 @@
 import { Component, inject, signal, ViewChild, ElementRef, AfterViewInit, effect, ViewEncapsulation } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from './auth.service';
-import { CalendarWidget } from './calendar-widget';
-import { GedcomService } from './gedcom.service';
-import { DashboardFactService } from './dashboard-fact.service';
-import { AppPageHeaderComponent } from './ui/app-page-header';
-import { AppStatCardComponent } from './ui/app-stat-card';
+import { AuthService } from './core/services/auth.service';
+import { CalendarWidget } from './shared/components/calendar-widget';
+import { GedcomService } from './core/services/gedcom.service';
+import { DashboardFactService } from './core/services/dashboard-fact.service';
+import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
+import { AppStatCardComponent } from './shared/components/ui/app-stat-card';
 import * as d3 from 'd3';
 
 @Component({

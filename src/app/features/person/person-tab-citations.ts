@@ -2,10 +2,10 @@ import { Component, Input, Output, EventEmitter, signal, computed } from '@angul
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { AppSectionHeaderComponent } from '../../ui/app-section-header';
-import { AppSourcesListComponent } from '../../ui/app-sources-list/app-sources-list';
-import { CitationModalComponent } from '../../ui/citation-modal/citation-modal';
-import { DisplaySource, Citation } from '../../models';
+import { AppSectionHeaderComponent } from '../../shared/components/ui/app-section-header';
+import { AppSourcesListComponent } from '../../shared/components/ui/app-sources-list/app-sources-list';
+import { CitationModalComponent } from '../../shared/components/ui/citation-modal/citation-modal';
+import { DisplaySource, Citation } from '../../core/models/models';
 
 @Component({
     selector: 'app-person-tab-citations',

@@ -1,25 +1,25 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { GedcomService } from '../../gedcom.service';
-import { Individual, Family } from '../../models';
+import { GedcomService } from '../../core/services/gedcom.service';
+import { Individual, Family } from '../../core/models/models';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { AuthService } from '../../auth.service';
-import { AppPageHeaderComponent } from '../../ui/app-page-header';
-import { AppAvatarComponent } from '../../ui/app-avatar';
+import { AuthService } from '../../core/services/auth.service';
+import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
+import { AppAvatarComponent } from '../../shared/components/ui/app-avatar';
 
-import { AppModalShell } from '../../ui/app-modal-shell';
-import { AppEmptyStateComponent } from '../../ui/app-empty-state';
-import { AppSectionHeaderComponent } from '../../ui/app-section-header';
-import { PlaceModal } from '../../ui/place-modal/place-modal';
+import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
+import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-state';
+import { AppSectionHeaderComponent } from '../../shared/components/ui/app-section-header';
+import { PlaceModal } from '../../shared/components/ui/place-modal/place-modal';
 import { MediaSelector } from '../../media-selector';
 import { MediaAddModal } from '../../media-add-modal';
 import { EventModal } from '../../event-modal';
 import { ImageViewer } from '../../image-viewer';
-import { AppNotesList } from '../../ui/app-notes-list/app-notes-list';
-import { DisplayNote, NoteCategory, DisplaySource } from '../../models';
-import { AppSourcesListComponent } from '../../ui/app-sources-list/app-sources-list';
+import { AppNotesList } from '../../shared/components/ui/app-notes-list/app-notes-list';
+import { DisplayNote, NoteCategory, DisplaySource } from '../../core/models/models';
+import { AppSourcesListComponent } from '../../shared/components/ui/app-sources-list/app-sources-list';
 
 @Component({
     selector: 'app-family-detail',

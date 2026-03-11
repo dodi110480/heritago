@@ -1,8 +1,8 @@
 import { Component, inject, ViewEncapsulation } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AuthService } from './auth.service';
-import { GedcomService } from './gedcom.service';
+import { AuthService } from '../../core/services/auth.service';
+import { GedcomService } from '../../core/services/gedcom.service';
 import { signal, effect } from '@angular/core';
 import { filter } from 'rxjs/operators';
 

@@ -10,10 +10,10 @@ import { inject } from '@angular/core';
 
 import { GlassCardComponent } from '../app-glass-card';
 import { SourceSummaryPipe } from '../source-summary-pipe';
-import { SourceModal } from '../../source-modal';
-import { AuthService } from '../../auth.service';
-import { GedcomService } from '../../gedcom.service';
-import { DisplaySource, EntityType, SourceType } from '../../models';
+import { SourceModal } from '../../../../source-modal';
+import { AuthService } from '../../../../core/services/auth.service';
+import { GedcomService } from '../../../../core/services/gedcom.service';
+import { DisplaySource, EntityType, SourceType } from '../../../../core/models/models';
 
 @Component({
   selector: 'app-sources-list',

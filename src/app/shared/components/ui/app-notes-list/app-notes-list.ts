@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { GlassCardComponent } from '../app-glass-card';
 
-import { DisplayNote, NoteCategory } from '../../models';
+import { DisplayNote, NoteCategory } from '../../../../core/models/models';
 
 export type EntityType = 'PERSON' | 'EVENT' | 'FACT' | 'FAMILY' | 'SOURCE' | 'PLACE' | 'RESEARCHLOG' | 'MEDIA' | 'CITATION';
 

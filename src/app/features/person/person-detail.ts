@@ -2,13 +2,13 @@ import { Component, inject, signal, computed, OnInit, ViewEncapsulation, ChangeD
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { GedcomService } from '../../gedcom.service';
-import { AuthService } from '../../auth.service';
-import { Individual, TreeData, Family, TimelineItem } from '../../models';
-import { CleanDatePipe } from '../../clean-date.pipe';
-import { PlaceModal } from '../../ui/place-modal/place-modal';
+import { GedcomService } from '../../core/services/gedcom.service';
+import { AuthService } from '../../core/services/auth.service';
+import { Individual, TreeData, Family, TimelineItem } from '../../core/models/models';
+import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
+import { PlaceModal } from '../../shared/components/ui/place-modal/place-modal';
 import { PersonCreateModal } from './person-create-modal';
-import { CanComponentDeactivate } from '../../unsaved-changes.guard';
+import { CanComponentDeactivate } from '../../core/guards/unsaved-changes.guard';
 import { forkJoin, of, switchMap } from 'rxjs';
 
 import { MediaSelector } from '../../media-selector';
@@ -16,8 +16,8 @@ import { MediaAddModal } from '../../media-add-modal';
 import { EventModal } from '../../event-modal';
 import { ImageViewer } from '../../image-viewer';
 
-import { AppPageHeaderComponent } from '../../ui/app-page-header';
-import { AppModalShell } from '../../ui/app-modal-shell';
+import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
+import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 
 import { PersonTabMediaComponent } from './person-tab-media';
 import { PersonTabNotesComponent } from './person-tab-notes';

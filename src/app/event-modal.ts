@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AppModalShell } from './ui/app-modal-shell';
-import { GedcomService } from './gedcom.service';
-import { AppNotesList } from './ui/app-notes-list/app-notes-list';
-import { AppSourcesListComponent } from './ui/app-sources-list/app-sources-list';
-import { DisplayNote, NoteCategory, DisplaySource } from './models';
+import { AppModalShell } from './shared/components/ui/app-modal-shell';
+import { GedcomService } from './core/services/gedcom.service';
+import { AppNotesList } from './shared/components/ui/app-notes-list/app-notes-list';
+import { AppSourcesListComponent } from './shared/components/ui/app-sources-list/app-sources-list';
+import { DisplayNote, NoteCategory, DisplaySource } from './core/models/models';
 
 @Component({
     selector: 'app-event-modal',

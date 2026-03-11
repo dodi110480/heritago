@@ -2,12 +2,12 @@ import { Component, inject, signal, OnInit, ViewEncapsulation, ViewChild, Change
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GedcomService } from './gedcom.service';
+import { GedcomService } from './core/services/gedcom.service';
 import { SourceModal } from './source-modal';
-import { AppEntityCard } from './ui/app-entity-card';
-import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AppEntityCard } from './shared/components/ui/app-entity-card';
+import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 import { RepositoryList } from './repository-list';
-import { AppListViewComponent } from './ui/app-list-view';
+import { AppListViewComponent } from './shared/components/ui/app-list-view';
 
 @Component({
     selector: 'app-source-list',

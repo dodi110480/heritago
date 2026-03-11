@@ -1,14 +1,14 @@
 import { Component, inject, signal, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { GedcomService } from '../../gedcom.service';
-import { Individual } from '../../models';
+import { GedcomService } from '../../core/services/gedcom.service';
+import { Individual } from '../../core/models/models';
 import { FormsModule } from '@angular/forms';
-import { CleanDatePipe } from '../../clean-date.pipe';
+import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
 import { PersonCreateModal } from './person-create-modal';
-import { AppEntityCard } from '../../ui/app-entity-card';
-import { AppPageHeaderComponent } from '../../ui/app-page-header';
-import { AppListViewComponent } from '../../ui/app-list-view';
+import { AppEntityCard } from '../../shared/components/ui/app-entity-card';
+import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
+import { AppListViewComponent } from '../../shared/components/ui/app-list-view';
 
 @Component({
     selector: 'app-person-list',

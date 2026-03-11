@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { AuthService } from './auth.service';
-import { AppPageHeaderComponent } from './ui/app-page-header';
+import { AuthService } from './core/services/auth.service';
+import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 
 @Component({
     selector: 'app-user-management',

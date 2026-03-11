@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AppModalShell } from '../app-modal-shell';
 import { AppNotesList } from '../app-notes-list/app-notes-list';
 import { AppNoteModal } from '../app-note-modal/app-note-modal';
-import { Citation, DisplayNote, NoteCategory } from '../../models';
+import { Citation, DisplayNote, NoteCategory } from '../../../../core/models/models';
 
 @Component({
   selector: 'app-citation-modal',

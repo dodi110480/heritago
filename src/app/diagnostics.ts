@@ -1,10 +1,10 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { GedcomService } from './gedcom.service';
-import { AuthService } from './auth.service';
-import { GenealogyValidationService, ValidationResult } from './genealogy-validation.service';
-import { AppPageHeaderComponent } from './ui/app-page-header';
+import { GedcomService } from './core/services/gedcom.service';
+import { AuthService } from './core/services/auth.service';
+import { GenealogyValidationService, ValidationResult } from './core/services/genealogy-validation.service';
+import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
 
 interface GedcomError {
     id: string;

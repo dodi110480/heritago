@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Individual, TimelineItem, TreeData } from '../../models';
-import { GedcomService } from '../../gedcom.service';
+import { Individual, TimelineItem, TreeData } from '../../core/models/models';
+import { GedcomService } from '../../core/services/gedcom.service';
 
 @Injectable({
     providedIn: 'root'

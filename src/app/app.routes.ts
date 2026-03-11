@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './auth.guard';
-import { adminGuard } from './admin.guard';
-import { unsavedChangesGuard } from './unsaved-changes.guard';
-import { AppShellComponent } from './app-shell';
+import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
+import { unsavedChangesGuard } from './core/guards/unsaved-changes.guard';
+import { AppShellComponent } from './shared/components/app-shell';
 
 export const routes: Routes = [
     {
