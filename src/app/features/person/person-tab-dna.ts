@@ -2,9 +2,9 @@ import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-import { AppModalShell } from './ui/app-modal-shell';
-import { AppEmptyStateComponent } from './ui/app-empty-state';
-import { AppSectionHeaderComponent } from './ui/app-section-header';
+import { AppModalShell } from '../../ui/app-modal-shell';
+import { AppEmptyStateComponent } from '../../ui/app-empty-state';
+import { AppSectionHeaderComponent } from '../../ui/app-section-header';
 
 @Component({
     selector: 'app-person-tab-dna',
