@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, inject, signal
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from './gedcom.service';
+import { GedcomService } from '../../gedcom.service';
 import { transformToFamilyChart } from './family-chart-transformer';
 import * as d3 from 'd3';
 // @ts-ignore

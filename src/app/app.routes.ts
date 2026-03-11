@@ -20,7 +20,7 @@ export const routes: Routes = [
         children: [
             {
                 path: 'tree',
-                loadComponent: () => import('./family-chart.component').then(m => m.FamilyChartComponent),
+                loadComponent: () => import('./features/family/family-chart.component').then(m => m.FamilyChartComponent),
                 data: { wide: true, breadcrumb: 'Stammbaum' }
             },
             {
@@ -56,17 +56,17 @@ export const routes: Routes = [
             },
             {
                 path: 'families',
-                loadComponent: () => import('./family-list').then(m => m.FamilyList),
+                loadComponent: () => import('./features/family/family-list').then(m => m.FamilyList),
                 data: { wide: true, breadcrumb: 'Familien' }
             },
             {
                 path: 'family/:id',
-                loadComponent: () => import('./family-detail').then(m => m.FamilyDetail),
+                loadComponent: () => import('./features/family/family-detail').then(m => m.FamilyDetail),
                 data: { wide: true, breadcrumb: 'Details' }
             },
             {
                 path: 'familie/:id',
-                loadComponent: () => import('./family-detail').then(m => m.FamilyDetail),
+                loadComponent: () => import('./features/family/family-detail').then(m => m.FamilyDetail),
                 data: { wide: true, breadcrumb: 'Details' }
             },
             {

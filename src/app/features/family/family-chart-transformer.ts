@@ -1,4 +1,4 @@
-import { TreeData, Individual, Family } from './models';
+import { TreeData, Individual, Family } from '../../models';
 
 export interface FamilyChartNode {
     id: string;
