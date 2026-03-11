@@ -1,15 +1,15 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from './core/services/gedcom.service';
-import { AuthService } from './core/services/auth.service';
+import { GedcomService } from '../../core/services/gedcom.service';
+import { AuthService } from '../../core/services/auth.service';
 import { MediaAddModal } from './media-add-modal';
-import { AppEntityCard } from './shared/components/ui/app-entity-card';
-import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
-import { AppListViewComponent } from './shared/components/ui/app-list-view';
+import { AppEntityCard } from '../../shared/components/ui/app-entity-card';
+import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
+import { AppListViewComponent } from '../../shared/components/ui/app-list-view';
 
 
-import { MediaService } from './core/services/media.service';
+import { MediaService } from '../../core/services/media.service';
 @Component({
     selector: 'app-media-gallery',
     standalone: true,

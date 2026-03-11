@@ -17,10 +17,10 @@ import { PlaceService } from '../../core/services/place.service';
 import { MediaService } from '../../core/services/media.service';
 import { SourceService } from '../../core/services/source.service';
 
-import { MediaSelector } from '../../media-selector';
-import { MediaAddModal } from '../../media-add-modal';
-import { EventModal } from '../../event-modal';
-import { ImageViewer } from '../../image-viewer';
+import { MediaSelector } from '../media/media-selector';
+import { MediaAddModal } from '../media/media-add-modal';
+import { EventModal } from '../../shared/components/ui/event-modal/event-modal';
+import { ImageViewer } from '../media/image-viewer';
 
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';

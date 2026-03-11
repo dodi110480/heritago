@@ -7,11 +7,11 @@ import { AppShellComponent } from './shared/components/app-shell';
 export const routes: Routes = [
     {
         path: 'login',
-        loadComponent: () => import('./login').then(m => m.Login)
+        loadComponent: () => import('./features/auth/login').then(m => m.Login)
     },
     {
         path: 'register',
-        loadComponent: () => import('./register').then(m => m.Register)
+        loadComponent: () => import('./features/auth/register').then(m => m.Register)
     },
     {
         path: '',
@@ -25,27 +25,27 @@ export const routes: Routes = [
             },
             {
                 path: 'settings',
-                loadComponent: () => import('./settings').then(m => m.Settings),
+                loadComponent: () => import('./features/system/settings').then(m => m.Settings),
                 data: { wide: true }
             },
             {
                 path: 'gedcom-io',
-                loadComponent: () => import('./gedcom-io').then(m => m.GedcomIo),
+                loadComponent: () => import('./features/system/gedcom-io').then(m => m.GedcomIo),
                 data: { wide: true }
             },
             {
                 path: 'settings/update',
-                loadComponent: () => import('./update-settings').then(m => m.UpdateSettings),
+                loadComponent: () => import('./features/system/update-settings').then(m => m.UpdateSettings),
                 canActivate: [adminGuard]
             },
             {
                 path: 'tree-management',
-                loadComponent: () => import('./tree-management').then(m => m.TreeManagement),
+                loadComponent: () => import('./features/system/tree-management').then(m => m.TreeManagement),
                 data: { wide: true }
             },
             {
                 path: 'admin/users',
-                loadComponent: () => import('./user-management').then(m => m.UserManagement),
+                loadComponent: () => import('./features/system/user-management').then(m => m.UserManagement),
                 canActivate: [adminGuard],
                 data: { wide: true }
             },
@@ -77,42 +77,42 @@ export const routes: Routes = [
             },
             {
                 path: 'places',
-                loadComponent: () => import('./place-list').then(m => m.PlaceList),
+                loadComponent: () => import('./features/places/place-list').then(m => m.PlaceList),
                 data: { wide: true, breadcrumb: 'Orte' }
             },
             {
                 path: 'sources',
-                loadComponent: () => import('./source-list').then(m => m.SourceList),
+                loadComponent: () => import('./features/sources/source-list').then(m => m.SourceList),
                 data: { wide: true, breadcrumb: 'Quellen' }
             },
             {
                 path: 'map',
-                loadComponent: () => import('./map-view').then(m => m.MapView),
+                loadComponent: () => import('./features/places/map-view').then(m => m.MapView),
                 data: { wide: true, breadcrumb: 'Karte' }
             },
             {
                 path: 'media',
-                loadComponent: () => import('./media-gallery').then(m => m.MediaGallery),
+                loadComponent: () => import('./features/media/media-gallery').then(m => m.MediaGallery),
                 data: { wide: true, breadcrumb: 'Medien' }
             },
             {
                 path: 'statistics',
-                loadComponent: () => import('./statistics').then(m => m.StatisticsDashboard),
+                loadComponent: () => import('./features/analytics/statistics').then(m => m.StatisticsDashboard),
                 data: { wide: true, breadcrumb: 'Statistiken' }
             },
             {
                 path: 'activity',
-                loadComponent: () => import('./activity-feed').then(m => m.ActivityFeed),
+                loadComponent: () => import('./features/dashboard/activity-feed').then(m => m.ActivityFeed),
                 data: { wide: true, breadcrumb: 'Aktivitäten' }
             },
             {
                 path: 'diagnostics',
-                loadComponent: () => import('./diagnostics').then(m => m.Diagnostics),
+                loadComponent: () => import('./features/analytics/diagnostics').then(m => m.Diagnostics),
                 data: { wide: true }
             },
             {
                 path: '',
-                loadComponent: () => import('./dashboard').then(m => m.Dashboard),
+                loadComponent: () => import('./features/dashboard/dashboard').then(m => m.Dashboard),
                 data: { wide: true }
             }
         ]

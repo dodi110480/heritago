@@ -5,9 +5,9 @@ import { FormsModule } from '@angular/forms';
 import { MediaService } from '../../core/services/media.service';
 
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
-import { MediaSelector } from '../../media-selector';
-import { ImageViewer } from '../../image-viewer';
-import { MediaAddModal } from '../../media-add-modal';
+import { MediaSelector } from '../media/media-selector';
+import { ImageViewer } from '../media/image-viewer';
+import { MediaAddModal } from '../media/media-add-modal';
 import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-state';
 import { AppSectionHeaderComponent } from '../../shared/components/ui/app-section-header';
 import { GedcomService } from '../../core/services/gedcom.service';

@@ -2,22 +2,22 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from './core/services/gedcom.service';
-import { AuthService } from './core/services/auth.service';
+import { GedcomService } from '../../core/services/gedcom.service';
+import { AuthService } from '../../core/services/auth.service';
 import { ImageCropper } from './image-cropper';
-import { AppModalShell } from './shared/components/ui/app-modal-shell';
-import { AppNotesList } from './shared/components/ui/app-notes-list/app-notes-list';
-import { AppSourcesListComponent } from './shared/components/ui/app-sources-list/app-sources-list';
-import { AppUsageList } from './shared/components/ui/app-usage-list/app-usage-list';
-import { DisplayNote, NoteCategory, DisplaySource } from './core/models/models';
+import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
+import { AppNotesList } from '../../shared/components/ui/app-notes-list/app-notes-list';
+import { AppSourcesListComponent } from '../../shared/components/ui/app-sources-list/app-sources-list';
+
+import { DisplayNote, NoteCategory, DisplaySource } from '../../core/models/models';
 
 
-import { MediaService } from './core/services/media.service';
-import { SourceService } from './core/services/source.service';
+import { MediaService } from '../../core/services/media.service';
+import { SourceService } from '../../core/services/source.service';
 @Component({
     selector: 'app-media-add-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, ImageCropper, AppModalShell, AppNotesList, AppUsageList, AppSourcesListComponent],
+    imports: [CommonModule, FormsModule, ImageCropper, AppModalShell, AppNotesList, AppSourcesListComponent],
     templateUrl: './media-add-modal.html'
 })
 export class MediaAddModal {

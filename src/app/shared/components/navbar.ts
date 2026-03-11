@@ -46,7 +46,7 @@ export class Navbar {
         const activeTree = this.authService.currentTree();
         if (activeTree) {
             this.analyticsService.getDiagnostics(activeTree.name).subscribe({
-                next: (data) => {
+                next: (data: any) => {
                     this.errorCount.set(data.count || 0);
                 },
                 error: () => this.errorCount.set(0)

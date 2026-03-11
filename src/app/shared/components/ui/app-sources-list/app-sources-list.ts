@@ -12,7 +12,7 @@ import { SourceService } from '../../../../core/services/source.service';
 
 import { GlassCardComponent } from '../app-glass-card';
 import { SourceSummaryPipe } from '../source-summary-pipe';
-import { SourceModal } from '../../../../source-modal';
+import { SourceModal } from '../../../../features/sources/source-modal';
 import { AuthService } from '../../../../core/services/auth.service';
 import { GedcomService } from '../../../../core/services/gedcom.service';
 import { DisplaySource, EntityType, SourceType } from '../../../../core/models/models';

@@ -1,12 +1,12 @@
 import { Component, inject, signal, computed, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { GedcomService } from './core/services/gedcom.service';
+import { GedcomService } from '../../core/services/gedcom.service';
 
-import { MediaService } from './core/services/media.service';
-import { AnalyticsService } from './core/services/analytics.service';
+import { MediaService } from '../../core/services/media.service';
+import { AnalyticsService } from '../../core/services/analytics.service';
 
-import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
+import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 
 declare const L: any;
 

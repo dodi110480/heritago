@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { environment } from './environment';
-import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
+import { environment } from '../../environment';
+import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 
 @Component({
     selector: 'app-update-settings',

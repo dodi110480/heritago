@@ -1,15 +1,15 @@
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AppModalShell } from './shared/components/ui/app-modal-shell';
-import { GedcomService } from './core/services/gedcom.service';
-import { AppNotesList } from './shared/components/ui/app-notes-list/app-notes-list';
-import { AppSourcesListComponent } from './shared/components/ui/app-sources-list/app-sources-list';
-import { DisplayNote, NoteCategory, DisplaySource } from './core/models/models';
+import { AppModalShell } from '../app-modal-shell';
+import { GedcomService } from '../../../../core/services/gedcom.service';
+import { AppNotesList } from '../app-notes-list/app-notes-list';
+import { AppSourcesListComponent } from '../app-sources-list/app-sources-list';
+import { DisplayNote, NoteCategory, DisplaySource } from '../../../../core/models/models';
 
 
-import { PlaceService } from './core/services/place.service';
-import { MediaService } from './core/services/media.service';
+import { PlaceService } from '../../../../core/services/place.service';
+import { MediaService } from '../../../../core/services/media.service';
 @Component({
     selector: 'app-event-modal',
     standalone: true,

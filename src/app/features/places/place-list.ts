@@ -2,13 +2,13 @@ import { Component, inject, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GedcomService } from './core/services/gedcom.service';
-import { PlaceModal } from './shared/components/ui/place-modal/place-modal';
-import { AppPageHeaderComponent } from './shared/components/ui/app-page-header';
-import { AppPlacesList } from './shared/components/ui/app-places-list/app-places-list';
+import { GedcomService } from '../../core/services/gedcom.service';
+import { PlaceModal } from '../../shared/components/ui/place-modal/place-modal';
+import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
+import { AppPlacesList } from '../../shared/components/ui/app-places-list/app-places-list';
 
 
-import { PlaceService } from './core/services/place.service';
+import { PlaceService } from '../../core/services/place.service';
 @Component({
     selector: 'app-place-list',
     standalone: true,

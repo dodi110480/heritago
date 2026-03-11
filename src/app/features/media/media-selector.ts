@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Output, Input, signal, inject, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { GedcomService } from './core/services/gedcom.service';
-import { AuthService } from './core/services/auth.service';
+import { GedcomService } from '../../core/services/gedcom.service';
+import { AuthService } from '../../core/services/auth.service';
 import { FormsModule } from '@angular/forms';
-import { AppModalShell } from './shared/components/ui/app-modal-shell';
+import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 
 
-import { MediaService } from './core/services/media.service';
+import { MediaService } from '../../core/services/media.service';
 @Component({
     selector: 'app-media-selector',
     standalone: true,
