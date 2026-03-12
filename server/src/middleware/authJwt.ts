@@ -23,7 +23,9 @@ export const authJwt = (prisma: PrismaClient) => {
             }
             return next();
         } catch (error) {
-            return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+            // If token is invalid or expired, we just don't set req.user
+            // This prevents blocking the /login route when an old cookie exists
+            return next();
         }
     };
 };
