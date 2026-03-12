@@ -82,7 +82,12 @@ export class PersonTabCitationsComponent {
                 whereInSource: cit.whereInSource || cit.page, // Keep cit.page for backward compatibility if needed, but prefer whereInSource
                 description: (cit.whereInSource || cit.page) ? `Fundstelle: ${cit.whereInSource || cit.page}` : '',
                 text: cit.text,
-                createdAt: (cit.date || cit.dateText) ? new Date(cit.date || cit.dateText) : new Date(), // Keep cit.dateText for backward compatibility
+                createdAt: (() => {
+                    const dateVal = cit.date || cit.dateText;
+                    if (!dateVal) return new Date();
+                    const d = new Date(dateVal);
+                    return isNaN(d.getTime()) ? new Date() : d;
+                })(),
                 _originalIndex: i
             } as any;
             return display;

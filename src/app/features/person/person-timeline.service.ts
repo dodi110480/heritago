@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Individual, TimelineItem, TreeData } from '../../core/models/models';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 
 
 import { MediaService } from '../../core/services/media.service';
@@ -10,7 +10,7 @@ import { MediaService } from '../../core/services/media.service';
 export class PersonTimelineService {
     public mediaService = inject(MediaService);
 
-    constructor(private gedcomService: GedcomService) {}
+    constructor(private treeService: TreeService) {}
 
     // --- Core Computation Logic ---
 
@@ -38,11 +38,24 @@ export class PersonTimelineService {
         }
 
         if (person.facts) {
+            const reverseFactMapping: Record<string, string> = {
+                'RELIGION': 'RELI',
+                'OCCUPATION': 'OCCU',
+                'EDUCATION': 'EDUC',
+                'RESIDENCE': 'RESI',
+                'TITLE': 'TITL',
+                'NATIONALITY': 'NATI',
+                'PROPERTY': 'PROP',
+                'MILITARY_SERVICE': 'MILI',
+                'DESCRIPTION': 'DSCR',
+                'OTHER': 'FACT'
+            };
+
             person.facts.forEach((fact, i) => {
                 merged.push({
                     originalType: 'fact',
                     originalIndex: i,
-                    tag: fact.type,
+                    tag: reverseFactMapping[fact.type] || fact.type,
                     date: (fact as any).date || fact.dateText,
                     place: (fact as any).place || fact.placeName,
                     value: fact.value,
@@ -55,10 +68,38 @@ export class PersonTimelineService {
             });
         }
 
-        if (person.familiesAsSpouse && treeData) {
+        if (treeData) {
+            const familyLinks: any[] = [];
+            const familySeen = new Set<string>();
+
+            if (person.familiesAsSpouse && person.familiesAsSpouse.length > 0) {
+                person.familiesAsSpouse.forEach((famLink: any) => {
+                    if (!famLink || !famLink.familyId) return;
+                    if (familySeen.has(famLink.familyId)) return;
+                    familySeen.add(famLink.familyId);
+                    familyLinks.push(famLink);
+                });
+            }
+
+            treeData.families.forEach((fam) => {
+                if (fam.husband !== person.id && fam.wife !== person.id) return;
+                if (familySeen.has(fam.id)) return;
+                familySeen.add(fam.id);
+                const spouseId = fam.husband === person.id ? fam.wife : fam.husband;
+                familyLinks.push({
+                    familyId: fam.id,
+                    spouseId,
+                    spouseName: spouseId ? getPersonName(spouseId) : 'Unbekannt',
+                    children: (fam.children || []).map(childId => ({
+                        id: childId,
+                        name: getPersonName(childId)
+                    }))
+                });
+            });
+
             const childBirthSeen = new Set<string>();
-            person.familiesAsSpouse.forEach((famLink) => {
-                const fullFam = treeData.families.find(f => f.id === famLink.familyId);
+            familyLinks.forEach((famLink) => {
+                const fullFam = treeData.families.find(f => f.id === famLink.familyId || f.gedcomId === famLink.familyId);
                 if (fullFam && fullFam.events) {
                     fullFam.events.forEach((ef, idx) => {
                         merged.push({
@@ -79,8 +120,9 @@ export class PersonTimelineService {
                 }
 
                 if (famLink.children && famLink.children.length > 0) {
-                    famLink.children.forEach((childRef) => {
-                        const child = treeData.individuals.find(i => i.id === childRef.id);
+                    famLink.children.forEach((childRef: any) => {
+                        const childId = childRef.id || childRef;
+                        const child = treeData.individuals.find(i => i.id === childId || i.gedcomId === childId);
                         if (!child || !child.events) return;
 
                         const derivedChildEvents = [
@@ -177,31 +219,36 @@ export class PersonTimelineService {
         rels.forEach(r => r.personName = this.getPersonName(treeData, r.personId));
 
         const enrichedPerson = { ...person };
-        enrichedPerson.familiesAsSpouse = [];
+        enrichedPerson.familiesAsSpouse = enrichedPerson.familiesAsSpouse || [];
         const seenFamilyKeys = new Set<string>();
+        // Add existing families to seen keys to avoid duplicates
+        enrichedPerson.familiesAsSpouse.forEach(f => {
+            const childrenIds = (f.children || []).map(c => c.id).sort().join('|');
+            const key = `${f.spouseId || ''}|${childrenIds}`;
+            seenFamilyKeys.add(key);
+        });
 
         treeData.families.forEach(fam => {
             if (fam.children.includes(person.id)) {
                 if (fam.husband) {
-                    enrichedPerson.fatherId = fam.husband;
-                    enrichedPerson.fatherName = this.getPersonName(treeData, fam.husband);
+                    enrichedPerson.fatherId = enrichedPerson.fatherId || fam.husband;
+                    enrichedPerson.fatherName = enrichedPerson.fatherName || this.getPersonName(treeData, fam.husband);
                 }
                 if (fam.wife) {
-                    enrichedPerson.motherId = fam.wife;
-                    enrichedPerson.motherName = this.getPersonName(treeData, fam.wife);
+                    enrichedPerson.motherId = enrichedPerson.motherId || fam.wife;
+                    enrichedPerson.motherName = enrichedPerson.motherName || this.getPersonName(treeData, fam.wife);
                 }
             }
 
             if (fam.husband === person.id || fam.wife === person.id) {
-                const familyKey = [fam.husband || '', fam.wife || '', ...(fam.children || []).slice().sort()].join('|');
+                const spouseId = fam.husband === person.id ? fam.wife : fam.husband;
+                const childrenIds = (fam.children || []).slice().sort().join('|');
+                const familyKey = `${spouseId || ''}|${childrenIds}`;
+                
                 if (seenFamilyKeys.has(familyKey)) return;
                 seenFamilyKeys.add(familyKey);
 
-                const spouseId = fam.husband === person.id ? fam.wife : fam.husband;
-
-                if (!enrichedPerson.familiesAsSpouse) enrichedPerson.familiesAsSpouse = [];
-
-                enrichedPerson.familiesAsSpouse.push({
+                enrichedPerson.familiesAsSpouse!.push({
                     familyId: fam.id,
                     spouseId: spouseId,
                     spouseName: spouseId ? this.getPersonName(treeData, spouseId) : 'Unbekannt',

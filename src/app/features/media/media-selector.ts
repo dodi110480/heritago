@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Output, Input, signal, inject, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { AuthService } from '../../core/services/auth.service';
 import { FormsModule } from '@angular/forms';
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
@@ -20,7 +20,7 @@ export class MediaSelector implements OnInit, OnChanges {
     @Output() selected = new EventEmitter<any>();
     @Output() closed = new EventEmitter<void>();
 
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private authService = inject(AuthService);
 
     mediaItems = signal<any[]>([]);
@@ -39,7 +39,7 @@ export class MediaSelector implements OnInit, OnChanges {
         const tree = this.authService.currentTree();
         if (!tree) return;
         this.loading.set(true);
-        this.mediaService.getMedia(tree.id, 'FOTOS', this.searchQuery()).subscribe({
+        this.mediaService.getMedia(tree.name, 'FOTOS', this.searchQuery()).subscribe({
             next: (res: any) => {
                 const items = (res.media || []).map((m: any) => ({
                     ...m,

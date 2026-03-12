@@ -1,73 +1,41 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { RepositoryService } from '../services/repository.service';
 
 export const repositoryRoutes = (prisma: PrismaClient) => {
     const router = Router({ mergeParams: true });
+    const repositoryService = new RepositoryService(prisma);
 
     router.get('/', async (req, res) => {
-        const treeName = (req.params as any).tree as string;
-        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-        if (!tree) return res.status(404).json({ success: false });
-
-        const repos = await prisma.repository.findMany({
-            where: { treeId: tree.id },
-            include: { _count: { select: { sources: true } } },
-            orderBy: { name: 'asc' }
-        });
-
-        res.json({
-            success: true,
-            repositories: repos.map(r => ({
-                id: r.id,
-                name: r.name,
-                address: r.address,
-                phone: r.phone,
-                email: r.email,
-                website: r.website,
-                sourceCount: r._count.sources
-            }))
-        });
+        const treeId = (req as any).tree.id;
+        try {
+            const repositories = await repositoryService.getRepositories(treeId);
+            res.json({ success: true, data: repositories });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message, code: 'REPOSITORY_FETCH_FAILED' });
+        }
     });
 
     router.post('/', async (req, res) => {
-        const treeName = (req.params as any).tree as string;
-        const { id, name, address, phone, email, website, mode } = req.body;
-
-        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-        if (!tree) return res.status(404).json({ success: false });
+        const treeId = (req as any).tree.id;
+        const { id, mode } = req.body;
 
         try {
             if (mode === 'delete' && id) {
-                const repo = await prisma.repository.findFirst({ where: { id, treeId: tree.id } });
-                if (repo) {
-                    await prisma.source.updateMany({ where: { repositoryId: id }, data: { repositoryId: null } });
-                    await prisma.repository.delete({ where: { id: repo.id } });
-                }
-                return res.json({ success: true });
+                await repositoryService.deleteRepository(treeId, id);
+                return res.json({ success: true, data: null });
             }
 
-            if (!name) return res.status(400).json({ success: false, message: 'Name is required' });
-
-            const data = {
-                name,
-                address: address || null,
-                phone: phone || null,
-                email: email || null,
-                website: website || null,
-            };
-
-            if (id) {
-                const existing = await prisma.repository.findFirst({ where: { id, treeId: tree.id } });
-                if (!existing) return res.status(404).json({ success: false, message: 'Repository not found' });
-                await prisma.repository.update({ where: { id }, data });
-            } else {
-                await prisma.repository.create({ data: { ...data, treeId: tree.id } });
-            }
-
-            res.json({ success: true });
+            await repositoryService.saveRepository(treeId, req.body);
+            res.json({ success: true, data: null });
         } catch (error: any) {
             console.error('Repository save error:', error);
-            res.status(500).json({ success: false, message: error.message });
+            const status = error.message.includes('not found') ? 404 : (error.message.includes('required') ? 400 : 500);
+            res.status(status).json({
+                success: false,
+                message: error.message,
+                code: status === 404 ? 'REPOSITORY_NOT_FOUND' : (status === 400 ? 'REPOSITORY_VALIDATION_ERROR' : 'REPOSITORY_SAVE_FAILED')
+            });
         }
     });
 

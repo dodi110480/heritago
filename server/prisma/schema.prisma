@@ -461,6 +461,7 @@ model Name {
   @@index([treeId])
   @@index([treeId, surname, given])
   @@index([treeId, isPrimary])
+  @@unique([personId, full, type, isPrimary])
 }
 
 //////////////////////////////////////////////////
@@ -524,6 +525,7 @@ model Event {
   @@index([treeId, sortDate])
   @@index([treeId, type, sortDate])
   @@index([importId])
+  @@unique([personId, familyId, type, dateText, placeId, description])
 }
 
 //////////////////////////////////////////////////
@@ -566,6 +568,7 @@ model Fact {
 
   @@index([treeId])
   @@index([treeId, type])
+  @@unique([personId, familyId, type, value, dateText, placeId])
 }
 
 //////////////////////////////////////////////////
@@ -618,6 +621,7 @@ model Place {
 
   @@unique([treeId, name, parentId]) // dein Unique bleibt
   @@index([treeId])
+  @@index([treeId, name])
   @@index([latitude, longitude])
   @@index([importId])
 }
@@ -1030,6 +1034,8 @@ model MediaLink {
   citationId String?
   citation   Citation? @relation(fields: [citationId], references: [id], onDelete: SetNull)
 
+  @@index([personId])
+  @@index([familyId])
   @@index([eventId])
   @@index([sourceId])
   @@index([noteId])

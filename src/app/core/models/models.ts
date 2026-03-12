@@ -92,6 +92,21 @@ export interface DisplayNote {
     priority?: number;
 }
 
+export interface DisplayMedia {
+    id: string;
+    title?: string;
+    mimeType?: string;
+    mediaType?: 'PHOTO' | 'DOCUMENT' | 'RECORD' | 'OTHER';
+    isPrimary?: boolean;
+    role?: 'PORTRAIT' | 'DOCUMENT' | 'CERTIFICATE' | 'GRAVESTONE' | 'SIGNATURE' | 'OTHER';
+    caption?: string;
+    url?: string;
+    previewUrl?: string;
+    links?: any[];
+    orphanFile?: boolean;
+    fileMissing?: boolean;
+}
+
 export interface Name {
     id?: string;
     type?: string; // BIRTH, MARRIED, AKA, etc.
@@ -150,6 +165,7 @@ export interface Fact {
 
 export interface Individual {
     id: string;
+    gedcomId?: string;
     name: string; // Display name
     names: Name[];
     gender: 'M' | 'F' | 'X' | 'U';
@@ -246,6 +262,7 @@ export interface LifeEvent {
 
 export interface Family {
     id: string;
+    gedcomId?: string;
     husband?: string; // Individual ID
     wife?: string;    // Individual ID
     children: string[]; // Individual IDs
@@ -258,6 +275,9 @@ export interface Family {
 export interface TreeData {
     individuals: Individual[];
     families: Family[];
+    sources?: any[];
+    repositories?: any[];
+    places?: any[];
     meta?: {
         tree: string;
         treeId?: string;

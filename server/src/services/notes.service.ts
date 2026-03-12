@@ -1,7 +1,18 @@
-export class NotesService {
-    static async processSharedNotes(tx: any, treeId: string, notes: any[], entityLinks: any, currentUserId?: string) {
-        if (!notes || !Array.isArray(notes)) return;
+import { PrismaClient } from '@prisma/client';
 
+export class NotesService {
+    constructor(private prisma: PrismaClient) {}
+
+    /**
+     * Processes and creates/updates shared notes for a given entity.
+     * @param tx Prisma transaction client
+     * @param treeId The ID of the tree
+     * @param notes Array of notes (strings or objects with text/type/privacy)
+     * @param entityLinks Object containing the entity IDs (personId, familyId, etc.)
+     * @param currentUserId Optional user ID for the creator
+     */
+    async processSharedNotes(tx: any, treeId: string, notes: any[], entityLinks: any, currentUserId?: string) {
+        if (!notes || !Array.isArray(notes)) return;
 
         // Clean existing note links for this entity (except for events/facts which are usually recreated)
         if (entityLinks.personId && !entityLinks.eventId && !entityLinks.factId) {
@@ -14,6 +25,8 @@ export class NotesService {
             await tx.noteLink.deleteMany({ where: { treeId, placeId: entityLinks.placeId } });
         } else if (entityLinks.citationId) {
             await tx.noteLink.deleteMany({ where: { treeId, citationId: entityLinks.citationId } });
+        } else if (entityLinks.mediaId) {
+            await tx.noteLink.deleteMany({ where: { treeId, mediaId: entityLinks.mediaId } });
         }
 
         for (const noteData of notes) {
@@ -52,7 +65,6 @@ export class NotesService {
                     }
                 });
             }
-
 
             await tx.noteLink.create({
                 data: {

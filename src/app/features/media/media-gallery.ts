@@ -1,24 +1,26 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { AuthService } from '../../core/services/auth.service';
 import { MediaAddModal } from './media-add-modal';
 import { AppEntityCard } from '../../shared/components/ui/app-entity-card';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 import { AppListViewComponent } from '../../shared/components/ui/app-list-view';
+import { AppMediaList } from '../../shared/components/ui/app-media-list/app-media-list';
+import { DisplayMedia } from '../../core/models/models';
 
 
 import { MediaService } from '../../core/services/media.service';
 @Component({
     selector: 'app-media-gallery',
     standalone: true,
-    imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppListViewComponent],
+    imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppListViewComponent, AppMediaList],
     templateUrl: './media-gallery.html'
 })
 export class MediaGallery implements OnInit {
     public mediaService = inject(MediaService);
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private authService = inject(AuthService);
 
     loading = signal(false);
@@ -28,6 +30,7 @@ export class MediaGallery implements OnInit {
     searchQuery = signal('');
     filterType = signal<'ALLE' | 'FOTOS' | 'DOKUMENTE' | 'UNLINKED'>('ALLE');
     showAddModal = signal(false);
+    viewMode = signal<'grid' | 'list'>('grid');
 
     mediaStats = signal<any>({ total: 0, fotos: 0, docs: 0, unlinked: 0 });
     stats = computed(() => this.mediaStats());
@@ -37,6 +40,21 @@ export class MediaGallery implements OnInit {
         const items = this.mediaItems();
         if (filter === 'UNLINKED') return items.filter(i => !i.links?.length);
         return items;
+    });
+
+    displayMediaList = computed<DisplayMedia[]>(() => {
+        return this.filteredItems().map(item => ({
+            id: item.id || '',
+            title: item.title || '',
+            mimeType: item.mimeType,
+            mediaType: item.mediaType,
+            isPrimary: false,
+            url: item.path || item.url,
+            previewUrl: item.previewUrl,
+            links: item.links,
+            orphanFile: item.orphanFile,
+            fileMissing: item.fileMissing
+        }));
     });
 
     ngOnInit() {
@@ -59,7 +77,7 @@ export class MediaGallery implements OnInit {
         this.loading.set(true);
         const backendType = this.filterType();
 
-        this.mediaService.getMedia(tree.id, backendType, this.searchQuery()).subscribe({
+        this.mediaService.getMedia(tree.name, backendType, this.searchQuery()).subscribe({
             next: (res: any) => {
                 const items = (res.media || []).map((m: any) => {
                     return {
@@ -95,9 +113,12 @@ export class MediaGallery implements OnInit {
     deleteMedia(item: any) {
         if (!confirm(`Medium "${item.title || item.path || item.id}" wirklich löschen?`)) return;
 
+        const tree = this.tree;
+        if (!tree) return;
+
         const obs = item.orphanFile 
-            ? this.mediaService.deleteOrphanFile(item.path)
-            : this.mediaService.deleteMedia(item.id);
+            ? this.mediaService.deleteOrphanFile(tree.name, item.path)
+            : this.mediaService.deleteMedia(tree.name, item.id);
 
         obs.subscribe({
             next: () => {

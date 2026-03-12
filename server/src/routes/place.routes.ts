@@ -8,98 +8,92 @@ export const placeRoutes = (prisma: PrismaClient) => {
 
     router.post('/merge', async (req, res) => {
         try {
-            const treeName = (req.params as any).tree as string;
+            const tree = (req as any).tree;
             const { sourceId, targetId } = req.body;
             
-            const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-            if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
-
             await placeService.mergePlaces(tree.id, sourceId, targetId);
-            res.json({ success: true });
+            res.json({ success: true, data: null });
         } catch (error: any) {
             console.error('Merge error:', error);
             const status = error.message.includes('not found') ? 404 : 400;
-            res.status(status).json({ success: false, message: error.message });
+            res.status(status).json({
+                success: false,
+                message: error.message,
+                code: status === 404 ? 'PLACE_NOT_FOUND' : 'PLACE_VALIDATION_ERROR'
+            });
         }
     });
 
     router.get('/', async (req, res) => {
         try {
-            const treeName = (req.params as any).tree as string;
-            const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-            if (!tree) return res.status(404).json({ success: false });
-
+            const tree = (req as any).tree;
             const places = await placeService.getPlaces(tree.id);
-            res.json({ success: true, places });
+            res.json({ success: true, data: places });
         } catch (error: any) {
             console.error('Get places error:', error);
-            res.status(500).json({ success: false, message: 'Internal server error' });
+            res.status(500).json({ success: false, message: 'Internal server error', code: 'PLACE_FETCH_FAILED' });
         }
     });
 
     router.get('/search', async (req, res) => {
         try {
-            const treeName = (req.params as any).tree as string;
+            const tree = (req as any).tree;
             const { q } = req.query;
             
-            const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-            if (!tree) return res.status(404).json({ success: false });
-
             const results = await placeService.searchPlaces(tree.id, q as string);
-            res.json({ success: true, results });
+            res.json({ success: true, data: results });
         } catch (error: any) {
             console.error('Search error:', error);
-            res.status(500).json({ success: false, message: 'Internal server error' });
+            res.status(500).json({ success: false, message: 'Internal server error', code: 'PLACE_SEARCH_FAILED' });
         }
     });
 
     router.get('/:id/usage', async (req, res) => {
         try {
-            const treeName = (req.params as any).tree as string;
+            const tree = (req as any).tree;
             const { id } = req.params;
             
-            const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-            if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
-
             const usage = await placeService.getPlaceUsage(tree.id, id);
-            res.json({ success: true, usage });
+            res.json({ success: true, data: usage });
         } catch (error: any) {
             console.error('Get usage error:', error);
-            res.status(500).json({ success: false, message: 'Internal server error' });
+            res.status(500).json({ success: false, message: 'Internal server error', code: 'PLACE_USAGE_FAILED' });
         }
     });
 
     router.get('/:id', async (req, res) => {
         try {
-            const treeName = (req.params as any).tree as string;
+            const tree = (req as any).tree;
             const { id } = req.params;
             
-            const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-            if (!tree) return res.status(404).json({ success: false });
-
             const place = await placeService.getPlaceById(tree.id, id);
-            res.json({ success: true, place });
+            res.json({ success: true, data: place });
         } catch (error: any) {
             console.error('Get place error:', error);
             const status = error.message.includes('not found') ? 404 : 500;
-            res.status(status).json({ success: false, message: error.message });
+            res.status(status).json({
+                success: false,
+                message: error.message,
+                code: status === 404 ? 'PLACE_NOT_FOUND' : 'PLACE_FETCH_FAILED'
+            });
         }
     });
 
     router.post('/', async (req, res) => {
         try {
-            const treeName = (req.params as any).tree as string;
-            const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-            if (!tree) return res.status(404).json({ success: false });
-
-            const currentUserId = req.body?.userId || (req as any).user?.id || null;
+            const tree = (req as any).tree;
+            const currentUserId = (req as any).user?.id || null;
             await placeService.savePlace(tree.id, currentUserId, req.body);
             
-            res.json({ success: true });
+            res.json({ success: true, data: null });
         } catch (error: any) {
             console.error('Place save error:', error);
             const status = error.statusCode || 500;
-            const responseData: any = { success: false, message: error.message };
+            const responseData: any = {
+                success: false,
+                message: error.message,
+                code: status === 409 ? 'PLACE_IN_USE' : (status === 400 ? 'PLACE_VALIDATION_ERROR' : 'PLACE_SAVE_FAILED')
+            };
             if (error.usage) responseData.usage = error.usage;
             
             res.status(status).json(responseData);

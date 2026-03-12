@@ -53,6 +53,54 @@ export class AuthService {
         }
     }
 
+    init(): Promise<void> {
+        return new Promise((resolve) => {
+            this.http.get<any>(`${this.apiUrl}/auth/me`, { withCredentials: true }).subscribe({
+                next: (response) => {
+                    const user = response?.data ?? response?.user;
+                    if (response?.success && user) {
+                        this.currentUser.set(user);
+                        localStorage.setItem('user', JSON.stringify(user));
+                    } else {
+                        this.currentUser.set(null);
+                        localStorage.removeItem('user');
+                    }
+                    resolve();
+                },
+                error: () => {
+                    // Try refresh once if access token expired
+                    this.http.post<any>(`${this.apiUrl}/auth/refresh`, {}, { withCredentials: true }).subscribe({
+                        next: () => {
+                            this.http.get<any>(`${this.apiUrl}/auth/me`, { withCredentials: true }).subscribe({
+                                next: (response) => {
+                                    const user = response?.data ?? response?.user;
+                                    if (response?.success && user) {
+                                        this.currentUser.set(user);
+                                        localStorage.setItem('user', JSON.stringify(user));
+                                    } else {
+                                        this.currentUser.set(null);
+                                        localStorage.removeItem('user');
+                                    }
+                                    resolve();
+                                },
+                                error: () => {
+                                    this.currentUser.set(null);
+                                    localStorage.removeItem('user');
+                                    resolve();
+                                }
+                            });
+                        },
+                        error: () => {
+                            this.currentUser.set(null);
+                            localStorage.removeItem('user');
+                            resolve();
+                        }
+                    });
+                }
+            });
+        });
+    }
+
     selectTree(tree: Tree) {
         this.currentTree.set(tree);
         localStorage.setItem('activeTree', JSON.stringify(tree));
@@ -65,8 +113,9 @@ export class AuthService {
         ).pipe(
             map(response => {
                 if (response.success) {
-                    this.currentUser.set(response.user);
-                    localStorage.setItem('user', JSON.stringify(response.user));
+                    const user = response?.data ?? response?.user;
+                    this.currentUser.set(user);
+                    localStorage.setItem('user', JSON.stringify(user));
                     return true;
                 }
                 return false;
@@ -82,8 +131,9 @@ export class AuthService {
         ).pipe(
             map(response => {
                 if (response.success) {
-                    this.currentUser.set(response.user);
-                    localStorage.setItem('user', JSON.stringify(response.user));
+                    const user = response?.data ?? response?.user;
+                    this.currentUser.set(user);
+                    localStorage.setItem('user', JSON.stringify(user));
                     return { success: true };
                 }
                 return { success: false, message: response.message };
@@ -93,8 +143,13 @@ export class AuthService {
     }
 
     logout() {
+        this.http.post<any>(`${this.apiUrl}/auth/logout`, {}, { withCredentials: true }).subscribe({
+            error: () => {}
+        });
         this.currentUser.set(null);
         localStorage.removeItem('user');
+        this.currentTree.set(null);
+        localStorage.removeItem('activeTree');
     }
 
     isAuthenticated(): boolean {
@@ -102,34 +157,49 @@ export class AuthService {
     }
 
     getTrees(): Observable<Tree[]> {
+        if (!environment.production) {
+            console.log(`[AuthService] Fetching trees from ${this.apiUrl}/trees`);
+        }
         return this.http.get<any>(`${this.apiUrl}/trees`, { withCredentials: true }).pipe(
-            map(response => response.success ? response.trees : []),
-            catchError(() => of([]))
+            map(response => {
+                if (!environment.production) {
+                    console.log('[AuthService] getTrees response:', response);
+                }
+                return response.success ? (response.data ?? response.trees ?? []) : [];
+            }),
+            catchError((err) => {
+                console.error('[AuthService] Error fetching trees:', err);
+                return of([]);
+            })
         );
     }
 
-    createTree(name: string, title: string, firstName: string, lastName: string, gender: string, birthDate: string, userId?: string): Observable<{ success: boolean; message?: string; tree?: Tree }> {
-        return this.http.post<any>(`${this.apiUrl}/tree/create`,
-            { name, title, firstName, lastName, gender, birthDate, userId },
+    createTree(name: string, title: string, firstName: string, lastName: string, gender: string, birthDate: string): Observable<{ success: boolean; message?: string; tree?: Tree }> {
+        return this.http.post<any>(`${this.apiUrl}/trees`,
+            { name, title, firstName, lastName, gender, birthDate },
             { withCredentials: true }
         ).pipe(
-            map(response => ({ success: response.success, message: response.message, tree: response.tree })),
+            map(response => ({ success: response.success, message: response.message, tree: response.data ?? response.tree })),
             catchError(err => of({ success: false, message: err.error?.message || 'Ein unbekannter Fehler ist aufgetreten.' }))
         );
     }
 
     updateTree(id: string, data: { title?: string, description?: string }): Observable<any> {
-        return this.http.put<any>(`${this.apiUrl}/tree/${id}`, data, { withCredentials: true });
+        return this.http.put<any>(`${this.apiUrl}/tree/${id}`, data, { withCredentials: true }).pipe(
+            catchError(err => of({ success: false, message: err.error?.message || 'Update fehlgeschlagen.' }))
+        );
     }
 
     deleteTree(id: string): Observable<any> {
-        return this.http.delete<any>(`${this.apiUrl}/tree/${id}`, { withCredentials: true });
+        return this.http.delete<any>(`${this.apiUrl}/tree/${id}`, { withCredentials: true }).pipe(
+            catchError(err => of({ success: false, message: err.error?.message || 'Löschen fehlgeschlagen.' }))
+        );
     }
 
     // Admin Methods
     getUsers(): Observable<any[]> {
         return this.http.get<any>(`${this.apiUrl}/admin/users`, { withCredentials: true }).pipe(
-            map(response => response.success ? response.users : []),
+            map(response => response.success ? (response.data ?? response.users ?? []) : []),
             catchError(() => of([]))
         );
     }

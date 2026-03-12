@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { Individual, Family, TreeData } from '../../core/models/models';
 import { FormsModule } from '@angular/forms';
 import { AppEntityCard } from '../../shared/components/ui/app-entity-card';
@@ -15,7 +15,7 @@ import { AppListViewComponent } from '../../shared/components/ui/app-list-view';
     templateUrl: './family-list.html'
 })
 export class FamilyList implements OnInit {
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private router = inject(Router);
 
     individuals = signal<Individual[]>([]);
@@ -45,7 +45,7 @@ export class FamilyList implements OnInit {
 
     loadData() {
         this.loading.set(true);
-        this.gedcomService.getTreeData().subscribe({
+        this.treeService.getTreeData().subscribe({
             next: (data) => {
                 if (data) {
                     this.individuals.set(data.individuals);

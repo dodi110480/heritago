@@ -32,52 +32,30 @@
 
     <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-6">
       <div *ngIf="activeTab() === 'basics'" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+        <!-- Event / Fact Switch -->
+        <div class="flex gap-0 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700 w-fit">
+          <button (click)="onItemKindChange('event')"
+            [class]="itemKind === 'event' ? 'bg-brand-500 text-white shadow-sm' : 'bg-canvas/50 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+            class="px-5 py-2 text-sm font-bold transition-all">📅 Ereignis</button>
+          <button (click)="onItemKindChange('fact')"
+            [class]="itemKind === 'fact' ? 'bg-brand-500 text-white shadow-sm' : 'bg-canvas/50 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+            class="px-5 py-2 text-sm font-bold transition-all">📋 Fakt</button>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div class="form-group">
             <label class="form-label">Typ</label>
             <select [(ngModel)]="item.type" class="form-input">
-              <option value="BIRT">Geburt</option>
-              <option value="CHR">Taufe (religiös)</option>
-              <option value="BAPM">Taufe (nicht-religiös)</option>
-              <option value="DEAT">Tod</option>
-              <option value="BURI">Beerdigung</option>
-              <option value="CREM">Einäscherung</option>
-              <option value="MARR">Heirat</option>
-              <option value="DIV">Scheidung</option>
-              <option value="ANUL">Annullierung</option>
-              <option value="ENGA">Verlobung</option>
-              <option value="ADOP">Adoption</option>
-              <option value="BARM">Bar Mitzvah</option>
-              <option value="BASM">Bas Mitzvah</option>
-              <option value="BLES">Segen</option>
-              <option value="CHRA">Erwachsenentaufe</option>
-              <option value="CONF">Firmung / Konfirmation</option>
-              <option value="FCOM">Erste Kommunion</option>
-              <option value="ORDN">Ordination</option>
-              <option value="NATU">Einbürgerung</option>
-              <option value="EMIG">Auswanderung</option>
-              <option value="IMMI">Einwanderung</option>
-              <option value="CENS">Volkszählung</option>
-              <option value="PROB">Testamentseröffnung</option>
-              <option value="WILL">Testament</option>
-              <option value="GRAD">Abschluss</option>
-              <option value="RETI">Ruhestand</option>
-              <option value="EVEN">Allgemeines Ereignis</option>
-              <option value="BAPL">LDS-Taufe (für Verstorbene)</option>
-              <option value="CONL">LDS-Bestätigung</option>
-              <option value="ENDL">LDS-Investitur</option>
-              <option value="SLGC">LDS-Kindersiegelung</option>
-              <option value="SLGS">LDS-Stellvertreter-Siegelung</option>
-              <option value="RESI">Wohnsitz</option>
-              <option value="MILI">Militärdienst</option>
-              <option value="CAST">Kaste</option>
-              <option value="DSCR">Körperliche Beschreibung</option>
-              <option value="OTHER">Sonstiges</option>
+              <option *ngFor="let opt of typeOptions" [value]="opt.value">{{opt.label}}</option>
             </select>
           </div>
-          <div class="form-group">
+          <div class="form-group" *ngIf="itemKind === 'event'">
             <label class="form-label">Untertyp</label>
             <input type="text" [(ngModel)]="item.subType" class="form-input" placeholder="z.B. Standesamt">
+          </div>
+          <div class="form-group" *ngIf="itemKind === 'fact'">
+            <label class="form-label">Wert</label>
+            <input type="text" [(ngModel)]="item.value" class="form-input" placeholder="z.B. Schreiner, Katholisch...">
           </div>
         </div>
 
@@ -105,17 +83,6 @@
             markieren</label>
         </div>
 
-        <div class="pt-6 flex justify-end" *ngIf="showDelete">
-          <button (click)="emitDelete()"
-            class="btn-secondary !w-auto !py-1 !px-3 !bg-accent-danger-500/10 !text-accent-danger-500 !border-accent-danger-500/20 text-xs flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2">
-              <path d="M3 6h18"></path>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-            Ereignis löschen
-          </button>
-        </div>
       </div>
 
       <div *ngIf="activeTab() === 'participants'" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">

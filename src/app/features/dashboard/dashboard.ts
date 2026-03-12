@@ -3,7 +3,7 @@ import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { CalendarWidget } from '../../shared/components/calendar-widget';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { DashboardFactService } from '../../core/services/dashboard-fact.service';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 import { AppStatCardComponent } from '../../shared/components/ui/app-stat-card';
@@ -22,7 +22,7 @@ export class Dashboard implements AfterViewInit {
     public analyticsService = inject(AnalyticsService);
     @ViewChild('miniTree') miniTreeSvg!: ElementRef<SVGSVGElement>;
     authService = inject(AuthService);
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private router = inject(Router);
     private factService = inject(DashboardFactService);
 
@@ -73,7 +73,7 @@ export class Dashboard implements AfterViewInit {
 
     loadStats(treeName?: string) {
         this.loading.set(true);
-        this.gedcomService.getTreeData(treeName).subscribe({
+        this.treeService.getTreeData(treeName).subscribe({
             next: (treeData) => {
                 if (treeData && treeData.meta) {
                     const meta = treeData.meta;
@@ -85,7 +85,7 @@ export class Dashboard implements AfterViewInit {
                     const people = treeData.individuals || [];
                     if (people.length > 0) {
                         let score = 0;
-                        people.forEach(p => {
+                        people.forEach((p: any) => {
                             if (p.names?.length > 0) score += 0.4;
                             if (p.gender && p.gender !== 'U') score += 0.2;
                             if (p.events?.some((e: any) => e.type === 'BIRT')) score += 0.4;

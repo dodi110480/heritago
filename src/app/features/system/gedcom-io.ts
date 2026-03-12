@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environment';
@@ -15,7 +15,7 @@ import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-head
     templateUrl: './gedcom-io.html'
 })
 export class GedcomIo {
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private http = inject(HttpClient);
 
     isImporting = false;
@@ -32,7 +32,7 @@ export class GedcomIo {
     async importGedcom() {
         if (!this.selectedFile) return;
 
-        const treeData = await firstValueFrom(this.gedcomService.getTreeData());
+        const treeData = await firstValueFrom(this.treeService.getTreeData());
         const treeName = treeData?.meta?.tree;
         if (!treeName) {
             this.showMsg('Fehler: Kein aktiver Stammbaum gefunden.', true);
@@ -60,7 +60,7 @@ export class GedcomIo {
     }
 
     async exportGedcom() {
-        const treeData = await firstValueFrom(this.gedcomService.getTreeData());
+        const treeData = await firstValueFrom(this.treeService.getTreeData());
         const treeName = treeData?.meta?.tree;
         if (!treeName) {
             this.showMsg('Fehler: Kein aktiver Stammbaum gefunden.', true);

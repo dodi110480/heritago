@@ -1,0 +1,139 @@
+<div class="space-y-6">
+  <!-- Header -->
+  @if (showHeader()) {
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex-1 max-w-sm relative">
+        <input
+          *ngIf="!readOnly()"
+          type="text"
+          [(ngModel)]="searchQuery"
+          [placeholder]="placeholder()"
+          class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
+        >
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </span>
+      </div>
+
+      <div *ngIf="allowCreate() && !readOnly()" class="flex items-center gap-2">
+        <button
+          (click)="mediaUploadRequested.emit()"
+          class="btn-primary !w-auto !py-2 shadow-brand-sm transition-all flex items-center gap-2 whitespace-nowrap"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Upload</span>
+        </button>
+        <button
+          (click)="mediaGalleryRequested.emit()"
+          class="btn-secondary !w-auto !py-2 transition-all flex items-center gap-2 whitespace-nowrap"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          <span>Galerie</span>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Empty State -->
+  <div *ngIf="filteredMedia().length === 0" class="flex flex-col items-center justify-center py-16 text-neutral-500 bg-neutral-50/50 dark:bg-neutral-900/20 rounded-card border-2 border-dashed border-neutral-200 dark:border-neutral-800">
+    <span class="text-3xl mb-3 opacity-50">🖼️</span>
+    <p class="font-medium text-sm">{{ searchQuery ? 'Keine passenden Medien gefunden.' : 'Noch keine Medien hinzugefügt.' }}</p>
+  </div>
+
+  <!-- Medienliste -->
+  <div class="space-y-4">
+    @for (media of filteredMedia(); track media.id) {
+      <app-glass-card
+        variant="note"
+        [borderColor]="getRoleBorder(media.role)"
+        [clickable]="allowEdit() && !readOnly()"
+        (cardClicked)="onEdit(media)"
+      >
+        <div class="flex items-center gap-4">
+          <!-- Thumbnail -->
+          <div
+            class="w-20 h-20 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center overflow-hidden shrink-0 cursor-pointer relative group/thumb"
+            (click)="onView(media, $event)"
+          >
+            <img
+              *ngIf="isImage(media) && getPreviewUrl(media)"
+              [src]="getPreviewUrl(media)"
+              class="w-full h-full object-cover transition-transform group-hover/thumb:scale-110"
+              alt="Vorschau"
+            >
+            <div *ngIf="!isImage(media) || !getPreviewUrl(media)" class="text-neutral-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                <polyline points="13 2 13 9 20 9"></polyline>
+              </svg>
+            </div>
+
+            <!-- Primary Badge -->
+            <div *ngIf="media.isPrimary"
+              class="absolute top-1 left-1 bg-brand-500 text-white p-1 rounded-md shadow-lg"
+              title="Profilbild"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Details -->
+          <div class="flex-1 min-w-0 space-y-1.5">
+            <!-- Title + Primary Toggle -->
+            <div class="flex items-center gap-3">
+              <h3 class="font-bold text-sm text-neutral-900 dark:text-neutral-100 truncate flex-1">{{ media.title || 'Ohne Titel' }}</h3>
+              <button
+                *ngIf="showPrimaryToggle() && allowEdit() && !readOnly()"
+                (click)="onPrimaryToggle(media.id, $event)"
+                [class.text-brand-400]="media.isPrimary"
+                [class.text-neutral-500]="!media.isPrimary"
+                class="px-2 py-0.5 rounded-full text-[10px] font-bold border transition-all hover:bg-brand-500/10 whitespace-nowrap"
+                [class.border-brand-400]="media.isPrimary"
+                [class.border-neutral-300]="!media.isPrimary"
+                [class.dark:border-neutral-700]="!media.isPrimary"
+              >
+                {{ media.isPrimary ? '★ Profilbild' : '☆ Profilbild' }}
+              </button>
+            </div>
+
+            <!-- Meta Row -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider" [ngClass]="getRoleClass(media.role)">
+                {{ getRoleLabel(media.role) }}
+              </span>
+              <span *ngIf="media.caption" class="text-xs text-neutral-600 dark:text-neutral-400 truncate">{{ media.caption }}</span>
+            </div>
+
+            <!-- MimeType + Badges -->
+            <div class="flex items-center gap-2 text-[10px] text-neutral-500">
+              <span *ngIf="media.mimeType" class="font-mono">{{ media.mimeType }}</span>
+              <span *ngIf="media.links?.length" class="px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-400 font-bold border border-brand-500/10">
+                {{ media.links.length }} Link{{ media.links.length !== 1 ? 's' : '' }}
+              </span>
+              <span *ngIf="media.orphanFile" class="px-1.5 py-0.5 rounded bg-accent-danger-500/20 text-accent-danger-400 font-bold uppercase">
+                Orphan
+              </span>
+              <span *ngIf="media.fileMissing" class="px-1.5 py-0.5 rounded bg-accent-danger-500 text-white font-black uppercase shadow-sm">
+                Datei fehlt
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions Slot -->
+        <ng-container actions>
+          <button
+            *ngIf="allowEdit() && !readOnly()"
+            (click)="onDelete(media.id, $event)"
+            class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-500/10 text-neutral-400 hover:text-red-500 transition-all"
+            title="Entfernen"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
+        </ng-container>
+      </app-glass-card>
+    }
+  </div>
+</div>

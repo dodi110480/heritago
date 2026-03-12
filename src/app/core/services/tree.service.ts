@@ -8,23 +8,29 @@ import { environment } from '../../environment';
 @Injectable({
     providedIn: 'root'
 })
-export class GedcomService {
+export class TreeService {
     private http = inject(HttpClient);
     private authService = inject(AuthService);
     private baseApiUrl = `${environment.apiUrl}/tree/`;
 
     currentTreeData = signal<TreeData | null>(null);
 
+    /**
+     * Fetches the full tree data (individuals, families, etc.)
+     * @param treeName Optional tree name. If not provided, uses the active tree from AuthService.
+     */
     getTreeData(treeName?: string): Observable<TreeData | null> {
         const timestamp = new Date().getTime();
 
         if (treeName) {
-            return this.http.get<TreeData>(`${this.baseApiUrl}${treeName}?t=${timestamp}`, { withCredentials: true }).pipe(
-                switchMap(data => {
+            return this.http.get<any>(`${this.baseApiUrl}${treeName}?t=${timestamp}`, { withCredentials: true }).pipe(
+                switchMap(res => {
+                    const data = res?.data ?? res;
                     this.currentTreeData.set(data);
                     return of(data);
                 }),
-                catchError(() => {
+                catchError((err) => {
+                    console.error('TreeService: Error fetching tree data for ' + treeName, err);
                     return this.loadFallbackTree(timestamp);
                 })
             );
@@ -32,8 +38,14 @@ export class GedcomService {
 
         const activeTree = this.authService.currentTree();
         if (activeTree) {
-            return this.http.get<TreeData>(`${this.baseApiUrl}${activeTree.name}?t=${timestamp}`, { withCredentials: true }).pipe(
-                catchError(() => {
+            return this.http.get<any>(`${this.baseApiUrl}${activeTree.name}?t=${timestamp}`, { withCredentials: true }).pipe(
+                switchMap(res => {
+                    const data = res?.data ?? res;
+                    this.currentTreeData.set(data);
+                    return of(data);
+                }),
+                catchError((err) => {
+                    console.error('TreeService: Error fetching tree data for ' + activeTree.name, err);
                     // If error (e.g. 404 because tree was deleted), clear active tree and try fallback
                     localStorage.removeItem('activeTree');
                     return this.loadFallbackTree(timestamp);
@@ -53,8 +65,9 @@ export class GedcomService {
                         const treeToLoad = validTrees[0];
                         // Set it as active
                         this.authService.selectTree(treeToLoad);
-                        return this.http.get<TreeData>(`${this.baseApiUrl}${treeToLoad.name}?t=${timestamp}`, { withCredentials: true }).pipe(
-                            switchMap(data => {
+                        return this.http.get<any>(`${this.baseApiUrl}${treeToLoad.name}?t=${timestamp}`, { withCredentials: true }).pipe(
+                            switchMap(res => {
+                                const data = res?.data ?? res;
                                 this.currentTreeData.set(data);
                                 return of(data);
                             })

@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { AuthService } from '../../core/services/auth.service';
 import { GenealogyValidationService, ValidationResult } from '../../core/services/genealogy-validation.service';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
@@ -27,7 +27,7 @@ interface GedcomError {
 })
 export class Diagnostics implements OnInit {
     public analyticsService = inject(AnalyticsService);
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private validationService = inject(GenealogyValidationService);
     authService = inject(AuthService);
 
@@ -61,7 +61,7 @@ export class Diagnostics implements OnInit {
                 });
 
                 // Logical validation
-                this.gedcomService.getTreeData(tree.name).subscribe(data => {
+                this.treeService.getTreeData().subscribe(data => {
                     if (data) {
                         const results = this.validationService.validateTree(data);
                         this.logicalErrors.set(results);

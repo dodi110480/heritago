@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, inject, signal
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { transformToFamilyChart } from './family-chart-transformer';
 import * as d3 from 'd3';
 
@@ -312,7 +312,7 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
 
   @ViewChild('familyChart') chartElement!: ElementRef;
 
-  private gedcomService = inject(GedcomService);
+  private treeService = inject(TreeService);
   private router = inject(Router);
 
   private treeData = signal<any[]>([]);
@@ -336,7 +336,7 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.loadSavedConfig();
-    this.gedcomService.getTreeData().subscribe(data => {
+    this.treeService.getTreeData().subscribe(data => {
       if (data) {
         const transformedData = transformToFamilyChart(data);
         this.treeData.set(transformedData);

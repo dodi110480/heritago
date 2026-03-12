@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../environment';
 
 @Injectable({
@@ -14,30 +14,42 @@ export class PlaceService {
         return this.http.get<any>(`${this.baseApiUrl}${treeName}/places/search`, {
             params: { q: query },
             withCredentials: true
-        });
+        }).pipe(map(res => res?.data ?? res));
     }
 
     savePlace(treeName: string, data: any): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, data, { withCredentials: true });
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, data, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
     getPlaces(treeName: string): Observable<any> {
-        return this.http.get<any>(`${this.baseApiUrl}${treeName}/place`, { withCredentials: true });
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/place`, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
     getPlace(treeName: string, placeId: string): Observable<any> {
-        return this.http.get<any>(`${this.baseApiUrl}${treeName}/place/${placeId}`, { withCredentials: true });
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/place/${placeId}`, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
     getPlaceUsage(treeName: string, placeId: string): Observable<any> {
-        return this.http.get<any>(`${this.baseApiUrl}${treeName}/place/${placeId}/usage`, { withCredentials: true });
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/place/${placeId}/usage`, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
     mergePlaces(treeName: string, sourceId: string, targetId: string): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place/merge`, { sourceId, targetId }, { withCredentials: true });
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place/merge`, { sourceId, targetId }, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
     deletePlace(treeName: string, placeName: string): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, { mode: 'delete', name: placeName }, { withCredentials: true });
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, { mode: 'delete', name: placeName }, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 }

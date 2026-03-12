@@ -2,7 +2,7 @@ import { Component, inject, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { PlaceModal } from '../../shared/components/ui/place-modal/place-modal';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 import { AppPlacesList } from '../../shared/components/ui/app-places-list/app-places-list';
@@ -18,7 +18,7 @@ import { PlaceService } from '../../core/services/place.service';
 })
 export class PlaceList {
     public placeService = inject(PlaceService);
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private router = inject(Router);
 
     places = signal<any[]>([]);
@@ -39,7 +39,7 @@ export class PlaceList {
 
     loadPlaces() {
         this.loading.set(true);
-        this.gedcomService.getTreeData().subscribe(treeData => {
+        this.treeService.getTreeData().subscribe(treeData => {
             if (treeData && treeData.meta && treeData.meta.tree) {
                 this.currentTree.set(treeData.meta.tree);
                 this.refreshList();

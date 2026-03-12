@@ -258,5 +258,5 @@
 </app-modal-shell>
 
 <app-image-cropper *ngIf="showCropper()" [imageUrl]="cropImageUrl() || ''" [initialRect]="currentCrop()"
-  (cropped)="onCropped($event)" (cancel)="showCropper.set(false)">
+  (cropped)="onCropped($event)" (cancel)="onCropCancel()">
 </app-image-cropper>

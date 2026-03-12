@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 
 import { MediaService } from '../../core/services/media.service';
 import { AnalyticsService } from '../../core/services/analytics.service';
@@ -19,7 +19,7 @@ declare const L: any;
 export class MapView implements OnInit {
     public mediaService = inject(MediaService);
     public analyticsService = inject(AnalyticsService);
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
 
     @ViewChild('mapContainer') mapContainer!: ElementRef;
 
@@ -50,7 +50,7 @@ export class MapView implements OnInit {
 
     loadMapData() {
         this.loading.set(true);
-        this.gedcomService.getTreeData().subscribe(treeData => {
+        this.treeService.getTreeData().subscribe(treeData => {
             if (treeData && treeData.meta && treeData.meta.tree) {
                 this.analyticsService.getMapData(treeData.meta.tree).subscribe({
                     next: (res: any) => {

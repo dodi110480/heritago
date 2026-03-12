@@ -1,7 +1,7 @@
 import { Component, inject, signal, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 
 
 import { AnalyticsService } from '../../core/services/analytics.service';
@@ -96,7 +96,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
 })
 export class ActivityFeed implements OnInit {
     public analyticsService = inject(AnalyticsService);
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private router = inject(Router);
 
     logs = signal<any[]>([]);
@@ -108,9 +108,9 @@ export class ActivityFeed implements OnInit {
     }
 
     loadLogs() {
-        this.gedcomService.getTreeData().subscribe(treeData => {
-            if (treeData && treeData.meta && treeData.meta.tree) {
-                this.analyticsService.getChangeLog(treeData.meta.tree).subscribe({
+        this.treeService.getTreeData().subscribe(data => {
+            if (data && data.meta && data.meta.tree) {
+                this.analyticsService.getChangeLog(data.meta.tree).subscribe({
                     next: (logs) => {
                         this.logs.set(logs);
                         this.groupedLogs.set(this.groupLogs(logs));

@@ -1,13 +1,11 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Individual, Family } from '../../core/models/models';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
-import { AppAvatarComponent } from '../../shared/components/ui/app-avatar';
 
 import { FamilyService } from '../../core/services/family.service';
 import { PlaceService } from '../../core/services/place.service';
@@ -26,16 +24,21 @@ import { AppNotesList } from '../../shared/components/ui/app-notes-list/app-note
 import { DisplayNote, NoteCategory, DisplaySource } from '../../core/models/models';
 import { AppSourcesListComponent } from '../../shared/components/ui/app-sources-list/app-sources-list';
 
+// New Tab Components
+import { FamilyTabBasicsComponent } from './family-tab-basics';
+import { FamilyTabChildrenComponent } from './family-tab-children';
+import { FamilyTabEventsComponent } from './family-tab-events';
+import { FamilyFeatureStore } from './family-feature.store';
+
 @Component({
     selector: 'app-family-detail',
     standalone: true,
+    providers: [FamilyFeatureStore],
     imports: [
         CommonModule,
         FormsModule,
-        RouterLink,
         AppPageHeaderComponent,
         AppModalShell,
-        AppAvatarComponent,
         AppEmptyStateComponent,
         AppSectionHeaderComponent,
         PlaceModal,
@@ -44,41 +47,19 @@ import { AppSourcesListComponent } from '../../shared/components/ui/app-sources-
         EventModal,
         ImageViewer,
         AppNotesList,
-        AppSourcesListComponent
+        AppSourcesListComponent,
+        FamilyTabBasicsComponent,
+        FamilyTabChildrenComponent,
+        FamilyTabEventsComponent
     ],
     templateUrl: './family-detail.html'
 })
 export class FamilyDetail implements OnInit, OnDestroy {
-    public familyService = inject(FamilyService);
+    public store = inject(FamilyFeatureStore);
     public mediaService = inject(MediaService);
-    public placeService = inject(PlaceService);
-    public sourceService = inject(SourceService);
-
-    private gedcomService = inject(GedcomService);
     public authService = inject(AuthService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
-
-    familyId = signal<string | null>(null);
-    family = signal<Family | null>(null);
-    individuals = signal<Individual[]>([]);
-    loading = signal(true);
-    isDirty = signal(false);
-    isSaving = signal(false);
-    availableSources = signal<any[]>([]);
-
-    loadAvailableSources() {
-        const treeName = this.authService.currentTree()?.name;
-        if (treeName) {
-            this.sourceService.getSources(treeName).subscribe({
-                next: (res: any) => {
-                    if (res.success) this.availableSources.set(res.sources || []);
-                }
-            });
-        }
-    }
-
-    activeTab = signal<'basics' | 'children' | 'events' | 'notes' | 'citations' | 'media'>('basics');
 
     // Modal States
     showEventModal = signal(false);
@@ -109,82 +90,6 @@ export class FamilyDetail implements OnInit, OnDestroy {
     noteSearchQuery = signal('');
     sourceDraft = signal<{ sourceId: string; confidence?: string; whereInSource?: string; text?: string; date?: string }>({ sourceId: '' });
 
-    onNoteCreateRequested() {
-        this.activeNoteIndex.set(null);
-        this.noteDraft.set({
-            id: 'note-' + Date.now(),
-            text: '',
-            noteType: 'COMMENT' as NoteCategory,
-            createdAt: new Date(),
-            isPrivate: false
-        });
-        this.showNoteModal.set(true);
-    }
-
-    onNoteEditRequested(note: DisplayNote) {
-        const fam = this.family();
-        if (!fam || !fam.notes) return;
-        const index = fam.notes.findIndex(n => n.id === note.id);
-        if (index !== -1) {
-            this.activeNoteIndex.set(index);
-            this.noteDraft.set({ ...note });
-            this.showNoteModal.set(true);
-        }
-    }
-
-    onNoteSave() {
-        const draft = this.noteDraft();
-        if (!draft?.text?.trim()) return;
-
-        this.family.update(fam => {
-            if (!fam) return fam;
-            const notes = [...(fam.notes || [])];
-            const index = this.activeNoteIndex();
-            
-            if (index !== null) {
-                notes[index] = draft;
-            } else {
-                notes.push(draft);
-            }
-            
-            return { ...fam, notes };
-        });
-
-        this.isDirty.set(true);
-        this.showNoteModal.set(false);
-        this.save();
-    }
-
-    onNoteDeletedFamily(noteId: string) {
-        this.family.update(fam => {
-            if (!fam) return fam;
-            if (confirm('Möchtest du diese Notiz wirklich löschen?')) {
-                return {
-                    ...fam,
-                    notes: (fam.notes || []).filter(n => n.id !== noteId)
-                };
-            }
-            return fam;
-        });
-        this.isDirty.set(true);
-        this.save();
-    }
-
-    onNoteDeleteFromModal() {
-        const idx = this.activeNoteIndex();
-        if (idx !== null) {
-            this.family.update(fam => {
-                if (!fam || !fam.notes) return fam;
-                const notes = [...fam.notes];
-                notes.splice(idx, 1);
-                return { ...fam, notes };
-            });
-            this.isDirty.set(true);
-            this.showNoteModal.set(false);
-            this.save();
-        }
-    }
-
     activeMediaIndex = signal<number | null>(null);
     mediaDraft = signal<any>(null);
 
@@ -194,35 +99,24 @@ export class FamilyDetail implements OnInit, OnDestroy {
     selectedChildId = signal<string | null>(null);
     addChildError = signal<string | null>(null);
 
-    // Place Search State
-    placeSearchResults = signal<any[]>([]);
-    showPlaceSuggestions = signal(false);
-    eventModalTab = signal<'basics' | 'citations' | 'media' | 'notes'>('basics');
-
     // Image viewer for media previews
     viewerUrl = signal<string | null>(null);
     viewerTitle = signal<string>('');
-    // If media dialogs are opened from the event modal, hide the event modal and reopen later
     pendingReopenEventModal = false;
 
     private sub = new Subscription();
 
-    // Signal for the event modal search feature
     allPersonsOptions = computed(() => {
-        return this.individuals().map(ind => ({
+        return this.store.individuals().map(ind => ({
             id: ind.id,
             displayName: `${ind.firstName || ''} ${ind.lastName || ''} (${ind.id})`
         }));
     });
 
-    // Helper for easier access in template
-    get self() { return this; }
-
     ngOnInit() {
         this.sub.add(
             this.route.params.subscribe(params => {
-                this.familyId.set(params['id']);
-                this.loadData();
+                this.store.init(params['id']);
             })
         );
     }
@@ -231,82 +125,13 @@ export class FamilyDetail implements OnInit, OnDestroy {
         this.sub.unsubscribe();
     }
 
+    // --- Modal Orchestration ---
     openViewer(media: any) {
         if (!media) return;
         const url = media.id ? this.mediaService.getMediaUrl(media.id) : (media.url ? this.mediaService.getMediaUrl(media.url) : null);
         if (!url) return;
         this.viewerUrl.set(url);
         this.viewerTitle.set(media.title || 'Bild');
-    }
-
-    loadData() {
-        this.loading.set(true);
-        this.gedcomService.getTreeData().subscribe({
-            next: (data) => {
-                if (data) {
-                    this.individuals.set(data.individuals);
-                    this.loadAvailableSources();
-                    const fam = data.families.find(f => f.id === this.familyId());
-                    if (fam) {
-                        const clonedFam = JSON.parse(JSON.stringify(fam));
-                        if (clonedFam.events) {
-                            clonedFam.events.forEach((e: any) => {
-                                if (!e.dateText && e.date) e.dateText = e.date;
-                                if (!e.place && e.placeName) e.place = e.placeName;
-                                if (!e.subType && e.eventSubtype) e.subType = e.eventSubtype;
-                                if (!Array.isArray(e.media)) e.media = [];
-                                if (!Array.isArray(e.notes)) e.notes = [];
-                                if (!Array.isArray(e.citations)) e.citations = [];
-                            });
-                        }
-                        if (!Array.isArray(clonedFam.notes)) clonedFam.notes = [];
-                        this.family.set(clonedFam);
-                    } else {
-                        this.router.navigate(['/families']);
-                    }
-                }
-                this.loading.set(false);
-            },
-            error: () => this.loading.set(false)
-        });
-    }
-
-    getPersonById(id: string | undefined): Individual | undefined {
-        if (!id) return undefined;
-        return this.individuals().find(i => i.id === id);
-    }
-
-    getPersonName(id: string | undefined): string {
-        const p = this.getPersonById(id);
-        if (!p) return 'Unbekannt';
-        return `${p.firstName} ${p.lastName}`;
-    }
-
-    getPersonImage(id: string | undefined): string {
-        const p = this.getPersonById(id);
-        if (!p) return 'assets/avatars/unknown.svg';
-        if (p.media && p.media.length > 0) {
-            const primary = p.media.find(m => m.isPrimary) || p.media[0];
-        if (primary?.id) return this.mediaService.getMediaUrl(primary.id, 'thumbs');
-        if (primary?.url) return this.mediaService.getMediaUrl(primary.url, 'thumbs');
-        }
-        const gender = p.gender === 'M' ? 'male' : (p.gender === 'F' ? 'female' : 'unknown');
-        return `assets/avatars/${gender}.svg`;
-    }
-
-    getPersonGender(id: string | undefined): string {
-        const p = this.getPersonById(id);
-        return p?.gender || 'U';
-    }
-
-    getMarriageInfo(): string {
-        const fam = this.family();
-        if (!fam || !fam.events) return '';
-        const marr = fam.events.find(e => e.type === 'MARR');
-        if (!marr) return '';
-        const date = marr.date || (marr as any).dateText || '';
-        const place = marr.place || (marr as any).placeName || '';
-        return date + (place ? ` in ${place}` : '');
     }
 
     // --- Events (Modal based) ---
@@ -323,22 +148,14 @@ export class FamilyDetail implements OnInit, OnDestroy {
             citations: [],
             associations: []
         });
-        this.eventModalTab.set('basics');
         this.showEventModal.set(true);
     }
 
     openEditEventModal(index: number) {
-        const fam = this.family();
+        const fam = this.store.family();
         if (!fam || !fam.events?.[index]) return;
         this.activeEventIndex.set(index);
-        const event = JSON.parse(JSON.stringify(fam.events[index]));
-        // Ensure arrays exist
-        if (!event.media) event.media = [];
-        if (!event.notes) event.notes = [];
-        if (!event.citations) event.citations = [];
-        if (!event.associations) event.associations = [];
-        this.eventDraft.set(event);
-        this.eventModalTab.set('basics');
+        this.eventDraft.set(JSON.parse(JSON.stringify(fam.events[index])));
         this.showEventModal.set(true);
     }
 
@@ -346,7 +163,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
         const draft = this.eventDraft();
         if (!draft) return;
 
-        this.family.update(fam => {
+        this.store.family.update(fam => {
             if (!fam) return fam;
             if (!fam.events) fam.events = [];
             const idx = this.activeEventIndex();
@@ -355,180 +172,106 @@ export class FamilyDetail implements OnInit, OnDestroy {
             } else {
                 fam.events.push(draft);
             }
-            return { ...fam }; // Return new reference for change detection
+            return { ...fam };
         });
 
-        this.isDirty.set(true);
+        this.store.markDirty();
         this.showEventModal.set(false);
-        this.eventDraft.set(null);
-        this.save();
+        this.store.saveFamily();
     }
 
     removeEvent(index: number) {
-        this.family.update(fam => {
+        this.store.family.update(fam => {
             if (fam?.events) {
                 fam.events.splice(index, 1);
             }
             return { ...fam } as Family;
         });
-        this.isDirty.set(true);
-        this.showEventModal.set(false);
-        this.save();
+        this.store.markDirty();
+        this.store.saveFamily();
     }
 
-    // --- Event Detail Management ---
-    addEventCitation() {
-        const draft = this.eventDraft();
-        if (draft) {
-            draft.citations.push({ sourceId: '', page: '', confidence: '', dateText: '' });
-            this.eventDraft.set({ ...draft });
-        }
-    }
-
-    removeEventCitation(idx: number) {
-        const draft = this.eventDraft();
-        if (draft) {
-            draft.citations.splice(idx, 1);
-            this.eventDraft.set({ ...draft });
-        }
-    }
-
-    addEventMedia() {
-        const draft = this.eventDraft();
-        if (draft) {
-            draft.media.push({ url: '', title: '', isPrimary: false });
-            this.eventDraft.set({ ...draft });
-        }
-    }
-
-    removeEventMedia(idx: number) {
-        const draft = this.eventDraft();
-        if (draft) {
-            draft.media.splice(idx, 1);
-            this.eventDraft.set({ ...draft });
-        }
-    }
-
-    addEventNote() {
-        const draft = this.eventDraft();
-        if (draft) {
-            draft.notes.push('');
-            this.eventDraft.set({ ...draft });
-        }
-    }
-
-    updateEventNote(idx: number, value: string) {
-        const draft = this.eventDraft();
-        if (draft) {
-            draft.notes[idx] = value;
-            this.eventDraft.set({ ...draft });
-        }
-    }
-
-    removeEventNote(idx: number) {
-        const draft = this.eventDraft();
-        if (draft) {
-            draft.notes.splice(idx, 1);
-            this.eventDraft.set({ ...draft });
-        }
-    }
-
-    // --- Place Management ---
-    searchPlaces(query: string) {
-        const tree = this.authService.currentTree();
-        if (!tree || !query || query.length < 2) {
-            this.placeSearchResults.set([]);
-            this.showPlaceSuggestions.set(false);
-            return;
-        }
-
-        this.placeService.searchPlaces(tree.name, query).subscribe({
-            next: (res: any) => {
-                this.placeSearchResults.set(res.places || []);
-                this.showPlaceSuggestions.set(true);
-            }
-        });
-    }
-
-    selectPlace(place: any) {
-        const draft = this.eventDraft();
-        if (draft) {
-            draft.place = place.name;
-            this.eventDraft.set({ ...draft });
-        }
-        this.showPlaceSuggestions.set(false);
-    }
-
-    openPlaceModal() {
-        this.showPlaceModal.set(true);
-    }
-
-    onPlaceSaved(place: any) {
-        const draft = this.eventDraft();
-        if (draft) {
-            draft.place = place.name;
-            this.eventDraft.set({ ...draft });
-        }
-        this.showPlaceModal.set(false);
-    }
-
-    // --- Notes (Modal based) ---
-    openAddNoteModal() {
+    // --- Notes ---
+    onNoteCreateRequested() {
         this.activeNoteIndex.set(null);
-        this.noteDraft.set({ text: '', noteType: 'GENERAL', researchStatus: 'OPEN', privacyLevel: 'PRIVATE' });
+        this.noteDraft.set({
+            id: 'note-' + Date.now(),
+            text: '',
+            noteType: 'COMMENT' as NoteCategory,
+            createdAt: new Date(),
+            isPrivate: false
+        });
         this.showNoteModal.set(true);
     }
 
-    openEditNoteModal(index: number) {
-        const fam = this.family() as any;
-        if (!fam || !fam.notes?.[index]) return;
-        this.activeNoteIndex.set(index);
-        this.noteDraft.set(JSON.parse(JSON.stringify(fam.notes[index])));
-        this.showNoteModal.set(true);
+    onNoteEditRequested(note: DisplayNote) {
+        const fam = this.store.family();
+        if (!fam || !fam.notes) return;
+        const index = fam.notes.findIndex(n => n.id === note.id);
+        if (index !== -1) {
+            this.activeNoteIndex.set(index);
+            this.noteDraft.set({ ...note });
+            this.showNoteModal.set(true);
+        }
     }
 
-    confirmSaveNote() {
+    onNoteSave() {
         const draft = this.noteDraft();
-        if (!draft) return;
+        if (!draft?.text?.trim()) return;
 
-        this.family.update(fam => {
-            const f = fam as any;
-            if (!f) return fam;
-            if (!f.notes) f.notes = [];
-            const idx = this.activeNoteIndex();
-            if (idx !== null) {
-                f.notes[idx] = draft;
+        this.store.family.update(fam => {
+            if (!fam) return fam;
+            const notes = [...(fam.notes || [])];
+            const index = this.activeNoteIndex();
+            if (index !== null) {
+                notes[index] = draft;
             } else {
-                f.notes.push(draft);
+                notes.push(draft);
             }
-            return { ...f };
+            return { ...fam, notes };
         });
 
-        this.isDirty.set(true);
+        this.store.markDirty();
         this.showNoteModal.set(false);
-        this.noteDraft.set(null);
-        this.save();
+        this.store.saveFamily();
     }
 
-    removeNote(index: number) {
-        this.family.update(fam => {
-            const f = fam as any;
-            if (f?.notes) {
-                f.notes.splice(index, 1);
-            }
-            return { ...f };
+    onNoteDeletedFamily(noteId: string) {
+        if (!confirm('Möchtest du diese Notiz wirklich löschen?')) return;
+        
+        this.store.family.update(fam => {
+            if (!fam) return fam;
+            return {
+                ...fam,
+                notes: (fam.notes || []).filter(n => n.id !== noteId)
+            };
         });
-        this.isDirty.set(true);
-        this.showNoteModal.set(false);
-        this.save();
+        this.store.markDirty();
+        this.store.saveFamily();
     }
 
+    onNoteDeleteFromModal() {
+        const idx = this.activeNoteIndex();
+        if (idx !== null) {
+            this.store.family.update(fam => {
+                if (!fam || !fam.notes) return fam;
+                const notes = [...fam.notes];
+                notes.splice(idx, 1);
+                return { ...fam, notes };
+            });
+            this.store.markDirty();
+            this.showNoteModal.set(false);
+            this.store.saveFamily();
+        }
+    }
+
+    // --- Sources ---
     mappedSources = computed(() => {
-        const fam = this.family() as any;
+        const fam = this.store.family() as any;
         if (!fam || !fam.citations) return [];
         return fam.citations.map((cit: any, i: number) => {
-            const rawSource = this.availableSources().find(s => s.id === cit.sourceId);
-            const display: DisplaySource & { _originalIndex?: number } = {
+            const rawSource = this.store.availableSources().find(s => s.id === cit.sourceId);
+            return {
                 id: cit.id || `cit-${i}`,
                 title: rawSource ? rawSource.title : 'Unbekannte Quelle',
                 author: rawSource ? rawSource.author : undefined,
@@ -541,18 +284,19 @@ export class FamilyDetail implements OnInit, OnDestroy {
                 createdAt: (cit.date || cit.dateText) ? new Date(cit.date || cit.dateText) : new Date(),
                 _originalIndex: i
             } as any;
-            return display;
         });
     });
 
     onSourceCreateRequested() {
-        this.addSourceDraft();
+        this.sourceDraft.set({ sourceId: '', whereInSource: '', text: '', confidence: '', date: '' });
+        this.activeSourceIndex.set(null);
+        this.showSourceModal.set(true);
     }
 
-    onSourceEditRequested(source: DisplaySource & { _originalIndex?: number }) {
-        let index = source._originalIndex;
+    onSourceEditRequested(source: any) {
+        const index = source._originalIndex;
         if (index === undefined) return;
-        const fam = this.family() as any;
+        const fam = this.store.family() as any;
         if (!fam || !fam.citations || !fam.citations[index]) return;
         
         const cit = fam.citations[index];
@@ -567,12 +311,6 @@ export class FamilyDetail implements OnInit, OnDestroy {
         this.showSourceModal.set(true);
     }
 
-    addSourceDraft() {
-        this.sourceDraft.set({ sourceId: '', whereInSource: '', text: '', confidence: '', date: '' });
-        this.activeSourceIndex.set(null);
-        this.showSourceModal.set(true);
-    }
-
     onSourceSave() {
         const draft = this.sourceDraft();
         if (!draft.sourceId) {
@@ -580,7 +318,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
             return;
         }
 
-        this.family.update(fam => {
+        this.store.family.update(fam => {
             if (!fam) return fam;
             const f = { ...fam } as any;
             if (!f.citations) f.citations = [];
@@ -594,17 +332,14 @@ export class FamilyDetail implements OnInit, OnDestroy {
             };
 
             const index = this.activeSourceIndex();
-            if (index !== null) {
-                f.citations[index] = citation;
-            } else {
-                f.citations.push(citation);
-            }
+            if (index !== null) f.citations[index] = citation;
+            else f.citations.push(citation);
             return f;
         });
 
-        this.isDirty.set(true);
+        this.store.markDirty();
         this.showSourceModal.set(false);
-        this.save();
+        this.store.saveFamily();
     }
 
     onSourceDeleteFromModal() {
@@ -612,141 +347,19 @@ export class FamilyDetail implements OnInit, OnDestroy {
         if (index === null) return;
         
         if (confirm('Möchtest du diesen Beleg wirklich löschen?')) {
-            this.family.update(fam => {
+            this.store.family.update(fam => {
                 if (!fam || !fam.citations) return fam;
                 const f = { ...fam } as any;
                 f.citations.splice(index, 1);
                 return f;
             });
-            this.isDirty.set(true);
+            this.store.markDirty();
             this.showSourceModal.set(false);
-            this.save();
+            this.store.saveFamily();
         }
     }
 
-    openMediaSelector() {
-        if (this.showEventModal && this.showEventModal()) {
-            this.pendingReopenEventModal = true;
-            this.showEventModal.set(false);
-        }
-        this.showMediaSelector = true;
-    }
-
-    onMediaSelected(mediaObj: any) {
-        if (!mediaObj) return;
-        // If the selector was opened from an event modal, add media to the event draft
-        if (this.pendingReopenEventModal && this.eventDraft()) {
-            const draft = this.eventDraft();
-            draft.media = draft.media || [];
-            draft.media.push({
-                id: mediaObj.id,
-                url: this.mediaService.getMediaUrl(mediaObj.id),
-                title: mediaObj.title || mediaObj.path || '',
-                isPrimary: draft.media.length === 0,
-                mimeType: mediaObj.mimeType
-            });
-            this.eventDraft.set({ ...draft });
-        } else {
-            const f = this.family();
-            if (f) {
-                f.media = f.media || [];
-                f.media.push({
-                    id: mediaObj.id,
-                    title: mediaObj.title || mediaObj.path || '',
-                    isPrimary: f.media.length === 0,
-                    mimeType: mediaObj.mimeType,
-                    url: this.mediaService.getMediaUrl(mediaObj.id)
-                });
-                this.family.set({ ...f });
-            }
-        }
-        this.showMediaSelector = false;
-        this.isDirty.set(true);
-        if (this.pendingReopenEventModal) {
-            this.showEventModal.set(true);
-            this.pendingReopenEventModal = false;
-        }
-    }
-
-    openMediaAddModal() {
-        if (this.showEventModal && this.showEventModal()) {
-            this.pendingReopenEventModal = true;
-            this.showEventModal.set(false);
-        }
-        this.showMediaAddModal.set(true);
-    }
-
-    onMediaAddUploaded(media: any) {
-        if (!media) return;
-        // If the add dialog was opened from an event modal, add media to event draft
-        if (this.pendingReopenEventModal && this.eventDraft()) {
-            const draft = this.eventDraft();
-            draft.media = draft.media || [];
-            draft.media.push({ id: media.id, url: this.mediaService.getMediaUrl(media.id), title: media.title || media.path || '', isPrimary: draft.media.length === 0, mimeType: media.mimeType });
-            this.eventDraft.set({ ...draft });
-            this.isDirty.set(true);
-        } else {
-            const f = this.family();
-            if (f) {
-                f.media = f.media || [];
-                f.media.push({ id: media.id, title: media.title || media.path || '', isPrimary: f.media.length === 0, mimeType: media.mimeType, url: this.mediaService.getMediaUrl(media.id) });
-                this.family.set({ ...f });
-                this.isDirty.set(true);
-            }
-        }
-        this.showMediaAddModal.set(false);
-        if (this.pendingReopenEventModal) {
-            this.showEventModal.set(true);
-            this.pendingReopenEventModal = false;
-        }
-    }
-
-    confirmSaveMedia() {
-        const draft = this.mediaDraft();
-        if (!draft) return;
-
-        this.family.update(fam => {
-            if (!fam) return fam;
-            if (!fam.media) fam.media = [];
-            const idx = this.activeMediaIndex();
-            if (idx !== null) {
-                fam.media[idx] = draft;
-            } else {
-                fam.media.push(draft);
-            }
-            return { ...fam };
-        });
-
-        this.isDirty.set(true);
-        this.showMediaModal.set(false);
-        this.mediaDraft.set(null);
-        this.save();
-    }
-
-    removeMedia(index: number) {
-        this.family.update(fam => {
-            if (fam?.media) {
-                fam.media.splice(index, 1);
-            }
-            return { ...fam } as Family;
-        });
-        this.isDirty.set(true);
-        this.showMediaModal.set(false);
-        this.save();
-    }
-
-    isImageUrl(url: string | undefined): boolean {
-        if (!url) return false;
-        return /\.(jpeg|jpg|gif|png|webp|svg)$/i.test(url);
-    }
-
-
-    getSourceTitle(sourceId: string): string {
-        const source = this.availableSources().find(s => s.id === sourceId);
-        return source?.title || sourceId || 'Unbekannte Quelle';
-    }
-
-    // ── Kind hinzufügen (Modal-Pattern) ──────────────────────────────────────
+    // --- Children ---
     openAddChildModal() {
         this.addChildQuery = '';
         this.addChildResults.set([]);
@@ -755,13 +368,9 @@ export class FamilyDetail implements OnInit, OnDestroy {
         this.showAddChildModal.set(true);
     }
 
-    selectChildCandidate(person: Individual) {
-        this.selectedChildId.set(person.id);
-    }
-
     confirmAddChild() {
         this.addChildError.set(null);
-        const currentFam = this.family();
+        const currentFam = this.store.family();
         if (!currentFam) return;
         
         const query = (this.addChildQuery || '').trim().toLowerCase();
@@ -776,14 +385,13 @@ export class FamilyDetail implements OnInit, OnDestroy {
             currentFam.wife || ''
         ].filter(Boolean));
 
-        const candidates = this.individuals().filter(p => {
+        const candidates = this.store.individuals().filter(p => {
             const id = (p.id || '').toLowerCase();
             const name = `${p.firstName || ''} ${p.lastName || ''}`.trim().toLowerCase();
             return id === query || name.includes(query);
         });
 
         if (candidates.length === 0) {
-            this.addChildResults.set([]);
             this.addChildError.set('Keine passende Person gefunden.');
             return;
         }
@@ -802,7 +410,7 @@ export class FamilyDetail implements OnInit, OnDestroy {
             return;
         }
 
-        this.family.update(fam => {
+        this.store.family.update(fam => {
             if (fam) {
                 if (!fam.children) fam.children = [];
                 fam.children.push(selected.id);
@@ -810,56 +418,118 @@ export class FamilyDetail implements OnInit, OnDestroy {
             return { ...fam } as Family;
         });
         
-        this.isDirty.set(true);
+        this.store.markDirty();
         this.showAddChildModal.set(false);
-        this.save();
+        this.store.saveFamily();
     }
 
     removeChild(childId: string) {
-        this.family.update(fam => {
+        this.store.family.update(fam => {
             if (fam?.children) {
                 fam.children = fam.children.filter(id => id !== childId);
             }
             return { ...fam } as Family;
         });
-        this.isDirty.set(true);
-        this.save();
+        this.store.markDirty();
+        this.store.saveFamily();
     }
 
-    // ── Speichern / Abbrechen ─────────────────────────────────────────────────
-    save() {
-        const fam = this.family();
-        const tree = this.authService.currentTree();
-        if (!fam || !tree || this.isSaving()) return;
-
-        this.isSaving.set(true);
-        this.familyService.saveFamily(tree.name, fam).subscribe({
-            next: (res) => {
-                this.isDirty.set(false);
-                this.isSaving.set(false);
-                if (res.family?.deleted) {
-                    this.router.navigate(['/families']);
-                } else {
-                    this.loadData();
-                }
-            },
-            error: (err) => {
-                this.isSaving.set(false);
-                // TODO: Fehlermeldung via Toast
-                console.error('Speichern fehlgeschlagen:', err?.error?.message);
-            }
-        });
+    // --- Media ---
+    openMediaSelector() {
+        if (this.showEventModal()) {
+            this.pendingReopenEventModal = true;
+            this.showEventModal.set(false);
+        }
+        this.showMediaSelector = true;
     }
 
-    requestCancel() {
-        if (this.isDirty()) {
-            this.showCancelConfirmModal.set(true);
+    onMediaSelected(mediaObj: any) {
+        if (!mediaObj) return;
+        if (this.pendingReopenEventModal && this.eventDraft()) {
+            const draft = this.eventDraft();
+            draft.media = draft.media || [];
+            draft.media.push({
+                id: mediaObj.id,
+                url: this.mediaService.getMediaUrl(mediaObj.id),
+                title: mediaObj.title || mediaObj.path || '',
+                isPrimary: draft.media.length === 0,
+                mimeType: mediaObj.mimeType
+            });
+            this.eventDraft.set({ ...draft });
         } else {
-            this.router.navigate(['/families']);
+            const f = this.store.family();
+            if (f) {
+                f.media = f.media || [];
+                f.media.push({
+                    id: mediaObj.id,
+                    title: mediaObj.title || mediaObj.path || '',
+                    isPrimary: f.media.length === 0,
+                    mimeType: mediaObj.mimeType,
+                    url: this.mediaService.getMediaUrl(mediaObj.id)
+                });
+                this.store.family.set({ ...f });
+            }
+        }
+        this.showMediaSelector = false;
+        this.store.markDirty();
+        if (this.pendingReopenEventModal) {
+            this.showEventModal.set(true);
+            this.pendingReopenEventModal = false;
         }
     }
 
-    confirmCancel() {
-        this.router.navigate(['/families']);
+    onMediaAddUploaded(media: any) {
+        if (!media) return;
+        if (this.pendingReopenEventModal && this.eventDraft()) {
+            const draft = this.eventDraft();
+            draft.media = draft.media || [];
+            draft.media.push({ id: media.id, url: this.mediaService.getMediaUrl(media.id), title: media.title || media.path || '', isPrimary: draft.media.length === 0, mimeType: media.mimeType });
+            this.eventDraft.set({ ...draft });
+        } else {
+            const f = this.store.family();
+            if (f) {
+                f.media = f.media || [];
+                f.media.push({ id: media.id, title: media.title || media.path || '', isPrimary: f.media.length === 0, mimeType: media.mimeType, url: this.mediaService.getMediaUrl(media.id) });
+                this.store.family.set({ ...f });
+            }
+        }
+        this.store.markDirty();
+        this.showMediaAddModal.set(false);
+        if (this.pendingReopenEventModal) {
+            this.showEventModal.set(true);
+            this.pendingReopenEventModal = false;
+        }
+    }
+
+    confirmSaveMedia() {
+        const draft = this.mediaDraft();
+        if (!draft) return;
+        this.store.family.update(fam => {
+            if (!fam) return fam;
+            if (!fam.media) fam.media = [];
+            const idx = this.activeMediaIndex();
+            if (idx !== null) fam.media[idx] = draft;
+            else fam.media.push(draft);
+            return { ...fam };
+        });
+        this.store.markDirty();
+        this.showMediaModal.set(false);
+        this.store.saveFamily();
+    }
+
+    removeMedia(index: number) {
+        this.store.family.update(fam => {
+            if (fam?.media) fam.media.splice(index, 1);
+            return { ...fam } as Family;
+        });
+        this.store.markDirty();
+        this.showMediaModal.set(false);
+        this.store.saveFamily();
+    }
+
+    // --- Helpers ---
+    isImageUrl(url: string | undefined): boolean {
+        if (!url) return false;
+        return /\.(jpeg|jpg|gif|png|webp|svg)$/i.test(url);
     }
 }

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ImageCropper } from './image-cropper';
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
@@ -23,7 +23,7 @@ import { SourceService } from '../../core/services/source.service';
 export class MediaAddModal {
     public mediaService = inject(MediaService);
     public sourceService = inject(SourceService);
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
 
     @Input() visible = false;
     treeId = signal('');
@@ -92,9 +92,10 @@ export class MediaAddModal {
     }
 
     private fetchUsage() {
-        if (!this.id() || !this.isEditing()) return;
+        const tree = this.authService.currentTree();
+        if (!this.id() || !this.isEditing() || !tree) return;
         this.isLoadingUsage.set(true);
-        this.mediaService.getMediaUsage(this.id()).subscribe({
+        this.mediaService.getMediaUsage(tree.name, this.id()).subscribe({
             next: (res) => {
                 this.isLoadingUsage.set(false);
                 if (res.success) this.usages.set(res.usage || []);
@@ -325,10 +326,15 @@ export class MediaAddModal {
         // coords is { x, y, width, height } from the cropper
         this.showCropper.set(false);
         const mid = this.id();
-        if (!mid) return;
+        const tree = this.authService.currentTree();
+        if (!mid || !tree) {
+            this.saved.emit(null);
+            this.close();
+            return;
+        }
 
         this.uploading.set(true);
-        this.mediaService.updateCrop(mid, coords).subscribe({
+        this.mediaService.updateCrop(tree.name, mid, coords).subscribe({
             next: (res) => {
                 this.uploading.set(false);
                 // Update internal crop state
@@ -341,15 +347,30 @@ export class MediaAddModal {
                 // Refresh preview
                 this.previewUrl.set(this.mediaService.getMediaUrl(mid, 'medium') + '?t=' + Date.now());
                 this.saved.emit(res.media);
+                this.close();
             },
-            error: () => this.uploading.set(false)
+            error: () => {
+                this.uploading.set(false);
+                this.close();
+            }
         });
     }
 
+    onCropCancel() {
+        this.showCropper.set(false);
+        if (this.id() && !this.isEditing() && this.mediaType() === 'PHOTO') {
+            // Already uploaded but crop was cancelled.
+            this.saved.emit({ id: this.id() });
+            this.close();
+        }
+    }
+
     startCropping() {
+        console.log('[MediaAddModal] startCropping called, id:', this.id());
         if (!this.id()) return;
         this.cropImageUrl.set(this.mediaService.getMediaUrl(this.id())); // Use original for cropping
         this.showCropper.set(true);
+        console.log('[MediaAddModal] showCropper set to true');
     }
 
     close() {
@@ -358,7 +379,8 @@ export class MediaAddModal {
     }
 
     submit() {
-        if (!this.treeId()) return;
+        const tree = this.authService.currentTree();
+        if (!tree) return;
         this.uploading.set(true);
 
         const file = this.selectedFile();
@@ -370,14 +392,8 @@ export class MediaAddModal {
             citations: this.citations(),
         };
 
-        if (!this.treeId()) {
-            console.error('[MediaAddModal] Cannot upload: No treeId active.');
-            this.uploading.set(false);
-            return;
-        }
-
         if (file) {
-            this.mediaService.uploadMedia(this.treeId(), this.userId(), file, this.title(), this.mediaType()).subscribe({
+            this.mediaService.uploadMedia(tree.name, this.userId(), file, this.title(), this.mediaType()).subscribe({
                 next: (res) => {
                     const newMedia = res.media;
                     this.id.set(newMedia.id);
@@ -386,30 +402,31 @@ export class MediaAddModal {
                     this.previewUrl.set(this.mediaService.getMediaUrl(newMedia.id, 'medium'));
 
                     // Update metadata (notes, identifiers, citations) right after upload
-                    this.mediaService.updateMedia(newMedia.id, data).subscribe({
+                    this.mediaService.updateMedia(tree.name, newMedia.id, data).subscribe({
                         next: (updRes) => {
-                            if (this.mediaType() === 'PHOTO') {
-                                this.startCropping();
-                            } else {
-                                this.syncLinks(newMedia.id).then(() => {
-                                    this.uploading.set(false);
+                            console.log('[MediaAddModal] Metadata updated, syncing links...');
+                            this.syncLinks(tree.name, newMedia.id).then(() => {
+                                console.log('[MediaAddModal] Links synced, uploading=false');
+                                this.uploading.set(false);
+                                if (this.mediaType() === 'PHOTO') {
+                                    this.startCropping();
+                                } else {
                                     this.saved.emit(updRes.media || newMedia);
                                     this.close();
-                                });
-                            }
+                                }
+                            });
                         },
                         error: (err) => {
-                            console.error('Metadata update after upload failed:', err);
-                            // Still allow cropping if it's a photo
-                            if (this.mediaType() === 'PHOTO') {
-                                this.startCropping();
-                            } else {
-                                this.syncLinks(newMedia.id).then(() => {
-                                    this.uploading.set(false);
+                            console.error('[MediaAddModal] Metadata update failed:', err);
+                            this.syncLinks(tree.name, newMedia.id).then(() => {
+                                this.uploading.set(false);
+                                if (this.mediaType() === 'PHOTO') {
+                                    this.startCropping();
+                                } else {
                                     this.saved.emit(newMedia);
                                     this.close();
-                                });
-                            }
+                                }
+                            });
                         }
                     });
                 },
@@ -420,7 +437,7 @@ export class MediaAddModal {
             });
         } else if (this.isEditing() && this.id()) {
             // Pure metadata update
-            this.updateMetadata(this.id(), data);
+            this.updateMetadata(tree.name, this.id(), data);
         } else {
             this.uploading.set(false);
         }
@@ -433,7 +450,7 @@ export class MediaAddModal {
         this.sourceService.getSources(this.treeId()).subscribe(res => {
             if (res.success) this.sourceOptions.set(res.sources || []);
         });
-        this.gedcomService.getTreeData().subscribe(data => {
+        this.treeService.getTreeData().subscribe(data => {
             if (data) {
                 this.personOptions.set(data.individuals || []);
                 this.familyOptions.set(data.families || []);
@@ -506,11 +523,11 @@ export class MediaAddModal {
         return 'Unbekannt';
     }
 
-    private updateMetadata(id: string, data: any) {
-        this.mediaService.updateMedia(id, data).subscribe({
+    private updateMetadata(treeName: string, id: string, data: any) {
+        this.mediaService.updateMedia(treeName, id, data).subscribe({
             next: (res) => {
                 // Ensure any pending (local) links are persisted
-                this.syncLinks(id).then(() => {
+                this.syncLinks(treeName, id).then(() => {
                     this.uploading.set(false);
                     this.saved.emit(res?.media || { ...data, id });
                     this.close();
@@ -523,20 +540,20 @@ export class MediaAddModal {
         });
     }
 
-    private syncLinks(mediaId: string): Promise<void> {
+    private syncLinks(treeName: string, mediaId: string): Promise<void> {
         const pending = this.links().filter(l => !l.id);
         if (pending.length === 0) return Promise.resolve();
 
         return new Promise((resolve) => {
             let remaining = pending.length;
             pending.forEach(l => {
-                const payload: any = { treeId: this.treeId() };
+                const payload: any = { };
                 if (l.person?.id) payload.personId = l.person.id;
                 if (l.family?.id) payload.familyId = l.family.id;
                 if (l.sourceId) payload.sourceId = l.sourceId;
                 if (l.isPrimary) payload.isPrimary = l.isPrimary;
 
-                this.mediaService.linkMedia(mediaId, payload).subscribe({
+                this.mediaService.linkMedia(treeName, mediaId, payload).subscribe({
                     next: (res) => {
                         const link = res?.link || res;
                         // Replace the first non-persisted entry with the returned link
@@ -562,12 +579,13 @@ export class MediaAddModal {
     }
 
     deleteItem() {
-        if ((!this.id() && !this.isOrphan()) || !confirm('Medium wirklich löschen?')) return;
+        const tree = this.authService.currentTree();
+        if (!tree || ((!this.id() && !this.isOrphan()) || !confirm('Medium wirklich löschen?'))) return;
         this.uploading.set(true);
 
         const obs = this.isOrphan() 
-            ? this.mediaService.deleteOrphanFile(this.currentPath())
-            : this.mediaService.deleteMedia(this.id());
+            ? this.mediaService.deleteOrphanFile(tree.name, this.currentPath())
+            : this.mediaService.deleteMedia(tree.name, this.id());
 
         obs.subscribe({
             next: () => {
@@ -607,11 +625,13 @@ export class MediaAddModal {
 
         // If this media already exists on the server, create link immediately
         if (this.isEditing() && this.id()) {
-            const payload: any = { treeId: this.treeId() };
+            const tree = this.authService.currentTree();
+            if (!tree) return;
+            const payload: any = { };
             if (person) payload.personId = person.id;
             if (family) payload.familyId = family.id;
 
-            this.mediaService.linkMedia(this.id(), payload).subscribe({
+            this.mediaService.linkMedia(tree.name, this.id(), payload).subscribe({
                 next: (res) => {
                     const link = res?.link || res;
                     this.links.set([...this.links(), link]);
@@ -636,7 +656,9 @@ export class MediaAddModal {
         if (!l) return;
 
         if (l.id) {
-            this.mediaService.unlinkMedia(l.id).subscribe({
+            const tree = this.authService.currentTree();
+            if (!tree) return;
+            this.mediaService.unlinkMedia(tree.name, l.id).subscribe({
                 next: () => {
                     this.links.set(this.links().filter((_, idx) => idx !== i));
                 },

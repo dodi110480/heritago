@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 
 
 import { AnalyticsService } from '../../core/services/analytics.service';
@@ -12,7 +12,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
 })
 export class CalendarWidget implements OnInit {
     public analyticsService = inject(AnalyticsService);
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
 
     events = signal<any[]>([]);
     currentDate = signal('');
@@ -25,10 +25,10 @@ export class CalendarWidget implements OnInit {
 
     loadEvents() {
         this.loading.set(true);
-        this.gedcomService.getTreeData().subscribe(treeData => {
-            if (treeData && treeData.meta && treeData.meta.tree) {
+        this.treeService.getTreeData().subscribe(data => {
+            if (data && data.meta && data.meta.tree) {
                 this.hasTree.set(true);
-                this.analyticsService.getCalendarEvents(treeData.meta.tree).subscribe({
+                this.analyticsService.getCalendarEvents(data.meta.tree).subscribe({
                     next: (res: any) => {
                         this.events.set(res.events || []);
                         this.currentDate.set(res.date);

@@ -1,7 +1,7 @@
 import { Component, inject, signal, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Individual } from '../../core/models/models';
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
@@ -16,7 +16,7 @@ import { PersonService } from '../../core/services/person.service';
 })
 export class PersonCreateModal {
     public personService = inject(PersonService);
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private authService = inject(AuthService);
 
     @Input() visible = false;

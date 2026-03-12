@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 import { AppNotesList } from '../../shared/components/ui/app-notes-list/app-notes-list';
 import { AppUsageList } from '../../shared/components/ui/app-usage-list/app-usage-list';
@@ -26,7 +26,7 @@ export class SourceModal implements OnInit {
     @Output() deleted = new EventEmitter<any>();
     @Output() merged = new EventEmitter<{ sourceId: string, targetId: string }>();
 
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
 
     visible = true;
     isSaving = signal(false);
@@ -80,6 +80,7 @@ export class SourceModal implements OnInit {
 
             if (this.mode === 'edit' && this.sourceData?.id) {
                 // Fetch full source data including notes
+                this.treeService.getTreeData().subscribe();
                 this.sourceService.getSource(this.currentTree, this.sourceData.id).subscribe({
                     next: (res) => {
                         if (res.success && res.source) {

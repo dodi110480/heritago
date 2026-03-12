@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { DisplayNote } from '../models/models';
 import { environment } from '../../environment';
 
@@ -14,6 +14,8 @@ export class MediaService {
         if (!mediaId) return '';
         if (mediaId.startsWith('http') || mediaId.startsWith('/') || mediaId.startsWith('assets/')) return mediaId;
         const v = variant ? `?variant=${variant}` : '';
+        // Note: For now, file serving stays direct or we'd need treeName here. 
+        // We'll keep it as is if it's based on ID.
         return `${environment.apiUrl}/media/file/${mediaId}${v}`;
     }
 
@@ -31,41 +33,50 @@ export class MediaService {
         return mime.includes('pdf') || p.endsWith('.pdf');
     }
 
-    getMedia(treeId: string, type?: string, search?: string): Observable<any> {
-        return this.http.get<any>(`${environment.apiUrl}/media`, {
-            params: { treeId, type: type || '', search: search || '' },
+    getMedia(treeName: string, type?: string, search?: string): Observable<any> {
+        return this.http.get<any>(`${environment.apiUrl}/tree/${treeName}/media`, {
+            params: { type: type || '', search: search || '' },
             withCredentials: true
-        });
+        }).pipe(map(res => res?.data ?? res));
     }
 
-    uploadMedia(treeId: string, userId: string, file: File, title?: string, mediaType?: string): Observable<any> {
+    uploadMedia(treeName: string, userId: string, file: File, title?: string, mediaType?: string): Observable<any> {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('treeId', treeId);
         formData.append('userId', userId);
         if (title) formData.append('title', title);
         if (mediaType) formData.append('mediaType', mediaType);
 
-        return this.http.post<any>(`${environment.apiUrl}/media/upload`, formData, { withCredentials: true });
+        return this.http.post<any>(`${environment.apiUrl}/tree/${treeName}/media/upload`, formData, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
-    updateCrop(mediaId: string, crop: { x: number, y: number, width: number, height: number }): Observable<any> {
-        return this.http.patch<any>(`${environment.apiUrl}/media/${mediaId}/crop`, crop, { withCredentials: true });
+    updateCrop(treeName: string, mediaId: string, crop: { x: number, y: number, width: number, height: number }): Observable<any> {
+        return this.http.patch<any>(`${environment.apiUrl}/tree/${treeName}/media/${mediaId}/crop`, crop, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
-    resetCrop(mediaId: string): Observable<any> {
-        return this.http.delete<any>(`${environment.apiUrl}/media/${mediaId}/crop`, { withCredentials: true });
+    resetCrop(treeName: string, mediaId: string): Observable<any> {
+        return this.http.delete<any>(`${environment.apiUrl}/tree/${treeName}/media/${mediaId}/crop`, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
-    getMediaUsage(id: string): Observable<any> {
-        return this.http.get<any>(`${environment.apiUrl}/media/${id}/usage`, { withCredentials: true });
+    getMediaUsage(treeName: string, id: string): Observable<any> {
+        return this.http.get<any>(`${environment.apiUrl}/tree/${treeName}/media/${id}/usage`, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
-    deleteMedia(id: string): Observable<any> {
-        return this.http.delete<any>(`${environment.apiUrl}/media/${id}`, { withCredentials: true });
+    deleteMedia(treeName: string, id: string): Observable<any> {
+        return this.http.delete<any>(`${environment.apiUrl}/tree/${treeName}/media/${id}`, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
-    updateMedia(id: string, data: {
+    updateMedia(treeName: string, id: string, data: {
         title?: string,
         mediaType?: string,
         gedcomId?: string,
@@ -75,30 +86,37 @@ export class MediaService {
         notes?: DisplayNote[],
         citations?: any[]
     }): Observable<any> {
-        return this.http.put<any>(`${environment.apiUrl}/media/${id}`, data, { withCredentials: true });
+        return this.http.put<any>(`${environment.apiUrl}/tree/${treeName}/media/${id}`, data, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
-    deleteOrphanFile(path: string): Observable<any> {
-        return this.http.request<any>('delete', `${environment.apiUrl}/media/orphan-file`, {
+    deleteOrphanFile(treeName: string, path: string): Observable<any> {
+        return this.http.request<any>('delete', `${environment.apiUrl}/tree/${treeName}/media/orphan-file`, {
             body: { path },
             withCredentials: true
-        });
+        }).pipe(map(res => res?.data ?? res));
     }
 
-    linkMedia(mediaId: string, linkData: { treeId: string, personId?: string, familyId?: string, sourceId?: string, isPrimary?: boolean }): Observable<any> {
-        return this.http.post<any>(`${environment.apiUrl}/media/${mediaId}/link`, linkData, { withCredentials: true });
+    linkMedia(treeName: string, mediaId: string, linkData: { personId?: string, familyId?: string, sourceId?: string, isPrimary?: boolean }): Observable<any> {
+        return this.http.post<any>(`${environment.apiUrl}/tree/${treeName}/media/${mediaId}/link`, linkData, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
-    unlinkMedia(linkId: string): Observable<any> {
-        return this.http.delete<any>(`${environment.apiUrl}/media/link/${linkId}`, { withCredentials: true });
+    unlinkMedia(treeName: string, linkId: string): Observable<any> {
+        return this.http.delete<any>(`${environment.apiUrl}/tree/${treeName}/media/link/${linkId}`, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 
-    adoptOrphanMedia(treeId: string, filePath: string, title?: string, mediaType?: string): Observable<any> {
-        return this.http.post<any>(`${environment.apiUrl}/media/adopt-orphan`, {
-            treeId,
+    adoptOrphanMedia(treeName: string, filePath: string, title?: string, mediaType?: string): Observable<any> {
+        return this.http.post<any>(`${environment.apiUrl}/tree/${treeName}/media/adopt-orphan`, {
             filePath,
             title,
             mediaType
-        }, { withCredentials: true });
+        }, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
     }
 }

@@ -7,6 +7,7 @@ const isDev = window.location.port === '4200';
 const baseUrl = isDev ? `http://${window.location.hostname}:3000` : '';
 
 export const environment = {
+    production: !isDev,
     apiUrl: `${baseUrl}/api`,
     baseUrl: baseUrl
 };

@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, inject, signal } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppModalShell } from '../app-modal-shell';
-import { GedcomService } from '../../../../core/services/gedcom.service';
+import { TreeService } from '../../../../core/services/tree.service';
 import { AppNotesList } from '../app-notes-list/app-notes-list';
 import { AppSourcesListComponent } from '../app-sources-list/app-sources-list';
 import { DisplayNote, NoteCategory, DisplaySource } from '../../../../core/models/models';
@@ -23,8 +23,10 @@ export class EventModal {
     @Input() item: any = null; // draft
     @Input() isNew = false;
     @Input() showDelete = false;
+    @Input() itemKind: 'event' | 'fact' = 'event';
 
     @Output() close = new EventEmitter<void>();
+    @Output() itemKindChange = new EventEmitter<'event' | 'fact'>();
     @Output() save = new EventEmitter<void>();
     @Output() delete = new EventEmitter<void>();
 
@@ -42,6 +44,67 @@ export class EventModal {
     @Output() masterSaved = new EventEmitter<void>();
 
     activeTab = signal<'basics' | 'participants' | 'citations' | 'media' | 'notes'>('basics');
+
+    // Event type options
+    readonly EVENT_TYPE_OPTIONS = [
+        { value: 'BIRT', label: 'Geburt' },
+        { value: 'CHR', label: 'Taufe (religiös)' },
+        { value: 'BAPM', label: 'Taufe (nicht-religiös)' },
+        { value: 'DEAT', label: 'Tod' },
+        { value: 'BURI', label: 'Beerdigung' },
+        { value: 'CREM', label: 'Einäscherung' },
+        { value: 'MARR', label: 'Heirat' },
+        { value: 'DIV', label: 'Scheidung' },
+        { value: 'ANUL', label: 'Annullierung' },
+        { value: 'ENGA', label: 'Verlobung' },
+        { value: 'ADOP', label: 'Adoption' },
+        { value: 'BARM', label: 'Bar Mitzvah' },
+        { value: 'BASM', label: 'Bas Mitzvah' },
+        { value: 'BLES', label: 'Segen' },
+        { value: 'CHRA', label: 'Erwachsenentaufe' },
+        { value: 'CONF', label: 'Firmung / Konfirmation' },
+        { value: 'FCOM', label: 'Erste Kommunion' },
+        { value: 'ORDN', label: 'Ordination' },
+        { value: 'NATU', label: 'Einbürgerung' },
+        { value: 'EMIG', label: 'Auswanderung' },
+        { value: 'IMMI', label: 'Einwanderung' },
+        { value: 'CENS', label: 'Volkszählung' },
+        { value: 'PROB', label: 'Testamentseröffnung' },
+        { value: 'WILL', label: 'Testament' },
+        { value: 'GRAD', label: 'Abschluss' },
+        { value: 'RETI', label: 'Ruhestand' },
+        { value: 'EVEN', label: 'Allgemeines Ereignis' },
+        { value: 'OTHER', label: 'Sonstiges' }
+    ];
+
+    // Fact type options
+    readonly FACT_TYPE_OPTIONS = [
+        { value: 'OCCU', label: 'Beruf' },
+        { value: 'EDUC', label: 'Bildung' },
+        { value: 'RELI', label: 'Religion' },
+        { value: 'RESI', label: 'Wohnsitz' },
+        { value: 'TITL', label: 'Titel' },
+        { value: 'NATI', label: 'Nationalität' },
+        { value: 'PROP', label: 'Eigentum' },
+        { value: 'MILI', label: 'Militärdienst' },
+        { value: 'DSCR', label: 'Körperliche Beschreibung' },
+        { value: 'CAST', label: 'Kaste' },
+        { value: 'FACT', label: 'Sonstiger Fakt' }
+    ];
+
+    get typeOptions() {
+        return this.itemKind === 'fact' ? this.FACT_TYPE_OPTIONS : this.EVENT_TYPE_OPTIONS;
+    }
+
+    onItemKindChange(kind: 'event' | 'fact') {
+        this.itemKind = kind;
+        this.itemKindChange.emit(kind);
+        // Reset type to first option of new kind
+        if (this.item) {
+            const options = kind === 'fact' ? this.FACT_TYPE_OPTIONS : this.EVENT_TYPE_OPTIONS;
+            this.item.type = options[0].value;
+        }
+    }
 
     // Note Sub-Modal State
     showNoteSubModal = signal(false);
@@ -222,7 +285,7 @@ export class EventModal {
         }
     }
 
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
 
     // Place search suggestions
     placeSearchResults = signal<string[]>([]);
@@ -290,16 +353,14 @@ export class EventModal {
             return;
         }
 
-        const treeName = this.gedcomService.currentTreeData()?.meta?.tree || '';
-        if (!treeName) {
-            this.placeSearchResults.set([]);
-            this.showPlaceResults.set(false);
-            return;
-        }
+        this.treeService.getTreeData().subscribe(data => {
+            const treeName = data?.meta?.tree;
+            if (!treeName) return;
 
-        this.placeService.searchPlaces(treeName, query).subscribe(res => {
-            this.placeSearchResults.set(res.results || []);
-            this.showPlaceResults.set(true);
+            this.placeService.searchPlaces(treeName, query).subscribe(res => {
+                this.placeSearchResults.set(res.results || []);
+                this.showPlaceResults.set(true);
+            });
         });
     }
 

@@ -1,7 +1,7 @@
 import { Component, inject, signal, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { AppEntityCard } from '../../shared/components/ui/app-entity-card';
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 
@@ -29,7 +29,7 @@ export class RepositoryList implements OnInit {
         return this._currentTree;
     }
 
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private cdr = inject(ChangeDetectorRef);
 
     repositories = signal<any[]>([]);
@@ -55,7 +55,7 @@ export class RepositoryList implements OnInit {
     loadRepositories() {
         if (!this.currentTree) return;
         this.loading.set(true);
-        this.sourceService.getRepositories(this.currentTree).subscribe({
+        this.treeService.getTreeData().subscribe({
             next: (res: any) => {
                 if (res.success) this.repositories.set(res.repositories);
                 this.loading.set(false);

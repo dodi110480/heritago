@@ -2,7 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChange
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GedcomService } from '../../../../core/services/gedcom.service';
+import { TreeService } from '../../../../core/services/tree.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AppModalShell } from '../app-modal-shell';
 import { PlaceDisplayPipe } from '../../../pipes/place-display.pipe';
@@ -22,7 +22,7 @@ declare const L: any;
 })
 export class PlaceModal implements OnInit {
     public placeService = inject(PlaceService);
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private authService = inject(AuthService);
     private router = inject(Router);
 
@@ -280,7 +280,7 @@ export class PlaceModal implements OnInit {
     private loadParentOptions() {
         const tree = this.currentTree();
         if (!tree) return;
-        this.placeService.getPlaces(tree).subscribe({
+        this.treeService.getTreeData().subscribe({
             next: (res: any) => this.availableParents.set(res?.places || []),
             error: () => this.availableParents.set([])
         });

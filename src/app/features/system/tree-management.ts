@@ -98,9 +98,7 @@ export class TreeManagement implements OnInit {
                 .replace(/[^-a-z0-9]/g, '')
                 .replace(/-+/g, '-');
 
-            const userId = this.authService.currentUser()?.id;
-
-            this.authService.createTree(normalizedName, this.title, this.firstName, this.lastName, this.gender, this.birthDate, userId).subscribe(result => {
+            this.authService.createTree(normalizedName, this.title, this.firstName, this.lastName, this.gender, this.birthDate).subscribe(result => {
                 if (result.success) {
                     if (result.tree) {
                         this.authService.selectTree(result.tree);
@@ -109,7 +107,13 @@ export class TreeManagement implements OnInit {
                     this.showForm.set('none');
                     this.router.navigate(['/persons']);
                 } else {
-                    this.error.set(result.message || 'Fehler beim Erstellen.');
+                    const msg = result.message || 'Fehler beim Erstellen.';
+                    if (msg.toLowerCase().includes('benutzer nicht gefunden') || msg.toLowerCase().includes('neu einloggen')) {
+                        this.authService.logout();
+                        this.router.navigate(['/login']);
+                        return;
+                    }
+                    this.error.set(msg);
                 }
             });
         } else if (this.showForm() === 'edit' && this.editingTree()) {

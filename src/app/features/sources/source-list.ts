@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, ViewEncapsulation, ViewChild, Change
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { SourceModal } from './source-modal';
 import { AppEntityCard } from '../../shared/components/ui/app-entity-card';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
@@ -20,7 +20,7 @@ import { SourceService } from '../../core/services/source.service';
 })
 export class SourceList implements OnInit {
     public sourceService = inject(SourceService);
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private router = inject(Router);
     private cdr = inject(ChangeDetectorRef);
 
@@ -53,7 +53,7 @@ export class SourceList implements OnInit {
 
     loadSources() {
         this.loading.set(true);
-        this.gedcomService.getTreeData().subscribe(treeData => {
+        this.treeService.getTreeData().subscribe(treeData => {
             if (treeData && treeData.meta && treeData.meta.tree) {
                 this.currentTree.set(treeData.meta.tree);
                 this.refreshList();

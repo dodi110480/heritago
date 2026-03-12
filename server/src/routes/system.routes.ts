@@ -16,12 +16,14 @@ export const systemRoutes = () => {
             const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
             res.json({
                 success: true,
-                version: pkg.version,
-                nodeVersion: process.version,
-                platform: process.platform
+                data: {
+                    version: pkg.version,
+                    nodeVersion: process.version,
+                    platform: process.platform
+                }
             });
         } catch (error) {
-            res.status(500).json({ success: false, message: 'Could not read version info' });
+            res.status(500).json({ success: false, message: 'Could not read version info', code: 'SYSTEM_INFO_FAILED' });
         }
     });
 
@@ -66,18 +68,21 @@ export const systemRoutes = () => {
 
             res.json({
                 success: true,
-                hasUpdate,
-                currentVersion: currentTag,
-                latestVersion: latestTag,
-                releaseName: latestRelease.name,
-                details: latestRelease.body
+                data: {
+                    hasUpdate,
+                    currentVersion: currentTag,
+                    latestVersion: latestTag,
+                    releaseName: latestRelease.name,
+                    details: latestRelease.body
+                }
             });
         } catch (error: any) {
             console.error('Update check error:', error.response?.data || error.message);
             res.status(500).json({
                 success: false,
                 message: 'Failed to check for updates',
-                error: error.response?.data?.message || error.message
+                code: 'SYSTEM_UPDATE_CHECK_FAILED',
+                data: { error: error.response?.data?.message || error.message }
             });
         }
     });
@@ -86,7 +91,7 @@ export const systemRoutes = () => {
         try {
             const { tag } = req.body;
             if (!tag) {
-                return res.status(400).json({ success: false, message: 'No target tag provided' });
+                return res.status(400).json({ success: false, message: 'No target tag provided', code: 'VALIDATION_ERROR' });
             }
 
             console.log(`[server]: Starting application update to ${tag}...`);
@@ -100,12 +105,14 @@ export const systemRoutes = () => {
 
             res.json({
                 success: true,
-                message: `Update to ${tag} successful. Server might need a restart if backend code changed.`,
-                output: stdout
+                data: {
+                    message: `Update to ${tag} successful. Server might need a restart if backend code changed.`,
+                    output: stdout
+                }
             });
         } catch (error: any) {
             console.error('Update execution error:', error);
-            res.status(500).json({ success: false, message: 'Update failed', error: error.message });
+            res.status(500).json({ success: false, message: 'Update failed', code: 'SYSTEM_UPDATE_FAILED', data: { error: error.message } });
         }
     });
 

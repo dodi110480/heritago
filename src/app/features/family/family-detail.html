@@ -1,6 +1,6 @@
-<ng-container *ngIf="!loading() && family()">
-    <app-page-header [title]="'Familie ' + family()?.id"
-        [description]="getPersonName(family()?.husband) + ' & ' + getPersonName(family()?.wife) + (getMarriageInfo() ? ' — ' + getMarriageInfo() : '')">
+<ng-container *ngIf="!store.loading() && store.family()">
+    <app-page-header [title]="'Familie ' + store.family()?.id"
+        [description]="store.getPersonName(store.family()?.husband) + ' & ' + store.getPersonName(store.family()?.wife) + (store.getMarriageInfo() ? ' — ' + store.getMarriageInfo() : '')">
         <div actions></div>
     </app-page-header>
 
@@ -14,8 +14,8 @@
             {id: 'notes', label: 'Notizen'},
             {id: 'citations', label: 'Quellen'},
             {id: 'media', label: 'Medien'}
-        ]" (click)="activeTab.set(tab.id)"
-            [class]="activeTab() === tab.id ? 
+        ]" (click)="store.setActiveTab(tab.id)"
+            [class]="store.activeTab() === tab.id ? 
             'px-4 py-2 rounded-lg bg-brand-500/10 text-brand-600 border border-brand-500/20 text-sm font-semibold whitespace-nowrap shadow-sm' : 
             'px-4 py-2 rounded-lg hover:bg-canvas/5 text-neutral-500 hover:text-neutral-900 dark:hover:text-white text-sm font-medium transition-all duration-[180ms] whitespace-nowrap'">
             {{tab.label}}
@@ -25,155 +25,35 @@
     <div class="space-y-8 animate-in fade-in duration-500 pb-20">
 
         <!-- Tab: Basics -->
-        <div *ngIf="activeTab() === 'basics'" class="space-y-6">
-            <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
-                <app-section-header title="Partner" [accent]="true"></app-section-header>
-                <div
-                    class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-10 items-center bg-canvas/5 dark:bg-white/5 !rounded-2xl p-6 md:p-10 relative border border-canvas/10 dark:border-white/10">
-                    <!-- Husband -->
-                    <div class="flex items-center gap-5">
-                        <app-avatar [imageUrl]="getPersonById(family()?.husband)?.media?.[0]?.url"
-                            [gender]="getPersonGender(family()?.husband)" size="lg"
-                            [alt]="getPersonName(family()?.husband)"></app-avatar>
-                        <div class="flex flex-col">
-                            <span
-                                class="text-xs text-neutral-500 dark:text-neutral-400 font-semibold uppercase tracking-wider mb-1">Ehemann</span>
-                            <span class="text-lg font-bold text-neutral-900 dark:text-white">{{
-                                getPersonName(family()?.husband) }}</span>
-                            <a [routerLink]="['/person', family()?.husband]"
-                                class="text-sm text-brand-600 dark:text-brand-400 hover:underline mt-1">Profil
-                                ansehen</a>
-                        </div>
-                    </div>
-
-                    <div class="text-4xl opacity-30 rotate-90 md:rotate-0 text-center">💍</div>
-
-                    <!-- Wife -->
-                    <div
-                        class="flex items-center gap-5 justify-start md:justify-end text-left md:text-right flex-row md:flex-row-reverse">
-                        <app-avatar [imageUrl]="getPersonById(family()?.wife)?.media?.[0]?.url"
-                            [gender]="getPersonGender(family()?.wife)" size="lg"
-                            [alt]="getPersonName(family()?.wife)"></app-avatar>
-                        <div class="flex flex-col">
-                            <span
-                                class="text-xs text-neutral-500 dark:text-neutral-400 font-semibold uppercase tracking-wider mb-1">Ehefrau</span>
-                            <span class="text-lg font-bold text-neutral-900 dark:text-white">{{
-                                getPersonName(family()?.wife) }}</span>
-                            <a [routerLink]="['/person', family()?.wife]"
-                                class="text-sm text-brand-600 dark:text-brand-400 hover:underline mt-1">Profil
-                                ansehen</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div *ngIf="store.activeTab() === 'basics'" class="space-y-6">
+            <app-family-tab-basics 
+                [family]="store.family()" 
+                [husband]="store.getPersonById(store.family()?.husband)"
+                [wife]="store.getPersonById(store.family()?.wife)">
+            </app-family-tab-basics>
         </div>
 
-        <!-- Tab: Kinder -->
-        <div *ngIf="activeTab() === 'children'" class="space-y-6">
-            <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
-                <app-section-header title="Kinder" icon="👶">
-                    <button actions class="btn-primary !w-auto !py-1.5 text-sm" (click)="openAddChildModal()">+
-                        Kind</button>
-                </app-section-header>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" *ngIf="family()?.children?.length">
-                    <div class="glass-card !p-4 !rounded-2xl flex items-center gap-4 hover:scale-[1.02] transition-transform cursor-pointer"
-                        *ngFor="let childId of family()?.children" [routerLink]="['/person', childId]">
-                        <app-avatar [imageUrl]="getPersonById(childId)?.media?.[0]?.url"
-                            [gender]="getPersonGender(childId)" size="sm" [alt]="getPersonName(childId)"></app-avatar>
-                        <div class="flex flex-col flex-1 min-w-0">
-                            <span class="font-bold text-sm text-neutral-900 dark:text-white truncate">{{
-                                getPersonName(childId) }}</span>
-                            <div class="flex gap-3 mt-1 text-xs">
-                                <span class="text-brand-600 dark:text-brand-400 hover:underline">Profil</span>
-                                <button class="text-accent-danger-500/70 hover:text-accent-danger-500 hover:underline"
-                                    (click)="$event.stopPropagation(); removeChild(childId)">Entfernen</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <app-empty-state *ngIf="!family()?.children || family()?.children?.length === 0" icon="👶"
-                    title="Keine Kinder" message="Bisher sind keine Kinder dieser Familie zugeordnet.">
-                </app-empty-state>
-            </div>
+        <div *ngIf="store.activeTab() === 'children'" class="space-y-6">
+            <app-family-tab-children
+                [family]="store.family()"
+                [children]="store.familyChildren()"
+                (addChildRequested)="openAddChildModal()"
+                (removeChildRequested)="removeChild($event)">
+            </app-family-tab-children>
         </div>
 
         <!-- Tab: Ereignisse -->
-        <div *ngIf="activeTab() === 'events'" class="space-y-6">
-            <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
-                <app-section-header title="Ereignisse" icon="📅">
-                    <button actions class="btn-primary !w-auto !py-1.5 text-sm" (click)="openAddEventModal()">+
-                        Ereignis</button>
-                </app-section-header>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" *ngIf="family()?.events?.length">
-                    <div *ngFor="let ev of family()?.events; let i = index" (click)="openEditEventModal(i)"
-                        class="glass-card !p-5 !rounded-2xl hover:scale-[1.02] transition-transform cursor-pointer group">
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="flex items-center gap-3">
-                                <div
-                                    class="w-10 h-10 rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xl">
-                                    {{ ev.type === 'MARR' ? '💍' : '📅' }}
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-bold text-neutral-900 dark:text-white">{{ ev.type
-                                        }}</span>
-                                    <span
-                                        class="text-xs text-neutral-500 dark:text-neutral-400 uppercase font-semibold tracking-wider">{{
-                                        ev.subType || 'Allgemein' }}</span>
-                                </div>
-                            </div>
-                            <button (click)="$event.stopPropagation(); removeEvent(i)"
-                                class="p-2 text-neutral-400 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M3 6h18"></path>
-                                    <path
-                                        d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                                    </path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="space-y-1.5">
-                            <div class="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
-                                <span class="text-neutral-400">📅</span>
-                                <span>{{ ev.dateText || ev.date || 'Kein Datum' }}</span>
-                            </div>
-                            <div class="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
-                                <span class="text-neutral-400">📍</span>
-                                <span>{{ ev.place || 'Kein Ort' }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Data Indicators -->
-                        <div class="flex flex-wrap gap-2 mt-4"
-                            *ngIf="ev.citations?.length || ev.media?.length || ev.notes?.length">
-                            <span *ngIf="ev.citations?.length"
-                                class="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase rounded-full border border-emerald-500/20">
-                                📖 {{ ev.citations.length }}
-                            </span>
-                            <span *ngIf="ev.media?.length"
-                                class="px-2 py-0.5 bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] font-bold uppercase rounded-full border border-brand-500/20">
-                                🖼 {{ ev.media.length }}
-                            </span>
-                            <span *ngIf="ev.notes?.length"
-                                class="px-2 py-0.5 bg-accent-highlight-500/10 text-accent-highlight-600 dark:text-accent-highlight-400 text-[10px] font-bold uppercase rounded-full border border-accent-highlight-500/20">
-                                📝 {{ ev.notes.length }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <app-empty-state *ngIf="!family()?.events || family()?.events?.length === 0" icon="📅"
-                    title="Keine Ereignisse"
-                    message="In dieser Familie wurden noch keine gemeinsamen Ereignisse hinterlegt.">
-                </app-empty-state>
-            </div>
+        <div *ngIf="store.activeTab() === 'events'" class="space-y-6">
+            <app-family-tab-events
+                [family]="store.family()"
+                (addEventRequested)="openAddEventModal()"
+                (editEventRequested)="openEditEventModal($event)"
+                (removeEventRequested)="removeEvent($event)">
+            </app-family-tab-events>
         </div>
 
         <!-- Tab: Notizen -->
-        <div *ngIf="activeTab() === 'notes'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div *ngIf="store.activeTab() === 'notes'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
             <div class="glass-card shadow-sm flex flex-col">
                 <div class="p-0">
                     <app-section-header title="Notizen" icon="📝">
@@ -196,7 +76,7 @@
                         </div>
                     </app-section-header>
 
-                    <app-notes-list [entityId]="familyId() || ''" [entityType]="'FAMILY'" [notesDisplay]="family()?.notes || []"
+                    <app-notes-list [entityId]="store.familyId() || ''" [entityType]="'FAMILY'" [notesDisplay]="store.family()?.notes || []"
                         [allowCreate]="true" [allowEdit]="true" [showHeader]="false" [searchTerm]="noteSearchQuery()"
                         (noteCreateRequested)="onNoteCreateRequested()" (noteEditRequested)="onNoteEditRequested($event)"
                         (noteDeleted)="onNoteDeletedFamily($event)"></app-notes-list>
@@ -205,7 +85,7 @@
         </div>
 
         <!-- Tab: Quellen -->
-        <div *ngIf="activeTab() === 'citations'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+        <div *ngIf="store.activeTab() === 'citations'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
             <div class="glass-card shadow-sm flex flex-col">
                 <div class="p-0">
                     <app-section-header title="Quellen" icon="📖">
@@ -229,7 +109,7 @@
                     </app-section-header>
 
                     <app-sources-list
-                        [entityId]="familyId() || ''"
+                        [entityId]="store.familyId() || ''"
                         entityType="FAMILY"
                         [sourcesDisplay]="mappedSources()"
                         [allowCreate]="true"
@@ -238,14 +118,14 @@
                         [searchTerm]="sourceSearchQuery()"
                         (sourceCreateRequested)="onSourceCreateRequested()"
                         (sourceEditRequested)="onSourceEditRequested($event)"
-                        (masterSaved)="loadAvailableSources()">
+                        (masterSaved)="store.loadAvailableSources()">
                     </app-sources-list>
                 </div>
             </div>
         </div>
 
         <!-- Tab: Medien -->
-        <div *ngIf="activeTab() === 'media'" class="space-y-6">
+        <div *ngIf="store.activeTab() === 'media'" class="space-y-6">
             <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
                 <app-section-header title="Medien" icon="🖼">
                     <div actions class="flex gap-2">
@@ -257,8 +137,8 @@
                 </app-section-header>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-                    *ngIf="family()?.media?.length">
-                    <div *ngFor="let med of family()?.media; let i = index" (click)="openEditMediaModal(i)"
+                    *ngIf="store.family()?.media?.length">
+                    <div *ngFor="let med of store.family()?.media; let i = index" (click)="openEditMediaModal(i)"
                         class="glass-card !p-0 !rounded-2xl overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer border border-canvas/10 dark:border-white/10">
                         <div
                             class="aspect-video bg-canvas/10 dark:bg-white/10 relative flex items-center justify-center overflow-hidden">
@@ -284,7 +164,7 @@
                     </div>
                 </div>
 
-                <app-empty-state *ngIf="!family()?.media || family()?.media?.length === 0" icon="🖼"
+                <app-empty-state *ngIf="!store.family()?.media || store.family()?.media?.length === 0" icon="🖼"
                     title="Keine Medien" message="Lade Bilder, Urkunden oder andere Dokumente hoch.">
                 </app-empty-state>
             </div>
@@ -332,20 +212,20 @@
     </app-media-selector>
 
     <app-media-add-modal [visible]="showMediaAddModal()" [treeId]="authService.currentTree()?.name || ''"
-        (closed)="showMediaAddModal.set(false)" (saved)="onMediaAddUploaded($event)" (masterSaved)="loadAvailableSources()">
+        (closed)="showMediaAddModal.set(false)" (saved)="onMediaAddUploaded($event)" (masterSaved)="store.loadAvailableSources()">
     </app-media-add-modal>
 
     <app-image-viewer [url]="viewerUrl()" [title]="viewerTitle()" (closed)="viewerUrl.set(null)"></app-image-viewer>
 
     <!-- Event Modal (reusable component) -->
     <app-event-modal [visible]="showEventModal()" [item]="eventDraft()" [isNew]="activeEventIndex() === null"
-        [availableSources]="availableSources()"
+        [availableSources]="store.availableSources()"
         [allPersonsOptions]="allPersonsOptions()" [showDelete]="activeEventIndex() !== null"
         (close)="showEventModal.set(false)" (save)="confirmSaveEvent()" (delete)="removeEvent(activeEventIndex()!)"
         (addCitation)="addEventCitation()" (removeCitation)="removeEventCitation($event)"
         (openUpload)="openMediaAddModal()" (openGallery)="openMediaSelector()" (addNote)="addEventNote()"
         (removeNote)="removeEventNote($event)" (addMedia)="addEventMedia()" (removeMedia)="removeEventMedia($event)"
-        (openViewer)="openViewer($event)" (masterSaved)="loadAvailableSources()">
+        (openViewer)="openViewer($event)" (masterSaved)="store.loadAvailableSources()">
     </app-event-modal>
 
     <!-- Globaler Place Modal Integration -->
@@ -437,7 +317,7 @@
                 <label class="form-label text-[10px]">Quelle</label>
                 <select [(ngModel)]="draft.sourceId" class="form-input !py-1.5 text-sm">
                     <option value="">— Quelle wählen —</option>
-                    <option *ngFor="let s of availableSources()" [value]="s.id">
+                    <option *ngFor="let s of store.availableSources()" [value]="s.id">
                         {{ s.title }}{{ s.author ? ' · ' + s.author : '' }}
                     </option>
                 </select>
@@ -475,7 +355,7 @@
 
 <!-- Loading Overlay -->
 <div class="fixed inset-0 bg-canvas/80 dark:bg-canvas-dark/80 backdrop-blur-sm z-[1000] flex flex-col items-center justify-center gap-4"
-    *ngIf="loading()">
+    *ngIf="store.loading()">
     <div class="w-10 h-10 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin"></div>
     <p class="text-neutral-700 dark:text-neutral-200 font-medium tracking-wide">Lade Familiendetails...</p>
 </div>

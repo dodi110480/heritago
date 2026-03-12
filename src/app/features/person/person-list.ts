@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { GedcomService } from '../../core/services/gedcom.service';
+import { TreeService } from '../../core/services/tree.service';
 import { Individual } from '../../core/models/models';
 import { FormsModule } from '@angular/forms';
 import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
@@ -22,7 +22,7 @@ import { MediaService } from '../../core/services/media.service';
 export class PersonList {
     public mediaService = inject(MediaService);
     private readonly FOCUS_PERSON_KEY = 'heritago_last_focus_person';
-    private gedcomService = inject(GedcomService);
+    private treeService = inject(TreeService);
     private router = inject(Router);
 
     individuals = signal<Individual[]>([]);
@@ -82,10 +82,12 @@ export class PersonList {
 
     loadPersons() {
         this.loading.set(true);
-        this.gedcomService.getTreeData().subscribe({
+        this.treeService.getTreeData().subscribe({
             next: (data) => {
+                console.log('[PersonList] Received tree data:', data);
                 if (data) {
                     this.individuals.set(data.individuals);
+                    console.log('[PersonList] Set individuals:', data.individuals.length);
                     this.families.set(data.families || []);
                     this.treeName.set(data.meta?.tree || '');
                 }

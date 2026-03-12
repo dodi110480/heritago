@@ -14,7 +14,7 @@ import { GlassCardComponent } from '../app-glass-card';
 import { SourceSummaryPipe } from '../source-summary-pipe';
 import { SourceModal } from '../../../../features/sources/source-modal';
 import { AuthService } from '../../../../core/services/auth.service';
-import { GedcomService } from '../../../../core/services/gedcom.service';
+import { TreeService } from '../../../../core/services/tree.service';
 import { DisplaySource, EntityType, SourceType } from '../../../../core/models/models';
 
 @Component({
@@ -99,7 +99,7 @@ export class AppSourcesListComponent {
   private searchSubject = new Subject<string>();
 
   private authService = inject(AuthService);
-  private gedcomService = inject(GedcomService);
+  private treeService = inject(TreeService);
 
   /** UI State für expandierte Beschreibungen */
   expandedSources = signal<Set<string>>(new Set());
@@ -206,14 +206,11 @@ export class AppSourcesListComponent {
     this.selectedSourceForMaster.set(source);
     
     // Wir brauchen eine Liste aller Quellen für das Modal (z.B. für Merge)
-    const tree = this.authService.currentTree();
-    if (tree) {
-      this.sourceService.getSources(tree.name).subscribe(res => {
-        if (res.success) {
-          this.allSourcesForMaster.set(res.sources);
-        }
-      });
-    }
+    this.treeService.getTreeData().subscribe(data => {
+      if (data && data.sources) {
+        this.allSourcesForMaster.set(data.sources);
+      }
+    });
     
     this.showSourceMasterModal.set(true);
   }

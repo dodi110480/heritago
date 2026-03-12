@@ -1,7 +1,15 @@
 import { PrismaClient } from '@prisma/client';
+import { NotesService } from './notes.service';
+import { AuditService } from './audit.service';
 
 export class PlaceService {
-    constructor(private prisma: PrismaClient) {}
+    private notesService: NotesService;
+    private auditService: AuditService;
+
+    constructor(private prisma: PrismaClient) {
+        this.notesService = new NotesService(prisma);
+        this.auditService = new AuditService(prisma);
+    }
 
     async mergePlaces(treeId: string, sourceId: string, targetId: string) {
         if (!sourceId || !targetId || sourceId === targetId) {
@@ -25,18 +33,16 @@ export class PlaceService {
             await tx.place.delete({ where: { id: source.id } });
         });
 
-        await this.prisma.changeLog.create({
-            data: {
-                treeId,
-                action: 'UPDATE',
-                entityType: 'PLACE',
-                entityId: target.id,
-                summary: `Ort ${source.name} in ${target.name} zusammengeführt`
-            }
+        await this.auditService.logChange({
+            treeId,
+            action: 'UPDATE',
+            entityType: 'PLACE',
+            entityId: target.id,
+            summary: `Ort ${source.name} in ${target.name} zusammengeführt`
         });
     }
 
-    async getPlaces(treeId: string) {
+    async getPlaces(treeId: string, limit: number = 200) {
         const places = await this.prisma.place.findMany({
             where: { treeId },
             include: {
@@ -49,7 +55,8 @@ export class PlaceService {
                     }
                 }
             },
-            orderBy: { name: 'asc' }
+            orderBy: { name: 'asc' },
+            take: limit
         });
 
         return places.map(p => ({
@@ -274,16 +281,15 @@ export class PlaceService {
             await this.updateSubEntities(treeId, currentUserId, targetPlaceId, translations, identifiers, notes);
 
             const afterState = await this.prisma.place.findUnique({ where: { id: targetPlaceId } });
-            await this.prisma.changeLog.create({
-                data: {
-                    treeId,
-                    action: action,
-                    entityType: 'PLACE',
-                    entityId: targetPlaceId,
-                    before: beforeState as any,
-                    after: afterState as any,
-                    summary: `Ort ${name} ${action === 'CREATE' ? 'erstellt' : 'aktualisiert'}`
-                }
+            await this.auditService.logChange({
+                treeId,
+                userId: currentUserId || undefined,
+                action: action,
+                entityType: 'PLACE',
+                entityId: targetPlaceId,
+                before: beforeState,
+                after: afterState,
+                summary: `Ort ${name} ${action === 'CREATE' ? 'erstellt' : 'aktualisiert'}`
             });
         }
         
@@ -336,19 +342,18 @@ export class PlaceService {
             await this.prisma.place.delete({ where: { id: placeToDelete.id } });
         }
 
-        await this.prisma.changeLog.create({
-            data: {
-                treeId,
-                action: 'DELETE',
-                entityType: 'PLACE',
-                entityId: placeToDelete.id,
-                before: placeToDelete as any,
-                summary: `Ort ${placeToDelete.name} gelöscht`
-            }
+        await this.auditService.logChange({
+            treeId,
+            action: 'DELETE',
+            entityType: 'PLACE',
+            entityId: placeToDelete.id,
+            before: placeToDelete,
+            summary: `Ort ${placeToDelete.name} gelöscht`
         });
     }
 
     private async updateSubEntities(treeId: string, currentUserId: string | null, targetPlaceId: string, translations: any, identifiers: any, notes: any) {
+        // --- Translations ---
         if (translations && Array.isArray(translations)) {
             await this.prisma.placeTranslation.deleteMany({ where: { placeId: targetPlaceId } });
             for (const tr of translations) {
@@ -367,6 +372,7 @@ export class PlaceService {
             }
         }
 
+        // --- Identifiers ---
         if (identifiers && Array.isArray(identifiers)) {
             await this.prisma.identifier.deleteMany({ where: { placeId: targetPlaceId } });
             for (const iden of identifiers) {
@@ -384,47 +390,9 @@ export class PlaceService {
             }
         }
 
+        // --- Notes (Unified) ---
         if (notes && Array.isArray(notes)) {
-            await this.prisma.noteLink.deleteMany({ where: { placeId: targetPlaceId } });
-            for (const noteData of notes) {
-                const isString = typeof noteData === 'string';
-                const noteText = isString ? noteData : (noteData?.text || '');
-                if (!noteText.trim()) continue;
-
-                const noteType = isString ? 'OTHER' : (noteData?.noteType || 'OTHER');
-                const pLevel = (!isString && noteData?.isPrivate) ? 'PRIVATE' : 'PUBLIC';
-                
-                let note;
-                if (!isString && noteData?.id && !noteData.id.startsWith('note-')) {
-                    note = await this.prisma.sharedNote.findUnique({ where: { id: noteData.id } });
-                    if (note) {
-                        note = await this.prisma.sharedNote.update({
-                            where: { id: note.id },
-                            data: { text: noteText, noteType, privacyLevel: pLevel as any }
-                        });
-                    }
-                }
-                
-                if (!note) {
-                    note = await this.prisma.sharedNote.create({
-                        data: {
-                            treeId,
-                            text: noteText,
-                            noteType,
-                            privacyLevel: pLevel as any,
-                            userId: currentUserId || null
-                        }
-                    });
-                }
-                
-                await this.prisma.noteLink.create({
-                    data: {
-                        treeId,
-                        placeId: targetPlaceId,
-                        noteId: note.id
-                    }
-                });
-            }
+            await this.notesService.processSharedNotes(this.prisma, treeId, notes, { placeId: targetPlaceId }, currentUserId || undefined);
         }
     }
 }

@@ -1,208 +1,144 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import fs from 'fs';
-import path from 'path';
-import { STORAGE_ROOT, MEDIA_ROOT } from '../config';
-import { GedcomManager } from '../services/gedcom.service';
+import { TreeService } from '../services/tree.service';
 import { PersonService } from '../services/person.service';
-import { analyzeInvalidFamilyIds } from './family.routes';
+import { FamilyService } from '../services/family.service';
 
 export const treeRoutes = (prisma: PrismaClient) => {
     const router = Router();
+    const treeService = new TreeService(prisma);
+    const personService = new PersonService(prisma);
+    const familyService = new FamilyService(prisma);
 
-    router.get('/trees', async (req, res) => {
-        const trees = await prisma.tree.findMany();
-        res.json({ success: true, trees });
+    // Ensure req.tree is populated for /tree/:tree routes when treeAuth isn't used
+    router.use('/tree/:tree', async (req: any, res, next) => {
+        if (req.tree) return next();
+        try {
+            const treeParam = req.params.tree;
+            if (treeParam === 'create') return next();
+            let tree = await prisma.tree.findUnique({ where: { name: treeParam } });
+            if (!tree && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(treeParam)) {
+                tree = await prisma.tree.findUnique({ where: { id: treeParam } });
+            }
+            if (!tree) return res.status(404).json({ success: false, message: 'Tree not found', code: 'TREE_NOT_FOUND' });
+            req.tree = tree;
+            next();
+        } catch (error: any) {
+            console.error('Error resolving tree:', error);
+            res.status(500).json({ success: false, message: error.message, code: 'TREE_RESOLVE_FAILED' });
+        }
     });
 
-    router.post('/tree/create', async (req, res) => {
-        const { name, title, firstName, lastName, gender, birthDate, userId } = req.body;
-        
+    router.get('/trees', async (req, res) => {
         try {
-            // Enforce one tree limit for non-admins
-            if (userId) {
-                const user = await prisma.user.findUnique({ where: { id: userId } });
-                if (user && user.globalRole !== 'ADMIN') {
-                    const ownerCount = await prisma.treePermission.count({
-                        where: { userId, level: 'OWNER' }
-                    });
-                    if (ownerCount >= 1) {
-                        return res.status(400).json({ success: false, message: 'Du kannst nur einen Stammbaum besitzen.' });
-                    }
-                }
-            }
-
-            const tree = await prisma.tree.create({ data: { name, title } });
-
-            // If userId is provided, create OWNER permission
-            if (userId) {
-                await prisma.treePermission.create({
-                    data: {
-                        treeId: tree.id,
-                        userId,
-                        level: 'OWNER'
+            const user = (req as any).user;
+            if (!user) return res.status(401).json({ success: false, message: 'Authentication required', code: 'AUTH_REQUIRED' });
+            let trees;
+            if (user.globalRole === 'ADMIN') {
+                trees = await treeService.getTrees();
+            } else {
+                trees = await prisma.tree.findMany({
+                    where: { permissions: { some: { userId: user.id } } },
+                    include: {
+                        _count: {
+                            select: { persons: true, families: true, media: true }
+                        }
                     }
                 });
             }
+            res.json({ success: true, data: trees });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message, code: 'TREES_FETCH_FAILED' });
+        }
+    });
 
-            // Create the initial person if data is provided
-            if (firstName && lastName) {
-                await PersonService.savePerson(prisma, tree.id, {
+    const handleTreeCreate = async (req: any, res: any) => {
+        const { name, title, firstName, lastName, gender, birthDate } = req.body;
+        const userId = req.user?.id;
+        try {
+            const tree = await treeService.createTree({
+                name,
+                title,
+                userId,
+                initialPerson: firstName && lastName ? {
                     firstName,
                     lastName,
                     gender,
                     birthDate
-                });
-            }
-
-            res.json({ success: true, tree });
-        } catch (error) {
+                } : undefined
+            });
+            res.json({ success: true, data: tree });
+        } catch (error: any) {
             console.error('Tree creation error:', error);
-            res.status(400).json({ success: false, message: 'Tree already exists or invalid data' });
+            const msg = error.message || 'Tree already exists or invalid data';
+            const isConflict = msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('bereits');
+            res.status(isConflict ? 409 : (msg.includes('besitzen') ? 400 : 500)).json({
+                success: false,
+                message: msg,
+                code: isConflict ? 'TREE_NAME_CONFLICT' : (msg.includes('besitzen') ? 'TREE_PERMISSION_INVALID' : 'TREE_CREATE_FAILED')
+            });
         }
-    });
+    };
+
+    router.post('/trees', handleTreeCreate);
+    // Legacy alias (deprecated)
+    router.post('/tree/create', handleTreeCreate);
 
     router.put('/tree/:id', async (req, res) => {
         const { id } = req.params;
-        const { title, description } = req.body;
         try {
-            const tree = await prisma.tree.update({
-                where: { id },
-                data: { title, description }
-            });
-            res.json({ success: true, tree });
-        } catch (error) {
-            res.status(400).json({ success: false, message: 'Could not update tree' });
+            const tree = await treeService.updateTree(id, req.body);
+            res.json({ success: true, data: tree });
+        } catch (error: any) {
+            res.status(400).json({ success: false, message: error.message || 'Could not update tree', code: 'TREE_UPDATE_FAILED' });
         }
     });
 
     router.delete('/tree/:id', async (req, res) => {
         const { id } = req.params;
         try {
-            // Find media to delete files
-            const media = await prisma.media.findMany({ where: { treeId: id } });
-            for (const m of media) {
-                const fname = m.path;
-                if (fname) {
-                    const baseDir = fname.startsWith('users/') ? STORAGE_ROOT : MEDIA_ROOT;
-                    const fullPath = path.join(baseDir, fname);
-                    if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
-                }
-            }
-
-            await prisma.tree.delete({ where: { id } });
-            res.json({ success: true });
-        } catch (error) {
-            res.status(400).json({ success: false, message: 'Could not delete tree' });
+            await treeService.deleteTree(id);
+            res.json({ success: true, data: null });
+        } catch (error: any) {
+            res.status(400).json({ success: false, message: error.message || 'Could not delete tree', code: 'TREE_DELETE_FAILED' });
         }
     });
 
-    router.get('/tree/:tree', async (req, res) => {
-        const { tree: treeName } = req.params;
-        const tree = await prisma.tree.findUnique({
-            where: { name: treeName },
-            include: {
-                persons: {
-                    include: {
-                        names: true,
-                        events: {
-                            include: {
-                                place: true,
-                                mediaLinks: { include: { media: true } },
-                                noteLinks: { include: { note: true } },
-                                citations: { include: { source: true } },
-                                associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } }
-                            }
-                        },
-                        facts: {
-                            include: {
-                                place: true,
-                                noteLinks: { include: { note: true } },
-                                citations: { include: { source: true } },
-                                associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } }
-                            }
-                        },
-                        citations: { include: { source: true } },
-                        mediaLinks: { include: { media: true } },
-                        noteLinks: { include: { note: true } },
-                        familyMembers: { include: { family: true } },
-                        associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } },
-                        dnaMatches: { include: { matchPerson: true, segments: true } },
-                        dnaSegments: true
-                    }
-                },
-                families: {
-                    include: {
-                        events: {
-                            include: {
-                                place: true,
-                                mediaLinks: { include: { media: true } },
-                                noteLinks: { include: { note: true } },
-                                citations: { include: { source: true } },
-                                associations: { include: { associated: { include: { names: { where: { isPrimary: true } } } } } }
-                            }
-                        },
-                        familyMembers: { include: { person: true } },
-                        mediaLinks: { include: { media: true } },
-                        noteLinks: { include: { note: true } }
-                    }
-                }
-            }
-        });
-
-        if (!tree) return res.status(404).json({ success: false });
-
-        const individuals = tree.persons.map(i => PersonService.formatPersonForClient(i));
-        const families = tree.families.map(f => GedcomManager.formatFamily(f));
-
-
-        res.json({ success: true, individuals, families, meta: { tree: treeName, treeId: tree.id } });
-    });
-
-    router.get('/tree/:tree/changelog', async (req, res) => {
-        const { tree: treeName } = req.params;
-        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-        if (!tree) return res.status(404).json({ success: false });
-
-        const logs = await prisma.changeLog.findMany({
-            where: { treeId: tree.id },
-            include: { user: { select: { username: true } } },
-            orderBy: { createdAt: 'desc' },
-            take: 50
-        });
-
-        res.json({ success: true, logs });
-    });
-
-    router.get('/tree/:tree/statistics', async (req, res) => {
-        const { tree: treeName } = req.params;
-        const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-        if (!tree) return res.status(404).json({ success: false });
-
-        const counts = {
-            individuals: await prisma.person.count({ where: { treeId: tree.id } }),
-            families: await prisma.family.count({ where: { treeId: tree.id } }),
-            media: await prisma.media.count({ where: { treeId: tree.id } }),
-            places: await prisma.place.count({ where: { treeId: tree.id } }),
-            sources: await prisma.source.count({ where: { treeId: tree.id } }),
-        };
-
-        const gender = {
-            male: await prisma.person.count({ where: { treeId: tree.id, sex: 'M' } }),
-            female: await prisma.person.count({ where: { treeId: tree.id, sex: 'F' } }),
-            unknown: await prisma.person.count({ where: { treeId: tree.id, sex: 'U' } }),
-        };
-
-        res.json({ success: true, counts, gender });
-    });
-
-    router.get('/tree/:tree/diagnostics', async (req, res) => {
+    router.get('/tree/:tree', async (req: any, res) => {
         try {
-            const { tree: treeName } = req.params;
-            const tree = await prisma.tree.findUnique({ where: { name: treeName } });
-            if (!tree) return res.status(404).json({ success: false, message: 'Tree not found' });
+            const tree = req.tree;
+            const data = await treeService.getFullTreeData(tree.id);
+            res.json({ success: true, data });
+        } catch (error: any) {
+            console.error('Error fetching full tree data:', error);
+            res.status(500).json({ success: false, message: error.message, code: 'TREE_FETCH_FAILED' });
+        }
+    });
 
-            const { invalidIds, duplicateCleanupCandidates } = await analyzeInvalidFamilyIds(prisma, tree.id);
+    router.get('/tree/:tree/stats', async (req, res) => {
+        const treeId = (req as any).tree.id;
+        try {
+            const stats = await treeService.getStats(treeId);
+            res.json({ success: true, data: stats });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message, code: 'TREE_STATS_FAILED' });
+        }
+    });
+
+    router.get('/tree/:tree/analyze-ids', async (req, res) => {
+        const treeId = (req as any).tree.id;
+        try {
+            const { invalidIds, duplicateCleanupCandidates } = await familyService.analyzeInvalidFamilyIds(treeId);
+            res.json({ success: true, data: { invalidFamilyIds: invalidIds, duplicateCleanupCandidates } });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message, code: 'TREE_ANALYZE_FAILED' });
+        }
+    });
+
+    router.get('/tree/:tree/verify', async (req, res) => {
+        const treeId = (req as any).tree.id;
+        try {
+            const { invalidIds, duplicateCleanupCandidates } = await familyService.analyzeInvalidFamilyIds(treeId);
 
             const errors = [
                 ...invalidIds.map((id) => ({
@@ -214,7 +150,7 @@ export const treeRoutes = (prisma: PrismaClient) => {
                     explanation: 'Family IDs should use GEDCOM-like xref format such as @F123@.',
                     content: id
                 })),
-                ...duplicateCleanupCandidates.map((c) => ({
+                ...duplicateCleanupCandidates.map((c: any) => ({
                     id: `family-dup-${c.canonicalId}`,
                     type: 'FAMILY',
                     line: 0,
@@ -227,27 +163,40 @@ export const treeRoutes = (prisma: PrismaClient) => {
 
             res.json({
                 success: true,
-                errors,
-                meta: {
-                    invalidFamilyIds: invalidIds,
-                    duplicateCleanupCandidates
+                data: {
+                    errors,
+                    meta: {
+                        invalidFamilyIds: invalidIds,
+                        duplicateCleanupCandidates
+                    }
                 }
             });
         } catch (error: any) {
             console.error('Diagnostics error:', error);
-            res.status(500).json({ success: false, message: error.message });
+            res.status(500).json({ success: false, message: error.message, code: 'TREE_DIAGNOSTICS_FAILED' });
+        }
+    });
+
+    // Alias for frontend compatibility
+    router.get(['/tree/:tree/diagnostics', '/tree/:tree/statistics'], async (req, res) => {
+        const treeId = (req as any).tree.id;
+        try {
+            const stats = await treeService.getStats(treeId);
+            res.json({ success: true, data: stats });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message, code: 'TREE_STATS_FAILED' });
         }
     });
 
     router.get('/tree/:tree/calendar', async (req, res) => {
-        // Empty calendar for now to avoid 404
-        res.json({ success: true, events: [] });
+        res.json({ success: true, data: { events: [] } });
     });
 
     router.get('/tree/:tree/map', async (req, res) => {
-        const { tree: treeName } = req.params;
-        const tree = await prisma.tree.findUnique({
-            where: { name: treeName },
+        const tree = (req as any).tree;
+        
+        const dbTree = await prisma.tree.findUnique({
+            where: { id: tree.id },
             include: {
                 places: {
                     where: {
@@ -260,16 +209,15 @@ export const treeRoutes = (prisma: PrismaClient) => {
             }
         });
 
-        if (!tree) return res.status(404).json({ success: false });
+        if (!dbTree) return res.status(404).json({ success: false, message: 'Tree not found', code: 'TREE_NOT_FOUND' });
 
-        const markers = tree.places.map(p => ({
+        const markers = dbTree.places.map(p => ({
             id: p.id,
             name: p.name,
             lat: p.latitude,
             lng: p.longitude
         }));
 
-        // Find persons with places in this tree
         const personsWithPlaces = await prisma.person.findMany({
             where: { treeId: tree.id },
             take: 50,
@@ -304,7 +252,7 @@ export const treeRoutes = (prisma: PrismaClient) => {
             };
         });
 
-        res.json({ success: true, markers, persons });
+        res.json({ success: true, data: { markers, persons } });
     });
 
     return router;
