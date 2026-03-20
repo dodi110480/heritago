@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-state';
 import { AppSectionHeaderComponent } from '../../shared/components/ui/app-section-header';
+import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripIdSuffix } from '../../shared/utils/person-autocomplete';
 
 @Component({
     selector: 'app-person-tab-dna',
@@ -84,10 +85,13 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
                     </select>
                 </div>
                 <div class="form-group mb-0">
-                    <label class="form-label">Match Person ID</label>
-                    <input type="text" [ngModel]="newDnaMatchDraft().matchPersonId"
-                        (ngModelChange)="newDnaMatchDraft.update(v => ({ ...v, matchPersonId: $event }))" class="form-input"
-                        placeholder="Personen-ID">
+                    <label class="form-label">Match Person</label>
+                    <input type="text" list="dna-person-options" [ngModel]="newDnaMatchDraft().matchPersonInput"
+                        (ngModelChange)="onNewMatchPersonInput($event)" class="form-input"
+                        placeholder="Name, UUID oder @I...@">
+                    <datalist id="dna-person-options">
+                        <option *ngFor="let opt of personOptions()" [value]="personOptionLabel(opt)"></option>
+                    </datalist>
                 </div>
                 <div class="form-group mb-0">
                     <label class="form-label">cM Wert</label>
@@ -117,11 +121,14 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
                         </select>
                     </div>
                     <div class="md:col-span-2 space-y-1">
-                        <label class="form-label">Match Person (ID)</label>
+                        <label class="form-label">Match Person</label>
                         <div class="flex items-center gap-3">
-                            <input type="text" [ngModel]="editDnaMatchDraft()?.matchPersonId"
-                                (ngModelChange)="editDnaMatchDraft.set({ ...editDnaMatchDraft(), matchPersonId: $event })"
-                                placeholder="ID suchen..." class="flex-1 form-input form-input-sm !py-2.5">
+                            <input type="text" list="dna-person-options" [ngModel]="editDnaMatchDraft()?.matchPersonInput"
+                                (ngModelChange)="onEditMatchPersonInput($event)"
+                                placeholder="Name, UUID oder @I...@" class="flex-1 form-input form-input-sm !py-2.5">
+                            <datalist id="dna-person-options">
+                                <option *ngFor="let opt of personOptions()" [value]="personOptionLabel(opt)"></option>
+                            </datalist>
                             <span class="text-lg font-bold text-brand-400 whitespace-nowrap">{{ editDnaMatchDraft()?.totalCm }} cM</span>
                         </div>
                     </div>
@@ -166,18 +173,20 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
 })
 export class PersonTabDnaComponent {
     @Input({ required: true }) person!: any;
+    @Input() allPersonsOptions: any[] = [];
     @Output() changed = new EventEmitter<void>();
+    @Output() search = new EventEmitter<string>();
 
     showDnaMatchCreateModal = signal(false);
     showDnaMatchEditModal = signal(false);
     activeDnaMatchIndex = signal<number | null>(null);
     editDnaMatchDraft = signal<any>({});
-    newDnaMatchDraft = signal<{ provider: string; matchPersonId: string; totalCm: number | null }>({
-        provider: '', matchPersonId: '', totalCm: null
+    newDnaMatchDraft = signal<any>({
+        provider: '', matchPersonId: '', matchPersonInput: '', matchPersonName: '', totalCm: null
     });
 
     addDnaMatch() {
-        this.newDnaMatchDraft.set({ provider: '', matchPersonId: '', totalCm: null });
+        this.newDnaMatchDraft.set({ provider: '', matchPersonId: '', matchPersonInput: '', matchPersonName: '', totalCm: null });
         this.showDnaMatchCreateModal.set(true);
     }
 
@@ -189,7 +198,11 @@ export class PersonTabDnaComponent {
         const p = this.person;
         if (!p || !p.dnaMatches) return;
         this.activeDnaMatchIndex.set(index);
-        this.editDnaMatchDraft.set({ ...p.dnaMatches[index] });
+        const existing = p.dnaMatches[index];
+        const display = existing?.matchPersonName
+            ? (String(existing.matchPersonName) + " (" + String(existing.matchPersonId || "") + ")")
+            : String(existing?.matchPersonId || "");
+        this.editDnaMatchDraft.set({ ...existing, matchPersonInput: display });
         this.showDnaMatchEditModal.set(true);
     }
 
@@ -218,6 +231,7 @@ export class PersonTabDnaComponent {
         p.dnaMatches.push({
             provider: draft.provider || '',
             matchPersonId: draft.matchPersonId || '',
+            matchPersonName: draft.matchPersonName || undefined,
             totalCm: draft.totalCm ?? undefined,
             segments: []
         });
@@ -230,6 +244,46 @@ export class PersonTabDnaComponent {
         if (!p || !p.dnaMatches) return;
         p.dnaMatches.splice(index, 1);
         this.changed.emit();
+    }
+
+    personOptions() {
+        return Array.isArray(this.allPersonsOptions) ? this.allPersonsOptions : [];
+    }
+
+    personOptionLabel(opt: any) {
+        return personOptionLabelUtil(opt);
+    }
+
+    private applyMatchPersonInput(draft: any, value: string) {
+        const input = String(value || '');
+        const opt = resolvePersonOption(input, this.personOptions(), { allowPrefix: true });
+
+        if (opt) {
+            const label = personOptionLabelUtil(opt);
+            const id = String((opt as any).id || '');
+            const name = stripIdSuffix(String((opt as any).displayName || (opt as any).name || ''));
+            return { ...draft, matchPersonInput: label, matchPersonId: id, matchPersonName: name };
+        }
+
+        return {
+            ...draft,
+            matchPersonInput: input,
+            matchPersonId: input.trim(),
+            matchPersonName: draft?.matchPersonName || ''
+        };
+    }
+
+    onNewMatchPersonInput(value: string) {
+        this.newDnaMatchDraft.update((d: any) => this.applyMatchPersonInput(d, value));
+        const q = String(value || '').trim();
+        if (q.length >= 2) this.search.emit(q);
+    }
+
+    onEditMatchPersonInput(value: string) {
+        const draft = this.editDnaMatchDraft();
+        this.editDnaMatchDraft.set(this.applyMatchPersonInput(draft, value));
+        const q = String(value || '').trim();
+        if (q.length >= 2) this.search.emit(q);
     }
 
     addDnaSegmentDraft() {

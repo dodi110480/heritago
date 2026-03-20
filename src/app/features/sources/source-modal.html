@@ -23,28 +23,28 @@
             <!-- Title -->
             <div class="space-y-1.5">
                 <label class="form-label">Titel / Name *</label>
-                <input type="text" [ngModel]="title()" (ngModelChange)="title.set($event)" class="form-input"
+                <input type="text" autocomplete="off" [ngModel]="title()" (ngModelChange)="title.set($event)" class="form-input"
                     placeholder="z.B. Heiratsurkunde Max Mustermann...">
             </div>
 
             <!-- Short Title -->
             <div class="space-y-1.5">
                 <label class="form-label">Kurztitel</label>
-                <input type="text" [ngModel]="shortTitle()" (ngModelChange)="shortTitle.set($event)" class="form-input"
+                <input type="text" autocomplete="off" [ngModel]="shortTitle()" (ngModelChange)="shortTitle.set($event)" class="form-input"
                     placeholder="z.B. Heirat Mustermann 1920">
             </div>
 
             <!-- Author -->
             <div class="space-y-1.5">
                 <label class="form-label">Autor / Urheber</label>
-                <input type="text" [ngModel]="author()" (ngModelChange)="author.set($event)" class="form-input"
+                <input type="text" autocomplete="off" [ngModel]="author()" (ngModelChange)="author.set($event)" class="form-input"
                     placeholder="z.B. Standesamt Berlin I">
             </div>
 
             <!-- Publication -->
             <div class="space-y-1.5">
                 <label class="form-label">Publikationsdetails</label>
-                <input type="text" [ngModel]="publication()" (ngModelChange)="publication.set($event)"
+                <input type="text" autocomplete="off" [ngModel]="publication()" (ngModelChange)="publication.set($event)"
                     class="form-input" placeholder="band 4, Seite 12...">
             </div>
 

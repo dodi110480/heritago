@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { forkJoin, of, switchMap, tap } from 'rxjs';
 import { Individual, TreeData, Family, TimelineItem } from '../../core/models/models';
+import { personOptionLabel } from '../../shared/utils/person-autocomplete';
 import { PersonService } from '../../core/services/person.service';
 import { FamilyService } from '../../core/services/family.service';
 import { TreeService } from '../../core/services/tree.service';
@@ -25,40 +26,73 @@ export class PersonFeatureStore {
     // --- State ---
     readonly personId = signal<string>('');
     readonly person = signal<Individual | null>(null);
-    readonly treeData = signal<TreeData | null>(null);
     readonly loading = signal<boolean>(false);
     readonly isSaving = signal<boolean>(false);
-    readonly isDirty = signal<boolean>(false);
     readonly timeline = signal<TimelineItem[]>([]);
-    readonly relations = signal<{ type: string; personId: string; personName?: string; familyId?: string }[]>([]);
+    readonly relations = signal<{ 
+        type: string; 
+        personId: string; 
+        personName?: string; 
+        familyId?: string; 
+        familyMemberId?: string;
+        pedigreeType?: string;
+        isPrimary?: boolean;
+        marriageType?: string;
+        weddingInfo?: string;
+        weddingEvent?: any;
+        notes?: any[];
+        citations?: any[];
+        restrictionNotice?: string;
+    }[]>([]);
     readonly activeTab = signal<'basics' | 'timeline' | 'relations' | 'media' | 'notes' | 'citations' | 'dna'>('basics');
     readonly availableSources = signal<any[]>([]);
+    readonly minimalIndividuals = signal<any[]>([]);
+    readonly searchResults = signal<any[]>([]);
+    readonly saveError = signal<string | null>(null);
+    readonly validationIssues = signal<any[]>([]);
 
     // --- Computed ---
     readonly profileImageUrl = computed(() => {
         const p = this.person();
-        if (!p) return null;
-        const rawUrl = (p.profileImageUrl && p.profileImageUrl.trim() !== '') 
-            ? p.profileImageUrl 
-            : (p.media && p.media.length > 0) 
-                ? (p.media.find((m: any) => m.isPrimary)?.id || p.media[0].id)
-                : null;
-        if (!rawUrl) return null;
-        if (rawUrl.startsWith('http') || rawUrl.startsWith('/') || rawUrl.startsWith('assets/')) return rawUrl;
-        return this.mediaService.getMediaUrl(rawUrl, 'thumbs');
+        if (!p || !p.profileImageUrl) return null;
+        if (p.profileImageUrl.startsWith('http') || p.profileImageUrl.startsWith('/') || p.profileImageUrl.startsWith('assets/')) return p.profileImageUrl;
+        return this.mediaService.getMediaUrl(p.profileImageUrl, 'thumbs');
     });
 
     readonly participations = computed(() => {
-        return this.personTimelineService.getParticipations(this.personId(), this.treeData());
+        return this.timeline().filter(t => t.originalType === 'participation');
     });
 
-    readonly allPersonsOptions = computed(() => {
-        const data = this.treeData();
-        if (!data || !data.individuals) return [];
-        return data.individuals.map(ind => ({
-            id: ind.id,
-            displayName: `${this.personTimelineService.getPrimaryName(ind)} (${ind.id})`
-        })).sort((a, b) => a.displayName.localeCompare(b.displayName));
+    readonly isSearching = signal<boolean>(false);
+
+    readonly allPersonsSignal = computed(() => {
+        const results = this.searchResults();
+        console.log('[Store] allPersonsSignal updating. Results:', results.length, 'isSearching:', this.isSearching());
+
+        // If we are searching or have results, use results (even if empty)
+        // Otherwise, show minimalIndividuals as a starting point
+        const base = (this.isSearching() || results.length > 0) ? results : this.minimalIndividuals();
+
+        return base.map((ind: any) => {
+            const opt = {
+                id: ind.id,
+                gedcomId: ind.gedcomId,
+                name: ind.name,
+                gender: ind.gender,
+                birthDate: ind.birthDate,
+                deathDate: ind.deathDate
+            };
+
+            return {
+                ...opt,
+                displayName: personOptionLabel({
+                    id: opt.id,
+                    displayName: opt.name,
+                    birthDate: opt.birthDate,
+                    deathDate: opt.deathDate
+                })
+            };
+        }).sort((a: any, b: any) => String(a.displayName || '').localeCompare(String(b.displayName || '')));
     });
 
     // --- Actions ---
@@ -71,8 +105,20 @@ export class PersonFeatureStore {
         this.activeTab.set(tab);
     }
 
-    markDirty() {
-        this.isDirty.set(true);
+    searchPersons(query: string) {
+        const treeName = this.authService.currentTree()?.name;
+        if (!treeName || !query || query.length < 2) {
+            this.searchResults.set([]);
+            this.isSearching.set(false);
+            return;
+        }
+
+        this.isSearching.set(true);
+        this.treeService.searchIndividuals(treeName, query).subscribe(results => {
+            this.searchResults.set(results);
+            // We keep isSearching true so that we continue to show results (even if empty) 
+            // until the query is cleared
+        });
     }
 
     loadPersonData() {
@@ -81,110 +127,162 @@ export class PersonFeatureStore {
         if (!id || !treeName) return;
 
         this.loading.set(true);
-        forkJoin({
-            tree: this.treeService.getTreeData(treeName),
-            children: this.personService.getChildren(treeName, id),
-            spouses: this.personService.getSpouses(treeName, id),
-            parents: this.personService.getParents(treeName, id)
-        }).subscribe({
-            next: (results: any) => {
-                const data = results.tree;
+        this.personService.getFullProfile(treeName, id).subscribe({
+            next: (data: any) => {
                 if (data) {
-                    this.treeData.set(data);
-                    this.loadAvailableSources();
-                    const copy = this.personService.mapRawDataToIndividual(results, data, id);
-                    if (copy) {
-                        this.person.set(copy);
-                        this.buildRelations();
-                    } else {
-                        this.router.navigate(['/persons']);
-                    }
+                    this.person.set(data.person);
+                    this.timeline.set(data.timeline);
+                    this.relations.set(data.relations);
+                    this.validationIssues.set(Array.isArray(data.validationIssues) ? data.validationIssues : []);
+                    
+                    // Populate minimalIndividuals fallback with current relations
+                    // so they appear in dropdowns even before searching
+                    const initialInds = (data.relations || []).map((r: any) => ({
+                        id: r.personId,
+                        name: r.personName || 'Unbekannt',
+                        gender: r.gender
+                    }));
+                    this.minimalIndividuals.set(initialInds);
+
+                    // Only load sources; minimal individuals is now handled by on-demand search
+                    this.treeService.getMinimalSources(treeName).subscribe(sources => {
+                        this.availableSources.set(sources);
+                    });
+                } else {
+                    this.router.navigate(['/persons']);
                 }
                 this.loading.set(false);
             },
             error: (err) => {
                 console.error('Error loading person data', err);
+                this.validationIssues.set([]);
                 this.loading.set(false);
                 this.router.navigate(['/persons']);
             }
         });
     }
+    updateTimeline(nextTimeline: TimelineItem[]) {
+        this.timeline.set(nextTimeline);
 
-    loadAvailableSources() {
-        const treeName = this.authService.currentTree()?.name;
-        if (treeName) {
-            this.sourceService.getSources(treeName).subscribe({
-                next: (res: any) => {
-                    if (res.success) this.availableSources.set(res.sources || []);
+        const syncedRelations = this.relations().map((relation: any) => {
+            if (relation.type !== "SPOUSE" || !relation.familyId) return relation;
+            const match = nextTimeline.find((item: any) => item.originalType === "family-event" && item.familyId === relation.familyId && item.tag === "MARR");
+            if (!match) {
+                return { ...relation, weddingEvent: undefined, weddingInfo: undefined };
+            }
+
+            const weddingInfo = `${match.dateText || match.date || ""}${match.place ? " in " + match.place : ""}`.trim() || undefined;
+            return {
+                ...relation,
+                weddingEvent: {
+                    ...(relation.weddingEvent || {}),
+                    id: match.id,
+                    type: match.tag,
+                    dateText: match.dateText || match.date || null,
+                    place: match.place || null,
+                    placeId: match.placeId || null,
+                    description: match.description || null,
+                    notes: match.notes || [],
+                    citations: match.citations || [],
+                    media: match.media || [],
+                    showInTimeline: true
+                },
+                weddingInfo
+            };
+        });
+
+        this.relations.set(syncedRelations);
+    }
+
+    updateRelations(nextRelations: any[]) {
+        this.relations.set(nextRelations);
+
+        const currentTimeline = this.timeline();
+        const nonWeddingTimeline = currentTimeline.filter((item: any) => !(item.originalType === "family-event" && item.tag === "MARR"));
+        const spouseWeddingItems: TimelineItem[] = nextRelations
+            .filter((relation: any) => relation.type === "SPOUSE" && relation.familyId)
+            .flatMap((relation: any): TimelineItem[] => {
+                const weddingEvent = relation.weddingEvent;
+                if (!weddingEvent?.showInTimeline && !weddingEvent?.dateText && !weddingEvent?.place && !weddingEvent?.description && !(weddingEvent?.notes?.length) && !(weddingEvent?.citations?.length) && !(weddingEvent?.media?.length)) {
+                    return [];
                 }
+
+                return [{
+                    id: weddingEvent?.id,
+                    itemKind: "event",
+                    originalType: "family-event",
+                    originalIndex: -1,
+                    familyId: relation.familyId,
+                    tag: "MARR",
+                    label: "Heirat",
+                    date: weddingEvent?.dateText || null,
+                    dateText: weddingEvent?.dateText || null,
+                    place: weddingEvent?.place || null,
+                    placeId: weddingEvent?.placeId || null,
+                    description: weddingEvent?.description || null,
+                    age: null,
+                    media: weddingEvent?.media || [],
+                    notes: weddingEvent?.notes || [],
+                    citations: weddingEvent?.citations || [],
+                    associations: []
+                } as TimelineItem];
             });
-        }
-    }
 
-    private buildRelations() {
-        const p = this.person();
-        const data = this.treeData();
-        if (!p || !data) return;
-
-        const { relations, enrichedPerson } = this.personTimelineService.enrichPersonRelations(p, data);
-        this.relations.set(relations);
-        this.person.set(enrichedPerson);
-        this.buildTimeline();
-    }
-
-    private buildTimeline() {
-        const p = this.person();
-        const data = this.treeData();
-        if (!p || !data) return;
-        const merged = this.personTimelineService.buildTimeline(p, data, (id: string) => this.personTimelineService.getPersonName(data, id));
-        this.timeline.set(merged);
+        this.timeline.set([...nonWeddingTimeline, ...spouseWeddingItems]);
     }
 
     savePerson() {
         const p = this.person();
-        const treeSnapshot = this.treeData();
-        if (!p || !treeSnapshot) return;
+        if (!p) return;
 
         this.isSaving.set(true);
-        const treeName = treeSnapshot.meta?.tree || '';
-        
-        // Prepare family events
-        const changedFamilies = new Map<string, Family>();
-        this.timeline().forEach((t) => {
-            if (t.originalType !== 'family-event' || !t.familyId || t.originalIndex < 0) return;
-            const sourceFamily = treeSnapshot.families.find(f => f.id === t.familyId);
-            if (!sourceFamily) return;
-            if (!changedFamilies.has(t.familyId)) changedFamilies.set(t.familyId, JSON.parse(JSON.stringify(sourceFamily)));
-            const targetFamily = changedFamilies.get(t.familyId)!;
-            targetFamily.events = targetFamily.events || [];
-            const targetEvent = targetFamily.events[t.originalIndex];
-            if (!targetEvent) return;
-            targetEvent.date = t.date || '';
-            targetEvent.place = t.place || '';
-            targetEvent.description = t.description || '';
-            (targetEvent as any).media = t.media || [];
-            (targetEvent as any).notes = t.notes || [];
-            (targetEvent as any).citations = t.citations || [];
-        });
+        this.saveError.set(null);
+        const treeName = this.authService.currentTree()?.name || '';
 
-        const payload = this.personService.prepareSavePayload(p, this.timeline(), this.relations());
-        const saveFamilies$ = changedFamilies.size > 0
-            ? forkJoin(Array.from(changedFamilies.values()).map(f => this.familyService.saveFamily(treeName, f)))
-            : of([]);
+        const payload = {
+            ...p,
+            id: p.id || this.personId(),
+            treeId: p.treeId || this.authService.currentTree()?.id || '',
+            timeline: this.timeline(),
+            relations: this.relations()
+        };
 
-        saveFamilies$.pipe(
-            switchMap(() => this.personService.savePerson(treeName, payload))
-        ).subscribe({
-            next: () => {
+        this.personService.savePerson(treeName, payload).subscribe({
+            next: (data: any) => {
                 this.isSaving.set(false);
-                this.isDirty.set(false);
+                // Trigger immediate UI refresh by setting a new reference if we have data back,
+                // or just call loadPersonData. Backend savePerson returns the updated record.
+                if (data) {
+                    // Update the local state with the returned full profile
+                    this.person.set(data.person);
+                    this.timeline.set(data.timeline);
+                    this.relations.set(data.relations);
+                }
                 this.loadPersonData();
             },
             error: (err) => {
                 this.isSaving.set(false);
+                const msg = err.error?.message || 'Unbekannter Fehler beim Speichern.';
                 console.error('Speicherfehler Details:', err);
-                alert('Fehler beim Speichern: ' + (err.error?.message || 'Unbekannter Fehler'));
+                this.saveError.set(msg);
+                // We keep the alert as a fallback for now, but the UI should show it better
             }
+        });
+    }
+
+    updatePersonCitations(update: { notes?: any[]; citations?: any[] }) {
+        const current = this.person();
+        if (!current) return;
+
+        this.person.set({
+            ...current,
+            notes: update.notes ?? current.notes ?? [],
+            citations: update.citations ?? current.citations ?? [],
+            formattedCitations: (update.citations ?? current.citations ?? []).map((citation: any) => ({
+                ...citation,
+                title: citation.sourceTitle || citation.title || "Unbekannte Quelle",
+                description: citation.whereInSource || citation.page ? 'Fundstelle: ' + (citation.whereInSource || citation.page) : ''
+            }))
         });
     }
 

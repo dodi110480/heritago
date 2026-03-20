@@ -1,6 +1,6 @@
 <ng-container *ngIf="!store.loading() && store.family()">
-    <app-page-header [title]="'Familie ' + store.family()?.id"
-        [description]="store.getPersonName(store.family()?.husband) + ' & ' + store.getPersonName(store.family()?.wife) + (store.getMarriageInfo() ? ' — ' + store.getMarriageInfo() : '')">
+    <app-page-header [title]="store.family()?.displayName || 'Unbekannte Familie'"
+        [description]="(store.family()?.marriageLabel ? store.family()?.marriageLabel + ' — ' : '') + 'ID: ' + store.family()?.id">
         <div actions></div>
     </app-page-header>
 
@@ -54,74 +54,21 @@
 
         <!-- Tab: Notizen -->
         <div *ngIf="store.activeTab() === 'notes'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div class="glass-card shadow-sm flex flex-col">
-                <div class="p-0">
-                    <app-section-header title="Notizen" icon="📝">
-                        <div actions class="flex items-center gap-3">
-                            <div class="relative hidden md:block w-64">
-                                <input 
-                                    type="text" 
-                                    [ngModel]="noteSearchQuery()"
-                                    (ngModelChange)="noteSearchQuery.set($event)"
-                                    placeholder="Notizen durchsuchen..."
-                                    class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
-                                >
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                </span>
-                            </div>
-                            <button (click)="onNoteCreateRequested()" class="btn-primary !w-auto !py-2">
-                                + Notiz
-                            </button>
-                        </div>
-                    </app-section-header>
-
-                    <app-notes-list [entityId]="store.familyId() || ''" [entityType]="'FAMILY'" [notesDisplay]="store.family()?.notes || []"
-                        [allowCreate]="true" [allowEdit]="true" [showHeader]="false" [searchTerm]="noteSearchQuery()"
-                        (noteCreateRequested)="onNoteCreateRequested()" (noteEditRequested)="onNoteEditRequested($event)"
-                        (noteDeleted)="onNoteDeletedFamily($event)"></app-notes-list>
-                </div>
-            </div>
+            <app-tab-notes
+                [entity]="store.family()"
+                [entityType]="'FAMILY'"
+                (changed)="store.saveFamily()">
+            </app-tab-notes>
         </div>
 
         <!-- Tab: Quellen -->
         <div *ngIf="store.activeTab() === 'citations'" class="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div class="glass-card shadow-sm flex flex-col">
-                <div class="p-0">
-                    <app-section-header title="Quellen" icon="📖">
-                        <div actions class="flex items-center gap-3">
-                            <div class="relative hidden md:block w-64">
-                                <input 
-                                    type="text" 
-                                    [ngModel]="sourceSearchQuery()"
-                                    (ngModelChange)="sourceSearchQuery.set($event)"
-                                    placeholder="Quellen durchsuchen..."
-                                    class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
-                                >
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                </span>
-                            </div>
-                            <button (click)="onSourceCreateRequested()" class="btn-primary !w-auto !py-2">
-                                + Beleg
-                            </button>
-                        </div>
-                    </app-section-header>
-
-                    <app-sources-list
-                        [entityId]="store.familyId() || ''"
-                        entityType="FAMILY"
-                        [sourcesDisplay]="mappedSources()"
-                        [allowCreate]="true"
-                        [allowEdit]="true"
-                        [showHeader]="false"
-                        [searchTerm]="sourceSearchQuery()"
-                        (sourceCreateRequested)="onSourceCreateRequested()"
-                        (sourceEditRequested)="onSourceEditRequested($event)"
-                        (masterSaved)="store.loadAvailableSources()">
-                    </app-sources-list>
-                </div>
-            </div>
+            <app-tab-citations
+                [entity]="store.family()"
+                [entityType]="'FAMILY'"
+                [availableSources]="store.availableSources()"
+                (changed)="store.saveFamily()">
+            </app-tab-citations>
         </div>
 
         <!-- Tab: Medien -->
@@ -138,12 +85,30 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
                     *ngIf="store.family()?.media?.length">
-                    <div *ngFor="let med of store.family()?.media; let i = index" (click)="openEditMediaModal(i)"
-                        class="glass-card !p-0 !rounded-2xl overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer border border-canvas/10 dark:border-white/10">
-                        <div
+                    <div *ngFor="let med of store.family()?.media; let i = index"
+                        class="glass-card !p-0 !rounded-2xl overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer border border-canvas/10 dark:border-white/10 shadow-sm relative">
+                        <!-- Actions Overlay -->
+                        <div class="absolute top-2 right-2 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button (click)="$event.stopPropagation(); openEditMediaModal(i)" title="Bearbeiten"
+                                class="w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-brand-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button (click)="$event.stopPropagation(); removeMedia(i)" title="Löschen"
+                                class="w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-accent-danger-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M3 6h18"></path>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div (click)="openViewer(med)"
                             class="aspect-video bg-canvas/10 dark:bg-white/10 relative flex items-center justify-center overflow-hidden">
-                            <img *ngIf="isImageUrl(med.url)" [src]="med.url" class="w-full h-full object-cover">
-                            <div *ngIf="!isImageUrl(med.url)" class="text-neutral-400 dark:text-neutral-500">
+                            <img *ngIf="mediaService.isImage(med)" [src]="med.url" class="w-full h-full object-cover">
+                            <div *ngIf="!mediaService.isImage(med)" class="text-neutral-400 dark:text-neutral-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
                                     fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
@@ -151,14 +116,16 @@
                                 </svg>
                             </div>
                             <div
-                                class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                                Klicken zum Bearbeiten
+                                class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold pointer-events-none">
+                                <div class="bg-black/40 px-3 py-1.5 rounded-full flex items-center gap-2 scale-90 group-hover:scale-100 transition-transform">
+                                    <span class="text-lg">🔍</span> Betrachten
+                                </div>
                             </div>
                         </div>
-                        <div class="p-3">
+                        <div (click)="openViewer(med)" class="p-3">
                             <p class="text-xs font-bold text-neutral-900 dark:text-white truncate">{{ med.title || 'Ohne
                                 Titel' }}</p>
-                            <p class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">{{ med.url }}
+                            <p class="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 truncate">{{ med.isPrimary ? '⭐ Primär' : (med.id || med.url) }}
                             </p>
                         </div>
                     </div>
@@ -220,11 +187,9 @@
     <!-- Event Modal (reusable component) -->
     <app-event-modal [visible]="showEventModal()" [item]="eventDraft()" [isNew]="activeEventIndex() === null"
         [availableSources]="store.availableSources()"
-        [allPersonsOptions]="allPersonsOptions()" [showDelete]="activeEventIndex() !== null"
+        [allPersonsOptions]="store.allPersonsSignal()" [showDelete]="activeEventIndex() !== null"
         (close)="showEventModal.set(false)" (save)="confirmSaveEvent()" (delete)="removeEvent(activeEventIndex()!)"
-        (addCitation)="addEventCitation()" (removeCitation)="removeEventCitation($event)"
-        (openUpload)="openMediaAddModal()" (openGallery)="openMediaSelector()" (addNote)="addEventNote()"
-        (removeNote)="removeEventNote($event)" (addMedia)="addEventMedia()" (removeMedia)="removeEventMedia($event)"
+        (openUpload)="openMediaAddModal()" (openGallery)="openMediaSelector()" 
         (openViewer)="openViewer($event)" (masterSaved)="store.loadAvailableSources()">
     </app-event-modal>
 
@@ -232,124 +197,20 @@
     <app-place-modal [visible]="showPlaceModal()" mode="add" (closed)="showPlaceModal.set(false)"
         (saved)="onPlaceSaved($event)"></app-place-modal>
 
-    <!-- Note Modal -->
-    <app-modal-shell [visible]="showNoteModal()"
-        [title]="activeNoteIndex() !== null ? 'Notiz bearbeiten' : 'Neue Notiz'" icon="📝" size="md" [showSave]="true"
-        [showDelete]="activeNoteIndex() !== null" (close)="showNoteModal.set(false)" (save)="onNoteSave()"
-        (delete)="onNoteDeleteFromModal()">
-        <div *ngIf="noteDraft() as draft" class="space-y-4">
-            <div class="form-group mb-0">
-                <label class="form-label text-xs uppercase tracking-wider font-bold text-neutral-500">Kategorie /
-                    Typ</label>
-                <select [(ngModel)]="draft.noteType" class="form-input">
-                    <option value="COMMENT">Kommentar</option>
-                    <option value="TRANSCRIPTION">Transkription</option>
-                    <option value="RESEARCH">Forschung</option>
-                    <option value="QUESTION">Frage</option>
-                    <option value="TODO">Aufgabe</option>
-                    <option value="HINT">Hinweis</option>
-                    <option value="OTHER">Andere</option>
-                </select>
-            </div>
-
-            <div class="form-group mb-0">
-                <label class="form-label text-xs uppercase tracking-wider font-bold text-neutral-500">Inhalt</label>
-                <textarea [(ngModel)]="draft.text" class="form-input min-h-[160px] font-body"
-                    placeholder="Schreibe deine Notiz hier..."></textarea>
-            </div>
-
-            <div
-                class="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-xl border border-neutral-200 dark:border-neutral-800">
-                <div class="flex-1">
-                    <div class="text-sm font-bold text-neutral-900 dark:text-white">Private Notiz</div>
-                    <div class="text-[10px] text-neutral-500">Nur für dich sichtbar.</div>
-                </div>
-                <input type="checkbox" [(ngModel)]="draft.isPrivate" class="checkbox checkbox-brand shadow-sm">
-            </div>
-        </div>
-    </app-modal-shell>
-
-    <!-- Kind hinzufügen Modal -->
-    <app-modal-shell [visible]="showAddChildModal()" title="Kind hinzufügen" icon="👶" size="sm" [showSave]="true"
-        saveText="Verknüpfen" (close)="showAddChildModal.set(false)" (save)="confirmAddChild()">
-        <div class="space-y-4">
-            <div class="form-group">
-                <label class="form-label">Name oder ID</label>
-                <input type="text" [(ngModel)]="addChildQuery" class="form-input" placeholder="z.B. I001..." autofocus>
-            </div>
-            <div *ngIf="addChildResults().length > 0" class="space-y-2">
-                <label class="form-label">Treffer</label>
-                <div class="flex flex-col gap-1 max-h-48 overflow-y-auto">
-                    <button *ngFor="let c of addChildResults()" (click)="selectChildCandidate(c)"
-                        [class]="selectedChildId() === c.id ? 'btn-brand-soft !justify-start !text-left' : 'btn-ghost !justify-start !text-left text-sm'">
-                        {{ c.firstName }} {{ c.lastName }} ({{ c.id }})
-                    </button>
-                </div>
-            </div>
-            <p *ngIf="addChildError()" class="text-xs text-accent-danger-500 bg-accent-danger-500/10 p-2 rounded-lg">{{
-                addChildError() }}</p>
-        </div>
-    </app-modal-shell>
-
-
-    <!-- Abbrechen Bestätigen Modal -->
-    <app-modal-shell [visible]="showCancelConfirmModal()" title="Änderungen verwerfen?" icon="⚠️" size="sm"
-        [showSave]="false" [showDelete]="true" deleteText="Ja, verwerfen" (close)="showCancelConfirmModal.set(false)"
-        (delete)="confirmCancel()">
-        <p class="p-4 text-neutral-600 dark:text-neutral-300 text-center">Möchten Sie alle ungespeicherten Änderungen
-            wirklich verwerfen?</p>
-    </app-modal-shell>
-
-    <!-- Source Modal -->
-    <app-modal-shell [visible]="showSourceModal()" 
-        [title]="activeSourceIndex() !== null ? 'Beleg bearbeiten' : 'Beleg hinzufügen'" 
-        icon="📖" 
-        size="md" 
-        [showSave]="true"
-        [showDelete]="activeSourceIndex() !== null" 
-        [saveText]="activeSourceIndex() !== null ? 'Speichern' : 'Hinzufügen'"
-        (close)="showSourceModal.set(false)" 
-        (save)="onSourceSave()" 
-        (delete)="onSourceDeleteFromModal()">
-        
-        <div *ngIf="sourceDraft() as draft" class="space-y-4">
-            <div class="form-group mb-0">
-                <label class="form-label text-[10px]">Quelle</label>
-                <select [(ngModel)]="draft.sourceId" class="form-input !py-1.5 text-sm">
-                    <option value="">— Quelle wählen —</option>
-                    <option *ngFor="let s of store.availableSources()" [value]="s.id">
-                        {{ s.title }}{{ s.author ? ' · ' + s.author : '' }}
-                    </option>
-                </select>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <div class="form-group mb-0">
-                    <label class="form-label text-[10px]">Seite/Ort</label>
-                    <input type="text" [(ngModel)]="draft.whereInSource" class="form-input !py-1.5 text-sm" placeholder="z.B. S. 12">
-                </div>
-                <div class="form-group mb-0">
-                    <label class="form-label text-[10px]">Datum im Beleg</label>
-                    <input type="text" [(ngModel)]="draft.date" class="form-input !py-1.5 text-sm" placeholder="z.B. 1900">
-                </div>
-            </div>
-            <div class="form-group mb-0">
-                <label class="form-label text-[10px]">Qualität</label>
-                <select [(ngModel)]="draft.confidence" class="form-input !py-1.5 text-sm">
-                    <option value="">Wählen...</option>
-                    <option value="CERTAIN">Sicher (3)</option>
-                    <option value="VERY_LIKELY">Sehr wahrscheinlich (2)</option>
-                    <option value="LIKELY">Wahrscheinlich (1)</option>
-                    <option value="UNLIKELY">Unzuverlässig (0)</option>
-                </select>
-            </div>
-            <div class="form-group mb-0">
-                <label class="form-label text-[10px]">Zitat / Ausschnitt</label>
-                <textarea [(ngModel)]="draft.text" 
-                    class="form-input !py-1.5 text-sm min-h-[80px]"
-                    placeholder="Zitierter Text"></textarea>
-            </div>
-        </div>
-    </app-modal-shell>
+    <!-- Relation Modal -->
+    <app-relation-modal
+        [visible]="showRelationModal()"
+        [relation]="activeRelation()"
+        [allPersonsOptions]="store.allPersonsSignal()"
+        [availableSources]="store.availableSources()"
+        (close)="showRelationModal.set(false)"
+        (search)="store.searchPersons($event)"
+        (save)="onRelationSave($event)"
+        (delete)="onRelationDeleteFromModal()"
+        (openGallery)="openMediaAddModal()"
+        (openUpload)="openMediaAddModal()"
+        (openViewer)="openViewer($event)"
+    ></app-relation-modal>
 
 </ng-container>
 

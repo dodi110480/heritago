@@ -140,6 +140,7 @@ export class ImageCropper implements AfterViewInit {
   }
 
   private draw() {
+    const gold = getComputedStyle(document.documentElement).getPropertyValue('--color-note-question').trim() || '#d97706';
     const canvas = this.canvasRef.nativeElement;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -163,17 +164,18 @@ export class ImageCropper implements AfterViewInit {
       this.rect.h
     );
 
-    ctx.strokeStyle = '#bf953f';
+    ctx.strokeStyle = gold;
     ctx.lineWidth = 2;
     ctx.strokeRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
     this.drawHandles();
   }
 
   private drawHandles() {
+    const gold = getComputedStyle(document.documentElement).getPropertyValue('--color-note-question').trim() || '#d97706';
     const ctx = this.ctx;
     const s = this.handleSize;
     const { x, y, w, h } = this.rect;
-    ctx.fillStyle = '#bf953f';
+    ctx.fillStyle = gold;
     ctx.fillRect(x + w - s / 2, y + h - s / 2, s, s);
   }
 

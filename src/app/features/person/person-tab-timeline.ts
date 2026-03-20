@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, inject, computed, ChangeDetectorRef } from '@angular/core';
+import { Component, Output, EventEmitter, signal, inject, computed, ChangeDetectorRef, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -15,6 +15,7 @@ import { MediaAddModal } from '../media/media-add-modal';
 import { MediaSelector } from '../media/media-selector';
 import { ImageViewer } from '../media/image-viewer';
 import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
+import { PersonFeatureStore } from './person-feature.store';
 
 @Component({
     selector: 'app-person-tab-timeline',
@@ -31,8 +32,8 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
         ImageViewer
     ],
     template: `
-        <div class="glass-card shadow-sm flex flex-col">
-            <div class="!p-4 md:!p-5">
+        <div class="glass-card flex flex-col">
+            <div class="p-4 md:p-5">
                 <app-section-header title="Lebenslauf" icon="⏳">
                     <button actions (click)="addTimelineItem()" class="btn-primary !w-auto !py-1.5 !px-3 text-xs">
                         + Ereignis/Fakt
@@ -46,16 +47,23 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                             class="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-brand-500 border-2 border-neutral-900 z-10 transition-transform group-hover/item:scale-125">
                         </div>
 
-                        <div class="glass-card !p-3 !bg-canvas-white/5 !rounded-xl transition-all shadow-sm cursor-pointer hover:bg-canvas-white/10"
+                        <div class="glass-card !p-3 transition-all cursor-pointer hover:bg-canvas-white/5"
                             (click)="!isTimelineItemLocked(item) && openTimelineItemModal(i)"
                             [class.ring-2]="item.editing" [class.ring-brand-500/50]="item.editing">
                             <div *ngIf="!item.editing" class="space-y-2">
                                 <div class="flex justify-between items-start">
                                     <div class="space-y-1">
                                         <div class="text-[10px] font-bold text-neutral-800 uppercase tracking-widest">
-                                            {{ getTagLabel(item.tag) }}</div>
-                                        <div class="text-sm font-semibold text-neutral-800 dark:text-neutral-200">{{ item.date || 'Kein Datum'
-                                            }}</div>
+                                            {{ item.label || item.tag }}
+                                        </div>
+                                        <div class="flex items-baseline gap-2">
+                                            <div class="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+                                                {{ item.date || 'Kein Datum' }}
+                                            </div>
+                                            <div *ngIf="item.age !== undefined && item.age !== null" class="text-[10px] font-medium text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
+                                                {{ item.age }} Jahre
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="flex flex-wrap gap-2" *ngIf="item.place">
@@ -85,6 +93,8 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                                         item.citations?.length }}</span>
                                     <span *ngIf="item.notes?.length" class="badge badge-highlight">📝 {{
                                         item.notes?.length }}</span>
+                                    <span *ngIf="item.associations?.length" class="badge badge-info">👥 {{
+                                        item.associations?.length }}</span>
                                 </div>
                             </div>
                         </div>
@@ -106,16 +116,16 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
             [isNew]="true"
             [itemKind]="newTimelineDraft().itemKind"
             (itemKindChange)="newTimelineDraft.update(v => ({ ...v, itemKind: $event }))"
-            [availableSources]="availableSources"
-            [allPersonsOptions]="allPersonsOptions()"
-            (close)="closeTimelineCreateModal()" 
-            (save)="confirmAddTimelineItem()"
-            (openUpload)="openNewTimelineMediaAdd()"
-            (openGallery)="openNewTimelineMediaSelector()"
-            (addNote)="addNewTimelineNote()"
-            (removeNote)="removeNewTimelineNote($event)"
-            (openViewer)="openViewer($event)"
-            (masterSaved)="onMasterSaved()">
+                [availableSources]="availableSources()"
+                [allPersonsOptions]="allPersonsSignal()"
+                (close)="closeTimelineCreateModal()" 
+                (search)="store.searchPersons($event)"
+                (save)="confirmAddTimelineItem()"
+                (openUpload)="openNewTimelineMediaAdd()"
+                (openGallery)="openNewTimelineMediaSelector()"
+                (addNote)="addNewTimelineNote()"
+                (removeNote)="removeNewTimelineNote($event)"
+                (openViewer)="openViewer($event)">
         </app-event-modal>
 
         <app-event-modal 
@@ -124,18 +134,18 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
             [isNew]="false"
             [itemKind]="editTimelineDraft()?.itemKind"
             (itemKindChange)="editTimelineDraft() && editTimelineDraft.update(v => ({ ...v, itemKind: $event }))"
-            [availableSources]="availableSources"
-            [allPersonsOptions]="allPersonsOptions()"
+            [availableSources]="availableSources()"
+            [allPersonsOptions]="allPersonsSignal()"
             [showDelete]="!!editTimelineDraft() && !isTimelineItemLocked(activeTimelineItem()!)"
             (close)="closeTimelineItemModal()"
+            (search)="store.searchPersons($event)"
             (save)="saveTimelineItemModal()"
             (delete)="removeTimelineItemModal()"
             (openUpload)="openTimelineMediaAdd()"
             (openGallery)="openTimelineMediaSelector()"
             (addNote)="addTimelineItemNote()"
             (removeNote)="removeTimelineItemNote($event)"
-            (openViewer)="openViewer($event)"
-            (masterSaved)="onMasterSaved()">
+            (openViewer)="openViewer($event)">
         </app-event-modal>
 
         <app-place-modal [visible]="showPlaceModal" [mode]="placeModalMode" [initialData]="selectedPlaceForModal"
@@ -145,7 +155,7 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
         <app-media-add-modal 
             *ngIf="showMediaAddModal()" 
             [visible]="true"
-            [treeId]="authService.currentTree()?.id || ''"
+            [treeId]="person()?.treeId || ''"
             (closed)="showMediaAddModal.set(false)" 
             (saved)="onMediaAddUploaded($event)">
         </app-media-add-modal>
@@ -161,12 +171,11 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
     `
 })
 export class PersonTabTimelineComponent {
-    @Input({ required: true }) person!: Individual;
-    @Input({ required: true }) treeData!: TreeData | null;
-    @Input({ required: true }) timeline = signal<TimelineItem[]>([]);
-    @Input({ required: true }) availableSources: any[] = [];
-    @Output() changed = new EventEmitter<void>();
-    @Output() masterSaved = new EventEmitter<void>();
+    person = input.required<Individual>();
+    timeline = input.required<TimelineItem[]>();
+    availableSources = input<any[]>([]);
+    allPersonsSignal = input<{id: string, displayName: string}[]>([]);
+    @Output() changed = new EventEmitter<TimelineItem[]>();
 
     private router = inject(Router);
     private personTimelineService = inject(PersonTimelineService);
@@ -174,6 +183,7 @@ export class PersonTabTimelineComponent {
     public mediaService = inject(MediaService);
     public placeService = inject(PlaceService);
     private cdr = inject(ChangeDetectorRef);
+    protected store = inject(PersonFeatureStore);
 
     showTimelineCreateModal = signal(false);
     showTimelineItemModal = signal(false);
@@ -217,21 +227,8 @@ export class PersonTabTimelineComponent {
     viewerUrl = signal<string | null>(null);
     viewerTitle = signal<string>('');
 
-    allPersonsOptions = computed(() => {
-        const data = this.treeData;
-        if (!data || !data.individuals) return [];
-        return data.individuals.map(ind => ({
-            id: ind.id,
-            displayName: `${this.personTimelineService.getPrimaryName(ind)} (${ind.id})`
-        })).sort((a, b) => a.displayName.localeCompare(b.displayName));
-    });
-
-    getTagLabel(tag: string) {
-        return this.personTimelineService.getTagLabel(tag);
-    }
-
     isTimelineItemLocked(item: TimelineItem): boolean {
-        return item.originalType === 'family-event';
+        return item.originalType === 'family-event' && item.originalIndex === -1;
     }
 
     addTimelineItem() {
@@ -261,8 +258,7 @@ export class PersonTabTimelineComponent {
         const isFact = draft.itemKind === 'fact';
         const text = (draft.description || '').trim();
 
-        const current = this.timeline();
-        this.timeline.set([...current, {
+        const newItem: TimelineItem = {
             originalType: isFact ? 'fact' : 'event',
             originalIndex: -1,
             tag: draft.type || 'EVEN',
@@ -276,9 +272,12 @@ export class PersonTabTimelineComponent {
             associations: draft.associations || [],
             editing: false,
             expanded: true
-        }]);
+        };
+
+        const currentTimeline = [...this.timeline(), newItem];
+        this.newTimelineDraft.set({} as any);
         this.showTimelineCreateModal.set(false);
-        this.onChanged();
+        this.onChanged(currentTimeline);
     }
 
     openTimelineItemModal(index: number) {
@@ -287,29 +286,24 @@ export class PersonTabTimelineComponent {
         
         const item = current[index];
         item.editing = false;
-        this.timeline.set([...current]);
         this.activeTimelineItemIndex.set(index);
 
         const factTags = ['OCCU', 'EDUC', 'RELI', 'RESI', 'TITL', 'NATI', 'PROP', 'MILI', 'DSCR', 'CAST', 'FACT'];
         const isFact = item.originalType === 'fact' || factTags.includes(item.tag);
-        let subType = '';
-        let description = '';
         let value = '';
 
         if (isFact) {
             value = item.value || item.description || '';
-        } else {
-            description = item.description || '';
         }
 
         this.editTimelineDraft.set({
             itemKind: isFact ? 'fact' : 'event',
             type: item.tag,
-            subType: subType,
+            subType: '',
             value: value,
             dateText: item.date || '',
             place: item.place || '',
-            description: description,
+            description: isFact ? '' : (item.description || ''),
             media: JSON.parse(JSON.stringify(item.media || [])),
             citations: JSON.parse(JSON.stringify(item.citations || [])),
             notes: JSON.parse(JSON.stringify(item.notes || [])),
@@ -335,27 +329,29 @@ export class PersonTabTimelineComponent {
         const idx = this.activeTimelineItemIndex();
         const draft = this.editTimelineDraft();
 
-        if (idx === null || !draft) return;
-        const current = this.timeline();
-        if (!current[idx]) return;
-
         const isFact = draft.itemKind === 'fact';
         const text = (draft.description || '').trim();
 
-        current[idx].tag = draft.type || 'EVEN';
-        current[idx].date = draft.dateText || '';
-        current[idx].place = draft.place || '';
-        current[idx].value = isFact ? (draft.value || text) : '';
-        current[idx].description = isFact ? text : (draft.subType ? draft.subType + (text ? ' - ' + text : '') : text);
-        current[idx].media = draft.media || [];
-        current[idx].notes = draft.notes || [];
-        current[idx].citations = draft.citations || [];
-        current[idx].associations = draft.associations || [];
-        current[idx].editing = false;
+        const updatedTimeline = this.timeline().map((item, i) => {
+            if (i !== idx) return item;
+            
+            return {
+                ...item,
+                tag: draft.type || 'EVEN',
+                date: draft.dateText || '',
+                place: draft.place || '',
+                value: isFact ? (draft.value || text) : '',
+                description: isFact ? text : (draft.subType ? draft.subType + (text ? ' - ' + text : '') : text),
+                media: draft.media || [],
+                notes: draft.notes || [],
+                citations: draft.citations || [],
+                associations: draft.associations || [],
+                editing: false
+            };
+        });
 
-        this.timeline.set([...current]);
         this.closeTimelineItemModal();
-        this.onChanged();
+        this.onChanged(updatedTimeline);
     }
 
     removeTimelineItemModal() {
@@ -363,10 +359,10 @@ export class PersonTabTimelineComponent {
         if (idx === null) return;
         const current = this.timeline();
         if (!current[idx] || this.isTimelineItemLocked(current[idx])) return;
+        
         current.splice(idx, 1);
-        this.timeline.set([...current]);
         this.closeTimelineItemModal();
-        this.onChanged();
+        this.onChanged(current);
     }
 
     openNewTimelineMediaAdd() {
@@ -455,7 +451,6 @@ export class PersonTabTimelineComponent {
         
         this.showMediaAddModal.set(false);
         this.reopenModals();
-        this.onChanged();
     }
 
     onMediaSelected(mediaObj: any) {
@@ -475,7 +470,6 @@ export class PersonTabTimelineComponent {
         
         this.showMediaSelector.set(false);
         this.reopenModals();
-        this.onChanged();
     }
 
     private mapMedia(media: any) {
@@ -509,19 +503,21 @@ export class PersonTabTimelineComponent {
 
     onPlaceModalSaved(placeData: any) {
         if (this.activeTimelineIndexForPlace !== null) {
-            const current = this.timeline();
-            current[this.activeTimelineIndexForPlace].place = placeData.name;
-            this.timeline.set([...current]);
+            const current = [...this.timeline()];
+            current[this.activeTimelineIndexForPlace] = { ...current[this.activeTimelineIndexForPlace], place: placeData.name };
+            this.showPlaceModal = false;
+            this.onChanged(current);
+        } else {
+            this.showPlaceModal = false;
         }
-        this.showPlaceModal = false;
-        this.onChanged();
     }
 
-    onChanged() {
-        this.changed.emit();
-    }
-
-    onMasterSaved() {
-        this.masterSaved.emit();
+    onChanged(newTimeline: TimelineItem[]) {
+        const p = this.person();
+        const updatedTimeline = newTimeline.map(item => ({
+            ...item,
+            personId: p?.id || (this.store ? this.store.personId() : null)
+        }));
+        this.changed.emit(updatedTimeline);
     }
 }

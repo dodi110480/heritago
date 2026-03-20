@@ -1,16 +1,14 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Individual, Family } from '../../core/models/models';
+import { Individual, Family, NoteCategory, DisplayNote } from '../../core/models/models';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 
 import { FamilyService } from '../../core/services/family.service';
-import { PlaceService } from '../../core/services/place.service';
 import { MediaService } from '../../core/services/media.service';
-import { SourceService } from '../../core/services/source.service';
 
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-state';
@@ -20,11 +18,13 @@ import { MediaSelector } from '../media/media-selector';
 import { MediaAddModal } from '../media/media-add-modal';
 import { EventModal } from '../../shared/components/ui/event-modal/event-modal';
 import { ImageViewer } from '../media/image-viewer';
-import { AppNotesList } from '../../shared/components/ui/app-notes-list/app-notes-list';
-import { DisplayNote, NoteCategory, DisplaySource } from '../../core/models/models';
-import { AppSourcesListComponent } from '../../shared/components/ui/app-sources-list/app-sources-list';
+import { AppRelationModal, RelationDraft } from '../../shared/components/ui/app-relation-modal/app-relation-modal';
 
-// New Tab Components
+// Shared Tab Components
+import { TabNotesComponent } from '../../shared/components/ui/tabs/tab-notes';
+import { TabCitationsComponent } from '../../shared/components/ui/tabs/tab-citations';
+
+// Sub Tab Components
 import { FamilyTabBasicsComponent } from './family-tab-basics';
 import { FamilyTabChildrenComponent } from './family-tab-children';
 import { FamilyTabEventsComponent } from './family-tab-events';
@@ -46,11 +46,12 @@ import { FamilyFeatureStore } from './family-feature.store';
         MediaAddModal,
         EventModal,
         ImageViewer,
-        AppNotesList,
-        AppSourcesListComponent,
         FamilyTabBasicsComponent,
         FamilyTabChildrenComponent,
-        FamilyTabEventsComponent
+        FamilyTabEventsComponent,
+        AppRelationModal,
+        TabNotesComponent,
+        TabCitationsComponent
     ],
     templateUrl: './family-detail.html'
 })
@@ -63,12 +64,10 @@ export class FamilyDetail implements OnInit, OnDestroy {
 
     // Modal States
     showEventModal = signal(false);
-    showNoteModal = signal(false);
     showMediaModal = signal(false);
     showMediaAddModal = signal(false);
-    showSourceModal = signal(false);
-    showAddChildModal = signal(false);
-    showCancelConfirmModal = signal(false);
+    showRelationModal = signal(false);
+    activeRelation = signal<RelationDraft | null>(null);
     showPlaceModal = signal(false);
     showMediaSelector = false;
 
@@ -76,28 +75,8 @@ export class FamilyDetail implements OnInit, OnDestroy {
     activeEventIndex = signal<number | null>(null);
     eventDraft = signal<any>(null);
 
-    activeNoteIndex = signal<number | null>(null);
-    noteDraft = signal<any>({
-        id: '',
-        text: '',
-        noteType: 'COMMENT' as NoteCategory,
-        createdAt: new Date(),
-        isPrivate: false
-    });
-
-    activeSourceIndex = signal<number | null>(null);
-    sourceSearchQuery = signal('');
-    noteSearchQuery = signal('');
-    sourceDraft = signal<{ sourceId: string; confidence?: string; whereInSource?: string; text?: string; date?: string }>({ sourceId: '' });
-
     activeMediaIndex = signal<number | null>(null);
     mediaDraft = signal<any>(null);
-
-    // Kind hinzufügen State
-    addChildQuery = '';
-    addChildResults = signal<Individual[]>([]);
-    selectedChildId = signal<string | null>(null);
-    addChildError = signal<string | null>(null);
 
     // Image viewer for media previews
     viewerUrl = signal<string | null>(null);
@@ -105,13 +84,6 @@ export class FamilyDetail implements OnInit, OnDestroy {
     pendingReopenEventModal = false;
 
     private sub = new Subscription();
-
-    allPersonsOptions = computed(() => {
-        return this.store.individuals().map(ind => ({
-            id: ind.id,
-            displayName: `${ind.firstName || ''} ${ind.lastName || ''} (${ind.id})`
-        }));
-    });
 
     ngOnInit() {
         this.sub.add(
@@ -175,7 +147,6 @@ export class FamilyDetail implements OnInit, OnDestroy {
             return { ...fam };
         });
 
-        this.store.markDirty();
         this.showEventModal.set(false);
         this.store.saveFamily();
     }
@@ -187,239 +158,44 @@ export class FamilyDetail implements OnInit, OnDestroy {
             }
             return { ...fam } as Family;
         });
-        this.store.markDirty();
         this.store.saveFamily();
-    }
-
-    // --- Notes ---
-    onNoteCreateRequested() {
-        this.activeNoteIndex.set(null);
-        this.noteDraft.set({
-            id: 'note-' + Date.now(),
-            text: '',
-            noteType: 'COMMENT' as NoteCategory,
-            createdAt: new Date(),
-            isPrivate: false
-        });
-        this.showNoteModal.set(true);
-    }
-
-    onNoteEditRequested(note: DisplayNote) {
-        const fam = this.store.family();
-        if (!fam || !fam.notes) return;
-        const index = fam.notes.findIndex(n => n.id === note.id);
-        if (index !== -1) {
-            this.activeNoteIndex.set(index);
-            this.noteDraft.set({ ...note });
-            this.showNoteModal.set(true);
-        }
-    }
-
-    onNoteSave() {
-        const draft = this.noteDraft();
-        if (!draft?.text?.trim()) return;
-
-        this.store.family.update(fam => {
-            if (!fam) return fam;
-            const notes = [...(fam.notes || [])];
-            const index = this.activeNoteIndex();
-            if (index !== null) {
-                notes[index] = draft;
-            } else {
-                notes.push(draft);
-            }
-            return { ...fam, notes };
-        });
-
-        this.store.markDirty();
-        this.showNoteModal.set(false);
-        this.store.saveFamily();
-    }
-
-    onNoteDeletedFamily(noteId: string) {
-        if (!confirm('Möchtest du diese Notiz wirklich löschen?')) return;
-        
-        this.store.family.update(fam => {
-            if (!fam) return fam;
-            return {
-                ...fam,
-                notes: (fam.notes || []).filter(n => n.id !== noteId)
-            };
-        });
-        this.store.markDirty();
-        this.store.saveFamily();
-    }
-
-    onNoteDeleteFromModal() {
-        const idx = this.activeNoteIndex();
-        if (idx !== null) {
-            this.store.family.update(fam => {
-                if (!fam || !fam.notes) return fam;
-                const notes = [...fam.notes];
-                notes.splice(idx, 1);
-                return { ...fam, notes };
-            });
-            this.store.markDirty();
-            this.showNoteModal.set(false);
-            this.store.saveFamily();
-        }
-    }
-
-    // --- Sources ---
-    mappedSources = computed(() => {
-        const fam = this.store.family() as any;
-        if (!fam || !fam.citations) return [];
-        return fam.citations.map((cit: any, i: number) => {
-            const rawSource = this.store.availableSources().find(s => s.id === cit.sourceId);
-            return {
-                id: cit.id || `cit-${i}`,
-                title: rawSource ? rawSource.title : 'Unbekannte Quelle',
-                author: rawSource ? rawSource.author : undefined,
-                publication: rawSource ? rawSource.publication : undefined,
-                confidence: cit.confidence as any,
-                whereInSource: cit.whereInSource || cit.page,
-                date: cit.date || cit.dateText,
-                description: (cit.whereInSource || cit.page) ? `Fundstelle: ${cit.whereInSource || cit.page}` : '',
-                text: cit.text,
-                createdAt: (cit.date || cit.dateText) ? new Date(cit.date || cit.dateText) : new Date(),
-                _originalIndex: i
-            } as any;
-        });
-    });
-
-    onSourceCreateRequested() {
-        this.sourceDraft.set({ sourceId: '', whereInSource: '', text: '', confidence: '', date: '' });
-        this.activeSourceIndex.set(null);
-        this.showSourceModal.set(true);
-    }
-
-    onSourceEditRequested(source: any) {
-        const index = source._originalIndex;
-        if (index === undefined) return;
-        const fam = this.store.family() as any;
-        if (!fam || !fam.citations || !fam.citations[index]) return;
-        
-        const cit = fam.citations[index];
-        this.sourceDraft.set({
-            sourceId: cit.sourceId || '',
-            whereInSource: cit.whereInSource || cit.page || '',
-            confidence: cit.confidence || '',
-            text: cit.text || '',
-            date: cit.date || cit.dateText || ''
-        });
-        this.activeSourceIndex.set(index);
-        this.showSourceModal.set(true);
-    }
-
-    onSourceSave() {
-        const draft = this.sourceDraft();
-        if (!draft.sourceId) {
-            alert('Bitte wählen Sie eine gültige Quelle aus.');
-            return;
-        }
-
-        this.store.family.update(fam => {
-            if (!fam) return fam;
-            const f = { ...fam } as any;
-            if (!f.citations) f.citations = [];
-            
-            const citation = {
-                sourceId: draft.sourceId,
-                whereInSource: draft.whereInSource || '',
-                confidence: draft.confidence || '',
-                text: draft.text || '',
-                date: draft.date || ''
-            };
-
-            const index = this.activeSourceIndex();
-            if (index !== null) f.citations[index] = citation;
-            else f.citations.push(citation);
-            return f;
-        });
-
-        this.store.markDirty();
-        this.showSourceModal.set(false);
-        this.store.saveFamily();
-    }
-
-    onSourceDeleteFromModal() {
-        const index = this.activeSourceIndex();
-        if (index === null) return;
-        
-        if (confirm('Möchtest du diesen Beleg wirklich löschen?')) {
-            this.store.family.update(fam => {
-                if (!fam || !fam.citations) return fam;
-                const f = { ...fam } as any;
-                f.citations.splice(index, 1);
-                return f;
-            });
-            this.store.markDirty();
-            this.showSourceModal.set(false);
-            this.store.saveFamily();
-        }
     }
 
     // --- Children ---
     openAddChildModal() {
-        this.addChildQuery = '';
-        this.addChildResults.set([]);
-        this.selectedChildId.set(null);
-        this.addChildError.set(null);
-        this.showAddChildModal.set(true);
+        this.activeRelation.set({
+            type: 'CHILD',
+            personId: '',
+            personName: '',
+            pedigreeType: 'BIRTH',
+            isPrimary: false
+        });
+        this.showRelationModal.set(true);
     }
 
-    confirmAddChild() {
-        this.addChildError.set(null);
+    onRelationSave(draft: RelationDraft) {
+        if (!draft.personId) return;
+        
         const currentFam = this.store.family();
         if (!currentFam) return;
-        
-        const query = (this.addChildQuery || '').trim().toLowerCase();
-        if (!query) {
-            this.addChildError.set('Bitte einen Namen oder eine ID eingeben.');
-            return;
-        }
-
-        const existing = new Set<string>([
-            ...(currentFam.children || []),
-            currentFam.husband || '',
-            currentFam.wife || ''
-        ].filter(Boolean));
-
-        const candidates = this.store.individuals().filter(p => {
-            const id = (p.id || '').toLowerCase();
-            const name = `${p.firstName || ''} ${p.lastName || ''}`.trim().toLowerCase();
-            return id === query || name.includes(query);
-        });
-
-        if (candidates.length === 0) {
-            this.addChildError.set('Keine passende Person gefunden.');
-            return;
-        }
-
-        if (candidates.length > 1 && !this.selectedChildId()) {
-            this.addChildResults.set(candidates.slice(0, 10));
-            return;
-        }
-
-        const selected = this.selectedChildId()
-            ? candidates.find(c => c.id === this.selectedChildId()) || candidates[0]
-            : candidates[0];
-
-        if (existing.has(selected.id)) {
-            this.addChildError.set('Diese Person ist bereits in der Familie verknüpft.');
-            return;
-        }
 
         this.store.family.update(fam => {
             if (fam) {
-                if (!fam.children) fam.children = [];
-                fam.children.push(selected.id);
+                if (draft.type === 'CHILD') {
+                    if (!fam.children) fam.children = [];
+                    if (!fam.children.includes(draft.personId)) {
+                        fam.children.push(draft.personId);
+                    }
+                } else if (draft.type === 'FATHER') {
+                    fam.husband = draft.personId;
+                } else if (draft.type === 'MOTHER') {
+                    fam.wife = draft.personId;
+                }
             }
             return { ...fam } as Family;
         });
         
-        this.store.markDirty();
-        this.showAddChildModal.set(false);
+        this.showRelationModal.set(false);
         this.store.saveFamily();
     }
 
@@ -430,7 +206,28 @@ export class FamilyDetail implements OnInit, OnDestroy {
             }
             return { ...fam } as Family;
         });
-        this.store.markDirty();
+        this.store.saveFamily();
+    }
+
+    onRelationDeleteFromModal() {
+        const rel = this.activeRelation();
+        if (!rel) return;
+
+        this.store.family.update(fam => {
+            if (!fam) return fam;
+            if (rel.type === 'CHILD' && rel.personId) {
+                if (fam.children) {
+                    fam.children = fam.children.filter(id => id !== rel.personId);
+                }
+            } else if (rel.type === 'FATHER') {
+                fam.husband = undefined;
+            } else if (rel.type === 'MOTHER') {
+                fam.wife = undefined;
+            }
+            return { ...fam } as Family;
+        });
+
+        this.showRelationModal.set(false);
         this.store.saveFamily();
     }
 
@@ -468,14 +265,26 @@ export class FamilyDetail implements OnInit, OnDestroy {
                     url: this.mediaService.getMediaUrl(mediaObj.id)
                 });
                 this.store.family.set({ ...f });
+                this.store.saveFamily();
             }
         }
         this.showMediaSelector = false;
-        this.store.markDirty();
         if (this.pendingReopenEventModal) {
             this.showEventModal.set(true);
             this.pendingReopenEventModal = false;
         }
+    }
+
+    openMediaAddModal() {
+        this.showMediaAddModal.set(true);
+    }
+
+    openEditMediaModal(index: number) {
+        const fam = this.store.family();
+        if (!fam || !fam.media?.[index]) return;
+        this.activeMediaIndex.set(index);
+        this.mediaDraft.set(JSON.parse(JSON.stringify(fam.media[index])));
+        this.showMediaModal.set(true);
     }
 
     onMediaAddUploaded(media: any) {
@@ -491,9 +300,9 @@ export class FamilyDetail implements OnInit, OnDestroy {
                 f.media = f.media || [];
                 f.media.push({ id: media.id, title: media.title || media.path || '', isPrimary: f.media.length === 0, mimeType: media.mimeType, url: this.mediaService.getMediaUrl(media.id) });
                 this.store.family.set({ ...f });
+                this.store.saveFamily();
             }
         }
-        this.store.markDirty();
         this.showMediaAddModal.set(false);
         if (this.pendingReopenEventModal) {
             this.showEventModal.set(true);
@@ -512,7 +321,6 @@ export class FamilyDetail implements OnInit, OnDestroy {
             else fam.media.push(draft);
             return { ...fam };
         });
-        this.store.markDirty();
         this.showMediaModal.set(false);
         this.store.saveFamily();
     }
@@ -522,7 +330,6 @@ export class FamilyDetail implements OnInit, OnDestroy {
             if (fam?.media) fam.media.splice(index, 1);
             return { ...fam } as Family;
         });
-        this.store.markDirty();
         this.showMediaModal.set(false);
         this.store.saveFamily();
     }
@@ -531,5 +338,9 @@ export class FamilyDetail implements OnInit, OnDestroy {
     isImageUrl(url: string | undefined): boolean {
         if (!url) return false;
         return /\.(jpeg|jpg|gif|png|webp|svg)$/i.test(url);
+    }
+
+    onPlaceSaved(place: any) {
+        this.showPlaceModal.set(false);
     }
 }

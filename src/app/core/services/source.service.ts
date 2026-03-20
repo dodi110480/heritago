@@ -29,15 +29,11 @@ export class SourceService {
     }
 
     saveSource(treeName: string, payload: any): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/source`, payload, { withCredentials: true }).pipe(
-            map(res => res?.data ?? res)
-        );
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/source`, payload, { withCredentials: true });
     }
 
     mergeSources(treeName: string, sourceId: string, targetId: string): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/source/merge`, { sourceId, targetId }, { withCredentials: true }).pipe(
-            map(res => res?.data ?? res)
-        );
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/source/merge`, { sourceId, targetId }, { withCredentials: true });
     }
 
     getRepositories(treeName: string): Observable<any> {
@@ -47,8 +43,6 @@ export class SourceService {
     }
 
     saveRepository(treeName: string, payload: any): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/repository`, payload, { withCredentials: true }).pipe(
-            map(res => res?.data ?? res)
-        );
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/repository`, payload, { withCredentials: true });
     }
 }

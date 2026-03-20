@@ -229,7 +229,7 @@ export class AppSourcesListComponent {
 
     if (confirm('Möchtest du diese Quelle wirklich UNWIDERRUFLICH aus dem gesamten Stammbaum löschen? Alle Belege an Personen und Ereignissen gehen verloren.')) {
         this.sourceService.saveSource(tree.name, { id: payload.source.id, mode: 'delete', reassignToId: payload.reassignToId }).subscribe(res => {
-            if (res.success) {
+            if (res && res.success) {
                 this.showSourceMasterModal.set(false);
                 this.masterSaved.emit();
             }
@@ -255,11 +255,11 @@ export class AppSourcesListComponent {
   // ---------------------------
 
   getSourceTypeClass(sourceType?: SourceType): string {
-    return 'bg-blue-100 text-blue-800';
+    return 'badge-primary';
   }
 
   getSourceTypeBorder(sourceType?: SourceType): string {
-    return 'border-blue-500';
+    return 'border-brand-500/20';
   }
 
   getSourceTypeIcon(type?: SourceType): string {

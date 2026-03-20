@@ -11,16 +11,14 @@ export class PlaceService {
     private baseApiUrl = `${environment.apiUrl}/tree/`;
 
     searchPlaces(treeName: string, query: string): Observable<any> {
-        return this.http.get<any>(`${this.baseApiUrl}${treeName}/places/search`, {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/place/search`, {
             params: { q: query },
             withCredentials: true
         }).pipe(map(res => res?.data ?? res));
     }
 
     savePlace(treeName: string, data: any): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, data, { withCredentials: true }).pipe(
-            map(res => res?.data ?? res)
-        );
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, data, { withCredentials: true });
     }
 
     getPlaces(treeName: string): Observable<any> {
@@ -42,13 +40,20 @@ export class PlaceService {
     }
 
     mergePlaces(treeName: string, sourceId: string, targetId: string): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place/merge`, { sourceId, targetId }, { withCredentials: true }).pipe(
-            map(res => res?.data ?? res)
-        );
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place/merge`, { sourceId, targetId }, { withCredentials: true });
     }
 
     deletePlace(treeName: string, placeName: string): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, { mode: 'delete', name: placeName }, { withCredentials: true }).pipe(
+        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, { mode: 'delete', name: placeName }, { withCredentials: true });
+    }
+
+    getPlacesHierarchy(treeName: string, search?: string): Observable<any> {
+        let params: any = {};
+        if (search) params.q = search;
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/places/hierarchy`, { 
+            params,
+            withCredentials: true 
+        }).pipe(
             map(res => res?.data ?? res)
         );
     }

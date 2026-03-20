@@ -1,14 +1,12 @@
-import { Component, inject, signal, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, effect, ViewEncapsulation, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { TreeService } from '../../core/services/tree.service';
 import { PlaceModal } from '../../shared/components/ui/place-modal/place-modal';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 import { AppPlacesList } from '../../shared/components/ui/app-places-list/app-places-list';
-
-
 import { PlaceService } from '../../core/services/place.service';
+
 @Component({
     selector: 'app-place-list',
     standalone: true,
@@ -16,10 +14,10 @@ import { PlaceService } from '../../core/services/place.service';
     templateUrl: './place-list.html',
     encapsulation: ViewEncapsulation.None
 })
-export class PlaceList {
+export class PlaceList implements OnInit {
     public placeService = inject(PlaceService);
     private treeService = inject(TreeService);
-    private router = inject(Router);
+    private cdr = inject(ChangeDetectorRef);
 
     places = signal<any[]>([]);
     hierarchy = signal<any[]>([]);
@@ -27,11 +25,19 @@ export class PlaceList {
     isSaving = signal(false);
     currentTree = signal<string | null>(null);
     errorMessage = signal<string | null>(null);
+    searchTerm = signal('');
 
     // Modal State
     isModalOpen = signal(false);
     modalMode = signal<'add' | 'edit'>('add');
     selectedPlaceData = signal<any>(null);
+
+    constructor() {
+        effect(() => {
+            const term = this.searchTerm();
+            this.refreshHierarchy(term);
+        }, { allowSignalWrites: true });
+    }
 
     ngOnInit() {
         this.loadPlaces();
@@ -55,11 +61,11 @@ export class PlaceList {
 
         this.placeService.getPlaces(tree).subscribe({
             next: (res: any) => {
-                const items = res.places || [];
+                const items = Array.isArray(res) ? res : (res.data || res.places || []);
                 this.places.set(items);
-                this.hierarchy.set(this.buildHierarchy(items));
-                this.loading.set(false);
-                // Refresh current modal data if open
+                
+                this.refreshHierarchy(this.searchTerm());
+
                 if (this.isModalOpen() && this.selectedPlaceData()?.id) {
                     const refreshed = items.find((p: any) => p.id === this.selectedPlaceData().id) || null;
                     if (refreshed) {
@@ -69,25 +75,22 @@ export class PlaceList {
                     }
                 }
             },
-            error: () => this.loading.set(false)
+            error: (err) => {
+                console.error('PlaceList: Error fetching places:', err);
+                this.loading.set(false);
+                this.cdr.detectChanges();
+            }
         });
     }
 
-    private buildHierarchy(places: any[]) {
-        const byId = new Map<string, any>();
-        const nodes = places.map((p) => ({ ...p, children: [] as any[] }));
-        nodes.forEach((n) => byId.set(n.id, n));
-        const roots: any[] = [];
-        for (const n of nodes) {
-            if (n.parentId && byId.has(n.parentId)) byId.get(n.parentId).children.push(n);
-            else roots.push(n);
-        }
-        const sortRec = (arr: any[]) => {
-            arr.sort((a, b) => a.name.localeCompare(b.name));
-            arr.forEach((c) => sortRec(c.children));
-        };
-        sortRec(roots);
-        return roots;
+    refreshHierarchy(search?: string) {
+        const tree = this.currentTree();
+        if (!tree) return;
+        this.placeService.getPlacesHierarchy(tree, search).subscribe(h => {
+            this.hierarchy.set(h);
+            this.loading.set(false);
+            this.cdr.detectChanges();
+        });
     }
 
     openAddModal() {

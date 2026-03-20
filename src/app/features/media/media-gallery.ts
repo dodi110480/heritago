@@ -137,4 +137,9 @@ export class MediaGallery implements OnInit {
     isPdf(item: any): boolean {
         return this.mediaService.isPdf(item);
     }
+
+    onSearchQueryChange(query: string) {
+        this.searchQuery.set(query);
+        this.loadMedia();
+    }
 }

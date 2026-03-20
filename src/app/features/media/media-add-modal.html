@@ -84,11 +84,12 @@
 
       <!-- Citations Tab -->
       <div *ngIf="activeTab() === 'citations'">
-        <app-sources-list [entityId]="id() || ''" [entityType]="'MEDIA'" [sourcesDisplay]="normalizedSources()"
-          [allowCreate]="true" [allowEdit]="true" [placeholder]="'Medien-Quellen durchsuchen...'"
-          (sourceCreateRequested)="onSourceCreateRequested()" (sourceEditRequested)="onSourceEditRequested($event)"
-          (sourceDeleted)="onSourceDeleted($event)" (masterSaved)="masterSaved.emit()">
-        </app-sources-list>
+        <app-tab-citations
+          [entity]="mediaAsEntity()"
+          [entityType]="'MEDIA'"
+          [availableSources]="sourceOptions()"
+          (changed)="onEntityChanged($event)">
+        </app-tab-citations>
       </div>
 
       <!-- Identifiers Tab -->
@@ -147,10 +148,11 @@
 
       <!-- Notes Tab -->
       <div *ngIf="activeTab() === 'notes'" class="animate-in fade-in slide-in-from-top-2 duration-300">
-        <app-notes-list [entityId]="id()" [entityType]="'MEDIA'" [notesDisplay]="notes()" [allowCreate]="true"
-          [allowEdit]="true" [placeholder]="'Medien-Notizen durchsuchen...'"
-          (noteCreateRequested)="onNoteCreateRequested()" (noteEditRequested)="onNoteEditRequested($event)"
-          (noteDeleted)="onNoteDeleted($event)"></app-notes-list>
+        <app-tab-notes
+          [entity]="mediaAsEntity()"
+          [entityType]="'MEDIA'"
+          (changed)="onEntityChanged($event)">
+        </app-tab-notes>
       </div>
     </div>
   </div>
@@ -178,81 +180,6 @@
         </svg>
         <span class="hidden md:inline">Beschnitt anpassen</span>
       </button>
-    </div>
-  </div>
-
-</app-modal-shell>
-
-<!-- NOTE EDIT SUB-MODAL -->
-<app-modal-shell [visible]="showNoteSubModal()" [title]="activeNoteIndex() !== null ? 'Notiz bearbeiten' : 'Neue Notiz'"
-  icon="📝" size="md" [showSave]="true" [showDelete]="activeNoteIndex() !== null" (close)="showNoteSubModal.set(false)"
-  (save)="onNoteSave()" (delete)="onNoteDeleteFromModal()">
-  <div class="space-y-4">
-    <div class="form-group mb-0">
-      <label class="form-label">Kategorie / Typ</label>
-      <select [(ngModel)]="noteDraft().noteType" class="form-input">
-        <option value="COMMENT">Kommentar</option>
-        <option value="TRANSCRIPTION">Transkription</option>
-        <option value="RESEARCH">Forschung</option>
-        <option value="QUESTION">Frage</option>
-        <option value="TODO">Aufgabe</option>
-        <option value="HINT">Hinweis</option>
-        <option value="OTHER">Andere</option>
-      </select>
-    </div>
-
-    <div class="form-group mb-0">
-      <label class="form-label">Inhalt</label>
-      <textarea [(ngModel)]="noteDraft().text" class="form-input min-h-[160px] font-body"
-        placeholder="Schreibe deine Notiz hier..."></textarea>
-    </div>
-
-    <div
-      class="flex items-center gap-3 p-3 bg-neutral-50 dark:bg-neutral-900/50 rounded-xl border border-neutral-200 dark:border-neutral-800">
-      <div class="flex-1">
-        <div class="text-sm font-bold text-neutral-900">Private Notiz</div>
-        <div class="text-[10px] text-neutral-500">Nur für dich (und eingeladene Bearbeiter) sichtbar.</div>
-      </div>
-      <input type="checkbox" [(ngModel)]="noteDraft().isPrivate" class="checkbox checkbox-brand">
-    </div>
-  </div>
-</app-modal-shell>
-
-<!-- SOURCE EDIT SUB-MODAL -->
-<app-modal-shell [visible]="showSourceSubModal()" [title]="activeSourceIndex() !== null ? 'Quellenbeleg bearbeiten' : 'Neuer Quellenbeleg'"
-  icon="📖" size="md" [showSave]="true" [showDelete]="activeSourceIndex() !== null" (close)="showSourceSubModal.set(false)"
-  (save)="onSourceSave()" (delete)="onSourceDeleteFromModal()">
-  <div class="space-y-4">
-    <div class="form-group mb-0">
-      <label class="form-label text-[10px]">Quelle</label>
-      <select [(ngModel)]="sourceDraft().sourceId" class="form-input !py-1.5 text-sm">
-        <option value="">-- Quelle wählen --</option>
-        <option *ngFor="let s of sourceOptions()" [value]="s.id">{{s.title}}</option>
-      </select>
-    </div>
-    <div class="grid grid-cols-2 gap-3">
-      <div class="form-group mb-0">
-        <label class="form-label text-[10px]">Seite/Ort</label>
-        <input type="text" [(ngModel)]="sourceDraft().page" class="form-input !py-1.5 text-sm" placeholder="z.B. S. 12">
-      </div>
-      <div class="form-group mb-0">
-        <label class="form-label text-[10px]">Datum im Beleg</label>
-        <input type="text" [(ngModel)]="sourceDraft().dateText" class="form-input !py-1.5 text-sm" placeholder="z.B. 1900">
-      </div>
-    </div>
-    <div class="form-group mb-0">
-      <label class="form-label text-[10px]">Qualität</label>
-      <select [(ngModel)]="sourceDraft().confidence" class="form-input !py-1.5 text-sm">
-        <option value="">Wählen...</option>
-        <option value="CERTAIN">Sicher (3)</option>
-        <option value="VERY_LIKELY">Sehr wahrscheinlich (2)</option>
-        <option value="LIKELY">Wahrscheinlich (1)</option>
-        <option value="UNLIKELY">Unzuverlässig (0)</option>
-      </select>
-    </div>
-    <div class="form-group mb-0">
-      <label class="form-label text-[10px]">Zitat / Ausschnitt</label>
-      <input type="text" [(ngModel)]="sourceDraft().text" class="form-input !py-1.5 text-sm" placeholder="Zitierter Text">
     </div>
   </div>
 </app-modal-shell>

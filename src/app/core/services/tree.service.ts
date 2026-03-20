@@ -56,6 +56,34 @@ export class TreeService {
         return this.loadFallbackTree(timestamp);
     }
 
+    getMinimalIndividuals(treeName: string): Observable<any[]> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/individuals/minimal`, { withCredentials: true }).pipe(
+            switchMap(res => of(res?.data ?? res)),
+            catchError(() => of([]))
+        );
+    }
+
+    searchIndividuals(treeName: string, query: string): Observable<any[]> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/individuals/search?q=${encodeURIComponent(query)}`, { withCredentials: true }).pipe(
+            switchMap(res => of(res?.data ?? res)),
+            catchError(() => of([]))
+        );
+    }
+
+    getMinimalSources(treeName: string): Observable<any[]> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/sources/minimal`, { withCredentials: true }).pipe(
+            switchMap(res => of(res?.data ?? res)),
+            catchError(() => of([]))
+        );
+    }
+
+    getTreeValidation(treeName: string): Observable<any[]> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/validation`, { withCredentials: true }).pipe(
+            switchMap(res => of(res?.data ?? res)),
+            catchError(() => of([]))
+        );
+    }
+
     private loadFallbackTree(timestamp: number): Observable<TreeData | null> {
         return this.authService.getTrees().pipe(
             switchMap(trees => {

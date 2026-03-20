@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppModalShell } from '../app-modal-shell';
@@ -6,14 +6,16 @@ import { TreeService } from '../../../../core/services/tree.service';
 import { AppNotesList } from '../app-notes-list/app-notes-list';
 import { AppSourcesListComponent } from '../app-sources-list/app-sources-list';
 import { DisplayNote, NoteCategory, DisplaySource } from '../../../../core/models/models';
+import { AppPlaceInput } from '../app-place-input';
 
 
 import { PlaceService } from '../../../../core/services/place.service';
 import { MediaService } from '../../../../core/services/media.service';
+import { resolvePersonOption, stripPersonLabelToName } from '../../../utils/person-autocomplete';
 @Component({
     selector: 'app-event-modal',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppModalShell, AppNotesList, AppSourcesListComponent],
+    imports: [CommonModule, FormsModule, AppModalShell, AppNotesList, AppSourcesListComponent, AppPlaceInput],
     templateUrl: './event-modal.html'
 })
 export class EventModal {
@@ -29,6 +31,7 @@ export class EventModal {
     @Output() itemKindChange = new EventEmitter<'event' | 'fact'>();
     @Output() save = new EventEmitter<void>();
     @Output() delete = new EventEmitter<void>();
+    @Output() search = new EventEmitter<string>();
 
     // action outputs for citations/media/notes
 
@@ -94,6 +97,16 @@ export class EventModal {
 
     get typeOptions() {
         return this.itemKind === 'fact' ? this.FACT_TYPE_OPTIONS : this.EVENT_TYPE_OPTIONS;
+    }
+
+    get isPairEvent(): boolean {
+        const tag = this.item?.tag || this.item?.type;
+        return ['MARR', 'DIV', 'ENGA', 'DIVF', 'ANUL'].includes(tag);
+    }
+
+    get currentPartner() {
+        if (!this.item?.associations) return null;
+        return this.item.associations.find((a: any) => a.role === 'SPOUSE');
     }
 
     onItemKindChange(kind: 'event' | 'fact') {
@@ -287,15 +300,10 @@ export class EventModal {
 
     private treeService = inject(TreeService);
 
-    // Place search suggestions
-    placeSearchResults = signal<string[]>([]);
-    showPlaceResults = signal(false);
-
     getMediaUrl(idOrUrl: string | undefined, variant?: string) {
         if (!idOrUrl) return null;
         return this.mediaService.getMediaUrl(idOrUrl, variant || 'thumbs');
     }
-
     emitClose() { this.close.emit(); }
     emitSave() { this.save.emit(); }
     emitDelete() { this.delete.emit(); }
@@ -310,27 +318,61 @@ export class EventModal {
     emitOpenGallery() { this.openGallery.emit(); }
     emitOpenViewer(m: any) { this.openViewer.emit(m); }
 
-    // Participant management (client-side in draft for now, like citations)
+    // Participant management
     @Input() allPersonsOptions: any[] = [];
     showParticipantAddModal = signal(false);
     newParticipantDraft = signal<any>({ role: 'OTHER', personInput: '', relationText: '', notes: '' });
+    
+    partnerInputFocused = signal(false);
+    participantInputFocused = signal(false);
 
     addParticipant() {
         this.newParticipantDraft.set({ role: 'OTHER', personInput: '', relationText: '', notes: '' });
         this.showParticipantAddModal.set(true);
     }
 
+    onParticipantInputChange(val: string) {
+        this.newParticipantDraft.update(v => ({ ...v, personInput: val }));
+        if (val && val.length >= 2) {
+            this.search.emit(val);
+            this.participantInputFocused.set(true);
+        } else {
+            this.participantInputFocused.set(false);
+        }
+    }
+
+    private resolveParticipantOption(personInput: string) {
+        return resolvePersonOption(personInput, this.allPersonsOptions, { allowPrefix: true });
+    }
+
+    selectParticipantOption(displayName: string) {
+        this.newParticipantDraft.update(v => ({ ...v, personInput: displayName }));
+        this.participantInputFocused.set(false);
+    }
+
+    onParticipantInputFocus() {
+        this.participantInputFocused.set(true);
+    }
+
+    onParticipantInputBlur() {
+        window.setTimeout(() => this.participantInputFocused.set(false), 120);
+    }
+
     confirmAddParticipant() {
         const draft = this.newParticipantDraft();
-        const personInput = (draft.personInput || '').trim();
-        const match = this.allPersonsOptions.find((opt: any) => opt.displayName === personInput);
-        
+        const personInput = (draft.personInput || "").trim();
+        const match = this.resolveParticipantOption(personInput);
+        const label = match
+            ? stripPersonLabelToName(String(match.displayName || match.name || personInput))
+            : personInput;
+
         const participant = {
-            role: draft.role || 'OTHER',
+            role: draft.role || "OTHER",
             associatedPersonId: match?.id || null,
-            associatedPersonName: match ? match.displayName.replace(` (${match.id})`, '') : personInput,
-            relationText: draft.relationText || '',
-            notes: draft.notes || '',
+            personId: match?.id || null,
+            associatedPersonName: label,
+            relationText: draft.relationText || "",
+            notes: draft.notes || "",
             citations: []
         };
 
@@ -345,32 +387,6 @@ export class EventModal {
         }
     }
 
-    // Place search for live suggestions
-    onPlaceInput(query: string) {
-        if (!query || query.length < 2) {
-            this.placeSearchResults.set([]);
-            this.showPlaceResults.set(false);
-            return;
-        }
-
-        this.treeService.getTreeData().subscribe(data => {
-            const treeName = data?.meta?.tree;
-            if (!treeName) return;
-
-            this.placeService.searchPlaces(treeName, query).subscribe(res => {
-                this.placeSearchResults.set(res.results || []);
-                this.showPlaceResults.set(true);
-            });
-        });
-    }
-
-    selectPlace(placeName: string) {
-        if (!this.item) return;
-        this.item.place = placeName;
-        this.placeSearchResults.set([]);
-        this.showPlaceResults.set(false);
-    }
-
     getRoleLabel(role: string): string {
         switch (role) {
             case 'GODPARENT': return 'Pate / Gevatter';
@@ -381,7 +397,61 @@ export class EventModal {
             case 'DOCTOR': return 'Arzt';
             case 'UNDERTAKER': return 'Bestatter';
             case 'OTHER': return 'Andere / Beteiligter';
+            case 'SPOUSE': return 'Ehepartner / Partner';
+            case 'PARTNER': return 'Partner';
             default: return role;
         }
+    }
+
+    onPartnerInputChange(val: string) {
+        if (!this.item) return;
+        if (val && val.length >= 2) {
+            this.search.emit(val);
+            this.partnerInputFocused.set(true);
+        } else {
+            this.partnerInputFocused.set(false);
+        }
+
+        const match = resolvePersonOption(val, this.allPersonsOptions, { allowPrefix: true });
+        
+        if (!this.item.associations) this.item.associations = [];
+        let spouseAssoc = this.item.associations.find((a: any) => a.role === 'SPOUSE');
+        
+        if (!val) {
+            // Remove if empty
+            if (spouseAssoc) {
+                const idx = this.item.associations.indexOf(spouseAssoc);
+                this.item.associations.splice(idx, 1);
+            }
+            return;
+        }
+
+        if (!spouseAssoc) {
+            spouseAssoc = { role: 'SPOUSE', citations: [] };
+            this.item.associations.push(spouseAssoc);
+        }
+
+        if (match) {
+            spouseAssoc.associatedPersonId = match.id;
+            spouseAssoc.associatedPersonName = stripPersonLabelToName(match.displayName || match.name || val);
+            spouseAssoc._personInput = match.displayName;
+        } else {
+            spouseAssoc.associatedPersonId = null;
+            spouseAssoc.associatedPersonName = val;
+            spouseAssoc._personInput = val;
+        }
+    }
+
+    selectPartnerOption(displayName: string) {
+        this.onPartnerInputChange(displayName);
+        this.partnerInputFocused.set(false);
+    }
+
+    onPartnerInputFocus() {
+        this.partnerInputFocused.set(true);
+    }
+
+    onPartnerInputBlur() {
+        window.setTimeout(() => this.partnerInputFocused.set(false), 120);
     }
 }

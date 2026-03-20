@@ -185,7 +185,7 @@ export class PlaceService {
 
     async savePlace(treeId: string, currentUserId: string | null, data: any) {
         const {
-            id, name, old_name, latitude, longitude, mode, jurisdiction,
+            id, name, latitude, longitude, mode, jurisdiction,
             historicNames, parentId, reassignToId, form, phrase, level,
             lang, formTemplate, translations, identifiers, notes
         } = data;
@@ -209,91 +209,98 @@ export class PlaceService {
             if (id && normalizedParentId === id) throw new Error('A place cannot be its own parent.');
         }
 
-        let beforeState = null;
-        let action: 'CREATE' | 'UPDATE' = 'CREATE';
-        let targetPlaceId: string | null = null;
-        let p: any;
+        return this.prisma.$transaction(async (tx) => {
+            let beforeState = null;
+            let action: 'CREATE' | 'UPDATE' = 'CREATE';
+            let targetPlaceId: string | null = null;
+            let p: any;
 
-        if (id) {
-            beforeState = await this.prisma.place.findFirst({ where: { id, treeId } });
-            if (!beforeState) throw new Error('Place not found.');
-            p = await this.prisma.place.update({
-                where: { id: beforeState.id },
-                data: {
-                    name, latitude: lat, longitude: lng, jurisdiction: jurisdiction || null,
-                    historicNames: normalizedHistoricNames, parentId: normalizedParentId,
-                    form: form || null, phrase: phrase || null, level: level || 'CITY',
-                    lang: lang || null, formTemplate: formTemplate || null
-                }
-            });
-            targetPlaceId = p.id;
-            action = 'UPDATE';
-        } else if (old_name && old_name !== name) {
-            beforeState = await this.prisma.place.findFirst({
-                where: { treeId, name: old_name, parentId: null }
-            });
-            if (beforeState) {
-                p = await this.prisma.place.update({
+            if (id) {
+                beforeState = await tx.place.findFirst({ where: { id, treeId } });
+                if (!beforeState) throw new Error('Place not found.');
+                p = await tx.place.update({
                     where: { id: beforeState.id },
                     data: {
                         name, latitude: lat, longitude: lng, jurisdiction: jurisdiction || null,
-                        historicNames: normalizedHistoricNames, form: form || null,
-                        phrase: phrase || null, level: level || 'CITY',
+                        historicNames: normalizedHistoricNames, parentId: normalizedParentId,
+                        form: form || null, phrase: phrase || null, level: level || 'CITY',
                         lang: lang || null, formTemplate: formTemplate || null
                     }
                 });
                 targetPlaceId = p.id;
                 action = 'UPDATE';
-            }
-        } else {
-            const existingPlace = await this.prisma.place.findFirst({
-                where: { treeId, name, parentId: normalizedParentId }
-            });
-            if (existingPlace) {
-                beforeState = existingPlace;
-                p = await this.prisma.place.update({
-                    where: { id: existingPlace.id },
-                    data: {
-                        latitude: lat, longitude: lng, jurisdiction: jurisdiction || null,
-                        historicNames: normalizedHistoricNames, form: form || null,
-                        phrase: phrase || null, level: level || 'CITY',
-                        lang: lang || null, formTemplate: formTemplate || null
-                    }
+            } else if (data.old_name && data.old_name !== name) {
+                beforeState = await tx.place.findFirst({
+                    where: { treeId, name: data.old_name, parentId: null }
                 });
-                targetPlaceId = p.id;
-                action = 'UPDATE';
-            } else {
-                p = await this.prisma.place.create({
-                    data: {
-                        treeId, name, historicNames: normalizedHistoricNames,
-                        jurisdiction: jurisdiction || null, parentId: normalizedParentId,
-                        latitude: lat, longitude: lng, form: form || null,
-                        phrase: phrase || null, level: level || 'CITY',
-                        lang: lang || null, formTemplate: formTemplate || null
-                    }
-                });
-                targetPlaceId = p.id;
-                action = 'CREATE';
+                if (beforeState) {
+                    p = await tx.place.update({
+                        where: { id: beforeState.id },
+                        data: {
+                            name, latitude: lat, longitude: lng, jurisdiction: jurisdiction || null,
+                            historicNames: normalizedHistoricNames, form: form || null,
+                            phrase: phrase || null, level: level || 'CITY',
+                            lang: lang || null, formTemplate: formTemplate || null
+                        }
+                    });
+                    targetPlaceId = p.id;
+                    action = 'UPDATE';
+                }
             }
-        }
+            
+            if (!targetPlaceId) {
+                const existingPlace = await tx.place.findFirst({
+                    where: { treeId, name, parentId: normalizedParentId }
+                });
+                if (existingPlace) {
+                    beforeState = existingPlace;
+                    p = await tx.place.update({
+                        where: { id: existingPlace.id },
+                        data: {
+                            latitude: lat, longitude: lng, jurisdiction: jurisdiction || null,
+                            historicNames: normalizedHistoricNames, form: form || null,
+                            phrase: phrase || null, level: level || 'CITY',
+                            lang: lang || null, formTemplate: formTemplate || null
+                        }
+                    });
+                    targetPlaceId = p.id;
+                    action = 'UPDATE';
+                } else {
+                    p = await tx.place.create({
+                        data: {
+                            treeId, name, historicNames: normalizedHistoricNames,
+                            jurisdiction: jurisdiction || null, parentId: normalizedParentId,
+                            latitude: lat, longitude: lng, form: form || null,
+                            phrase: phrase || null, level: level || 'CITY',
+                            lang: lang || null, formTemplate: formTemplate || null
+                        }
+                    });
+                    targetPlaceId = p.id;
+                    action = 'CREATE';
+                }
+            }
 
-        if (targetPlaceId) {
-            await this.updateSubEntities(treeId, currentUserId, targetPlaceId, translations, identifiers, notes);
+            if (targetPlaceId) {
+                if (process.env['NODE_ENV'] === 'development') {
+                    console.log(`[PlaceService] Saving ${notes?.length || 0} notes for place ${targetPlaceId}`);
+                }
+                await this.updateSubEntitiesTransaction(tx, treeId, currentUserId, targetPlaceId, translations, identifiers, notes);
 
-            const afterState = await this.prisma.place.findUnique({ where: { id: targetPlaceId } });
-            await this.auditService.logChange({
-                treeId,
-                userId: currentUserId || undefined,
-                action: action,
-                entityType: 'PLACE',
-                entityId: targetPlaceId,
-                before: beforeState,
-                after: afterState,
-                summary: `Ort ${name} ${action === 'CREATE' ? 'erstellt' : 'aktualisiert'}`
-            });
-        }
-        
-        return p;
+                const afterState = await tx.place.findUnique({ where: { id: targetPlaceId } });
+                await this.auditService.logChange({
+                    treeId,
+                    userId: currentUserId || undefined,
+                    action: action,
+                    entityType: 'PLACE',
+                    entityId: targetPlaceId,
+                    before: beforeState,
+                    after: afterState,
+                    summary: `Ort ${name} ${action === 'CREATE' ? 'erstellt' : 'aktualisiert'}`
+                }, tx);
+            }
+            
+            return p;
+        });
     }
 
     private async deletePlace(treeId: string, id: string | undefined, name: string | undefined, reassignToId: string | undefined) {
@@ -352,13 +359,13 @@ export class PlaceService {
         });
     }
 
-    private async updateSubEntities(treeId: string, currentUserId: string | null, targetPlaceId: string, translations: any, identifiers: any, notes: any) {
+    private async updateSubEntitiesTransaction(tx: any, treeId: string, currentUserId: string | null, targetPlaceId: string, translations: any, identifiers: any, notes: any) {
         // --- Translations ---
         if (translations && Array.isArray(translations)) {
-            await this.prisma.placeTranslation.deleteMany({ where: { placeId: targetPlaceId } });
+            await tx.placeTranslation.deleteMany({ where: { placeId: targetPlaceId } });
             for (const tr of translations) {
                 if (!tr.name) continue;
-                await this.prisma.placeTranslation.create({
+                await tx.placeTranslation.create({
                     data: {
                         placeId: targetPlaceId,
                         name: tr.name,
@@ -374,10 +381,10 @@ export class PlaceService {
 
         // --- Identifiers ---
         if (identifiers && Array.isArray(identifiers)) {
-            await this.prisma.identifier.deleteMany({ where: { placeId: targetPlaceId } });
+            await tx.identifier.deleteMany({ where: { placeId: targetPlaceId } });
             for (const iden of identifiers) {
                 if (!iden.value) continue;
-                await this.prisma.identifier.create({
+                await tx.identifier.create({
                     data: {
                         treeId,
                         placeId: targetPlaceId,
@@ -392,7 +399,63 @@ export class PlaceService {
 
         // --- Notes (Unified) ---
         if (notes && Array.isArray(notes)) {
-            await this.notesService.processSharedNotes(this.prisma, treeId, notes, { placeId: targetPlaceId }, currentUserId || undefined);
+            await this.notesService.processSharedNotes(tx, treeId, notes, { placeId: targetPlaceId }, currentUserId || undefined);
         }
+    }
+
+    async getPlacesHierarchy(treeId: string, search?: string) {
+        const places = await this.prisma.place.findMany({
+            where: { treeId },
+            include: {
+                _count: {
+                    select: {
+                        events: true,
+                        facts: true,
+                        associations: true,
+                        children: true
+                    }
+                }
+            },
+            orderBy: { name: 'asc' }
+        });
+
+        const nodes = places.map(p => ({
+            ...p,
+            usage: {
+                total: p._count.events + p._count.facts + p._count.associations
+            },
+            children: [] as any[]
+        }));
+
+        const byId = new Map<string, any>();
+        nodes.forEach(n => byId.set(n.id, n));
+
+        const roots: any[] = [];
+        for (const n of nodes) {
+            if (n.parentId && byId.has(n.parentId)) {
+                byId.get(n.parentId).children.push(n);
+            } else {
+                roots.push(n);
+            }
+        }
+
+        if (search) {
+            const term = search.toLowerCase();
+            const filterNodes = (list: any[]): any[] => {
+                return list.reduce((acc, node) => {
+                    const nameMatch = (node.name || '').toLowerCase().includes(term);
+                    const phraseMatch = (node.phrase || '').toLowerCase().includes(term);
+                    const filteredChildren = filterNodes(node.children || []);
+                    
+                    if (nameMatch || phraseMatch || filteredChildren.length > 0) {
+                        acc.push({ ...node, children: filteredChildren });
+                    }
+                    return acc;
+                }, [] as any[]);
+            };
+            return filterNodes(roots);
+        }
+
+        return roots;
     }
 }

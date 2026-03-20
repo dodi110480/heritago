@@ -31,44 +31,44 @@ export class Diagnostics implements OnInit {
     private validationService = inject(GenealogyValidationService);
     authService = inject(AuthService);
 
-    errors = signal<GedcomError[]>([]);
-    logicalErrors = signal<ValidationResult[]>([]);
+    issues = signal<any[]>([]);
     isLoading = signal<boolean>(true);
     treeName = signal<string>('');
+    filterType = signal<'ALL' | 'error' | 'warning' | 'todo'>('ALL');
 
     ngOnInit() {
         this.loadDiagnostics();
     }
 
+    get filteredIssues() {
+        const issues = this.issues();
+        const type = this.filterType();
+        if (type === 'ALL') return issues;
+        return issues.filter(i => i.type === type);
+    }
+
+    getIssueCount(type: 'error' | 'warning' | 'todo' | 'ALL') {
+        if (type === 'ALL') return this.issues().length;
+        return this.issues().filter(i => i.type === type).length;
+    }
+
     loadDiagnostics() {
         this.isLoading.set(true);
-        this.authService.getTrees().subscribe(trees => {
-            const validTrees = trees.filter(t => t.name !== 'DEFAULT_TREE');
-            if (validTrees.length > 0) {
-                const sperlichTree = validTrees.find(t => t.name.toLowerCase() === 'sperlich');
-                const tree = sperlichTree || validTrees[0];
-                this.treeName.set(tree.name);
-
-                this.analyticsService.getDiagnostics(tree.name).subscribe({
-                    next: (data) => {
-                        this.errors.set(data.errors || []);
-                        this.isLoading.set(false);
-                    },
-                    error: () => {
-                        this.errors.set([]);
-                        this.isLoading.set(false);
-                    }
-                });
-
-                // Logical validation
-                this.treeService.getTreeData().subscribe(data => {
-                    if (data) {
-                        const results = this.validationService.validateTree(data);
-                        this.logicalErrors.set(results);
-                    }
-                });
-            }
-        });
+        const currentTree = this.authService.currentTree();
+        if (currentTree) {
+            this.treeName.set(currentTree.name);
+            this.analyticsService.getDiagnostics(currentTree.name).subscribe({
+                next: (data) => {
+                    this.issues.set(data.issues || []);
+                    this.isLoading.set(false);
+                },
+                error: (err) => {
+                    console.error('Error loading diagnostics', err);
+                    this.issues.set([]);
+                    this.isLoading.set(false);
+                }
+            });
+        }
     }
 
     toggleExpand(error: GedcomError) {

@@ -46,17 +46,7 @@ export class StatisticsDashboard implements OnInit {
 
     get genderPercentages() {
         const s = this.stats();
-        if (!s || !s.gender) return { male: 0, female: 0, unknown: 0 };
-
-        const male = s.gender.male || 0;
-        const female = s.gender.female || 0;
-        const unknown = s.gender.unknown || 0;
-        const total = male + female + unknown;
-
-        return {
-            male: total ? (male / total) * 100 : 0,
-            female: total ? (female / total) * 100 : 0,
-            unknown: total ? (unknown / total) * 100 : 0
-        };
+        if (!s || !s.genderPercentages) return { male: 0, female: 0, unknown: 0 };
+        return s.genderPercentages;
     }
 }

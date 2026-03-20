@@ -69,6 +69,10 @@ import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-sta
                             class="px-2 py-0.5 bg-accent-highlight-500/10 text-accent-highlight-600 dark:text-accent-highlight-400 text-[10px] font-bold uppercase rounded-full border border-accent-highlight-500/20">
                             📝 {{ ev.notes.length }}
                         </span>
+                        <span *ngIf="ev.associations?.length"
+                            class="px-2 py-0.5 bg-accent-violet-500/10 text-accent-violet-600 dark:text-accent-violet-400 text-[10px] font-bold uppercase rounded-full border border-accent-violet-500/20">
+                            👥 {{ ev.associations.length }}
+                        </span>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Observable, tap, of, catchError, map } from 'rxjs';
 import { environment } from '../../environment';
 
@@ -21,7 +22,7 @@ export interface Tree {
 })
 export class AuthService {
     private http = inject(HttpClient);
-    // New base URL for Node.js
+    private router = inject(Router);
     private apiUrl = environment.apiUrl;
 
     currentUser = signal<User | null>(null);
@@ -61,44 +62,41 @@ export class AuthService {
                     if (response?.success && user) {
                         this.currentUser.set(user);
                         localStorage.setItem('user', JSON.stringify(user));
+                        resolve();
                     } else {
-                        this.currentUser.set(null);
-                        localStorage.removeItem('user');
-                    }
-                    resolve();
-                },
-                error: () => {
-                    // Try refresh once if access token expired
-                    this.http.post<any>(`${this.apiUrl}/auth/refresh`, {}, { withCredentials: true }).subscribe({
-                        next: () => {
-                            this.http.get<any>(`${this.apiUrl}/auth/me`, { withCredentials: true }).subscribe({
-                                next: (response) => {
-                                    const user = response?.data ?? response?.user;
-                                    if (response?.success && user) {
-                                        this.currentUser.set(user);
-                                        localStorage.setItem('user', JSON.stringify(user));
-                                    } else {
-                                        this.currentUser.set(null);
-                                        localStorage.removeItem('user');
-                                    }
-                                    resolve();
-                                },
-                                error: () => {
-                                    this.currentUser.set(null);
-                                    localStorage.removeItem('user');
+                        // Try refresh
+                        this.refresh().subscribe({
+                            next: (success) => {
+                                if (success) {
+                                    this.http.get<any>(`${this.apiUrl}/auth/me`, { withCredentials: true }).subscribe({
+                                        next: (res2) => {
+                                            const u2 = res2?.data ?? res2?.user;
+                                            this.currentUser.set(u2);
+                                            localStorage.setItem('user', JSON.stringify(u2));
+                                            resolve();
+                                        },
+                                        error: () => { resolve(); }
+                                    });
+                                } else {
                                     resolve();
                                 }
-                            });
-                        },
-                        error: () => {
-                            this.currentUser.set(null);
-                            localStorage.removeItem('user');
-                            resolve();
-                        }
-                    });
+                            },
+                            error: () => resolve()
+                        });
+                    }
+                },
+                error: () => {
+                   this.refresh().subscribe(() => resolve());
                 }
             });
         });
+    }
+
+    refresh(): Observable<boolean> {
+        return this.http.post<any>(`${this.apiUrl}/auth/refresh`, {}, { withCredentials: true }).pipe(
+            map(res => !!res.success),
+            catchError(() => of(false))
+        );
     }
 
     selectTree(tree: Tree) {
@@ -150,6 +148,7 @@ export class AuthService {
         localStorage.removeItem('user');
         this.currentTree.set(null);
         localStorage.removeItem('activeTree');
+        this.router.navigate(['/login']);
     }
 
     isAuthenticated(): boolean {

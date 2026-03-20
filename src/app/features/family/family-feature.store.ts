@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { forkJoin, of, tap, switchMap, catchError } from 'rxjs';
 import { Family, Individual, TreeData } from '../../core/models/models';
+import { personOptionLabel } from '../../shared/utils/person-autocomplete';
 import { FamilyService } from '../../core/services/family.service';
 import { TreeService } from '../../core/services/tree.service';
 import { MediaService } from '../../core/services/media.service';
@@ -22,9 +23,10 @@ export class FamilyFeatureStore {
     familyId = signal<string | null>(null);
     family = signal<Family | null>(null);
     individuals = signal<Individual[]>([]);
+    allIndividuals = signal<any[]>([]);
+    searchResults = signal<any[]>([]);
     loading = signal(true);
     isSaving = signal(false);
-    isDirty = signal(false);
     activeTab = signal<'basics' | 'children' | 'events' | 'notes' | 'citations' | 'media'>('basics');
     availableSources = signal<any[]>([]);
 
@@ -33,10 +35,32 @@ export class FamilyFeatureStore {
     
     familyChildren = computed(() => {
         const fam = this.family();
-        if (!fam || !fam.children) return [];
-        return fam.children
-            .map(id => this.individuals().find(i => i.id === id))
-            .filter((p): p is Individual => !!p);
+        if (!fam) return [];
+        return this.individuals().filter(ind => fam.children?.includes(ind.id));
+    });
+
+    allPersonsSignal = computed(() => {
+        const base = this.searchResults().length > 0 ? this.searchResults() : this.allIndividuals();
+        return base.map((ind: any) => {
+            const opt = {
+                id: ind.id,
+                gedcomId: ind.gedcomId,
+                name: ind.name,
+                gender: ind.gender,
+                birthDate: ind.birthDate,
+                deathDate: ind.deathDate
+            };
+
+            return {
+                ...opt,
+                displayName: personOptionLabel({
+                    id: opt.id,
+                    displayName: opt.name,
+                    birthDate: opt.birthDate,
+                    deathDate: opt.deathDate
+                })
+            };
+        });
     });
 
     // --- Methods ---
@@ -46,24 +70,40 @@ export class FamilyFeatureStore {
     }
 
     loadData() {
+        const treeName = this.authService.currentTree()?.name;
+        if (!treeName || !this.familyId()) return;
+
         this.loading.set(true);
-        this.treeService.getTreeData().subscribe({
+        this.familyService.getFullProfile(treeName, this.familyId()!).subscribe({
             next: (data) => {
-                if (data) {
-                    this.individuals.set(data.individuals);
+                if (data && data.family) {
+                    this.individuals.set(data.members || []);
+                    const fam = data.family;
+                    this.family.set(fam);
                     this.loadAvailableSources();
-                    const fam = data.families.find(f => f.id === this.familyId());
-                    if (fam) {
-                        const clonedFam = JSON.parse(JSON.stringify(fam));
-                        this.sanitizeFamilyData(clonedFam);
-                        this.family.set(clonedFam);
-                    } else {
-                        this.router.navigate(['/families']);
-                    }
+
+                    // Load all individuals for search
+                    this.treeService.getMinimalIndividuals(treeName).subscribe(inds => {
+                        this.allIndividuals.set(inds);
+                    });
+                } else {
+                    this.router.navigate(['/families']);
                 }
                 this.loading.set(false);
             },
             error: () => this.loading.set(false)
+        });
+    }
+
+    searchPersons(query: string) {
+        const treeName = this.authService.currentTree()?.name;
+        if (!treeName || !query || query.length < 2) {
+            this.searchResults.set([]);
+            return;
+        }
+
+        this.treeService.searchIndividuals(treeName, query).subscribe(results => {
+            this.searchResults.set(results);
         });
     }
 
@@ -72,29 +112,13 @@ export class FamilyFeatureStore {
         if (treeName) {
             this.sourceService.getSources(treeName).subscribe({
                 next: (res: any) => {
-                    if (res.success) this.availableSources.set(res.sources || []);
+                    const sources = res.success ? (res.sources || res.data || []) : [];
+                    this.availableSources.set(sources);
                 }
             });
         }
     }
 
-    private sanitizeFamilyData(fam: any) {
-        if (fam.events) {
-            fam.events.forEach((e: any) => {
-                if (!e.dateText && e.date) e.dateText = e.date;
-                if (!e.place && e.placeName) e.place = e.placeName;
-                if (!e.subType && e.eventSubtype) e.subType = e.eventSubtype;
-                if (!Array.isArray(e.media)) e.media = [];
-                if (!Array.isArray(e.notes)) e.notes = [];
-                if (!Array.isArray(e.citations)) e.citations = [];
-                if (!e.associations) e.associations = [];
-            });
-        }
-        if (!Array.isArray(fam.notes)) fam.notes = [];
-        if (!Array.isArray(fam.media)) fam.media = [];
-        if (!Array.isArray(fam.citations)) fam.citations = [];
-        if (!Array.isArray(fam.children)) fam.children = [];
-    }
 
     saveFamily() {
         const fam = this.family();
@@ -102,11 +126,9 @@ export class FamilyFeatureStore {
         if (!fam || !treeName) return;
 
         this.isSaving.set(true);
-        // We use the same saveFamily method in the service
         this.familyService.saveFamily(treeName, fam).subscribe({
             next: (res) => {
-                if (res.success) {
-                    this.isDirty.set(false);
+                if (res) {
                     // Reload to get potential server-side enrichments
                     this.loadData();
                 }
@@ -118,16 +140,10 @@ export class FamilyFeatureStore {
 
     deleteFamily() {
         // Implementation of delete logic if needed
-        // For now, it seems FamilyDetail doesn't have a delete button in the UI shown in HTML, 
-        // but PersonDetail did. I'll add it just in case.
     }
 
     setActiveTab(tab: any) {
         this.activeTab.set(tab);
-    }
-
-    markDirty() {
-        this.isDirty.set(true);
     }
 
     // --- Data Helpers for Tabs ---
@@ -139,21 +155,11 @@ export class FamilyFeatureStore {
     getPersonName(id: string | undefined): string {
         const p = this.getPersonById(id);
         if (!p) return 'Unbekannt';
-        return `${p.firstName} ${p.lastName}`;
+        return p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim() || 'Unbekannt';
     }
 
     getPersonGender(id: string | undefined): string {
         const p = this.getPersonById(id);
         return p?.gender || 'U';
-    }
-
-    getMarriageInfo(): string {
-        const fam = this.family();
-        if (!fam || !fam.events) return '';
-        const marr = fam.events.find(e => e.type === 'MARR');
-        if (!marr) return '';
-        const date = marr.date || (marr as any).dateText || '';
-        const place = marr.place || (marr as any).placeName || '';
-        return date + (place ? ` in ${place}` : '');
     }
 }

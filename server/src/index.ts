@@ -80,7 +80,7 @@ app.use('/api/auth', authRoutes(prisma));
 app.use('/api/admin', authRoutes(prisma));
 // Removed unscoped person routes; use tree-scoped routes only
 app.use('/api/family', familyRoutes(prisma));
-// Removed unscoped media routes; use tree-scoped routes only
+app.use('/api/media', mediaRoutes(prisma));
 app.use('/api/system', systemRoutes());
 
 // Tree-scoped routes middleware

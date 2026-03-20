@@ -1,7 +1,6 @@
-<div *ngIf="store.person() as p" (input)="store.markDirty()">
-    <app-page-header [title]="p.firstName + ' ' + p.lastName"
-        [description]="(p.birthDate | cleanDate) + ' - ' + (p.deathDate | cleanDate)">
-        <div actions></div>
+<div *ngIf="store.person() as p">
+    <app-page-header [title]="(p.firstName || p.lastName) ? (p.firstName + ' ' + p.lastName).trim() : (p.name || 'Unbekannte Person')"
+        [description]="((p.birthDate || '') | cleanDate) + ' - ' + ((p.deathDate || '') | cleanDate)">
     </app-page-header>
 
     <div
@@ -14,12 +13,42 @@
             {id: 'media', label: 'Medien'},
             {id: 'notes', label: 'Notizen'},
             {id: 'citations', label: 'Quellen'}
-        ]" (click)="store.setActiveTab(tab.id)"
+        ]" (click)="store.setActiveTab(tab.id); store.saveError.set(null)"
             [class]="store.activeTab() === tab.id ? 
             'px-4 py-2 rounded-lg bg-brand-500/10 text-brand-600 border border-brand-500/20 text-sm font-semibold whitespace-nowrap shadow-sm' : 
             'px-4 py-2 rounded-lg hover:bg-canvas/5 text-neutral-500 hover:text-neutral-900 text-sm font-medium transition-all duration-[180ms] whitespace-nowrap'">
             {{tab.label}}
         </button>
+    </div>
+
+    <!-- Global Save Error Display -->
+    <div *ngIf="store.saveError()" class="mb-8 p-4 bg-accent-danger-500/10 border border-accent-danger-500/20 rounded-2xl flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div class="p-2 bg-accent-danger-500/20 text-accent-danger-600 rounded-xl shadow-inner">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        </div>
+        <div class="flex-1">
+            <h4 class="text-sm font-bold text-accent-danger-700 mb-1">Hinweis zur Datenintegrität</h4>
+            <p class="text-xs text-accent-danger-600 font-medium leading-relaxed">
+                {{ store.saveError() }}
+            </p>
+        </div>
+        <button (click)="store.saveError.set(null)" class="p-1 hover:bg-accent-danger-500/10 rounded-lg transition-colors text-accent-danger-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+    </div>
+
+    <div *ngIf="store.validationIssues().length > 0" class="mb-8 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div class="p-2 bg-amber-500/20 text-amber-700 rounded-xl shadow-inner">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+        </div>
+        <div class="flex-1">
+            <h4 class="text-sm font-bold text-amber-800 mb-1">Bekannte Hinweise zur Datenintegrität</h4>
+            <div class="space-y-1.5">
+                <p *ngFor="let issue of store.validationIssues(); let i = index" class="text-xs text-amber-700 font-medium leading-relaxed">
+                    {{ i + 1 }}. {{ issue.message }}
+                </p>
+            </div>
+        </div>
     </div>
 
     <div class="space-y-8 animate-in fade-in duration-500 pb-20">
@@ -30,7 +59,7 @@
                 [person]="p" 
                 [profileImageUrl]="store.profileImageUrl()" 
                 [participations]="store.participations()"
-                (changed)="store.markDirty(); store.savePerson()"
+                (changed)="store.savePerson()"
                 (mediaTabRequested)="store.setActiveTab('media')"
                 (deleteRequested)="openDeleteModal()">
             </app-person-tab-basics>
@@ -40,11 +69,10 @@
         <div *ngIf="store.activeTab() === 'timeline'" class="space-y-6">
             <app-person-tab-timeline 
                 [person]="p" 
-                [treeData]="store.treeData()" 
-                [timeline]="store.timeline"
+                [timeline]="store.timeline()"
                 [availableSources]="store.availableSources()"
-                (changed)="store.markDirty(); store.savePerson()"
-                (masterSaved)="store.loadAvailableSources()">
+                [allPersonsSignal]="store.allPersonsSignal()"
+                (changed)="store.updateTimeline($event); store.savePerson()">
             </app-person-tab-timeline>
         </div>
 
@@ -52,32 +80,33 @@
         <div *ngIf="store.activeTab() === 'relations'" class="space-y-6">
             <app-person-tab-relations 
                 [person]="p" 
-                [treeData]="store.treeData()" 
-                [relations]="store.relations"
-                (changed)="store.markDirty(); store.savePerson()">
+                [relations]="store.relations()"
+                [allPersonsSignal]="store.allPersonsSignal()"
+                [availableSources]="store.availableSources()"
+                (changed)="store.updateRelations($event); store.savePerson()">
             </app-person-tab-relations>
         </div>
 
         <!-- DNA TAB -->
         <div *ngIf="store.activeTab() === 'dna'" class="space-y-6">
-            <app-person-tab-dna [person]="p" (changed)="store.markDirty(); store.savePerson()"></app-person-tab-dna>
+            <app-person-tab-dna [person]="p" [allPersonsOptions]="store.allPersonsSignal()" (search)="store.searchPersons($event)" (changed)="store.savePerson()"></app-person-tab-dna>
         </div>
 
         <!-- MEDIA TAB -->
         <div *ngIf="store.activeTab() === 'media'" class="space-y-6">
-            <app-person-tab-media [person]="p" [treeId]="store.treeData()?.meta?.treeId || ''"
-                (changed)="store.markDirty(); store.savePerson()"></app-person-tab-media>
+            <app-person-tab-media [person]="p" [treeId]="p.treeId || ''"
+                (changed)="store.savePerson()"></app-person-tab-media>
         </div>
 
         <!-- NOTES TAB -->
         <div *ngIf="store.activeTab() === 'notes'" class="space-y-6">
-            <app-person-tab-notes [person]="p" (changed)="store.markDirty(); store.savePerson()"></app-person-tab-notes>
+            <app-person-tab-notes [person]="p" (changed)="store.savePerson()"></app-person-tab-notes>
         </div>
 
         <!-- CITATIONS TAB -->
         <div *ngIf="store.activeTab() === 'citations'" class="space-y-6">
             <app-person-tab-citations [person]="p" [availableSources]="store.availableSources()"
-                (changed)="store.markDirty(); store.savePerson()" (masterSaved)="store.loadAvailableSources()"></app-person-tab-citations>
+                (changed)="store.updatePersonCitations($event); store.savePerson()"></app-person-tab-citations>
         </div>
 
     </div>

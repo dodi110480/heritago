@@ -41,13 +41,13 @@ export const authRoutes = (prisma: PrismaClient) => {
                 if (!secret) {
                     return res.status(500).json({ success: false, message: 'JWT_SECRET not configured', code: 'AUTH_CONFIG_MISSING' });
                 }
-                const accessToken = jwt.sign({ id: result.id, type: 'access' }, secret, { expiresIn: '15m' });
+                const accessToken = jwt.sign({ id: result.id, type: 'access' }, secret, { expiresIn: '1h' });
                 const refreshToken = jwt.sign({ id: result.id, type: 'refresh' }, secret, { expiresIn: '7d' });
                 res.cookie(getAuthCookieName(), accessToken, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'strict',
-                    maxAge: 15 * 60 * 1000
+                    maxAge: 60 * 60 * 1000
                 });
                 res.cookie(getRefreshCookieName(), refreshToken, {
                     httpOnly: true,
@@ -76,13 +76,13 @@ export const authRoutes = (prisma: PrismaClient) => {
             if (!secret) {
                 return res.status(500).json({ success: false, message: 'JWT_SECRET not configured', code: 'AUTH_CONFIG_MISSING' });
             }
-            const accessToken = jwt.sign({ id: result.id, type: 'access' }, secret, { expiresIn: '15m' });
+            const accessToken = jwt.sign({ id: result.id, type: 'access' }, secret, { expiresIn: '1h' });
             const refreshToken = jwt.sign({ id: result.id, type: 'refresh' }, secret, { expiresIn: '7d' });
             res.cookie(getAuthCookieName(), accessToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 15 * 60 * 1000
+                maxAge: 60 * 60 * 1000
             });
             res.cookie(getRefreshCookieName(), refreshToken, {
                 httpOnly: true,
@@ -116,12 +116,12 @@ export const authRoutes = (prisma: PrismaClient) => {
             const user = await prisma.user.findUnique({ where: { id: payload.id } });
             if (!user) return res.status(401).json({ success: false, message: 'User not found', code: 'AUTH_USER_NOT_FOUND' });
 
-            const accessToken = jwt.sign({ id: user.id, type: 'access' }, secret, { expiresIn: '15m' });
+            const accessToken = jwt.sign({ id: user.id, type: 'access' }, secret, { expiresIn: '1h' });
             res.cookie(getAuthCookieName(), accessToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 15 * 60 * 1000
+                maxAge: 60 * 60 * 1000
             });
             res.json({ success: true, data: null });
         } catch (error: any) {

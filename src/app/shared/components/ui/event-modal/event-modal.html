@@ -66,7 +66,7 @@
           </div>
           <div class="form-group relative">
             <label class="form-label">Ort</label>
-            <input type="text" [(ngModel)]="item.place" class="form-input" placeholder="Ort suchen oder eingeben...">
+            <app-place-input [(value)]="item.place" placeholder="Ort suchen oder eingeben..."></app-place-input>
           </div>
         </div>
 
@@ -74,6 +74,38 @@
           <label class="form-label">Beschreibung (optional)</label>
           <textarea [(ngModel)]="item.description" class="form-input min-h-[80px]"
             placeholder="Zusätzliche Details zum Ereignis..."></textarea>
+        </div>
+
+        <!-- Partner Selection for Pair Events -->
+        <div class="form-group border-t border-canvas/10 pt-4 animate-in fade-in duration-500" *ngIf="isPairEvent">
+          <label class="form-label text-brand-500 font-bold flex items-center gap-2">
+            <span>💍</span> Beteiligte/r Partner/in
+          </label>
+          <div class="flex flex-col gap-2 bg-brand-500/5 p-4 rounded-xl border border-brand-500/20">
+            <div class="relative">
+              <input type="text"
+                [ngModel]="currentPartner?._personInput || currentPartner?.associatedPersonName || ''"
+                (ngModelChange)="onPartnerInputChange($event)"
+                (focus)="onPartnerInputFocus()"
+                (blur)="onPartnerInputBlur()"
+                class="form-input !bg-white/50 dark:!bg-black/50"
+                placeholder="Partner suchen oder Name eingeben...">
+              
+              <!-- Search Results Overlay -->
+              <div *ngIf="partnerInputFocused() && allPersonsOptions.length > 0" 
+                class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-neutral-900 border border-canvas/10 dark:border-white/10 rounded-xl shadow-2xl z-[150] max-h-60 overflow-y-auto">
+                <button *ngFor="let opt of allPersonsOptions" 
+                  type="button" (mousedown)="$event.preventDefault()" (click)="selectPartnerOption(opt.displayName)"
+                  class="w-full text-left px-4 py-2.5 text-sm hover:bg-brand-500/10 hover:text-brand-500 transition-colors border-b last:border-0 border-canvas/5 dark:border-white/5 flex items-center justify-between group">
+                  <span>{{opt.displayName}}</span>
+                  <span class="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity text-brand-400">Auswählen →</span>
+                </button>
+              </div>
+            </div>
+            <p class="text-[10px] text-neutral-500 italic">
+              Hinweis: Wenn ein Partner angegeben wird, wird dieses Ereignis automatisch mit dem Partner synchronisiert und als Familien-Ereignis gespeichert.
+            </p>
+          </div>
         </div>
 
         <div class="flex items-center gap-2 pt-2">
@@ -282,11 +314,24 @@
   <div class="space-y-4">
     <div class="form-group mb-0">
       <label class="form-label">Person</label>
-      <input type="text" [(ngModel)]="newParticipantDraft().personInput" list="participant-person-list"
-        class="form-input" placeholder="Person suchen oder Name eingeben...">
-      <datalist id="participant-person-list">
-        <option *ngFor="let opt of allPersonsOptions" [value]="opt.displayName"></option>
-      </datalist>
+      <div class="relative">
+        <input type="text" [ngModel]="newParticipantDraft().personInput" 
+          (ngModelChange)="onParticipantInputChange($event)"
+          (focus)="onParticipantInputFocus()"
+          (blur)="onParticipantInputBlur()"
+          class="form-input" placeholder="Person suchen oder Name eingeben...">
+        
+        <!-- Search Results Overlay -->
+        <div *ngIf="participantInputFocused() && allPersonsOptions.length > 0" 
+          class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-neutral-900 border border-canvas/10 dark:border-white/10 rounded-xl shadow-2xl z-[150] max-h-60 overflow-y-auto">
+          <button *ngFor="let opt of allPersonsOptions" 
+            type="button" (mousedown)="$event.preventDefault()" (click)="selectParticipantOption(opt.displayName)"
+            class="w-full text-left px-4 py-2.5 text-sm hover:bg-brand-500/10 hover:text-brand-500 transition-colors border-b last:border-0 border-canvas/5 dark:border-white/5 flex items-center justify-between group">
+            <span>{{opt.displayName}}</span>
+            <span class="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity text-brand-400">Auswählen →</span>
+          </button>
+        </div>
+      </div>
     </div>
     <div class="form-group mb-0">
       <label class="form-label">Rolle</label>

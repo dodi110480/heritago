@@ -65,13 +65,13 @@ export class AppNotesList {
 
   getNoteTypeBorder(type?: NoteCategory): string {
     switch (type) {
-      case 'RESEARCH': return '#3b82f6'; // blue
-      case 'HINT': return '#8b5cf6'; // purple
-      case 'QUESTION': return '#f59e0b'; // amber
-      case 'TRANSCRIPTION': return '#10b981'; // emerald
-      case 'TODO': return '#ef4444'; // red
-      case 'COMMENT': return '#6b7280'; // gray
-      default: return '#6366f1'; // brand/indigo
+      case 'RESEARCH': return 'var(--color-note-research)';
+      case 'HINT': return 'var(--color-note-hint)';
+      case 'QUESTION': return 'var(--color-note-question)';
+      case 'TRANSCRIPTION': return 'var(--color-note-transcription)';
+      case 'TODO': return 'var(--color-note-todo)';
+      case 'COMMENT': return 'var(--color-note-comment)';
+      default: return 'var(--color-note-default)';
     }
   }
 

@@ -1,6 +1,7 @@
-import { Component, Input, Output, EventEmitter, OnInit, signal, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, signal, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { map } from 'rxjs';
 import { TreeService } from '../../core/services/tree.service';
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 import { AppNotesList } from '../../shared/components/ui/app-notes-list/app-notes-list';
@@ -27,6 +28,7 @@ export class SourceModal implements OnInit {
     @Output() merged = new EventEmitter<{ sourceId: string, targetId: string }>();
 
     private treeService = inject(TreeService);
+    private cdr = inject(ChangeDetectorRef);
 
     visible = true;
     isSaving = signal(false);
@@ -60,6 +62,11 @@ export class SourceModal implements OnInit {
     // Tab State
     activeTab = signal<'details' | 'notes'>('details');
 
+    setTab(tab: 'details' | 'notes') {
+        this.activeTab.set(tab);
+        this.cdr.detectChanges();
+    }
+
     ngOnInit() {
         if (this.mode === 'edit' && this.sourceData) {
             this.title.set(this.sourceData.title || '');
@@ -73,8 +80,8 @@ export class SourceModal implements OnInit {
 
         if (this.currentTree) {
             this.sourceService.getRepositories(this.currentTree).subscribe({
-                next: (res: any) => {
-                    if (res.success) this.repositories.set(res.repositories);
+                next: (repos: any) => {
+                    this.repositories.set(repos || []);
                 }
             });
 
@@ -82,19 +89,19 @@ export class SourceModal implements OnInit {
                 // Fetch full source data including notes
                 this.treeService.getTreeData().subscribe();
                 this.sourceService.getSource(this.currentTree, this.sourceData.id).subscribe({
-                    next: (res) => {
-                        if (res.success && res.source) {
-                            this.notes.set(res.source.notes || []);
+                    next: (source) => {
+                        if (source) {
+                            this.notes.set(source.notes || []);
                         }
                     }
                 });
 
                 this.isLoadingUsage.set(true);
                 this.sourceService.getSourceUsage(this.currentTree, this.sourceData.id).subscribe({
-                    next: (res) => {
+                    next: (usage) => {
                         this.isLoadingUsage.set(false);
-                        if (res.success && res.usage) {
-                            this.usages.set(res.usage.citations || []);
+                        if (usage) {
+                            this.usages.set(usage.citations || []);
                         }
                     },
                     error: () => this.isLoadingUsage.set(false)
@@ -199,7 +206,9 @@ export class SourceModal implements OnInit {
             payload.id = this.sourceData.id;
         }
 
-        this.sourceService.saveSource(tree, payload).subscribe({
+        this.sourceService.saveSource(tree, payload).pipe(
+            map(res => res?.success ? res : { success: false, message: res?.message || 'Unknown error' })
+        ).subscribe({
             next: (res: any) => {
                 this.isSaving.set(false);
                 if (res.success) {
@@ -207,6 +216,7 @@ export class SourceModal implements OnInit {
                 } else {
                     this.errorMessage.set(res.message || 'Fehler beim Speichern der Quelle.');
                 }
+                this.cdr.detectChanges();
             },
             error: (err: any) => {
                 this.isSaving.set(false);

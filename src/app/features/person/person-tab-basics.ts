@@ -13,7 +13,7 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
     imports: [CommonModule, FormsModule, AppSectionHeaderComponent, AppModalShell],
     template: `
         <div class="space-y-6">
-            <div class="glass-card !bg-canvas-white/3 !rounded-2xl !p-6 relative overflow-hidden animate-in zoom-in-95 duration-300">
+            <div class="glass-card relative overflow-hidden animate-in zoom-in-95 duration-300">
                 <div class="p-0 space-y-6">
                     <app-section-header title="Basisdaten" icon="🧾"></app-section-header>
 
@@ -52,7 +52,7 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                                 </div>
                                 <div>
                                     <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1 opacity-60">Geschlecht</div>
-                                    <div class="text-sm font-medium text-neutral-800 dark:text-neutral-200">{{ genderLabel(person.gender) }}</div>
+                                    <div class="text-sm font-medium text-neutral-800 dark:text-neutral-200">{{ person.genderLabel || 'Unbekannt' }}</div>
                                 </div>
                                 <div>
                                     <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1 opacity-60">Status</div>
@@ -65,7 +65,7 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                                 </div>
                                 <div>
                                     <div class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-1 opacity-60">Datenschutz</div>
-                                    <div class="text-sm font-medium text-neutral-800 dark:text-neutral-200 text-brand-600 dark:text-brand-400">{{ privacyLabel(person.privacyLevel) }}</div>
+                                    <div class="text-sm font-medium text-neutral-800 dark:text-neutral-200 text-brand-600 dark:text-brand-400">{{ person.privacyLevelLabel || 'Privat' }}</div>
                                 </div>
                             </div>
                         </div>
@@ -77,16 +77,16 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                             <span class="w-1 h-3 bg-brand-500 rounded-full"></span> Beteiligt als...
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div *ngFor="let part of participations" class="glass-card !bg-neutral-black/10 !p-4 !rounded-xl border !border-canvas-white/5 flex items-start gap-4 hover:bg-neutral-black/20 transition-all">
+                            <div *ngFor="let part of participations" class="glass-card !p-4 flex items-start gap-4 hover:bg-neutral-black/20 transition-all">
                                 <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg shadow-inner">
                                     {{ getRoleIcon(part.role) }}
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-bold text-neutral-800 dark:text-neutral-200 truncate">
-                                        {{ getRoleLabel(part.role) }}
+                                        {{ part.roleLabel || part.role }}
                                     </p>
                                     <p class="text-[11px] text-neutral-500 font-medium">
-                                        {{ getEventLabel(part.eventTag) }} • {{ part.subjectPersonName }} 
+                                        {{ part.label }} • {{ part.subjectPersonName }} 
                                         <span *ngIf="part.eventDate" class="opacity-50 ml-1">({{ part.eventDate }})</span>
                                     </p>
                                 </div>
@@ -108,6 +108,10 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                             <div class="flex items-center gap-2" *ngIf="person.exid">
                                 <span class="opacity-40">Ex-ID:</span>
                                 <span class="font-mono text-accent-highlight-500 font-semibold">{{ person.exid }}</span>
+                            </div>
+                            <div class="flex items-center gap-2" *ngIf="person.id">
+                                <span class="opacity-40">UUID:</span>
+                                <span class="font-mono text-neutral-600 dark:text-neutral-400 font-medium select-all">{{ person.id }}</span>
                             </div>
                         </div>
 
@@ -211,8 +215,20 @@ export class PersonTabBasicsComponent {
         this.person.firstName = this.basicsDraft.firstName || '';
         this.person.lastName = this.basicsDraft.lastName || '';
         this.person.gender = this.basicsDraft.gender;
+        this.person.sex = this.basicsDraft.gender; // Keep sex in sync — repository uses dbData.sex with priority
         this.person.isLiving = this.basicsDraft.isLiving;
         this.person.privacyLevel = this.basicsDraft.privacyLevel;
+
+        // Sync with names array if present to ensure backend persistence
+        if (this.person.names && Array.isArray(this.person.names)) {
+            const primaryName = this.person.names.find((n: any) => n.isPrimary) || this.person.names[0];
+            if (primaryName) {
+                primaryName.given = this.person.firstName;
+                primaryName.surname = this.person.lastName;
+                primaryName.full = `${this.person.firstName} ${this.person.lastName}`.trim();
+            }
+        }
+
         this.changed.emit();
         this.showBasicsModal = false;
     }

@@ -11,19 +11,24 @@ export const searchRoutes = (prisma: PrismaClient) => {
         const { q } = req.query;
         if (!q) return res.json({ success: true, data: [] });
 
+        const query = (q as string).trim();
+        const parts = query.split(/\s+/).filter(p => p.length > 0);
+
         const [people, places, sources] = await Promise.all([
             prisma.person.findMany({
                 where: {
                     treeId: treeId,
-                    names: {
-                        some: {
-                            OR: [
-                                { given: { contains: q as string, mode: 'insensitive' } },
-                                { surname: { contains: q as string, mode: 'insensitive' } },
-                                { full: { contains: q as string, mode: 'insensitive' } }
-                            ]
+                    AND: parts.map(part => ({
+                        names: {
+                            some: {
+                                OR: [
+                                    { given: { contains: part, mode: 'insensitive' } },
+                                    { surname: { contains: part, mode: 'insensitive' } },
+                                    { full: { contains: part, mode: 'insensitive' } }
+                                ]
+                            }
                         }
-                    }
+                    }))
                 },
                 include: { names: true, events: { include: { place: true } } },
                 take: 15

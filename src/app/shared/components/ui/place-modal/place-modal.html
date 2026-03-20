@@ -188,10 +188,7 @@
 
           <div class="space-y-1.5">
             <label class="form-label">Übergeordneter Ort</label>
-            <select [(ngModel)]="modalData.parentId" class="form-input">
-              <option value="">— Kein übergeordneter Ort —</option>
-              <option *ngFor="let p of parentOptions()" [value]="p.id">{{ p.name }}</option>
-            </select>
+            <app-place-input [(value)]="modalData.parentId" placeholder="Übergeordneten Ort suchen..."></app-place-input>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">

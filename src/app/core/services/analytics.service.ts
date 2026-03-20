@@ -39,4 +39,10 @@ export class AnalyticsService {
             map(res => res?.data ?? res)
         );
     }
+
+    getDiagnosticsSummary(treeName: string): Observable<any> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/validation/summary`, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
+    }
 }

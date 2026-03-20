@@ -72,7 +72,6 @@ export const routes: Routes = [
             {
                 path: 'person/:id',
                 loadComponent: () => import('./features/person/person-detail').then(m => m.PersonDetail),
-                canDeactivate: [unsavedChangesGuard],
                 data: { wide: true, breadcrumb: 'Details' }
             },
             {

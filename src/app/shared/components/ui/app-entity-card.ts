@@ -10,7 +10,7 @@ export type EntityBadgeColor = 'primary' | 'highlight' | 'success' | 'danger' | 
     standalone: true,
     imports: [CommonModule, RouterLink, AppAvatarComponent],
     template: `
-        <div class="glass-card !p-3 flex items-start gap-3 hover:bg-ui-cardHover transition-all cursor-pointer group border-l-[3px]"
+        <div class="glass-card flex items-start gap-3 hover:bg-ui-cardHover transition-all cursor-pointer group border-l-[3px]"
              [ngClass]="getBorderColorClass()"
              [routerLink]="routerLink"
              [queryParams]="queryParams"

@@ -14,11 +14,21 @@ export class NotesService {
     async processSharedNotes(tx: any, treeId: string, notes: any[], entityLinks: any, currentUserId?: string) {
         if (!notes || !Array.isArray(notes)) return;
 
+        console.log(`[NotesService] Processing ${notes.length} notes for entity:`, JSON.stringify(entityLinks));
+
         // Clean existing note links for this entity (except for events/facts which are usually recreated)
         if (entityLinks.personId && !entityLinks.eventId && !entityLinks.factId) {
-            await tx.noteLink.deleteMany({ where: { treeId, personId: entityLinks.personId, eventId: null, factId: null } });
-        } else if (entityLinks.familyId && !entityLinks.eventId) {
-            await tx.noteLink.deleteMany({ where: { treeId, familyId: entityLinks.familyId, eventId: null } });
+            const del = await tx.noteLink.deleteMany({ where: { treeId, personId: entityLinks.personId, eventId: null, factId: null } });
+            console.log(`[NotesService] Deleted ${del.count} old person links`);
+        } else if (entityLinks.familyId && !entityLinks.eventId && !entityLinks.factId) {
+            const del = await tx.noteLink.deleteMany({ where: { treeId, familyId: entityLinks.familyId, eventId: null, factId: null } });
+            console.log(`[NotesService] Deleted ${del.count} old family links`);
+        } else if (entityLinks.eventId) {
+            const del = await tx.noteLink.deleteMany({ where: { treeId, eventId: entityLinks.eventId } });
+            console.log(`[NotesService] Deleted ${del.count} old event links for ${entityLinks.eventId}`);
+        } else if (entityLinks.factId) {
+            const del = await tx.noteLink.deleteMany({ where: { treeId, factId: entityLinks.factId } });
+            console.log(`[NotesService] Deleted ${del.count} old fact links`);
         } else if (entityLinks.sourceId) {
             await tx.noteLink.deleteMany({ where: { treeId, sourceId: entityLinks.sourceId } });
         } else if (entityLinks.placeId) {

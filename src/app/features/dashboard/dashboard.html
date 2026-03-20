@@ -4,23 +4,23 @@
     </app-page-header>
 
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-10" *ngIf="!loading()">
-        <app-stat-card [value]="stats()?.counts?.individuals || 0" label="Personen" icon="👥" accent="brand"
+        <app-stat-card [value]="stats()?.counts?.individuals || 0" label="Personen" icon="people" accent="brand"
             routerLink="/persons">
         </app-stat-card>
-        <app-stat-card [value]="stats()?.counts?.families || 0" label="Familien" icon="👨‍👩‍👧‍👦"
+        <app-stat-card [value]="stats()?.counts?.families || 0" label="Familien" icon="family"
             accent="purple" routerLink="/families">
         </app-stat-card>
-        <app-stat-card [value]="stats()?.counts?.media || 0" label="Medien" icon="🖼️" accent="purple"
+        <app-stat-card [value]="stats()?.counts?.media || 0" label="Medien" icon="media" accent="amber"
             routerLink="/media">
         </app-stat-card>
-        <app-stat-card [value]="stats()?.counts?.sources || 0" label="Quellen" icon="📚" accent="amber"
+        <app-stat-card [value]="stats()?.counts?.sources || 0" label="Quellen" icon="source" accent="brand"
             routerLink="/sources">
         </app-stat-card>
-        <app-stat-card [value]="stats()?.counts?.places || 0" label="Orte" icon="📍" accent="emerald"
+        <app-stat-card [value]="stats()?.counts?.places || 0" label="Orte" icon="place" accent="emerald"
             routerLink="/places">
         </app-stat-card>
-        <app-stat-card [value]="completeness() + '%'" label="Vollständigkeit" icon="✅" accent="emerald">
-            <div class="w-full h-1 bg-canvas/5 rounded-full mt-3 overflow-hidden">
+        <app-stat-card [value]="completeness() + '%'" label="Progress" icon="target" accent="emerald">
+            <div class="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full mt-3 overflow-hidden">
                 <div class="h-full bg-gradient-to-r from-accent-success-500 to-accent-success-600 rounded-full shadow-sm transition-all duration-1000 ease-out"
                     [style.width.%]="completeness()"></div>
             </div>
@@ -29,40 +29,70 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-6 mb-16">
         <a routerLink="/tree"
-            class="relative no-underline text-inherit flex items-center rounded-xl transition-all duration-[180ms] overflow-hidden bg-brand-500/10 border border-brand-500/20 p-10 gap-8 group hover:bg-brand-500/15 hover:border-brand-500/30 hover:-translate-y-1 hover:shadow-md">
-            <div class="w-16 h-16 bg-white/10 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
-                <img src="/favicon.svg" alt="Tree" class="w-[60%] h-[60%] object-contain" />
+            class="relative no-underline text-inherit flex items-center rounded-card transition-all duration-[180ms] overflow-hidden bg-brand-500/10 dark:bg-brand-500/15 border border-brand-500/20 dark:border-brand-500/30 p-8 gap-6 group hover:bg-brand-500/15 dark:hover:bg-brand-500/20 hover:border-brand-500/30 dark:hover:border-brand-500/40 hover:-translate-y-0.5 hover:shadow-card-light">
+            <div class="w-14 h-14 bg-white/80 dark:bg-white/10 rounded-lg flex items-center justify-center shrink-0 shadow-sm border border-white/40">
+                <img src="/favicon.svg" alt="Tree" class="w-[50%] h-[50%] object-contain opacity-100" />
             </div>
             <div>
-                <h3 class="text-3xl font-bold mb-2 text-neutral-900">Stammbaum ansehen</h3>
-                <p class="text-neutral-500 text-base leading-relaxed">Erforsche deine Ahnen in der interaktiven Ansicht</p>
+                <h3 class="text-2xl font-black mb-1 text-slate-900 dark:text-white tracking-tight">Stammbaum ansehen</h3>
+                <p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">Erforsche deine Ahnen in der interaktiven Ansicht</p>
             </div>
             <div
-                class="text-3xl text-brand-500 ml-auto opacity-40 transition-all duration-[180ms] group-hover:translate-x-2 group-hover:opacity-100">
+                class="text-2xl text-brand-600 ml-auto opacity-40 transition-all duration-[180ms] group-hover:translate-x-1 group-hover:opacity-100">
                 →</div>
         </a>
 
-        <div class="flex flex-col gap-5">
-            <a (click)="toggleSwitcher()"
-                class="flex flex-col sm:flex-row items-start sm:items-center glass-card gap-5 transition-all duration-[180ms] group cursor-pointer hover:scale-[1.02]">
+        <div class="glass-card !p-8 flex flex-col gap-6">
+            <div>
+                <h3 class="text-xl font-black text-slate-900 dark:text-white mb-1">Was möchten Sie heute tun?</h3>
+                <p class="text-slate-500 dark:text-slate-400 text-sm">Wählen Sie eine Aktion, um Ihren Stammbaum zu erweitern.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button (click)="openQuickWizard('person')"
+                    class="flex items-center gap-4 p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-neutral-200 dark:border-white/10 hover:border-brand-500/50 hover:bg-brand-500/5 transition-all group text-left">
+                    <div class="w-10 h-10 rounded-lg bg-brand-500/10 text-brand-600 flex items-center justify-center group-hover:bg-brand-500/20 transition-colors">
+                        <app-icon name="plus" size="1.2rem"></app-icon>
+                    </div>
+                    <div>
+                        <span class="block font-bold text-slate-900 dark:text-white text-sm">Neue Person</span>
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Schritt-für-Schritt anlegen</span>
+                    </div>
+                </button>
+
+                <button (click)="discoverAncestor()"
+                    class="flex items-center gap-4 p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-neutral-200 dark:border-white/10 hover:border-accent-highlight-500/50 hover:bg-accent-highlight-500/5 transition-all group text-left">
+                    <div class="w-10 h-10 rounded-lg bg-accent-highlight-500/10 text-accent-highlight-600 flex items-center justify-center group-hover:bg-accent-highlight-500/20 transition-colors">
+                        <app-icon name="target" size="1.2rem"></app-icon>
+                    </div>
+                    <div>
+                        <span class="block font-bold text-slate-900 dark:text-white text-sm">Inspiration finden</span>
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Zufälligen Ahnen entdecken</span>
+                    </div>
+                </button>
+
+                <button (click)="toggleSwitcher()"
+                    class="flex items-center gap-4 p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-neutral-200 dark:border-white/10 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all group text-left">
+                    <div class="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                        <app-icon name="tree" size="1.2rem"></app-icon>
+                    </div>
+                    <div>
+                        <span class="block font-bold text-slate-900 dark:text-white text-sm">Baum wechseln</span>
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Anderen Zweig öffnen</span>
+                    </div>
+                </button>
+
                 <div
-                    class="text-brand-600 text-3xl font-extrabold w-14 h-14 bg-brand-500/10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                    ＋</div>
-                <div>
-                    <h3 class="text-xl font-bold mb-1 text-neutral-900">Stammbaum wechseln</h3>
-                    <p class="text-neutral-500 text-sm">Anderen Baum öffnen</p>
+                    class="flex items-center gap-4 p-4 rounded-xl bg-white/30 dark:bg-white/5 border border-dashed border-neutral-300 dark:border-white/10 opacity-60">
+                    <div class="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-white/5 text-neutral-400 flex items-center justify-center">
+                        <app-icon name="activity" size="1.2rem"></app-icon>
+                    </div>
+                    <div>
+                        <span class="block font-bold text-slate-400 text-sm italic">Coming soon...</span>
+                        <span class="text-[11px] text-slate-400 font-medium italic">Weitere KI-Assistenten</span>
+                    </div>
                 </div>
-            </a>
-            <a (click)="discoverAncestor()"
-                class="flex flex-col sm:flex-row items-start sm:items-center glass-card !bg-accent-highlight-500/5 border border-accent-highlight-200/50 p-6 gap-5 rounded-xl transition-all duration-[180ms] group cursor-pointer hover:scale-[1.02]">
-                <div
-                    class="text-accent-highlight-600 text-2xl w-14 h-14 bg-accent-highlight-500/10 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                    ✨</div>
-                <div>
-                    <h3 class="text-xl font-bold mb-1 text-neutral-900">Entdecken</h3>
-                    <p class="text-neutral-500 text-sm">Zufälligen Vorfahren finden</p>
-                </div>
-            </a>
+            </div>
         </div>
     </div>
 
@@ -70,48 +100,27 @@
         class="flex flex-wrap gap-2 glass-card !p-2 !rounded-xl mb-16 w-full">
         <a routerLink="/map" title="Karte"
             class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-[180ms]">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2.5">
-                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-            </svg>
+            <app-icon name="place" size="1rem"></app-icon>
             <span class="text-xs font-bold uppercase tracking-wider">Karte</span>
         </a>
         <a routerLink="/media" title="Galerie"
             class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-[180ms]">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2.5">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
+            <app-icon name="media" size="1rem"></app-icon>
             <span class="text-xs font-bold uppercase tracking-wider">Galerie</span>
         </a>
         <a routerLink="/statistics" title="Statistik"
             class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-[180ms]">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2.5">
-                <line x1="18" y1="20" x2="18" y2="10"></line>
-                <line x1="12" y1="20" x2="12" y2="4"></line>
-                <line x1="6" y1="20" x2="6" y2="14"></line>
-            </svg>
+            <app-icon name="statistics" size="1rem"></app-icon>
             <span class="text-xs font-bold uppercase tracking-wider">Statistik</span>
         </a>
         <a routerLink="/activity" title="Aktivität"
             class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-[180ms]">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2.5">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-            </svg>
+            <app-icon name="activity" size="1rem"></app-icon>
             <span class="text-xs font-bold uppercase tracking-wider">Aktivität</span>
         </a>
         <a routerLink="/diagnostics" title="Fehlersuche"
             class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-[180ms]">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
+            <app-icon name="diagnostics" size="1rem"></app-icon>
             <span class="text-xs font-bold uppercase tracking-wider">Prüfung</span>
         </a>
     </div>

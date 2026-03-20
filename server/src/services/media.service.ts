@@ -4,9 +4,31 @@ import sharp from 'sharp';
 import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import { STORAGE_ROOT, MEDIA_ROOT, TEMP_DIR, USERS_DIR } from '../config';
+import { NotesService } from './notes.service';
 
 export class MediaService {
-    constructor(private prisma: PrismaClient) {}
+    constructor(private prisma: PrismaClient, private notesService: NotesService) {}
+
+    async getMediaById(treeId: string, id: string) {
+        const media = await this.prisma.media.findUnique({
+            where: { id, treeId },
+            include: {
+                links: {
+                    include: {
+                        person: { include: { names: { where: { isPrimary: true } } } },
+                        family: { include: { mediaLinks: { include: { media: true } } } }
+                    }
+                },
+                citations: { include: { source: true } },
+                identifiers: true,
+                noteLinks: { include: { note: true } },
+                variants: true
+            }
+        });
+
+        if (!media) return null;
+        return this.formatMediaForClient(media);
+    }
 
     static formatUserId(userId: string | number): string {
         if (typeof userId === 'string' && userId.includes('-')) {
@@ -68,7 +90,7 @@ export class MediaService {
                         family: { include: { mediaLinks: { include: { media: true } } } }
                     }
                 },
-                citations: true,
+                citations: { include: { source: true } },
                 identifiers: true,
                 noteLinks: { include: { note: true } }
             },
@@ -158,7 +180,49 @@ export class MediaService {
                 });
         }
 
-        return { media: [...finalMedia, ...orphanFiles], stats };
+        return { 
+            media: [...finalMedia, ...orphanFiles].map(m => this.formatMediaForClient(m)), 
+            stats 
+        };
+    }
+
+    private formatMediaForClient(m: any) {
+        return {
+            ...m,
+            notes: (m.noteLinks || []).map((nl: any) => nl.note).filter(Boolean),
+            formattedNotes: MediaService.formatNotesForClient(m.noteLinks || []),
+            formattedCitations: MediaService.formatCitationsForClient(m.citations || [])
+        };
+    }
+
+    private static formatNotesForClient(noteLinks: any[]): any[] {
+        if (!noteLinks) return [];
+        return noteLinks.map(nl => {
+            const n = nl.note;
+            if (!n) return null;
+            return {
+                id: n.id,
+                text: n.text,
+                noteType: n.noteType,
+                isPrivate: n.privacyLevel === 'PRIVATE',
+                date: n.createdAt ? n.createdAt.toLocaleDateString('de-DE') : ''
+            };
+        }).filter(Boolean);
+    }
+
+    private static formatCitationsForClient(citations: any[]): any[] {
+        if (!citations) return [];
+        return citations.map(c => {
+            return {
+                id: c.id,
+                sourceId: c.sourceId,
+                title: c.source?.title || 'Unbekannte Quelle',
+                whereInSource: c.page || '',
+                confidenceLabel: c.confidence === 'CERTAIN' ? 'Sicher' : 
+                                 c.confidence === 'VERY_LIKELY' ? 'Sehr wahrscheinlich' :
+                                 c.confidence === 'LIKELY' ? 'Wahrscheinlich' : 'Unzuverlässig'
+            };
+        });
     }
 
     async getMediaFilePath(id: string, variant?: string): Promise<{ path: string; mimeType: string } | null> {
@@ -190,18 +254,18 @@ export class MediaService {
         return null;
     }
 
-    async saveMedia(id: string, data: any) {
+    async saveMedia(id: string, data: any, currentUserId?: string) {
         const { title, mediaType, notes, identifiers, citations } = data;
         
-        return await this.prisma.$transaction(async (tx) => {
+        const treeId = await this.prisma.$transaction(async (tx) => {
             const currentMedia = await tx.media.findUnique({
                 where: { id },
                 select: { treeId: true }
             });
             if (!currentMedia) throw new Error('Media not found');
-            const treeId = currentMedia.treeId;
+            const tid = currentMedia.treeId;
 
-            const updatedMedia = await tx.media.update({
+            await tx.media.update({
                 where: { id },
                 data: { title, mediaType }
             });
@@ -213,7 +277,7 @@ export class MediaService {
                         if (!iden.value) continue;
                         await tx.identifier.create({
                             data: {
-                                treeId, mediaId: id, entityId: id, entityType: 'MEDIA',
+                                treeId: tid, mediaId: id, entityId: id, entityType: 'MEDIA',
                                 type: iden.type || null, value: iden.value
                             }
                         });
@@ -222,39 +286,24 @@ export class MediaService {
             }
 
             if (notes !== undefined) {
-                await tx.noteLink.deleteMany({ where: { mediaId: id } });
-                if (Array.isArray(notes)) {
-                    for (const noteData of notes) {
-                        const isString = typeof noteData === 'string';
-                        const text = isString ? noteData.trim() : (noteData.text || '').trim();
-                        if (!text) continue;
-                        const sharedNote = await tx.sharedNote.create({
-                            data: {
-                                treeId, text,
-                                noteType: isString ? 'OTHER' : (noteData.noteType || 'OTHER'),
-                                privacyLevel: (!isString && noteData.isPrivate) ? 'PRIVATE' : 'PUBLIC',
-                                researchStatus: 'OPEN'
-                            }
-                        });
-                        await tx.noteLink.create({ data: { treeId, mediaId: id, noteId: sharedNote.id } });
-                    }
+                await this.notesService.processSharedNotes(tx, tid, notes, { mediaId: id }, currentUserId);
+            }
+
+            await tx.citation.deleteMany({ where: { mediaId: id } });
+            if (Array.isArray(citations)) {
+                for (const cit of citations) {
+                    if (!cit.sourceId) continue;
+                    await tx.citation.create({
+                        data: { treeId: tid, mediaId: id, sourceId: cit.sourceId, page: cit.page || null }
+                    });
                 }
             }
 
-            if (citations !== undefined) {
-                await tx.citation.deleteMany({ where: { mediaId: id } });
-                if (Array.isArray(citations)) {
-                    for (const cit of citations) {
-                        if (!cit.sourceId) continue;
-                        await tx.citation.create({
-                            data: { treeId, mediaId: id, sourceId: cit.sourceId, page: cit.page || null }
-                        });
-                    }
-                }
-            }
-
-            return updatedMedia;
+            return tid;
         });
+
+        // Return fully formatted object
+        return await this.getMediaById(treeId, id);
     }
 
     async deleteMedia(id: string) {
@@ -295,8 +344,9 @@ export class MediaService {
         const media = await prisma.media.findUnique({ where: { id: mediaId } });
         if (!media || !media.path) return;
 
-        const originalPath = path.join(storageRoot, media.path);
-        const userDir = path.dirname(path.dirname(path.dirname(originalPath))); 
+        const baseDir = media.path.startsWith('users/') ? storageRoot : MEDIA_ROOT;
+        const originalPath = path.join(baseDir, media.path);
+        const userDir = path.dirname(path.dirname(originalPath)); 
         const thumbsDir = path.join(userDir, 'thumbs');
         const mediumDir = path.join(userDir, 'medium');
 
@@ -391,9 +441,138 @@ export class MediaService {
         });
 
         if (isImage) {
-            await MediaService.generateVariants(media.id, this.prisma, MEDIA_ROOT);
+            await MediaService.generateVariants(media.id, this.prisma, STORAGE_ROOT);
         }
 
         return media;
+    }
+
+    async updateCrop(treeId: string, mediaId: string, crop: { x: number, y: number, width: number, height: number }) {
+        const media = await this.prisma.media.update({
+            where: { id: mediaId, treeId },
+            data: {
+                cropX: Math.round(crop.x),
+                cropY: Math.round(crop.y),
+                cropWidth: Math.round(crop.width),
+                cropHeight: Math.round(crop.height)
+            }
+        });
+
+        if (media.mimeType?.startsWith('image/')) {
+            await MediaService.generateVariants(mediaId, this.prisma, STORAGE_ROOT);
+        }
+
+        return media;
+    }
+
+    async resetCrop(treeId: string, mediaId: string) {
+        const media = await this.prisma.media.update({
+            where: { id: mediaId, treeId },
+            data: {
+                cropX: null,
+                cropY: null,
+                cropWidth: null,
+                cropHeight: null
+            }
+        });
+
+        if (media.mimeType?.startsWith('image/')) {
+            await MediaService.generateVariants(mediaId, this.prisma, STORAGE_ROOT);
+        }
+
+        return media;
+    }
+
+    async getMediaUsage(treeId: string, mediaId: string) {
+        const links = await this.prisma.mediaLink.findMany({
+            where: { mediaId, treeId },
+            include: {
+                person: { include: { names: { where: { isPrimary: true } } } },
+                family: {
+                    include: {
+                        familyMembers: {
+                            include: {
+                                person: { include: { names: { where: { isPrimary: true } } } }
+                            }
+                        }
+                    }
+                },
+                source: true
+            }
+        });
+
+        return links.map(l => {
+            let context = 'Medium';
+            let contextLabel = 'Unbekannt';
+            let entityId = l.id;
+            let entityType = 'media';
+            let confidence = l.isPrimary ? 'CERTAIN' : undefined;
+
+            if (l.person) {
+                context = 'Person';
+                contextLabel = l.person.names[0]?.full || 'Unbekannte Person';
+                entityId = l.personId!;
+                entityType = 'person';
+            } else if (l.family) {
+                context = 'Familie';
+                const h = l.family.familyMembers.find(m => m.role === 'SPOUSE');
+                const w = l.family.familyMembers.find(m => m.role === 'SPOUSE' && m !== h);
+                const hName = h?.person.names[0]?.full || 'Sohn/Tochter';
+                const wName = w?.person.names[0]?.full || 'Unbekannt';
+                contextLabel = `${hName} & ${wName}`;
+                entityId = l.familyId!;
+                entityType = 'family';
+            } else if (l.source) {
+                context = 'Quelle';
+                contextLabel = l.source.title;
+                entityId = l.sourceId!;
+                entityType = 'source';
+            }
+
+            return {
+                context,
+                contextLabel,
+                entityId,
+                entityType,
+                confidence
+            };
+        });
+    }
+
+    async linkMedia(treeId: string, mediaId: string, data: { personId?: string, familyId?: string, sourceId?: string, isPrimary?: boolean }) {
+        return await this.prisma.mediaLink.create({
+            data: {
+                treeId,
+                mediaId,
+                personId: data.personId || null,
+                familyId: data.familyId || null,
+                sourceId: data.sourceId || null,
+                isPrimary: !!data.isPrimary
+            },
+            include: {
+                person: { include: { names: { where: { isPrimary: true } } } },
+                family: true,
+                source: true
+            }
+        });
+    }
+
+    async unlinkMedia(treeId: string, linkId: string) {
+        return await this.prisma.mediaLink.delete({
+            where: { id: linkId, treeId }
+        });
+    }
+
+    async deleteOrphanFile(treeId: string, filePath: string) {
+        if (!filePath || filePath.includes('..') || path.isAbsolute(filePath)) {
+            throw new Error('Invalid filePath');
+        }
+
+        const fullPath = path.join(MEDIA_ROOT, filePath);
+        if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+            return true;
+        }
+        return false;
     }
 }

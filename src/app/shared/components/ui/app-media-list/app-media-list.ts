@@ -106,12 +106,12 @@ export class AppMediaList {
 
   getRoleBorder(role?: string): string {
     switch (role) {
-      case 'PORTRAIT': return '#8b5cf6';
-      case 'DOCUMENT': return '#3b82f6';
-      case 'CERTIFICATE': return '#10b981';
-      case 'GRAVESTONE': return '#6b7280';
-      case 'SIGNATURE': return '#f59e0b';
-      default: return '#6366f1';
+      case 'PORTRAIT': return 'var(--color-media-portrait)';
+      case 'DOCUMENT': return 'var(--color-media-document)';
+      case 'CERTIFICATE': return 'var(--color-media-certificate)';
+      case 'GRAVESTONE': return 'var(--color-media-gravestone)';
+      case 'SIGNATURE': return 'var(--color-media-signature)';
+      default: return 'var(--color-media-default)';
     }
   }
 

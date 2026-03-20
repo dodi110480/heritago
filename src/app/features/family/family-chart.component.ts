@@ -2,8 +2,10 @@ import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, inject, signal
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../core/services/auth.service';
 import { TreeService } from '../../core/services/tree.service';
-import { transformToFamilyChart } from './family-chart-transformer';
+import { environment } from '../../environment';
 import * as d3 from 'd3';
 
 import { MediaService } from '../../core/services/media.service';
@@ -135,6 +137,22 @@ import 'family-chart/styles/family-chart.css';
     --fc-overlay: rgba(0, 0, 0, 0.4);
     font-family: theme('fontFamily.body');
 }
+
+    .fc-search-container {
+        @apply absolute top-5 right-5 w-56 z-[1000];
+    }
+    .fc-search-input {
+        @apply w-full bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full px-5 py-2.5 text-neutral-900 dark:text-white outline-none shadow-lg font-medium focus:ring-2 focus:ring-brand-500/30;
+    }
+    .fc-search-dropdown {
+        @apply absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl rounded-2xl border border-glass-border dark:border-glass-border-dark shadow-2xl overflow-hidden max-h-[300px] overflow-y-auto z-[1001];
+    }
+    .fc-search-item {
+        @apply px-4 py-2.5 cursor-pointer text-sm text-neutral-700 dark:text-neutral-300 border-b border-neutral-100 dark:border-neutral-800 transition-colors;
+    }
+    .fc-search-item:hover {
+        @apply bg-brand-500 text-white;
+    }
 
     .f3-literal-wrapper {
         position: relative;
@@ -272,7 +290,7 @@ import 'family-chart/styles/family-chart.css';
         transition: transform 0.2s;
     }
       .f3 div.card-image-circle div.card-label {
-      color: #fff;
+      @apply text-white;
   }
     /* Gender colors from /persons */
     .f3-html-card.gender-F { border-color: theme('colors.gender.female'); }
@@ -309,6 +327,8 @@ import 'family-chart/styles/family-chart.css';
 })
 export class FamilyChartComponent implements OnInit, AfterViewInit {
     public mediaService = inject(MediaService);
+    public authService = inject(AuthService);
+    private http = inject(HttpClient);
 
   @ViewChild('familyChart') chartElement!: ElementRef;
 
@@ -336,15 +356,22 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.loadSavedConfig();
-    this.treeService.getTreeData().subscribe(data => {
-      if (data) {
-        const transformedData = transformToFamilyChart(data);
-        this.treeData.set(transformedData);
-        if (this.chartElement) {
-          this.renderChart();
-        }
-      }
-    });
+    const activeTree = this.authService.currentTree();
+    const treeName = activeTree?.name;
+    
+    if (treeName) {
+      this.http.get<any>(`${environment.apiUrl}/tree/${treeName}/chart-data`, { withCredentials: true }).subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.treeData.set(res.data);
+            if (this.chartElement) {
+              this.renderChart();
+            }
+          }
+        },
+        error: (err) => console.error('Error fetching chart data', err)
+      });
+    }
   }
 
   ngAfterViewInit() {
@@ -454,10 +481,10 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
     })).filter((v, i, a) => a.findIndex(t => t.value === v.value) === i);
 
     const search_cont = d3.select(this.chartElement.nativeElement).append("div")
-      .attr("style", "position: absolute; top: 20px; right: 20px; width: 220px; z-index: 1000;");
+      .attr("class", "fc-search-container");
 
     const search_input = search_cont.append("input")
-      .attr("style", "width: 100%; padding: 10px 18px; background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; color: #1e293b; outline: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-weight: 500;")
+      .attr("class", "fc-search-input")
       .attr("type", "text")
       .attr("placeholder", "Person suchen...")
       .on("input", (event: any) => {
@@ -467,11 +494,11 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
       });
 
     const dropdown = search_cont.append("div")
-      .attr("style", "background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); max-height: 300px; overflow-y: auto; border-radius: 16px; margin-top: 8px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.1);");
+      .attr("class", "fc-search-dropdown");
 
     const updateSearchDropdown = (options: any[]) => {
       dropdown.selectAll("div").data(options).join("div")
-        .attr("style", "padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #222; font-size: 13px; color: var(--fc-text-soft);")
+        .attr("class", "fc-search-item")
         .text(d => d.label)
         .on("mouseover", (event: any) => { d3.select(event.currentTarget).style("background", "var(--fc-primary)").style("color", "white"); })
         .on("mouseout", (event: any) => { d3.select(event.currentTarget).style("background", "transparent").style("color", "var(--fc-text-soft)"); })

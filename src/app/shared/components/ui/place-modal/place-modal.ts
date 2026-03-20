@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject, signal, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject, signal, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -25,6 +25,7 @@ export class PlaceModal implements OnInit {
     private treeService = inject(TreeService);
     private authService = inject(AuthService);
     private router = inject(Router);
+    private cdr = inject(ChangeDetectorRef);
 
     @ViewChild('mapContainer') mapContainer?: ElementRef<HTMLDivElement>;
 
@@ -98,6 +99,7 @@ export class PlaceModal implements OnInit {
 
     setTab(tab: 'basics' | 'languages' | 'location' | 'notes' | 'links') {
         this.activeTab.set(tab);
+        this.cdr.detectChanges();
         if (tab === 'location' && this.showMap()) {
             setTimeout(() => this.initMap(), 50);
         }
@@ -114,7 +116,14 @@ export class PlaceModal implements OnInit {
         this.placeService.getPlaceUsage(tree, this.initialData.id).subscribe({
             next: (res) => {
                 this.isLoadingUsage.set(false);
-                if (res.success) this.usages.set(res.usage || []);
+                // The service unwraps data. If it's an array, it's the usage data.
+                if (Array.isArray(res)) {
+                    this.usages.set(res);
+                } else if (res && res.usage) {
+                    this.usages.set(res.usage);
+                } else if (res && res.success === false) {
+                    console.warn('Place usage fetch failed', res);
+                }
             },
             error: () => this.isLoadingUsage.set(false)
         });
@@ -148,8 +157,9 @@ export class PlaceModal implements OnInit {
                     if (tree) {
                         this.placeService.getPlace(tree.name, this.initialData.id).subscribe({
                             next: (res: any) => {
-                                if (res.success && res.place) {
-                                    const p = res.place;
+                                // Service unwrapped response: might be the object itself OR {success: false, ...}
+                                if (res && res.id) {
+                                    const p = res;
                                     this.modalData.id = p.id;
                                     this.modalData.description = p.name || '';
                                     this.modalData.latitude = p.latitude?.toString() || '';
@@ -178,10 +188,17 @@ export class PlaceModal implements OnInit {
                                     // Parse name into components, but keep full name as description fallback
                                     this.parsePlaceName(p.name || '');
                                     
-                                    setTimeout(() => this.initMap(), 50);
-                                } else {
+                                    this.cdr.detectChanges();
+                                } else if (res && res.success === false) {
                                     console.warn('Backend returned success:false for place fetch', res);
                                     this.fallbackToInitialData();
+                                    this.cdr.detectChanges();
+                                    setTimeout(() => this.initMap(), 50);
+                                } else {
+                                    // Fallback for unexpected format but assuming error if no ID
+                                    console.warn('Backend returned unexpected place format', res);
+                                    this.fallbackToInitialData();
+                                    this.cdr.detectChanges();
                                     setTimeout(() => this.initMap(), 50);
                                 }
                             },
@@ -407,11 +424,15 @@ export class PlaceModal implements OnInit {
         this.placeService.savePlace(tree, payload).subscribe({
             next: (res: any) => {
                 this.isSaving.set(false);
-                if (res.success) {
+                if (res && (res.success || res.id)) {
                     this.saved.emit(payload);
+                } else if (res && res._debug) {
+                    this.errorMessage.set(`${res.message} (UID: ${res._debug.userId}, Tree: ${res._debug.treeName})`);
                 } else {
-                    this.errorMessage.set(res.message);
+                    this.errorMessage.set(res?.message || 'Fehler beim Speichern.');
                 }
+                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             },
             error: (err: any) => {
                 this.isSaving.set(false);

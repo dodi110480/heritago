@@ -90,18 +90,17 @@ export class MapView implements OnInit {
         if (markers.length > 0) {
             const bounds = L.latLngBounds([]);
             markers.forEach((m: any) => {
-                // Find persons associated with this place name (or coordinates)
-                const personAtPlace = persons.filter(p => p.places.some((pl: any) => pl.name === m.name));
+                const personAtPlace = m.persons || [];
                 
                 let personsHtml = '';
                 if (personAtPlace.length > 0) {
                     personsHtml = `
-                        <div style="margin-top: 10px; border-top: 1px solid #eee; pt-2;">
-                            <p style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #666; margin: 8px 0 4px 0;">Personen hier:</p>
-                            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
-                                ${personAtPlace.map(p => `
-                                    <div style="width: 32px; height: 32px; border-radius: 50%; overflow: hidden; background: #f0f0f0; border: 1px solid #ddd;" title="${p.firstName} ${p.lastName}">
-                                        <img src="${this.getAvatarUrl(p.profileImageUrl)}" style="width: 100%; height: 100%; object-cover: true;">
+                        <div class="map-popup-divider">
+                            <p class="map-popup-label">Personen hier:</p>
+                            <div class="map-popup-avatars">
+                                ${personAtPlace.map((p: any) => `
+                                    <div class="map-avatar-wrapper" title="${p.firstName} ${p.lastName}">
+                                        <img src="${this.getAvatarUrl(p.profileImageUrl)}" class="map-avatar-img">
                                     </div>
                                 `).join('')}
                             </div>
@@ -111,9 +110,9 @@ export class MapView implements OnInit {
 
                 const marker = L.marker([m.lat, m.lng])
                     .bindPopup(`
-                        <div style="padding: 5px; min-width: 150px;">
-                            <h4 style="margin: 0 0 5px 0; color: #1e293b;">${m.name}</h4>
-                            <p style="margin: 0; font-size: 11px; color: #64748b;">${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}</p>
+                        <div class="map-popup-content">
+                            <h4 class="map-popup-title">${m.name}</h4>
+                            <p class="map-popup-coords">${m.lat.toFixed(4)}, ${m.lng.toFixed(4)}</p>
                             ${personsHtml}
                         </div>
                     `)

@@ -91,8 +91,10 @@ export class PersonCreateModal {
         this.personService.savePerson(tree.name, payload).subscribe({
             next: (res: any) => {
                 this.isSaving.set(false);
-                if (res && res.success && res.person) {
-                    this.created.emit({ mode: 'new', person: res.person });
+                if (res) {
+                    // res is the mapped data from PersonService (either the person object or the full profile)
+                    const personData = res.person || res;
+                    this.created.emit({ mode: 'new', person: personData });
                     this.close();
                 }
             },

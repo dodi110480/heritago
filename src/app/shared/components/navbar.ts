@@ -8,10 +8,12 @@ import { filter } from 'rxjs/operators';
 
 
 import { AnalyticsService } from '../../core/services/analytics.service';
+import { AppIconComponent } from './ui/app-icon';
+
 @Component({
     selector: 'app-navbar',
     standalone: true,
-    imports: [RouterLink, RouterLinkActive, CommonModule],
+    imports: [RouterLink, RouterLinkActive, CommonModule, AppIconComponent],
     templateUrl: './navbar.html',
     encapsulation: ViewEncapsulation.None
 })
@@ -22,6 +24,7 @@ export class Navbar {
     private router = inject(Router);
 
     errorCount = signal<number>(0);
+    warningCount = signal<number>(0);
     isMobileMenuOpen = signal<boolean>(false);
 
     constructor() {
@@ -45,14 +48,19 @@ export class Navbar {
     updateDiagnostics() {
         const activeTree = this.authService.currentTree();
         if (activeTree) {
-            this.analyticsService.getDiagnostics(activeTree.name).subscribe({
+            this.analyticsService.getDiagnosticsSummary(activeTree.name).subscribe({
                 next: (data: any) => {
-                    this.errorCount.set(data.count || 0);
+                    this.errorCount.set(data.errors || 0);
+                    this.warningCount.set(data.warnings || 0);
                 },
-                error: () => this.errorCount.set(0)
+                error: () => {
+                    this.errorCount.set(0);
+                    this.warningCount.set(0);
+                }
             });
         } else {
             this.errorCount.set(0);
+            this.warningCount.set(0);
         }
     }
 

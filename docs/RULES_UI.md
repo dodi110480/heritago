@@ -58,6 +58,7 @@
 ## 9. Bilder & Avatare
 - `app-avatar`: imageUrl?, gender(M/F/O), size(xs–2xl)
 - Originalbilder → unverändert, Crops nur für Varianten
+- **Klick auf Medien-Cards öffnet ausnahmslos den Media Viewer.** Metadaten-Bearbeitung erfolgt über separate Icons/Buttons.
 - Variantenerzeugung asynchron
 
 ## 10. REST & API

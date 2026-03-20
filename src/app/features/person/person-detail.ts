@@ -44,7 +44,7 @@ import { PersonTabTimelineComponent } from './person-tab-timeline';
     templateUrl: './person-detail.html',
     encapsulation: ViewEncapsulation.None
 })
-export class PersonDetail implements OnInit, CanComponentDeactivate {
+export class PersonDetail implements OnInit {
     public store = inject(PersonFeatureStore);
     public timelineService = inject(PersonTimelineService);
     private route = inject(ActivatedRoute);
@@ -59,10 +59,6 @@ export class PersonDetail implements OnInit, CanComponentDeactivate {
                 this.store.init(id);
             }
         });
-    }
-
-    canDeactivate(): boolean | Promise<boolean> {
-        return !this.store.isDirty();
     }
 
     openDeleteModal() {

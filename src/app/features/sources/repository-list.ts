@@ -37,7 +37,7 @@ export class RepositoryList implements OnInit {
     selectedRepo = signal<any | null>(null);
 
     // Modal state
-    modalVisible = false;
+    modalVisible = signal(false);
     modalMode: 'add' | 'edit' = 'add';
     isSaving = signal(false);
     errorMessage = signal<string | null>(null);
@@ -56,14 +56,12 @@ export class RepositoryList implements OnInit {
         if (!this.currentTree) return;
         this.loading.set(true);
         this.treeService.getTreeData().subscribe({
-            next: (res: any) => {
-                if (res.success) this.repositories.set(res.repositories);
+            next: (data: any) => {
+                if (data) this.repositories.set(data.repositories || []);
                 this.loading.set(false);
-                this.cdr.detectChanges();
             },
             error: () => {
                 this.loading.set(false);
-                this.cdr.detectChanges();
             }
         });
     }
@@ -73,8 +71,7 @@ export class RepositoryList implements OnInit {
         this.selectedRepo.set(null);
         this.resetForm();
         this.errorMessage.set(null);
-        this.modalVisible = true;
-        this.cdr.detectChanges();
+        this.modalVisible.set(true);
     }
 
     openEditModal(repo: any) {
@@ -86,13 +83,11 @@ export class RepositoryList implements OnInit {
         this.formEmail.set(repo.email || '');
         this.formWebsite.set(repo.website || '');
         this.errorMessage.set(null);
-        this.modalVisible = true;
-        this.cdr.detectChanges();
+        this.modalVisible.set(true);
     }
 
     closeModal() {
-        this.modalVisible = false;
-        this.cdr.detectChanges();
+        this.modalVisible.set(false);
     }
 
     resetForm() {
@@ -128,18 +123,16 @@ export class RepositoryList implements OnInit {
         this.sourceService.saveRepository(this.currentTree, payload).subscribe({
             next: (res: any) => {
                 this.isSaving.set(false);
-                if (res.success) {
-                    this.modalVisible = false;
+                if (res && (res.success || res.id)) {
+                    this.modalVisible.set(false);
                     this.loadRepositories();
                 } else {
-                    this.errorMessage.set(res.message || 'Fehler beim Speichern.');
+                    this.errorMessage.set(res?.message || 'Fehler beim Speichern.');
                 }
-                this.cdr.detectChanges();
             },
             error: (err: any) => {
                 this.isSaving.set(false);
                 this.errorMessage.set(err.error?.message || 'Netzwerkfehler.');
-                this.cdr.detectChanges();
             }
         });
     }
@@ -152,10 +145,9 @@ export class RepositoryList implements OnInit {
             next: () => {
                 if (this.selectedRepo()?.id === repo.id) {
                     this.selectedRepo.set(null);
-                    this.modalVisible = false;
+                    this.modalVisible.set(false);
                 }
                 this.loadRepositories();
-                this.cdr.detectChanges();
             }
         });
     }

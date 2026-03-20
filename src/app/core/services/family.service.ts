@@ -15,4 +15,14 @@ export class FamilyService {
             map(res => res?.data ?? res)
         );
     }
+
+    getFullProfile(treeName: string, familyId: string): Observable<any> {
+        return this.http.get<any>(`${this.baseApiUrl}${treeName}/family/${familyId}/full-profile`, { withCredentials: true }).pipe(
+            map(res => res?.data ?? res)
+        );
+    }
+
+    deleteFamily(treeName: string, familyId: string): Observable<any> {
+        return this.http.delete<any>(`${this.baseApiUrl}${treeName}/family/${familyId}`, { withCredentials: true });
+    }
 }

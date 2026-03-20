@@ -165,6 +165,7 @@ export interface Fact {
 
 export interface Individual {
     id: string;
+    treeId?: string;
     gedcomId?: string;
     name: string; // Display name
     names: Name[];
@@ -183,6 +184,7 @@ export interface Individual {
     isLiving?: boolean;
     privacyLevel?: 'PUBLIC' | 'FAMILY' | 'PRIVATE';
     exid?: string;
+    completeness?: { score: number; missing: string[] };
     associations?: {
         role?: string;
         associatedPersonId?: string;
@@ -241,6 +243,12 @@ export interface Individual {
         spouseName?: string;
         children: { id: string; name: string }[];
     }[];
+    genderLabel?: string;
+    privacyLevelLabel?: string;
+    familyLinkCount?: number;
+    formattedCitations?: any[];
+    formattedNotes?: any[];
+    timeline?: TimelineItem[];
 }
 
 export interface LifeEvent {
@@ -257,6 +265,11 @@ export interface LifeEvent {
     citations?: Citation[];
     age?: string;
     isPrimary: boolean;
+    dateType?: string; // DatePrecision Enum
+    isNegative?: boolean;
+    cause?: string;
+    ldsTemple?: string;
+    ldsStatus?: string;
     associations?: any[]; // For event participants
 }
 
@@ -266,13 +279,36 @@ export interface Family {
     husband?: string; // Individual ID
     wife?: string;    // Individual ID
     children: string[]; // Individual IDs
+    marriageType?: string; // Enum
+    restrictionNotice?: string; // Enum
+    familyMembers?: {
+        personId: string;
+        marriageType?: string;
+        sortOrder?: number;
+    }[];
     events?: LifeEvent[];
     media?: Media[];
     notes?: DisplayNote[];
     citations?: Citation[];
+    status?: string;
+    statusLabel?: string;
+    statusIcon?: string;
+    marriageLabel?: string;
+    marriageDate?: string | Date;
+    marriageSubtypeLabels?: string[];
+    childrenCount?: number;
+    displayName?: string;
+    formattedCitations?: any[];
+    formattedNotes?: any[];
+    husbandName?: string;
+    wifeName?: string;
+    profileImageUrl?: string;
+    gender?: string;
+    childNames?: string;
 }
 
 export interface TreeData {
+    id?: string; // Compatibility alias for meta.treeId
     individuals: Individual[];
     families: Family[];
     sources?: any[];
@@ -286,20 +322,36 @@ export interface TreeData {
 }
 
 export interface TimelineItem {
-    originalType: 'event' | 'fact' | 'family-event';
+    id?: string; // Original database ID of the event or fact
+    originalType: 'event' | 'fact' | 'family-event' | 'participation';
     originalIndex: number;
     familyId?: string;
     sourcePersonId?: string;
     sourcePersonName?: string;
+    itemKind?: 'event' | 'fact';
     tag: string;
+    label?: string;
+    age?: number | null;
     date?: string;
+    dateText?: string;
     place?: string;
+    placeId?: string; // Original place ID if available
     description?: string; // Für Events
     value?: string; // Für Fakten
     media?: any[];
-    notes?: string[];
-    citations?: any[];
-    associations?: any[];
+    notes?: DisplayNote[];
+    citations?: Citation[];
+    associations?: {
+        id?: string;
+        personId?: string;
+        associatedPersonId?: string;
+        associatedPersonName?: string;
+        role?: string;
+        relationText?: string;
+        dateText?: string;
+        confidence?: string;
+        notes?: string;
+    }[];
     expanded?: boolean;
     editing?: boolean;
 }

@@ -86,7 +86,7 @@ export class MediaService {
         notes?: DisplayNote[],
         citations?: any[]
     }): Observable<any> {
-        return this.http.put<any>(`${environment.apiUrl}/tree/${treeName}/media/${id}`, data, { withCredentials: true }).pipe(
+        return this.http.patch<any>(`${environment.apiUrl}/tree/${treeName}/media/${id}`, data, { withCredentials: true }).pipe(
             map(res => res?.data ?? res)
         );
     }

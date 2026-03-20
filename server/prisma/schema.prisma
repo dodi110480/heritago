@@ -122,6 +122,8 @@ enum AssociationRole {
   EMPLOYER
   FRIEND
   OTHER
+  SPOUSE
+  PARTNER
 }
 
 enum EntityType {
@@ -425,6 +427,7 @@ model FamilyMember {
   role         FamilyRole?
   marriageType MarriageType?
   pedigreeType PedigreeType?
+  isPrimary    Boolean       @default(false)
   sortOrder    Int           @default(0)
 
   @@unique([familyId, personId])

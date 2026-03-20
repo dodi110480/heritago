@@ -23,7 +23,7 @@ import { CommonModule } from '@angular/common';
       </div>
 
       <!-- Main Content -->
-      <div class="relative z-0">
+      <div class="relative flex-1">
         <ng-content></ng-content>
       </div>
     </div>

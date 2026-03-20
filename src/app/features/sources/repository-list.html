@@ -49,7 +49,7 @@
 </div>
 
 <!-- Add/Edit Modal -->
-<app-modal-shell [visible]="modalVisible" [title]="modalMode === 'add' ? 'Neues Archiv anlegen' : 'Archiv bearbeiten'"
+    <app-modal-shell [visible]="modalVisible()" [title]="modalMode === 'add' ? 'Neues Archiv anlegen' : 'Archiv bearbeiten'"
     icon="🏛️" size="md" [loading]="isSaving()" [disabledSave]="!formName().trim()" [showDelete]="modalMode === 'edit'"
     deleteText="Archiv löschen" (close)="closeModal()" (save)="save()" (delete)="deleteRepo(selectedRepo())">
 
@@ -60,33 +60,33 @@
         </div>
 
         <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Name *</label>
-            <input type="text" [ngModel]="formName()" (ngModelChange)="formName.set($event)" class="form-input"
+            <label for="repo-name" class="block text-sm font-medium text-neutral-400">Name *</label>
+            <input type="text" id="repo-name" name="repo-name" autocomplete="off" [ngModel]="formName()" (ngModelChange)="formName.set($event)" class="form-input"
                 placeholder="z.B. Staatsarchiv München">
         </div>
 
         <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Adresse</label>
-            <input type="text" [ngModel]="formAddress()" (ngModelChange)="formAddress.set($event)" class="form-input"
+            <label for="repo-address" class="block text-sm font-medium text-neutral-400">Adresse</label>
+            <input type="text" id="repo-address" name="repo-address" autocomplete="off" [ngModel]="formAddress()" (ngModelChange)="formAddress.set($event)" class="form-input"
                 placeholder="z.B. Schönfeldstraße 5, 80539 München">
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-1.5">
-                <label class="block text-sm font-medium text-neutral-400">Telefon</label>
-                <input type="tel" [ngModel]="formPhone()" (ngModelChange)="formPhone.set($event)" class="form-input"
+                <label for="repo-phone" class="block text-sm font-medium text-neutral-400">Telefon</label>
+                <input type="tel" id="repo-phone" name="repo-phone" autocomplete="off" [ngModel]="formPhone()" (ngModelChange)="formPhone.set($event)" class="form-input"
                     placeholder="+49 89 12345-0">
             </div>
             <div class="space-y-1.5">
-                <label class="block text-sm font-medium text-neutral-400">E-Mail</label>
-                <input type="email" [ngModel]="formEmail()" (ngModelChange)="formEmail.set($event)" class="form-input"
+                <label for="repo-email" class="block text-sm font-medium text-neutral-400">E-Mail</label>
+                <input type="email" id="repo-email" name="repo-email" autocomplete="off" [ngModel]="formEmail()" (ngModelChange)="formEmail.set($event)" class="form-input"
                     placeholder="info@archiv.de">
             </div>
         </div>
 
         <div class="space-y-1.5">
-            <label class="block text-sm font-medium text-neutral-400">Website</label>
-            <input type="url" [ngModel]="formWebsite()" (ngModelChange)="formWebsite.set($event)" class="form-input"
+            <label for="repo-website" class="block text-sm font-medium text-neutral-400">Website</label>
+            <input type="url" id="repo-website" name="repo-website" autocomplete="off" [ngModel]="formWebsite()" (ngModelChange)="formWebsite.set($event)" class="form-input"
                 placeholder="https://www.staatsarchiv.de">
         </div>
     </div>

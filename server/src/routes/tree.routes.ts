@@ -3,12 +3,14 @@ import { PrismaClient } from '@prisma/client';
 import { TreeService } from '../services/tree.service';
 import { PersonService } from '../services/person.service';
 import { FamilyService } from '../services/family.service';
+import { AuditService } from '../services/audit.service';
 
 export const treeRoutes = (prisma: PrismaClient) => {
     const router = Router();
     const treeService = new TreeService(prisma);
     const personService = new PersonService(prisma);
     const familyService = new FamilyService(prisma);
+    const auditService = new AuditService(prisma);
 
     // Ensure req.tree is populated for /tree/:tree routes when treeAuth isn't used
     router.use('/tree/:tree', async (req: any, res, next) => {
@@ -115,6 +117,187 @@ export const treeRoutes = (prisma: PrismaClient) => {
         }
     });
 
+    router.get('/tree/:tree/person/:id/full-profile', async (req: any, res) => {
+        try {
+            const treeId = req.tree.id;
+            const personId = req.params.id;
+            const profile = await personService.getFullProfile(personId, treeId);
+            if (!profile) return res.status(404).json({ success: false, message: 'Person not found' });
+            res.json({ success: true, data: profile });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
+    router.get('/tree/:tree/family/:id/full-profile', async (req: any, res) => {
+        try {
+            const treeId = req.tree.id;
+            const familyId = req.params.id;
+            const profile = await familyService.getFullProfile(familyId, treeId);
+            if (!profile) return res.status(404).json({ success: false, message: 'Family not found' });
+            res.json({ success: true, data: profile });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
+    router.get('/tree/:tree/individuals/search', async (req: any, res) => {
+        try {
+            const treeId = req.tree.id;
+            const rawQuery = (req.query.q || '').toString().trim();
+            const query = rawQuery.toLowerCase().trim();
+            console.log(`[Backend] Search request for query: "${query}" in tree: ${treeId}`);
+
+            if (!query || query.length < 2) {
+                return res.json({ success: true, data: [] });
+            }
+
+            const parts = query.split(/\s+/).filter((p: string) => p.length > 0);
+
+            // Also support searching by UUID prefix and GEDCOM id.
+            const looksLikeUuidPrefix = /^[0-9a-f\-]{6,}$/i.test(rawQuery);
+            const looksLikeGedcom = rawQuery.includes('@');
+
+            const orClauses: any[] = [];
+
+            if (looksLikeUuidPrefix) {
+                orClauses.push({ id: { startsWith: rawQuery } });
+            }
+
+            if (looksLikeGedcom) {
+                orClauses.push({ gedcomId: { contains: rawQuery, mode: 'insensitive' } });
+            }
+
+            if (parts.length > 0) {
+                orClauses.push({
+                    AND: parts.map((part: string) => ({
+                        names: {
+                            some: {
+                                OR: [
+                                    { given: { contains: part, mode: 'insensitive' } },
+                                    { surname: { contains: part, mode: 'insensitive' } },
+                                    { full: { contains: part, mode: 'insensitive' } }
+                                ]
+                            }
+                        }
+                    }))
+                });
+            }
+
+            const individuals = await prisma.person.findMany({
+                where: {
+                    treeId,
+                    OR: orClauses
+                },
+                select: {
+                    id: true,
+                    gedcomId: true,
+                    sex: true,
+                    names: {
+                        where: { isPrimary: true },
+                        select: { given: true, surname: true, full: true }
+                    },
+                    events: {
+                        where: { type: { in: ['BIRT', 'DEAT'] } },
+                        select: { type: true, dateText: true, dateStart: true },
+                        orderBy: { sortDate: 'asc' },
+                        take: 6
+                    }
+                },
+                take: 20
+            });
+
+            const toDateText = (ev: any) => {
+                if (!ev) return null;
+                return ev.dateText || (ev.dateStart ? new Date(ev.dateStart).toISOString().slice(0, 10) : null);
+            };
+
+            const formatted = individuals.map((p: any) => {
+                const n = p.names[0];
+                const name = n ? (n.full || `${n.given || ''} ${n.surname || ''}`.trim()) : 'Unbekannt';
+
+                const birt = Array.isArray(p.events) ? p.events.find((e: any) => e.type === 'BIRT') : null;
+                const deat = Array.isArray(p.events) ? p.events.find((e: any) => e.type === 'DEAT') : null;
+
+                return {
+                    id: p.id,
+                    gedcomId: p.gedcomId,
+                    name,
+                    gender: p.sex,
+                    birthDate: toDateText(birt),
+                    deathDate: toDateText(deat)
+                };
+            });
+
+            res.json({ success: true, data: formatted });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
+router.get('/tree/:tree/individuals/minimal', async (req: any, res) => {
+        try {
+            const treeId = req.tree.id;
+            const individuals = await prisma.person.findMany({
+                where: { treeId },
+                select: {
+                    id: true,
+                    gedcomId: true,
+                    sex: true,
+                    names: {
+                        where: { isPrimary: true },
+                        select: { given: true, surname: true, full: true }
+                    },
+                    events: {
+                        where: { type: { in: ['BIRT', 'DEAT'] } },
+                        select: { type: true, dateText: true, dateStart: true },
+                        orderBy: { sortDate: 'asc' },
+                        take: 2
+                    }
+                }
+            });
+
+            const toDateText = (ev: any) => {
+                if (!ev) return null;
+                return ev.dateText || (ev.dateStart ? new Date(ev.dateStart).toISOString().slice(0, 10) : null);
+            };
+
+            const formatted = individuals.map((p: any) => {
+                const n = p.names[0];
+                const name = n ? (n.full || `${n.given || ''} ${n.surname || ''}`.trim()) : 'Unbekannt';
+
+                const birt = Array.isArray(p.events) ? p.events.find((e: any) => e.type === 'BIRT') : null;
+                const deat = Array.isArray(p.events) ? p.events.find((e: any) => e.type === 'DEAT') : null;
+
+                return {
+                    id: p.id,
+                    gedcomId: p.gedcomId,
+                    name,
+                    gender: p.sex,
+                    birthDate: toDateText(birt),
+                    deathDate: toDateText(deat)
+                };
+            });
+
+            res.json({ success: true, data: formatted });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
+router.get('/tree/:tree/sources/minimal', async (req: any, res) => {
+        try {
+            const treeId = req.tree.id;
+            const sources = await prisma.source.findMany({
+                where: { treeId },
+                select: { id: true, title: true }
+            });
+            res.json({ success: true, data: sources });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
     router.get('/tree/:tree/stats', async (req, res) => {
         const treeId = (req as any).tree.id;
         try {
@@ -177,8 +360,49 @@ export const treeRoutes = (prisma: PrismaClient) => {
         }
     });
 
-    // Alias for frontend compatibility
-    router.get(['/tree/:tree/diagnostics', '/tree/:tree/statistics'], async (req, res) => {
+    router.get('/tree/:tree/validation', async (req: any, res) => {
+        const treeId = req.tree.id;
+        try {
+            const validationResults = await treeService.validateTree(treeId);
+            res.json({ success: true, data: validationResults });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
+    router.get('/tree/:tree/validation/summary', async (req: any, res) => {
+        const treeId = req.tree.id;
+        try {
+            const summary = await treeService.getTreeIssuesSummary(treeId);
+            res.json({ success: true, data: summary });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
+    // Unified diagnostics endpoint
+    router.get('/tree/:tree/diagnostics', async (req: any, res) => {
+        const treeId = req.tree.id;
+        try {
+            const validationResults = await treeService.validateTree(treeId);
+            // Also include stats for backward compatibility if needed by some UI parts
+            const stats = await treeService.getStats(treeId);
+            res.json({ 
+                success: true, 
+                data: {
+                    issues: validationResults,
+                    stats: stats,
+                    count: validationResults.length,
+                    errors: validationResults.filter((i: any) => i.type === 'error').length,
+                    warnings: validationResults.filter((i: any) => i.type === 'warning').length
+                } 
+            });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message, code: 'TREE_DIAGNOSTICS_FAILED' });
+        }
+    });
+
+    router.get('/tree/:tree/statistics', async (req, res) => {
         const treeId = (req as any).tree.id;
         try {
             const stats = await treeService.getStats(treeId);
@@ -188,71 +412,61 @@ export const treeRoutes = (prisma: PrismaClient) => {
         }
     });
 
+    router.get('/tree/:tree/hierarchy', async (req: any, res) => {
+        const treeId = req.tree.id;
+        try {
+            const hierarchy = await treeService.getMiniTreeHierarchy(treeId);
+            res.json({ success: true, data: hierarchy });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
+    router.get('/tree/:tree/chart-data', async (req: any, res) => {
+        const treeId = req.tree.id;
+        try {
+            const chartData = await treeService.getFamilyChartData(treeId);
+            res.json({ success: true, data: chartData });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+
     router.get('/tree/:tree/calendar', async (req, res) => {
         res.json({ success: true, data: { events: [] } });
     });
 
-    router.get('/tree/:tree/map', async (req, res) => {
-        const tree = (req as any).tree;
-        
-        const dbTree = await prisma.tree.findUnique({
-            where: { id: tree.id },
-            include: {
-                places: {
-                    where: {
-                        AND: [
-                            { latitude: { not: null } },
-                            { longitude: { not: null } }
-                        ]
-                    }
-                }
-            }
-        });
+    router.get('/tree/:tree/map', async (req: any, res) => {
+        try {
+            const treeId = req.tree.id;
+            const data = await treeService.getMapData(treeId);
+            res.json({ success: true, data });
+        } catch (error: any) {
+            console.error('Map data error:', error);
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
+    
+    router.get('/tree/:tree/places/hierarchy', async (req: any, res) => {
+        const treeId = req.tree.id;
+        const search = req.query.q as string;
+        try {
+            const placeService = new (require('../services/place.service').PlaceService)(prisma);
+            const hierarchy = await placeService.getPlacesHierarchy(treeId, search);
+            res.json({ success: true, data: hierarchy });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
+    });
 
-        if (!dbTree) return res.status(404).json({ success: false, message: 'Tree not found', code: 'TREE_NOT_FOUND' });
-
-        const markers = dbTree.places.map(p => ({
-            id: p.id,
-            name: p.name,
-            lat: p.latitude,
-            lng: p.longitude
-        }));
-
-        const personsWithPlaces = await prisma.person.findMany({
-            where: { treeId: tree.id },
-            take: 50,
-            include: {
-                events: {
-                    where: { place: { latitude: { not: null }, longitude: { not: null } } },
-                    include: { place: true }
-                },
-                facts: {
-                    where: { place: { latitude: { not: null }, longitude: { not: null } } },
-                    include: { place: true }
-                },
-                names: { where: { isPrimary: true } },
-                mediaLinks: {
-                    include: { media: true }
-                }
-            }
-        });
-
-        const persons = personsWithPlaces.filter(p => p.events.length > 0 || p.facts.length > 0).map((p: any) => {
-            const primaryMedia = p.mediaLinks.find((ml: any) => ml.isPrimary)?.media || p.mediaLinks[0]?.media;
-            return {
-                id: p.id,
-                gedcomId: p.gedcomId,
-                firstName: p.names[0]?.given || '',
-                lastName: p.names[0]?.surname || '',
-                profileImageUrl: primaryMedia?.id || '',
-                places: [
-                    ...p.events.map((e: any) => ({ name: e.place?.name || '', lat: e.place?.latitude, lng: e.place?.longitude })),
-                    ...p.facts.map((f: any) => ({ name: f.place?.name || '', lat: f.place?.latitude, lng: f.place?.longitude }))
-                ]
-            };
-        });
-
-        res.json({ success: true, data: { markers, persons } });
+    router.get('/tree/:tree/changelog', async (req: any, res) => {
+        const treeId = req.tree.id;
+        try {
+            const logs = await auditService.getChangeLog(treeId);
+            res.json({ success: true, data: logs });
+        } catch (error: any) {
+            res.status(500).json({ success: false, message: error.message });
+        }
     });
 
     return router;

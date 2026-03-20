@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, ViewEncapsulation, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ViewEncapsulation, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -39,7 +39,6 @@ export class SourceList implements OnInit {
 
     setActiveTab(tab: 'sources' | 'repositories') {
         this.activeTab.set(tab);
-        this.cdr.detectChanges();
     }
 
     // Modal State
@@ -57,10 +56,8 @@ export class SourceList implements OnInit {
             if (treeData && treeData.meta && treeData.meta.tree) {
                 this.currentTree.set(treeData.meta.tree);
                 this.refreshList();
-                this.cdr.detectChanges();
             } else {
                 this.loading.set(false);
-                this.cdr.detectChanges();
             }
         });
     }
@@ -71,7 +68,8 @@ export class SourceList implements OnInit {
 
         this.sourceService.getSources(tree).subscribe({
             next: (res: any) => {
-                const items = res.sources || [];
+                console.log('SourceList refreshList res:', res);
+                const items = Array.isArray(res) ? res : (res.data || res.sources || []);
                 // Client-side sorting is already done from backend, but could be dynamic
                 this.sources.set(items);
                 this.loading.set(false);
@@ -80,25 +78,24 @@ export class SourceList implements OnInit {
                     const refreshed = items.find((s: any) => s.id === sel.id) || null;
                     this.selectedSource.set(refreshed);
                 }
-                this.cdr.detectChanges();
             },
             error: () => {
                 this.loading.set(false);
-                this.cdr.detectChanges();
             }
         });
     }
 
-    get filteredSources() {
+    filteredSources = computed(() => {
         const query = this.searchQuery().toLowerCase();
-        if (!query) return this.sources();
-        return this.sources().filter((s: any) =>
+        const sources = this.sources();
+        if (!query) return sources;
+        return sources.filter((s: any) =>
             (s.title || '').toLowerCase().includes(query) ||
             (s.shortTitle || '').toLowerCase().includes(query) ||
             (s.author || '').toLowerCase().includes(query) ||
             (s.repositoryName || '').toLowerCase().includes(query)
         );
-    }
+    });
 
     selectSource(source: any) {
         this.selectedSource.set(source);
@@ -109,19 +106,16 @@ export class SourceList implements OnInit {
         this.modalMode.set('add');
         this.selectedSourceData.set(null);
         this.isModalOpen.set(true);
-        this.cdr.detectChanges();
     }
 
     openEditModal(source: any) {
         this.modalMode.set('edit');
         this.selectedSourceData.set(source);
         this.isModalOpen.set(true);
-        this.cdr.detectChanges();
     }
 
     closeModal() {
         this.isModalOpen.set(false);
-        this.cdr.detectChanges();
     }
 
     openAddRepositoryModal() {

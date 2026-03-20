@@ -1,20 +1,23 @@
 import { Component, inject, signal, ViewChild, ElementRef, AfterViewInit, effect, ViewEncapsulation } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
+import { environment } from '../../environment';
 import { CalendarWidget } from '../../shared/components/calendar-widget';
 import { TreeService } from '../../core/services/tree.service';
-import { DashboardFactService } from '../../core/services/dashboard-fact.service';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 import { AppStatCardComponent } from '../../shared/components/ui/app-stat-card';
 import * as d3 from 'd3';
 
 
 import { AnalyticsService } from '../../core/services/analytics.service';
+import { AppIconComponent } from '../../shared/components/ui/app-icon';
+
 @Component({
     selector: 'app-dashboard',
     standalone: true,
-    imports: [CommonModule, RouterLink, CalendarWidget, AppPageHeaderComponent, AppStatCardComponent],
+    imports: [CommonModule, RouterLink, CalendarWidget, AppPageHeaderComponent, AppStatCardComponent, AppIconComponent],
     templateUrl: './dashboard.html',
     encapsulation: ViewEncapsulation.None
 })
@@ -24,7 +27,7 @@ export class Dashboard implements AfterViewInit {
     authService = inject(AuthService);
     private treeService = inject(TreeService);
     private router = inject(Router);
-    private factService = inject(DashboardFactService);
+    private http = inject(HttpClient);
 
     stats = signal<any>(null);
     treeName = signal('');
@@ -81,31 +84,13 @@ export class Dashboard implements AfterViewInit {
                     this.allIndividuals.set(treeData.individuals || []);
                     this.allFamilies.set(treeData.families || []);
 
-                    // Calculate Completeness
-                    const people = treeData.individuals || [];
-                    if (people.length > 0) {
-                        let score = 0;
-                        people.forEach((p: any) => {
-                            if (p.names?.length > 0) score += 0.4;
-                            if (p.gender && p.gender !== 'U') score += 0.2;
-                            if (p.events?.some((e: any) => e.type === 'BIRT')) score += 0.4;
-                        });
-                        this.completeness.set(Math.round((score / people.length) * 100));
-
-                        this.updateFunStat(people);
-                    }
-
-                    const trees = this.availableTrees();
-                    if (trees.length > 0) {
-                        const current = trees.find(t => t.name === meta.tree);
-                        if (current) {
-                            this.authService.selectTree(current);
-                        }
-                    }
-
                     this.analyticsService.getStatistics(meta.tree).subscribe({
                         next: (res) => {
                             this.stats.set(res);
+                            if (res) {
+                                this.completeness.set(res.completeness || 0);
+                                this.funStat.set(res.funStat || '');
+                            }
                             this.loading.set(false);
                             // Initial render
                             setTimeout(() => this.renderMiniTree(), 200);
@@ -120,63 +105,31 @@ export class Dashboard implements AfterViewInit {
         });
     }
 
-    updateFunStat(people: any[]) {
-        const fact = this.factService.generateFact(people, this.allFamilies(), this.completeness());
-        this.funStat.set(fact);
-    }
-
     renderMiniTree() {
         if (!this.miniTreeSvg) return;
 
         const svg = d3.select(this.miniTreeSvg.nativeElement);
         svg.selectAll('*').remove();
 
-        const data = this.allIndividuals();
-        const families = this.allFamilies();
-        if (data.length === 0) return;
+        const treeName = this.treeName() || this.authService.currentTree()?.name;
+        if (!treeName) return;
 
-        // 1. Build a simple hierarchy (Top 3 generations)
-        // Find "root" candidates (those with no parents in data)
-        const childInFam = new Set<string>();
-        families.forEach(f => f.children?.forEach((cid: string) => childInFam.add(cid)));
+        this.http.get<any>(`${environment.apiUrl}/tree/${treeName}/hierarchy`, { withCredentials: true }).subscribe({
+            next: (res) => {
+                const hierarchyData = res.data;
+                if (!hierarchyData) return;
 
-        const roots = data.filter(p => !childInFam.has(p.id));
-        if (roots.length === 0 && data.length > 0) roots.push(data[0]);
+                const root = d3.hierarchy(hierarchyData);
 
-        // Simple tree builder (Depth 3)
-        const buildHierarchy = (person: any, depth: number): any => {
-            if (depth >= 3) return { name: person.lastName, id: person.id };
+                // 2. Layout
+                const width = 400;
+                const height = 180;
+                const treeLayout = d3.tree().size([width - 80, height - 60]);
+                treeLayout(root as any);
 
-            // Find families where this person is a parent
-            const fams = families.filter(f => f.husband === person.id || f.wife === person.id);
-            const children: any[] = [];
+                const g = svg.append('g').attr('transform', 'translate(40, 30)');
 
-            fams.forEach(f => {
-                f.children?.forEach((cid: string) => {
-                    const child = data.find(p => p.id === cid);
-                    if (child) children.push(buildHierarchy(child, depth + 1));
-                });
-            });
-
-            return {
-                name: person.lastName ? `${person.firstName[0]}. ${person.lastName}` : person.firstName,
-                id: person.id,
-                children: children.length > 0 ? children : undefined
-            };
-        };
-
-        const hierarchyData = buildHierarchy(roots[0], 1);
-        const root = d3.hierarchy(hierarchyData);
-
-        // 2. Layout
-        const width = 400;
-        const height = 180;
-        const treeLayout = d3.tree().size([width - 80, height - 60]);
-        treeLayout(root as any);
-
-        const g = svg.append('g').attr('transform', 'translate(40, 30)');
-
-        // 3. Render Links
+                // 3. Render Links
         g.selectAll('.link')
             .data(root.links())
             .enter()
@@ -207,9 +160,14 @@ export class Dashboard implements AfterViewInit {
             .attr('dy', '2.5em')
             .attr('text-anchor', 'middle')
             .text((d: any) => d.data.name)
-            .style('font-size', '8px')
-            .style('fill', '#64748b') // Neutral-500
-            .style('font-weight', '600');
+            .style('font-size', '7px') // Noch filigraner (von 8px)
+            .style('fill', 'rgba(100, 116, 139, 0.7)') // Slate-500 mit Deckkraft
+            .style('font-weight', '700')
+            .style('text-transform', 'uppercase')
+            .style('letter-spacing', '0.05em');
+            },
+            error: () => {}
+        });
     }
 
     discoverAncestor() {
@@ -251,5 +209,13 @@ export class Dashboard implements AfterViewInit {
         this.authService.selectTree(tree);
         this.loadStats(tree.name);
         this.showTreeSwitcher.set(false);
+    }
+
+    openQuickWizard(type: string) {
+        if (type === 'person') {
+            // For now just navigate to persons or show a placeholder
+            // alert('Der Wizard für ' + type + ' wird bald verfügbar sein! ✨');
+            this.router.navigate(['/persons']);
+        }
     }
 }
