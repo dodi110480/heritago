@@ -1,4 +1,4 @@
-import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { Component, Input, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppEmptyStateComponent } from './app-empty-state';
 
@@ -31,6 +31,7 @@ import { AppEmptyStateComponent } from './app-empty-state';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   encapsulation: ViewEncapsulation.None
 })
 export class AppListViewComponent {

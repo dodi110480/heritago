@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, signal, inject, computed, ChangeDetectorRef, input } from '@angular/core';
+import { Component, Output, EventEmitter, signal, inject, computed, ChangeDetectorRef, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -31,11 +31,12 @@ import { PersonFeatureStore } from './person-feature.store';
         MediaSelector,
         ImageViewer
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
         <div class="glass-card flex flex-col">
             <div class="p-4 md:p-5">
                 <app-section-header title="Lebenslauf" icon="⏳">
-                    <button actions (click)="addTimelineItem()" class="btn-primary !w-auto !py-1.5 !px-3 text-xs">
+                    <button actions (click)="addTimelineItem()" class="btn-primary w-auto! py-1.5! px-3! text-xs">
                         + Ereignis/Fakt
                     </button>
                 </app-section-header>
@@ -44,10 +45,10 @@ import { PersonFeatureStore } from './person-feature.store';
                     class="relative pl-6 space-y-4 before:absolute before:left-2 before:top-1 before:bottom-1 before:w-0.5 before:bg-canvas-white/10">
                     <div *ngFor="let item of timeline(); let i = index" class="relative group/item">
                         <div
-                            class="absolute -left-[20px] top-1.5 w-3 h-3 rounded-full bg-brand-500 border-2 border-neutral-900 z-10 transition-transform group-hover/item:scale-125">
+                            class="absolute left-[-20px] top-1.5 w-3 h-3 rounded-full bg-brand-500 border-2 border-neutral-900 z-10 transition-transform group-hover/item:scale-125">
                         </div>
 
-                        <div class="glass-card !p-3 transition-all cursor-pointer hover:bg-canvas-white/5"
+                        <div class="glass-card p-3! transition-all cursor-pointer hover:bg-canvas-white/5"
                             (click)="!isTimelineItemLocked(item) && openTimelineItemModal(i)"
                             [class.ring-2]="item.editing" [class.ring-brand-500/50]="item.editing">
                             <div *ngIf="!item.editing" class="space-y-2">
@@ -60,7 +61,7 @@ import { PersonFeatureStore } from './person-feature.store';
                                             <div class="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
                                                 {{ item.date || 'Kein Datum' }}
                                             </div>
-                                            <div *ngIf="item.age !== undefined && item.age !== null" class="text-[10px] font-medium text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded">
+                                            <div *ngIf="item.age !== undefined && item.age !== null" class="text-[10px] font-medium text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-sm">
                                                 {{ item.age }} Jahre
                                             </div>
                                         </div>
@@ -132,7 +133,7 @@ import { PersonFeatureStore } from './person-feature.store';
             [visible]="showTimelineItemModal()" 
             [item]="editTimelineDraft()" 
             [isNew]="false"
-            [itemKind]="editTimelineDraft()?.itemKind"
+            [itemKind]="$safeNavigationMigration(editTimelineDraft()?.itemKind)"
             (itemKindChange)="editTimelineDraft() && editTimelineDraft.update(v => ({ ...v, itemKind: $event }))"
             [availableSources]="availableSources()"
             [allPersonsOptions]="allPersonsSignal()"

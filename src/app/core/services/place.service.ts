@@ -43,8 +43,11 @@ export class PlaceService {
         return this.http.post<any>(`${this.baseApiUrl}${treeName}/place/merge`, { sourceId, targetId }, { withCredentials: true });
     }
 
-    deletePlace(treeName: string, placeName: string): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/place`, { mode: 'delete', name: placeName }, { withCredentials: true });
+    deletePlace(treeName: string, id: string, reassignToId?: string): Observable<any> {
+        return this.http.delete<any>(`${this.baseApiUrl}${treeName}/place/${id}`, {
+            withCredentials: true,
+            body: reassignToId ? { reassignToId } : undefined
+        });
     }
 
     getPlacesHierarchy(treeName: string, search?: string): Observable<any> {

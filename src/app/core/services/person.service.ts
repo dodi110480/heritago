@@ -38,12 +38,6 @@ export class PersonService {
     }
 
     deletePerson(treeName: string, id: string): Observable<any> {
-        return this.http.post<any>(`${this.baseApiUrl}${treeName}/person`, { mode: 'delete', id }, { withCredentials: true }).pipe(
-            map(res => res?.data ?? res)
-        );
-    }
-
-    deletePersonById(treeName: string, id: string): Observable<any> {
         return this.http.delete<any>(`${this.baseApiUrl}${treeName}/person/${id}`, { withCredentials: true }).pipe(
             map(res => res?.data ?? res)
         );

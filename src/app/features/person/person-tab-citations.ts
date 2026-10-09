@@ -1,4 +1,4 @@
-import { Component, input, Output, EventEmitter } from '@angular/core';
+import { Component, input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Individual } from '../../core/models/models';
 import { TabCitationsComponent } from '../../shared/components/ui/tabs/tab-citations';
@@ -7,6 +7,7 @@ import { TabCitationsComponent } from '../../shared/components/ui/tabs/tab-citat
     selector: 'app-person-tab-citations',
     standalone: true,
     imports: [CommonModule, TabCitationsComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
         <app-tab-citations
             [entity]="person()"

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -8,6 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
     selector: 'app-login',
     standalone: true,
     imports: [CommonModule, FormsModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './login.html'
 })
 export class Login {
@@ -25,12 +26,12 @@ export class Login {
         this.loading.set(true);
         this.error.set(null);
 
-        this.authService.login(this.username, this.password).subscribe(success => {
+        this.authService.login(this.username, this.password).subscribe(result => {
             this.loading.set(false);
-            if (success) {
+            if (result.success) {
                 this.checkTreesAndRedirect();
             } else {
-                this.error.set('Ungültiger Benutzername oder Passwort.');
+                this.error.set(result.message || 'Ungültiger Benutzername oder Passwort.');
             }
         });
     }

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TreeService } from '../../core/services/tree.service';
@@ -14,6 +14,7 @@ declare const L: any;
     selector: 'app-map-view',
     standalone: true,
     imports: [CommonModule, RouterLink, AppPageHeaderComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './map-view.html'
 })
 export class MapView implements OnInit {

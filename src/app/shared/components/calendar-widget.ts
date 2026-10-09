@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TreeService } from '../../core/services/tree.service';
 
@@ -8,6 +8,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
     selector: 'app-calendar-widget',
     standalone: true,
     imports: [CommonModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './calendar-widget.html'
 })
 export class CalendarWidget implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -10,18 +10,19 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
     selector: 'app-person-tab-names',
     standalone: true,
     imports: [CommonModule, FormsModule, AppModalShell, AppEmptyStateComponent, AppSectionHeaderComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="glass-card shadow-sm flex flex-col">
+        <div class="glass-card shadow-xs flex flex-col">
             <div class="p-0">
                 <app-section-header title="Namen" icon="🧾">
-                    <button actions (click)="openNameModal()" class="btn-primary !w-auto !py-2">
+                    <button actions (click)="openNameModal()" class="btn-primary w-auto! py-2!">
                         + Name
                     </button>
                 </app-section-header>
 
                 <div class="space-y-4">
                     <div *ngFor="let n of person?.names; let i = index"
-                        class="!p-5 glass-card !bg-brand-50 !rounded-2xl space-y-4 group relative cursor-pointer hover:bg-neutral-100 transition-colors"
+                        class="p-5! glass-card bg-brand-50! rounded-2xl! space-y-4 group relative cursor-pointer hover:bg-neutral-100 transition-colors"
                         (click)="openNameEditModal(i)">
                         <div class="flex justify-between items-start">
                             <div>
@@ -30,7 +31,7 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
                                     <span *ngIf="n.isPrimary" class="badge badge-primary text-[10px] py-0.5 px-2">Primär</span>
                                 </div>
                                 <p class="text-sm text-neutral-800 dark:text-neutral-200 flex items-center gap-1">
-                                    <span class="text-xs font-mono bg-brand-100 px-1.5 py-0.5 rounded text-neutral-800 dark:text-neutral-200">{{
+                                    <span class="text-xs font-mono bg-brand-100 px-1.5 py-0.5 rounded-sm text-neutral-800 dark:text-neutral-200">{{
                                         n.type === 'BIRTH' ? 'Geburtsname' : n.type === 'MARRIED' ? 'Ehename' : 'Alias' }}</span>
                                 </p>
                             </div>
@@ -76,7 +77,7 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
                 <div class="form-group mb-0">
                     <label class="form-label">Typ</label>
                     <select [ngModel]="newNameDraft().type"
-                        (ngModelChange)="newNameDraft.update(v => ({ ...v, type: $event }))" class="form-input !py-2.5">
+                        (ngModelChange)="newNameDraft.update(v => ({ ...v, type: $event }))" class="form-input py-2.5!">
                         <option value="BIRTH">Geburtsname</option>
                         <option value="MARRIED">Ehename</option>
                         <option value="AKA">Alias / AKA</option>
@@ -86,7 +87,7 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
                 <label class="flex items-center gap-2 cursor-pointer text-sm text-neutral-300">
                     <input type="checkbox" [ngModel]="newNameDraft().isPrimary"
                         (ngModelChange)="newNameDraft.update(v => ({ ...v, isPrimary: $event }))"
-                        class="w-4 h-4 rounded border-canvas-white/10 bg-brand-900 text-brand-500 focus:ring-brand-500 focus:ring-offset-neutral-900">
+                        class="w-4 h-4 rounded-sm border-canvas-white/10 bg-brand-900 text-brand-500 focus:ring-brand-500 focus:ring-offset-neutral-900">
                     Als Primärname setzen
                 </label>
             </div>
@@ -99,13 +100,13 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="form-group mb-0">
                         <label class="form-label">Vorname</label>
-                        <input type="text" [ngModel]="editNameDraft()?.given"
+                        <input type="text" [ngModel]="$safeNavigationMigration(editNameDraft()?.given)"
                             (ngModelChange)="editNameDraft.set({ ...editNameDraft(), given: $event })" class="form-input"
                             placeholder="Vorname">
                     </div>
                     <div class="form-group mb-0">
                         <label class="form-label">Nachname</label>
-                        <input type="text" [ngModel]="editNameDraft()?.surname"
+                        <input type="text" [ngModel]="$safeNavigationMigration(editNameDraft()?.surname)"
                             (ngModelChange)="editNameDraft.set({ ...editNameDraft(), surname: $event })" class="form-input"
                             placeholder="Nachname">
                     </div>
@@ -113,9 +114,9 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
 
                 <div class="form-group mb-0">
                     <label class="form-label">Typ</label>
-                    <select [ngModel]="editNameDraft()?.type"
+                    <select [ngModel]="$safeNavigationMigration(editNameDraft()?.type)"
                         (ngModelChange)="editNameDraft.set({ ...editNameDraft(), type: $event })"
-                        class="form-input !py-2.5">
+                        class="form-input py-2.5!">
                         <option value="BIRTH">Geburtsname</option>
                         <option value="MARRIED">Ehename</option>
                         <option value="AKA">Alias / AKA</option>
@@ -123,9 +124,9 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
                 </div>
 
                 <label class="flex items-center gap-2 cursor-pointer text-sm text-neutral-300">
-                    <input type="checkbox" [ngModel]="editNameDraft()?.isPrimary"
+                    <input type="checkbox" [ngModel]="$safeNavigationMigration(editNameDraft()?.isPrimary)"
                         (ngModelChange)="editNameDraft.set({ ...editNameDraft(), isPrimary: $event })"
-                        class="w-4 h-4 rounded border-canvas-white/10 bg-brand-900 text-brand-500 focus:ring-brand-500 focus:ring-offset-neutral-900">
+                        class="w-4 h-4 rounded-sm border-canvas-white/10 bg-brand-900 text-brand-500 focus:ring-brand-500 focus:ring-offset-neutral-900">
                     Als Primärname setzen
                 </label>
             </div>

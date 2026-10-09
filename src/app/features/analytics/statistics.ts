@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TreeService } from '../../core/services/tree.service';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
@@ -10,6 +10,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
     selector: 'app-statistics',
     standalone: true,
     imports: [CommonModule, AppPageHeaderComponent, AppStatCardComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './statistics.html'
 })
 export class StatisticsDashboard implements OnInit {

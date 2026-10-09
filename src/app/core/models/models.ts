@@ -1,18 +1,37 @@
 export type NoteCategory = 'RESEARCH' | 'HINT' | 'QUESTION' | 'TRANSCRIPTION' | 'TODO' | 'COMMENT' | 'OTHER';
 
 export type SourceType =
-  | 'BUCH'
-  | 'WEBSEITE'
-  | 'DOKUMENT'
-  | 'ZEITUNG'
-  | 'ARCHIV'
-  | 'FOTO'
+  | 'BOOK'
+  | 'WEBSITE'
+  | 'DOCUMENT'
+  | 'NEWSPAPER'
+  | 'ARCHIVE'
+  | 'PHOTO'
   | 'AUDIO'
   | 'VIDEO'
-  | 'PERIODISCH'
-  | 'KIRCHBUCH'
-  | 'VOLKSZAEHLUNG'
-  | 'ANDERE';
+  | 'PERIODICAL'
+  | 'CHURCH_RECORD'
+  | 'CENSUS'
+  | 'OTHER';
+
+/**
+ * German display labels for source types.
+ * Semantic enum values stay English (backend-first); labels are a presentation concern.
+ */
+export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
+  BOOK: 'Buch',
+  WEBSITE: 'Webseite',
+  DOCUMENT: 'Dokument',
+  NEWSPAPER: 'Zeitung',
+  ARCHIVE: 'Archiv',
+  PHOTO: 'Foto',
+  AUDIO: 'Audio',
+  VIDEO: 'Video',
+  PERIODICAL: 'Periodisch',
+  CHURCH_RECORD: 'Kirchbuch',
+  CENSUS: 'Volkszählung',
+  OTHER: 'Andere',
+};
 
 export type SourceCategory = 'PRIMARY' | 'SECONDARY';
 

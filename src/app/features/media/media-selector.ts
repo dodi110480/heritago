@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, Input, signal, inject, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Output, Input, signal, inject, OnInit, OnChanges, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TreeService } from '../../core/services/tree.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -11,6 +11,7 @@ import { MediaService } from '../../core/services/media.service';
     selector: 'app-media-selector',
     standalone: true,
     imports: [CommonModule, FormsModule, AppModalShell],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './media-selector.html'
 })
 export class MediaSelector implements OnInit, OnChanges {

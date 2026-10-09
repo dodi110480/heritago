@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TreeService } from '../../core/services/tree.service';
@@ -16,6 +16,7 @@ import { MediaService } from '../../core/services/media.service';
     selector: 'app-media-gallery',
     standalone: true,
     imports: [CommonModule, FormsModule, MediaAddModal, AppEntityCard, AppPageHeaderComponent, AppListViewComponent, AppMediaList],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './media-gallery.html'
 })
 export class MediaGallery implements OnInit {

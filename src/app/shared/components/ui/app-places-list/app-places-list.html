@@ -22,8 +22,8 @@
 
         <div actions class="flex gap-1 items-center">
             <span *ngIf="place.usage?.total > 0"
-                class="text-[10px] px-2 py-0.5 rounded bg-neutral-400/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap mr-1"
-                [title]="'Events: ' + place.usage?.eventCount + ', Fakten: ' + place.usage?.factCount + ', Ass.: ' + place.usage?.associationCount">
+                class="text-[10px] px-2 py-0.5 rounded-sm bg-neutral-400/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap mr-1"
+                [title]="'Events: ' + $safeNavigationMigration($safeNavigationMigration(place.usage?.eventCount)) + ', Fakten: ' + $safeNavigationMigration($safeNavigationMigration(place.usage?.factCount)) + ', Ass.: ' + $safeNavigationMigration($safeNavigationMigration(place.usage?.associationCount))">
                 {{ place.usage.total }} Verkn.
             </span>
             <button

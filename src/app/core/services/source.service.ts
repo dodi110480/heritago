@@ -36,6 +36,13 @@ export class SourceService {
         return this.http.post<any>(`${this.baseApiUrl}${treeName}/source/merge`, { sourceId, targetId }, { withCredentials: true });
     }
 
+    deleteSource(treeName: string, id: string, reassignToId?: string): Observable<any> {
+        return this.http.delete<any>(`${this.baseApiUrl}${treeName}/source/${id}`, {
+            withCredentials: true,
+            body: reassignToId ? { reassignToId } : undefined
+        });
+    }
+
     getRepositories(treeName: string): Observable<any> {
         return this.http.get<any>(`${this.baseApiUrl}${treeName}/repository`, { withCredentials: true }).pipe(
             map(res => res?.data ?? res)
@@ -44,5 +51,9 @@ export class SourceService {
 
     saveRepository(treeName: string, payload: any): Observable<any> {
         return this.http.post<any>(`${this.baseApiUrl}${treeName}/repository`, payload, { withCredentials: true });
+    }
+
+    deleteRepository(treeName: string, id: string): Observable<any> {
+        return this.http.delete<any>(`${this.baseApiUrl}${treeName}/repository/${id}`, { withCredentials: true });
     }
 }

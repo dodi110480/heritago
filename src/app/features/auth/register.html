@@ -17,13 +17,14 @@
                     </svg>
                 </div>
                 <h1
-                    class="text-4xl font-black bg-gradient-to-br from-canvas-white to-canvas-white bg-clip-text text-transparent tracking-tighter mb-2">
+                    class="text-4xl font-black bg-linear-to-br from-canvas-white to-canvas-white bg-clip-text text-transparent tracking-tighter mb-2">
                     Registrieren
                 </h1>
                 <p class="text-neutral-800 dark:text-neutral-200 font-medium tracking-wide">Starte dein Abenteuer</p>
             </div>
 
-            <form (submit)="onSubmit()" #registerForm="ngForm" class="flex flex-col gap-2">
+            <form *ngIf="!success()" (submit)="onSubmit()" #registerForm="ngForm" class="flex flex-col gap-2">
+                <input type="text" name="website" [(ngModel)]="website" autocomplete="off" tabindex="-1" class="hidden" aria-hidden="true">
                 <div class="form-group">
                     <label class="form-label" for="username">Benutzername</label>
                     <input type="text" id="username" name="username" [(ngModel)]="username" required class="form-input"
@@ -53,12 +54,18 @@
                 </div>
 
                 <button type="submit" [disabled]="!registerForm.form.valid || loading()"
-                    class="btn-primary !py-4 text-lg transform transition-all active:scale-95 disabled:opacity-50">
+                    class="btn-primary py-4! text-lg transform transition-all active:scale-95 disabled:opacity-50">
                     <span *ngIf="!loading()">Konto erstellen</span>
                     <span *ngIf="loading()"
                         class="w-6 h-6 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin"></span>
                 </button>
             </form>
+
+            <div *ngIf="success()" class="mt-6 p-5 rounded-2xl bg-accent-success-500/10 border border-accent-success-500/20 text-center">
+                <p class="font-bold text-accent-success-400 mb-2">Registrierung erfolgreich!</p>
+                <p class="text-sm text-neutral-300">Wir haben dir eine E-Mail zur Verifizierung gesendet. Bitte klicke auf den Link in der E-Mail, um dein Konto zu aktivieren.</p>
+                <a routerLink="/login" class="inline-block mt-4 text-brand-400 font-bold hover:underline">Zum Login</a>
+            </div>
 
             <div class="mt-8 text-center">
                 <p class="text-neutral-400 text-sm">Bereits ein Konto?</p>

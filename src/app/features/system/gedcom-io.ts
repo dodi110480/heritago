@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TreeService } from '../../core/services/tree.service';
@@ -12,6 +12,7 @@ import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-head
     selector: 'app-gedcom-io',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterLink, AppPageHeaderComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './gedcom-io.html'
 })
 export class GedcomIo {

@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, signal, inject, computed, input } from '@angular/core';
+import { Component, Output, EventEmitter, signal, inject, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -30,8 +30,9 @@ import { PersonFeatureStore } from './person-feature.store';
         MediaAddModal,
         ImageViewer
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="glass-card shadow-sm flex flex-col">
+        <div class="glass-card shadow-xs flex flex-col">
             <div class="p-0">
                 <app-section-header title="Familie & Beziehungen" icon="👨‍👩‍👧‍👦" description="Verwalte Ehepartner, Eltern und Kinder.">
                     <div actions class="flex items-center gap-3">
@@ -46,7 +47,7 @@ import { PersonFeatureStore } from './person-feature.store';
                                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                             </svg>
                         </button>
-                        <button (click)="addRelation()" class="btn-primary !w-auto !py-2">
+                        <button (click)="addRelation()" class="btn-primary w-auto! py-2!">
                             + Beziehung
                         </button>
                     </div>
@@ -55,7 +56,7 @@ import { PersonFeatureStore } from './person-feature.store';
                 <div *ngIf="relations().length > 0" class="space-y-3 p-4">
                     <div *ngFor="let rel of relations(); let i = index"
                         (click)="onCardClick(i, rel)"
-                        class="group relative glass-card !p-4 flex items-center gap-4 hover:bg-canvas-white/10 transition-all border-l-4 cursor-pointer"
+                        class="group relative glass-card p-4! flex items-center gap-4 hover:bg-canvas-white/10 transition-all border-l-4 cursor-pointer"
                         [class.border-l-brand-500]="rel.type === 'SPOUSE'"
                         [class.border-l-indigo-500]="rel.type === 'FATHER' || rel.type === 'MOTHER'"
                         [class.border-l-emerald-500]="rel.type === 'CHILD'">

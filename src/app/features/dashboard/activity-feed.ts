@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, OnInit, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { TreeService } from '../../core/services/tree.service';
@@ -11,7 +11,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
     template: `
     <div class="min-h-screen text-canvas-white/90 flex flex-col p-0 m-0">
         <div class="page-header overflow-hidden h-[300px]">
-             <div class="absolute -top-1/2 -left-[10%] w-[60%] h-[150%] pointer-events-none -rotate-12 header-gold-glow"></div>
+             <div class="absolute -top-1/2 left-[-10%] w-[60%] h-[150%] pointer-events-none -rotate-12 header-gold-glow"></div>
             <div class="page-header-inner flex flex-col justify-center h-full">
                 <div class="header-info">
                     <h1 class="page-title text-4xl font-bold mb-2">Aktivitätsverlauf</h1>
@@ -33,7 +33,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
                 <div *ngFor="let group of groupedLogs()" class="flex flex-col gap-4">
                     <h3 class="text-meta uppercase text-neutral-500 tracking-[0.2em] font-bold text-[10px] ml-4 mt-8 first:mt-0">{{ group.dateLabel }}</h3>
                     
-                    <div class="glass-card !p-0 overflow-hidden bg-white/80 dark:bg-slate-900/80 border-neutral-200/50 dark:border-slate-800/50 shadow-lg">
+                    <div class="glass-card p-0! overflow-hidden bg-white/80 dark:bg-slate-900/80 border-neutral-200/50 dark:border-slate-800/50 shadow-lg">
                         <div *ngFor="let log of group.logs" 
                              class="flex items-center gap-4 py-3 px-6 hover:bg-neutral-50 dark:hover:bg-slate-800/40 transition-all cursor-pointer group border-b border-neutral-100 dark:border-slate-800/50 last:border-0"
                              (click)="navigateToEntity(log)">
@@ -84,7 +84,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
             </div>
  
             <div class="mt-16 flex justify-center">
-                <a routerLink="/" class="px-6 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-neutral-200 dark:border-slate-800 shadow-sm inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 hover:text-brand-700 hover:border-brand-200 transition-all group-link">
+                <a routerLink="/" class="px-6 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-neutral-200 dark:border-slate-800 shadow-xs inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 hover:text-brand-700 hover:border-brand-200 transition-all group-link">
                     <span class="text-sm">←</span>
                     <span>Zurück zum Dashboard</span>
                 </a>
@@ -93,7 +93,9 @@ import { AnalyticsService } from '../../core/services/analytics.service';
     </div>
     `,
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
+        @reference "../../../styles.css";
         .glass-card {
             @apply bg-white dark:bg-slate-950 backdrop-blur-md border border-neutral-200 dark:border-slate-800 rounded-[24px] p-8 shadow-xl transition-all duration-300;
         }

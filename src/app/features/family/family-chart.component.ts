@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, inject, signal, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, inject, signal, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -118,31 +118,33 @@ import 'family-chart/styles/family-chart.css';
       <div #familyChart class="f3 w-full h-full flex-1" id="FamilyChart"></div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
+    @reference "../../../styles.css";
 
   .f3 {
-    --female-color: theme('colors.gender.female');
-    --male-color: theme('colors.gender.male');
-    --genderless-color: theme('colors.gender.neutral');
+    --female-color: var(--color-gender-female);
+    --male-color: var(--color-gender-male);
+    --genderless-color: var(--color-gender-neutral);
     --background-color: transparent;
-    --text-color: theme('colors.neutral.900');
-    --fc-primary: theme('colors.accent-highlight.500');
-    --fc-surface: theme('colors.glass.bg');
-    --fc-surface-2: theme('colors.glass.bg');
-    --fc-border: theme('colors.glass.border');
-    --fc-text-muted: theme('colors.neutral.500');
-    --fc-text-soft: theme('colors.neutral.700');
-    --fc-toolbar-bg: theme('colors.glass.bg');
-    --fc-toolbar-border: theme('colors.glass.border');
+    --text-color: var(--color-neutral-900);
+    --fc-primary: var(--color-accent-highlight-500);
+    --fc-surface: var(--color-glass-bg);
+    --fc-surface-2: var(--color-glass-bg);
+    --fc-border: var(--color-glass-border);
+    --fc-text-muted: var(--color-neutral-500);
+    --fc-text-soft: var(--color-neutral-700);
+    --fc-toolbar-bg: var(--color-glass-bg);
+    --fc-toolbar-border: var(--color-glass-border);
     --fc-overlay: rgba(0, 0, 0, 0.4);
-    font-family: theme('fontFamily.body');
+    font-family: var(--font-body);
 }
 
     .fc-search-container {
         @apply absolute top-5 right-5 w-56 z-[1000];
     }
     .fc-search-input {
-        @apply w-full bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full px-5 py-2.5 text-neutral-900 dark:text-white outline-none shadow-lg font-medium focus:ring-2 focus:ring-brand-500/30;
+        @apply w-full bg-white/70 dark:bg-neutral-900/70 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full px-5 py-2.5 text-neutral-900 dark:text-white outline-hidden shadow-lg font-medium focus:ring-2 focus:ring-brand-500/30;
     }
     .fc-search-dropdown {
         @apply absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl rounded-2xl border border-glass-border dark:border-glass-border-dark shadow-2xl overflow-hidden max-h-[300px] overflow-y-auto z-[1001];
@@ -293,8 +295,8 @@ import 'family-chart/styles/family-chart.css';
       @apply text-white;
   }
     /* Gender colors from /persons */
-    .f3-html-card.gender-F { border-color: theme('colors.gender.female'); }
-    .f3-html-card.gender-M { border-color: theme('colors.gender.male'); }
+    .f3-html-card.gender-F { border-color: var(--color-gender-female); }
+    .f3-html-card.gender-M { border-color: var(--color-gender-male); }
 
     /* Default Avatar Styling */
     .f3 div.card-image-rect[style*="assets/avatars/"],
@@ -306,19 +308,19 @@ import 'family-chart/styles/family-chart.css';
 
     .f3-html-card.gender-M div.card-image-rect[style*="assets/avatars/"],
     .f3-html-card.gender-M div.card-image-circle[style*="assets/avatars/"] {
-        background-color: theme('colors.brand.500 / 15%') !important;
+        background-color: --alpha(var(--color-brand-500) / 15%) !important;
     }
 
     .f3-html-card.gender-F div.card-image-rect[style*="assets/avatars/"],
     .f3-html-card.gender-F div.card-image-circle[style*="assets/avatars/"] {
-        background-color: theme('colors.gender.female / 15%') !important;
+        background-color: --alpha(var(--color-gender-female) / 15%) !important;
     }
 
     .f3-html-card.gender-U div.card-image-rect[style*="assets/avatars/"],
     .f3-html-card.gender-U div.card-image-circle[style*="assets/avatars/"],
     .f3-html-card.gender-X div.card-image-rect[style*="assets/avatars/"],
     .f3-html-card.gender-X div.card-image-circle[style*="assets/avatars/"] {
-        background-color: theme('colors.neutral.500 / 15%') !important;
+        background-color: --alpha(var(--color-neutral-500) / 15%) !important;
     }
 
     .f3 * { transition: none !important; }

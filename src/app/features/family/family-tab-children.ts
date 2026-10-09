@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Family, Individual } from '../../core/models/models';
@@ -10,15 +10,16 @@ import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-sta
     selector: 'app-family-tab-children',
     standalone: true,
     imports: [CommonModule, RouterLink, AppAvatarComponent, AppSectionHeaderComponent, AppEmptyStateComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
+        <div class="glass-card p-6! sm:p-8! flex flex-col gap-6">
             <app-section-header title="Kinder" icon="👶">
-                <button actions class="btn-primary !w-auto !py-1.5 text-sm" (click)="addChildRequested.emit()">+
+                <button actions class="btn-primary w-auto! py-1.5! text-sm" (click)="addChildRequested.emit()">+
                     Kind</button>
             </app-section-header>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" *ngIf="children.length">
-                <div class="glass-card !p-4 !rounded-2xl flex items-center gap-4 hover:scale-[1.02] transition-transform cursor-pointer"
+                <div class="glass-card p-4! rounded-2xl! flex items-center gap-4 hover:scale-[1.02] transition-transform cursor-pointer"
                     *ngFor="let child of children" [routerLink]="['/person', child.id]">
                     <app-avatar [imageUrl]="getPersonImage(child)"
                         [gender]="child.gender" size="sm" [alt]="getPersonName(child)"></app-avatar>

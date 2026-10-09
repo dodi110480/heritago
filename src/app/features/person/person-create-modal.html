@@ -19,7 +19,7 @@
 
                     <!-- Search Results Dropdown -->
                     <div *ngIf="showResults()"
-                        class="absolute top-full left-0 right-0 mt-2 glass-card !rounded-2xl shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
+                        class="absolute top-full left-0 right-0 mt-2 glass-card rounded-2xl! shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                         <div *ngFor="let res of searchResults()" (click)="selectExisting(res)"
                             class="p-4 border-b border-canvas-white/5 last:border-0 hover:bg-brand-500/10 cursor-pointer transition-colors flex items-center justify-between group">
                             <div class="flex flex-col">
@@ -68,7 +68,7 @@
 
                 <div class="form-group mb-0">
                     <label class="form-label">Geschlecht</label>
-                    <div class="grid grid-cols-3 gap-3 glass-card !p-1 !rounded-2xl">
+                    <div class="grid grid-cols-3 gap-3 glass-card p-1! rounded-2xl!">
                         <button type="button" (click)="updateField('gender', 'M')"
                             [class]="newPersonData().gender === 'M' ? 'bg-brand-600 text-canvas-white shadow-lg shadow-brand-sm' : 'text-neutral-800 dark:text-neutral-200 hover:text-neutral-300 hover:bg-canvas-white/5'"
                             class="py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300">
@@ -94,7 +94,7 @@
                 Abbrechen
             </button>
             <button (click)="save()" [disabled]="!newPersonData().firstName || isSaving()"
-                class="flex-[2] btn-primary py-4 disabled:opacity-50 flex items-center justify-center gap-2">
+                class="flex-2 btn-primary py-4 disabled:opacity-50 flex items-center justify-center gap-2">
                 <span *ngIf="isSaving()"
                     class="w-5 h-5 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin"></span>
                 {{ isSaving() ? 'Wird angelegt...' : 'Anlegen & Verknüpfen' }}

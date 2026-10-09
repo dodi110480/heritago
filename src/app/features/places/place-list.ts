@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, ViewEncapsulation, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, effect, ViewEncapsulation, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TreeService } from '../../core/services/tree.service';
@@ -12,6 +12,7 @@ import { PlaceService } from '../../core/services/place.service';
     standalone: true,
     imports: [CommonModule, FormsModule, PlaceModal, AppPageHeaderComponent, AppPlacesList],
     templateUrl: './place-list.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     encapsulation: ViewEncapsulation.None
 })
 export class PlaceList implements OnInit {

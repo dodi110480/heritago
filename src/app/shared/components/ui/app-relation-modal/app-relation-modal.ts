@@ -1,4 +1,4 @@
-import { Component, input, output, signal, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, input, output, signal, OnChanges, SimpleChanges, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppModalShell } from '../app-modal-shell';
@@ -41,6 +41,7 @@ export interface RelationDraft {
   selector: 'app-relation-modal',
   standalone: true,
   imports: [CommonModule, FormsModule, AppModalShell, AppNotesList, AppSourcesListComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app-relation-modal.html'
 })
 export class AppRelationModal implements OnChanges {

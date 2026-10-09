@@ -1,10 +1,11 @@
-import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'app-image-viewer',
     standalone: true,
     imports: [CommonModule],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './image-viewer.html'
 })
 export class ImageViewer {

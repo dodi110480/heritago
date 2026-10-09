@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { DisplaySource } from '../../../core/models/models';
+import { DisplaySource, SourceType, SOURCE_TYPE_LABELS } from '../../../core/models/models';
 
 @Pipe({
   name: 'sourceSummary',
@@ -20,7 +20,8 @@ export class SourceSummaryPipe implements PipeTransform {
     if (source.publication) parts.push(source.publication);
     if (source.whereInSource) parts.push(`[${source.whereInSource}]`);
     if (source.date) parts.push(source.date);
-    if (source.sourceType && source.sourceType !== 'ANDERE') parts.push(`(${source.sourceType})`);
+    const sourceType = source.sourceType as SourceType | undefined;
+    if (sourceType && sourceType !== 'OTHER') parts.push(`(${SOURCE_TYPE_LABELS[sourceType] || sourceType})`);
 
     return parts.length > 0 ? parts.join(' – ') : fallback;
   }

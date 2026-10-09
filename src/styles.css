@@ -1,30 +1,303 @@
-@import "family-chart/styles/family-chart.css";
+@import 'family-chart/styles/family-chart.css' layer(base);
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@source './';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-brand-50: #f6fff5ff;
+  --color-brand-100: #feefebff;
+  --color-brand-200: #dce3fd;
+  --color-brand-300: #c2cdfa;
+  --color-brand-400: #a3aff5;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand: #6366f1;
+
+  --color-canvas: #8cc4c1ff;
+  --color-canvas-dark: #020617;
+  --color-canvas-white: #ffffff;
+  --color-canvas-black: #000000;
+
+  --color-glass-bg: rgba(255, 255, 255, 0.7);
+  --color-glass-border: rgba(255, 255, 255, 0.4);
+  --color-glass-bg-dark: rgba(15, 23, 42, 0.75);
+  --color-glass-border-dark: rgba(255, 255, 255, 0.1);
+
+  --color-accent-highlight-300: #fcd34d;
+  --color-accent-highlight-400: #fbbf24;
+  --color-accent-highlight-500: #d97706;
+  --color-accent-highlight-600: #b45309;
+  --color-accent-highlight-700: #92400e;
+  --color-accent-highlight: #d97706;
+
+  --color-accent-success-300: #6ee7b7;
+  --color-accent-success-400: #34d399;
+  --color-accent-success-500: #10b981;
+  --color-accent-success-600: #059669;
+  --color-accent-success-700: #047857;
+
+  --color-accent-danger-300: #fda4af;
+  --color-accent-danger-400: #fb7185;
+  --color-accent-danger-500: #f43f5e;
+  --color-accent-danger-600: #e11d48;
+  --color-accent-danger-700: #be123c;
+
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+
+  --color-ui-bg: #fcfcfb;
+  --color-ui-border: #e2e8f0;
+  --color-ui-card: #ffffff;
+
+  --color-accent-violet-300: #c4b5fd;
+  --color-accent-violet-400: #a78bfa;
+  --color-accent-violet-500: #8b5cf6;
+  --color-accent-violet-600: #7c3aed;
+  --color-accent-violet-700: #6d28d9;
+
+  --color-gender-male: #4f46e5;
+  --color-gender-female: #db2777;
+  --color-gender-neutral: #94a3b8;
+
+  --font-body: Inter, system-ui, sans-serif;
+  --font-display: Inter, system-ui, sans-serif;
+  --font-mono: JetBrains Mono, monospace;
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.6;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.5;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.4;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.3;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 1.2;
+
+  --shadow-card-light:
+    0 10px 30px -15px rgba(0, 0, 0, 0.45),
+    0 15px 30px -10px rgba(0, 0, 0, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  --shadow-card-dark:
+    0 35px 70px -15px rgba(0, 0, 0, 0.6), 0 20px 40px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  --shadow-card-hover:
+    0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 35px 60px -15px rgba(0, 0, 0, 0.5);
+  --shadow-brand-glow: 0 0 25px rgba(99, 102, 241, 0.4);
+  --shadow-brand-sm: 0 4px 12px rgba(99, 102, 241, 0.25);
+  --shadow-danger-glow: 0 0 25px rgba(244, 63, 94, 0.4);
+  --shadow-inner-glow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
+
+  --radius-card: 0.2rem;
+  --radius-modal: 0.4rem;
+  --radius-btn: 0.2rem;
+
+  --z-index-navbar: 100;
+  --z-index-dropdown: 200;
+  --z-index-modal: 1000;
+  --z-index-toast: 2000;
+
+  --animate-fade-in: fadeIn 0.3s ease-out;
+  --animate-slide-up: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes slideUp {
+    0% {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+.glass-card {
+  /* --- Glassmorphism Foundation --- */
+  @apply bg-glass-bg
+            backdrop-blur-3xl
+            rounded-card
+            p-6 md:p-4
+            transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+            
+            shadow-card-light
+            border border-glass-border;
+
+  &:where(.dark *) {
+    @apply bg-glass-bg-dark border-glass-border-dark shadow-card-dark;
+  }
+
+  &:hover {
+    @apply -translate-y-2 shadow-card-hover border-glass-border/60 scale-[1.01];
+  }
+}
+
+.page-header {
+  /* --- Page Headers --- */
+  @apply px-6 md:px-10 py-10 mb-8 relative overflow-hidden;
+}
+
+.page-title {
+  @apply m-0 text-3xl md:text-4xl font-bold text-neutral-900 dark:text-white tracking-tight leading-tight;
+}
+
+.page-subtitle {
+  @apply m-0 text-neutral-500 dark:text-neutral-400 mt-2 text-sm md:text-base max-w-2xl font-medium;
+}
+
+.btn-primary {
+  /* --- Buttons --- */
+  @apply px-6 py-2.5 bg-brand-600 hover:bg-brand-500 active:scale-95 text-white rounded-btn font-semibold shadow-brand-sm hover:shadow-brand-glow flex items-center justify-center gap-2 transition-all duration-220;
+}
+
+.btn-secondary {
+  @apply px-6 py-2.5 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 active:scale-95 text-neutral-900 dark:text-white rounded-btn font-medium shadow-xs border border-neutral-200 dark:border-neutral-700 flex items-center justify-center gap-2 transition-all;
+}
+
+.btn-ghost {
+  @apply px-4 py-2 bg-transparent hover:bg-brand-500/10 active:scale-95 text-neutral-600 dark:text-neutral-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-btn font-semibold flex items-center justify-center gap-2 transition-all;
+}
+
+.btn-danger {
+  @apply px-6 py-2.5 bg-accent-danger-500 hover:bg-accent-danger-400 active:scale-95 text-white rounded-btn font-semibold shadow-danger-glow flex items-center justify-center gap-2 transition-all;
+}
+
+.search-input {
+  /* --- Forms --- */
+  @apply w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-11 pr-4 py-2.5 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-hidden focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all;
+}
+
+.form-input {
+  @apply w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-xl px-5 py-3.5 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-hidden focus:ring-4 focus:ring-brand-500/10 transition-all;
+}
+
+.form-select {
+  @apply w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-xl px-5 py-3.5 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-hidden focus:ring-4 focus:ring-brand-500/10 transition-all;
+}
+
+.form-label {
+  @apply block text-sm font-bold text-neutral-800 dark:text-neutral-200 mb-2;
+}
+
+.badge {
+  /* --- Badges --- */
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all;
+}
+
+.badge-primary {
+  @apply bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/20;
+}
+
+.badge-highlight {
+  @apply bg-accent-highlight-500/10 text-accent-highlight-500 border-accent-highlight-500/20;
+}
+
+.badge-success {
+  @apply bg-accent-success-500/10 text-accent-success-500 border-accent-success-500/20;
+}
+
+.badge-danger {
+  @apply bg-accent-danger-500/10 text-accent-danger-500 border-accent-danger-500/20;
+}
+
+.badge-info {
+  @apply bg-accent-violet-500/10 text-accent-violet-500 border-accent-violet-500/20;
+}
+
+.mobile-nav-link {
+  /* --- Navigation --- */
+  @apply flex items-center gap-4 px-6 py-5 rounded-2xl text-neutral-500 dark:text-neutral-400 transition-all duration-200 font-bold text-lg border border-transparent;
+  &.active {
+    @apply bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/10;
+  }
+}
+
+.hover-lift {
+  @apply hover:-translate-y-0.5 active:translate-y-0;
+}
 
 @layer base {
     :root {
         /* Media Role Colors */
-        --color-media-portrait: theme('colors.brand.500');
-        --color-media-document: theme('colors.brand.300');
-        --color-media-certificate: theme('colors.accent-success.500');
-        --color-media-gravestone: theme('colors.neutral.600');
-        --color-media-signature: theme('colors.accent-highlight.500');
-        --color-media-default: theme('colors.brand.500');
+        --color-media-portrait: var(--color-brand-500);
+        --color-media-document: var(--color-brand-300);
+        --color-media-certificate: var(--color-accent-success-500);
+        --color-media-gravestone: var(--color-neutral-600);
+        --color-media-signature: var(--color-accent-highlight-500);
+        --color-media-default: var(--color-brand-500);
 
         /* Note Category Colors */
-        --color-note-research: theme('colors.brand.300');
-        --color-note-hint: theme('colors.brand.500');
-        --color-note-question: theme('colors.accent-highlight.500');
-        --color-note-transcription: theme('colors.accent-success.500');
-        --color-note-todo: theme('colors.accent-danger.500');
-        --color-note-comment: theme('colors.neutral.500');
-        --color-note-default: theme('colors.brand.500');
+        --color-note-research: var(--color-brand-300);
+        --color-note-hint: var(--color-brand-500);
+        --color-note-question: var(--color-accent-highlight-500);
+        --color-note-transcription: var(--color-accent-success-500);
+        --color-note-todo: var(--color-accent-danger-500);
+        --color-note-comment: var(--color-neutral-500);
+        --color-note-default: var(--color-brand-500);
 
         /* Technical Colors */
-        --color-neutral-500: theme('colors.neutral.500');
+        --color-neutral-500: var(--color-neutral-500);
     }
 
     /* ==================================================================== */
@@ -40,9 +313,9 @@
         overflow: visible;
 
         /* Variables for colors and text synced with Tailwind tokens */
-        --female-color: theme('colors.gender.female');
-        --male-color: theme('colors.gender.male');
-        --genderless-color: theme('colors.gender.neutral');
+        --female-color: var(--color-gender-female);
+        --male-color: var(--color-gender-male);
+        --genderless-color: var(--color-gender-neutral);
         --background-color: transparent;
         --text-color: currentColor;
     }
@@ -82,33 +355,33 @@
         
         /* Deep Vibrant Mesh Gradient using Theme Tokens */
         background-image: 
-            radial-gradient(at 0% 0%, theme('colors.brand.500/0.15') 0px, transparent 50%),
-            radial-gradient(at 100% 0%, theme('colors.accent-danger.500/0.12') 0px, transparent 50%),
-            radial-gradient(at 100% 100%, theme('colors.accent-violet.500/0.1') 0px, transparent 50%),
+            radial-gradient(at 0% 0%, --alpha(var(--color-brand-500) / 15%) 0px, transparent 50%),
+            radial-gradient(at 100% 0%, --alpha(var(--color-accent-danger-500) / 12%) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, --alpha(var(--color-accent-violet-500) / 10%) 0px, transparent 50%),
             radial-gradient(at 0% 100%, rgba(20, 184, 166, 0.08) 0px, transparent 50%),
-            radial-gradient(at 50% 50%, theme('colors.brand.500/0.05') 0px, transparent 80%);
+            radial-gradient(at 50% 50%, --alpha(var(--color-brand-500) / 5%) 0px, transparent 80%);
     }
 
     .dark body, .dark html {
         @apply text-slate-100 bg-canvas-dark;
         background-image: 
-            radial-gradient(at 0% 0%, theme('colors.brand.500/0.2') 0px, transparent 55%),
-            radial-gradient(at 100% 0%, theme('colors.accent-danger.500/0.15') 0px, transparent 55%),
-            radial-gradient(at 50% 100%, theme('colors.canvas.dark') 0px, transparent 100%),
-            radial-gradient(at 50% 0%, theme('colors.accent-violet.500/0.1') 0px, transparent 60%);
+            radial-gradient(at 0% 0%, --alpha(var(--color-brand-500) / 20%) 0px, transparent 55%),
+            radial-gradient(at 100% 0%, --alpha(var(--color-accent-danger-500) / 15%) 0px, transparent 55%),
+            radial-gradient(at 50% 100%, var(--color-canvas-dark) 0px, transparent 100%),
+            radial-gradient(at 50% 0%, --alpha(var(--color-accent-violet-500) / 10%) 0px, transparent 60%);
     }
 
     button, a, input, select, [role="button"] {
-        @apply transition-all duration-[220ms] ease-out min-h-[44px];
+        @apply transition-all duration-220 ease-out min-h-[44px];
     }
 
     :focus-visible {
-        @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-canvas;
+        @apply outline-hidden ring-2 ring-brand-500 ring-offset-2 ring-offset-canvas;
     }
 
     /* Leaflet Overrides */
-    .leaflet-container { @apply bg-neutral-400 !important; }
-    .leaflet-popup-tip { @apply bg-slate-900/90 !important; }
+    .leaflet-container { @apply bg-neutral-400!; }
+    .leaflet-popup-tip { @apply bg-slate-900/90!; }
 
     /* Map Popup / Marker Styles */
     .map-popup-content { @apply p-1 min-w-[150px] text-white; }
@@ -118,96 +391,8 @@
     .map-popup-label { @apply text-[9px] font-bold uppercase tracking-wider text-white/50 mb-2; }
     .map-popup-avatars { @apply flex flex-wrap gap-1.5; }
     .map-avatar-wrapper { 
-        @apply w-8 h-8 rounded-full overflow-hidden bg-white/10 border border-white/20 shadow-sm transition-transform hover:scale-110; 
+        @apply w-8 h-8 rounded-full overflow-hidden bg-white/10 border border-white/20 shadow-xs transition-transform hover:scale-110; 
     }
     .map-avatar-img { @apply w-full h-full object-cover; }
 
-}
-
-@layer components {
-    /* --- Glassmorphism Foundation --- */
-    .glass-card {
-        @apply 
-            bg-glass-bg
-            backdrop-blur-3xl
-            rounded-card
-            p-6 md:p-4
-            transition-all duration-[400ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]
-            
-            shadow-card-light
-            border border-glass-border;
-    }
-
-    .dark .glass-card {
-        @apply bg-glass-bg-dark border-glass-border-dark shadow-card-dark;
-    }
-
-    .glass-card:hover {
-        @apply -translate-y-2 shadow-card-hover border-glass-border/60 scale-[1.01];
-    }
-
-    /* --- Page Headers --- */
-    .page-header {
-        @apply px-6 md:px-10 py-10 mb-8 relative overflow-hidden;
-    }
-
-    .page-title {
-        @apply m-0 text-3xl md:text-4xl font-bold text-neutral-900 dark:text-white tracking-tight leading-tight;
-    }
-
-    .page-subtitle {
-        @apply m-0 text-neutral-500 dark:text-neutral-400 mt-2 text-sm md:text-base max-w-2xl font-medium;
-    }
-
-    /* --- Buttons --- */
-    .btn-primary {
-        @apply px-6 py-2.5 bg-brand-600 hover:bg-brand-500 active:scale-95 text-white rounded-btn font-semibold shadow-brand-sm hover:shadow-brand-glow flex items-center justify-center gap-2 transition-all duration-[220ms];
-    }
-
-    .btn-secondary {
-        @apply px-6 py-2.5 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 active:scale-95 text-neutral-900 dark:text-white rounded-btn font-medium shadow-sm border border-neutral-200 dark:border-neutral-700 flex items-center justify-center gap-2 transition-all;
-    }
-
-    .btn-ghost {
-        @apply px-4 py-2 bg-transparent hover:bg-brand-500/10 active:scale-95 text-neutral-600 dark:text-neutral-400 hover:text-brand-600 dark:hover:text-brand-400 rounded-btn font-semibold flex items-center justify-center gap-2 transition-all;
-    }
-
-    .btn-danger {
-        @apply px-6 py-2.5 bg-accent-danger-500 hover:bg-accent-danger-400 active:scale-95 text-white rounded-btn font-semibold shadow-danger-glow flex items-center justify-center gap-2 transition-all;
-    }
-
-    /* --- Forms --- */
-    .search-input {
-        @apply w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-11 pr-4 py-2.5 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all;
-    }
-
-    .form-input, .form-select {
-        @apply w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-xl px-5 py-3.5 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition-all;
-    }
-
-    .form-label {
-        @apply block text-sm font-bold text-neutral-800 dark:text-neutral-200 mb-2;
-    }
-
-    /* --- Badges --- */
-    .badge {
-        @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition-all;
-    }
-    .badge-primary { @apply bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/20; }
-    .badge-highlight { @apply bg-accent-highlight-500/10 text-accent-highlight-500 border-accent-highlight-500/20; }
-    .badge-success { @apply bg-accent-success-500/10 text-accent-success-500 border-accent-success-500/20; }
-    .badge-danger { @apply bg-accent-danger-500/10 text-accent-danger-500 border-accent-danger-500/20; }
-    .badge-info { @apply bg-accent-violet-500/10 text-accent-violet-500 border-accent-violet-500/20; }
-
-    /* --- Navigation --- */
-    .mobile-nav-link {
-        @apply flex items-center gap-4 px-6 py-5 rounded-2xl text-neutral-500 dark:text-neutral-400 transition-all duration-200 font-bold text-lg border border-transparent;
-    }
-    .mobile-nav-link.active {
-        @apply bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/10;
-    }
-}
-
-@layer utilities {
-    .hover-lift { @apply hover:-translate-y-0.5 active:translate-y-0; }
 }

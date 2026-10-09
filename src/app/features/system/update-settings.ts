@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../environment';
@@ -8,6 +8,7 @@ import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-head
     selector: 'app-update-settings',
     standalone: true,
     imports: [CommonModule, RouterModule, AppPageHeaderComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './update-settings.html'
 })
 export class UpdateSettings implements OnInit {

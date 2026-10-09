@@ -14,8 +14,7 @@ import { GlassCardComponent } from '../app-glass-card';
 import { SourceSummaryPipe } from '../source-summary-pipe';
 import { SourceModal } from '../../../../features/sources/source-modal';
 import { AuthService } from '../../../../core/services/auth.service';
-import { TreeService } from '../../../../core/services/tree.service';
-import { DisplaySource, EntityType, SourceType } from '../../../../core/models/models';
+import { DisplaySource, EntityType, SourceType, SOURCE_TYPE_LABELS } from '../../../../core/models/models';
 
 @Component({
   selector: 'app-sources-list',
@@ -58,9 +57,9 @@ export class AppSourcesListComponent {
   enableEntityLinking = input<boolean>(false);
 
   typeOptions = input<SourceType[]>([
-    'BUCH','WEBSEITE','DOKUMENT','ZEITUNG','ARCHIV',
-    'FOTO','AUDIO','VIDEO','PERIODISCH',
-    'KIRCHBUCH','VOLKSZAEHLUNG','ANDERE'
+    'BOOK','WEBSITE','DOCUMENT','NEWSPAPER','ARCHIVE',
+    'PHOTO','AUDIO','VIDEO','PERIODICAL',
+    'CHURCH_RECORD','CENSUS','OTHER'
   ]);
 
   debounceTimeInput = input<number>(300);
@@ -99,7 +98,6 @@ export class AppSourcesListComponent {
   private searchSubject = new Subject<string>();
 
   private authService = inject(AuthService);
-  private treeService = inject(TreeService);
 
   /** UI State für expandierte Beschreibungen */
   expandedSources = signal<Set<string>>(new Set());
@@ -115,13 +113,20 @@ export class AppSourcesListComponent {
 
   filteredSources = computed(() => {
 
-    const query = (this.searchQuery.toLowerCase().trim() || this.searchTerm().toLowerCase().trim());
-
     let sources = this.sourcesDisplay().filter(s => !s.isArchived);
 
     if (this.filterByCategory()) {
       sources = sources.filter(s => s.category === this.filterByCategory());
     }
+
+    // Server-side search mode: the backend is the single source of truth and
+    // already returned the filtered list. Never re-filter locally to avoid
+    // duplicated filtering and flickering UI states.
+    if (this.enableVirtualScroll()) {
+      return sources;
+    }
+
+    const query = (this.searchQuery.toLowerCase().trim() || this.searchTerm().toLowerCase().trim());
 
     if (!query) return sources;
 
@@ -204,14 +209,15 @@ export class AppSourcesListComponent {
 
   onEditMaster(source: any): void {
     this.selectedSourceForMaster.set(source);
-    
-    // Wir brauchen eine Liste aller Quellen für das Modal (z.B. für Merge)
-    this.treeService.getTreeData().subscribe(data => {
-      if (data && data.sources) {
-        this.allSourcesForMaster.set(data.sources);
-      }
-    });
-    
+
+    const tree = this.authService.currentTree();
+    if (tree) {
+      // Load the merge/reassign candidate list from the dedicated endpoint.
+      this.sourceService.getSources(tree.name).subscribe((sources: any) => {
+        this.allSourcesForMaster.set(Array.isArray(sources) ? sources : []);
+      });
+    }
+
     this.showSourceMasterModal.set(true);
   }
 
@@ -221,20 +227,28 @@ export class AppSourcesListComponent {
   }
 
   onSourceMasterDeleted(payload: any): void {
-    // Wenn die Quelle im Master-Modal gelöscht wird, leiten wir das an das Parent weiter
-    // oder wir benachrichtigen das System.
-    // In diesem Kontext löscht das System die Quelle komplett aus dem Baum.
     const tree = this.authService.currentTree();
     if (!tree) return;
 
-    if (confirm('Möchtest du diese Quelle wirklich UNWIDERRUFLICH aus dem gesamten Stammbaum löschen? Alle Belege an Personen und Ereignissen gehen verloren.')) {
-        this.sourceService.saveSource(tree.name, { id: payload.source.id, mode: 'delete', reassignToId: payload.reassignToId }).subscribe(res => {
-            if (res && res.success) {
-                this.showSourceMasterModal.set(false);
-                this.masterSaved.emit();
-            }
-        });
+    if (!confirm('Möchtest du diese Quelle wirklich UNWIDERRUFLICH aus dem gesamten Stammbaum löschen? Alle Belege an Personen und Ereignissen gehen verloren.')) {
+      return;
     }
+
+    this.sourceService.deleteSource(tree.name, payload.source.id, payload.reassignToId).subscribe({
+      next: (res: any) => {
+        if (res?.success) {
+          this.showSourceMasterModal.set(false);
+          this.masterSaved.emit();
+        }
+      },
+      error: (err: any) => {
+        if (err?.status === 409) {
+          alert('Die Quelle ist noch in Verwendung. Bitte wähle eine Ziel-Quelle zum Umhängen oder führe sie zuerst zusammen.');
+        } else {
+          alert('Fehler beim Löschen: ' + (err?.error?.message || 'Unbekannter Fehler'));
+        }
+      }
+    });
   }
 
   drop(event: CdkDragDrop<DisplaySource[]>): void {
@@ -266,16 +280,21 @@ export class AppSourcesListComponent {
 
     switch (type) {
 
-      case 'BUCH': return 'book';
-      case 'WEBSEITE': return 'globe';
-      case 'ZEITUNG': return 'newspaper';
-      case 'ARCHIV': return 'archive';
-      case 'FOTO': return 'image';
+      case 'BOOK': return 'book';
+      case 'WEBSITE': return 'globe';
+      case 'NEWSPAPER': return 'newspaper';
+      case 'ARCHIVE': return 'archive';
+      case 'PHOTO': return 'image';
 
       default:
         return 'file-text';
     }
 
+  }
+
+  getSourceTypeLabel(type?: SourceType): string {
+    if (!type) return '';
+    return SOURCE_TYPE_LABELS[type] ?? type;
   }
 
   getConfidenceLabel(conf?: string): string {

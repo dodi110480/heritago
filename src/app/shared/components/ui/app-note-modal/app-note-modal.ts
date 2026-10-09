@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppModalShell } from '../app-modal-shell';
@@ -8,6 +8,7 @@ import { DisplayNote, NoteCategory } from '../../../../core/models/models';
   selector: 'app-note-modal',
   standalone: true,
   imports: [CommonModule, FormsModule, AppModalShell],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app-note-modal.html'
 })
 export class AppNoteModal {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, inject, signal, computed } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TreeService } from '../../core/services/tree.service';
@@ -29,6 +29,7 @@ import { AppUsageList } from '../../shared/components/ui/app-usage-list/app-usag
         TabCitationsComponent,
         AppUsageList
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './media-add-modal.html'
 })
 export class MediaAddModal {

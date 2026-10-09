@@ -1,4 +1,4 @@
-import { Component, input, output, signal, computed } from '@angular/core';
+import { Component, input, output, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppModalShell } from '../app-modal-shell';
@@ -10,6 +10,7 @@ import { Citation, DisplayNote, NoteCategory } from '../../../../core/models/mod
   selector: 'app-citation-modal',
   standalone: true,
   imports: [CommonModule, FormsModule, AppModalShell, AppNotesList, AppNoteModal],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './citation-modal.html'
 })
 export class CitationModalComponent {

@@ -33,7 +33,7 @@
         badgeText="Familie" badgeColor="highlight" [routerLink]="['/family', fam.id]">
 
         <div actions *ngIf="fam.childrenCount"
-            class="text-[10px] px-2 py-1 rounded-lg bg-brand-500/5 text-brand-600 font-bold border border-brand-500/10 whitespace-nowrap shadow-sm"
+            class="text-[10px] px-2 py-1 rounded-lg bg-brand-500/5 text-brand-600 font-bold border border-brand-500/10 whitespace-nowrap shadow-xs"
             [title]="getChildrenTooltip(fam)">
             {{ fam.childrenCount }} {{ fam.childrenCount === 1 ? 'Kind' : 'Kinder' }}
         </div>

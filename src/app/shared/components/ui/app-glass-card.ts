@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ViewEncapsulation } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -15,7 +15,7 @@ import { CommonModule } from '@angular/common';
       (click)="onClick($event)"
     >
       <!-- Background Glow (optional, based on design) -->
-      <div class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
+      <div class="absolute inset-0 bg-linear-to-br from-white/5 to-transparent pointer-events-none"></div>
       
       <!-- Top Action Bar (Absolute or relative depending on design, here we allow content projection) -->
       <div class="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -34,6 +34,7 @@ import { CommonModule } from '@angular/common';
       width: 100%;
     }
   `],
+  changeDetection: ChangeDetectionStrategy.Eager,
   encapsulation: ViewEncapsulation.None
 })
 export class GlassCardComponent {

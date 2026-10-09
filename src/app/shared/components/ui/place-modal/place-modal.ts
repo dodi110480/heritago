@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject, signal, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, inject, signal, ViewChild, ElementRef, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -18,6 +18,7 @@ declare const L: any;
     selector: 'app-place-modal',
     standalone: true,
     imports: [CommonModule, FormsModule, AppNotesList, AppUsageList, AppModalShell],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './place-modal.html'
 })
 export class PlaceModal implements OnInit {

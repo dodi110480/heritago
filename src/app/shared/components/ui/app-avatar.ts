@@ -1,4 +1,4 @@
-import { Component, Input, computed } from '@angular/core';
+import { Component, Input, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -19,6 +19,7 @@ import { CommonModule } from '@angular/common';
       <div *ngIf="!isLoaded" class="absolute inset-0 animate-pulse bg-neutral-200"></div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     :host { display: inline-block; }
   `]
@@ -71,7 +72,7 @@ export class AppAvatarComponent {
       base,
       sizeMap[this.size] || sizeMap.md,
       this.circular ? 'rounded-full' : 'rounded-2xl',
-      this.border ? 'border border-ui-border shadow-sm' : ''
+      this.border ? 'border border-ui-border shadow-xs' : ''
     ].join(' ');
   });
 }

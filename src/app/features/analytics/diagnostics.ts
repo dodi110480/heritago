@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TreeService } from '../../core/services/tree.service';
@@ -23,6 +23,7 @@ interface GedcomError {
     selector: 'app-diagnostics',
     standalone: true,
     imports: [CommonModule, RouterLink, AppPageHeaderComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './diagnostics.html'
 })
 export class Diagnostics implements OnInit {

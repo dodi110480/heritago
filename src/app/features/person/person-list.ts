@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, computed, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { TreeService } from '../../core/services/tree.service';
@@ -18,6 +18,7 @@ import { MediaService } from '../../core/services/media.service';
     standalone: true,
     imports: [CommonModule, RouterLink, FormsModule, CleanDatePipe, PersonCreateModal, AppEntityCard, AppPageHeaderComponent, AppListViewComponent],
     templateUrl: './person-list.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     encapsulation: ViewEncapsulation.None
 })
 export class PersonList {

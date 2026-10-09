@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, signal, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, signal, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { map } from 'rxjs';
@@ -14,6 +14,7 @@ import { SourceService } from '../../core/services/source.service';
     selector: 'app-source-modal',
     standalone: true,
     imports: [CommonModule, FormsModule, AppModalShell, AppNotesList, AppUsageList],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './source-modal.html'
 })
 export class SourceModal implements OnInit {
@@ -43,7 +44,7 @@ export class SourceModal implements OnInit {
     author = signal('');
     publication = signal('');
     repositoryId = signal('');
-    sourceType = signal<string>('ANDERE');
+    sourceType = signal<string>('OTHER');
     category = signal<string>('SECONDARY');
 
     mergeTargetId = signal('');
@@ -74,7 +75,7 @@ export class SourceModal implements OnInit {
             this.author.set(this.sourceData.author || '');
             this.publication.set(this.sourceData.publication || '');
             this.repositoryId.set(this.sourceData.repositoryId || '');
-            this.sourceType.set(this.sourceData.sourceType || 'ANDERE');
+            this.sourceType.set(this.sourceData.sourceType || 'OTHER');
             this.category.set(this.sourceData.category || 'SECONDARY');
         }
 

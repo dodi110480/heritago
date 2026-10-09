@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="py-12 px-6 flex flex-col items-center justify-center border-2 border-dashed border-ui-border/20 rounded-3xl text-center bg-ui-card/5 backdrop-blur-sm group hover:border-brand-500/30 transition-all duration-300">
+    <div class="py-12 px-6 flex flex-col items-center justify-center border-2 border-dashed border-ui-border/20 rounded-3xl text-center bg-ui-card/5 backdrop-blur-xs group hover:border-brand-500/30 transition-all duration-300">
       <div class="w-20 h-20 bg-brand-500/5 rounded-full flex items-center justify-center mb-6 text-4xl group-hover:scale-110 group-hover:bg-brand-500/10 transition-all duration-500">
         <span class="opacity-40 group-hover:opacity-100 transition-opacity">{{ icon }}</span>
       </div>
@@ -18,6 +18,7 @@ import { CommonModule } from '@angular/common';
       </div>
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     :host { display: block; width: 100%; }
   `]

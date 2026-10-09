@@ -1,8 +1,9 @@
-import { Component, inject, ViewEncapsulation } from '@angular/core';
+import { Component, inject, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { TreeService } from '../../core/services/tree.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { signal, effect } from '@angular/core';
 import { filter } from 'rxjs/operators';
 
@@ -15,17 +16,21 @@ import { AppIconComponent } from './ui/app-icon';
     standalone: true,
     imports: [RouterLink, RouterLinkActive, CommonModule, AppIconComponent],
     templateUrl: './navbar.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     encapsulation: ViewEncapsulation.None
 })
 export class Navbar {
     public analyticsService = inject(AnalyticsService);
     authService = inject(AuthService);
+    notificationService = inject(NotificationService);
     private treeService = inject(TreeService);
     private router = inject(Router);
 
     errorCount = signal<number>(0);
     warningCount = signal<number>(0);
     isMobileMenuOpen = signal<boolean>(false);
+    showNotifications = signal<boolean>(false);
+    notifications = signal<any[]>([]);
 
     constructor() {
         const router = inject(Router);
@@ -34,6 +39,7 @@ export class Navbar {
             const user = this.authService.currentUser();
             if (user) {
                 this.updateDiagnostics();
+                this.loadNotifications();
             }
         });
 
@@ -81,6 +87,29 @@ export class Navbar {
 
     toggleMobileMenu() {
         this.isMobileMenuOpen.update(v => !v);
+    }
+
+    toggleNotifications() {
+        this.showNotifications.update(v => !v);
+        if (this.showNotifications()) {
+            this.loadNotifications();
+        }
+    }
+
+    loadNotifications() {
+        this.notificationService.refresh().subscribe(data => this.notifications.set(data.notifications));
+    }
+
+    openNotification(n: any) {
+        this.notificationService.markRead(n.id).subscribe(() => this.loadNotifications());
+        if (n.type === 'CHANGE_REQUEST' && n.entityId) {
+            this.router.navigate(['/change-requests'], { queryParams: { open: n.entityId } });
+        }
+        this.showNotifications.set(false);
+    }
+
+    markAllNotificationsRead() {
+        this.notificationService.markAllRead().subscribe(() => this.loadNotifications());
     }
 
     closeMobileMenu() {

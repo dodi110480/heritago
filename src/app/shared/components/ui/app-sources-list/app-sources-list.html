@@ -10,7 +10,7 @@
           [(ngModel)]="searchQuery"
           (ngModelChange)="onSearchChange()"
           [placeholder]="placeholder()"
-          class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
+          class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
         >
         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -20,7 +20,7 @@
       <button
         *ngIf="allowCreate() && !readOnly()"
         (click)="sourceCreateRequested.emit()"
-        class="btn-primary !w-auto !py-2 transition-all flex items-center gap-2 whitespace-nowrap"
+        class="btn-primary w-auto! py-2! transition-all flex items-center gap-2 whitespace-nowrap"
       >
         <app-icon name="plus" size="1rem"></app-icon>
         <span>Beleg hinzufügen</span>
@@ -46,7 +46,7 @@
         [clickable]="true"
         [borderColor]="getSourceTypeBorder(source.sourceType)"
         (cardClicked)="sourceEditRequested.emit(source)"
-        class="!p-0"
+        class="p-0!"
       >
 
         <div class="flex flex-col gap-4 p-4 md:p-5">
@@ -55,7 +55,7 @@
             @if (source.sourceType) {
               <span class="badge badge-xs" [ngClass]="getSourceTypeClass(source.sourceType)">
                 <i class="feather icon-{{ getSourceTypeIcon(source.sourceType) }}"></i>
-                {{ source.sourceType }}
+                {{ getSourceTypeLabel(source.sourceType) }}
               </span>
             }
             @if (source.category) {

@@ -104,7 +104,7 @@ export class AuthService {
         localStorage.setItem('activeTree', JSON.stringify(tree));
     }
 
-    login(username: string, password: string): Observable<boolean> {
+    login(username: string, password: string): Observable<{ success: boolean, message?: string }> {
         return this.http.post<any>(`${this.apiUrl}/auth/login`,
             { username, password },
             { withCredentials: true }
@@ -114,25 +114,22 @@ export class AuthService {
                     const user = response?.data ?? response?.user;
                     this.currentUser.set(user);
                     localStorage.setItem('user', JSON.stringify(user));
-                    return true;
+                    return { success: true };
                 }
-                return false;
+                return { success: false, message: response.message || 'Ungültige Anmeldedaten.' };
             }),
-            catchError(() => of(false))
+            catchError(err => of({ success: false, message: err.error?.message || 'Ungültige Anmeldedaten.' }))
         );
     }
 
-    register(username: string, email: string, password: string): Observable<{ success: boolean, message?: string }> {
+    register(username: string, email: string, password: string, website?: string): Observable<{ success: boolean, message?: string }> {
         return this.http.post<any>(`${this.apiUrl}/auth/register`,
-            { username, email, password },
+            { username, email, password, website },
             { withCredentials: true }
         ).pipe(
             map(response => {
                 if (response.success) {
-                    const user = response?.data ?? response?.user;
-                    this.currentUser.set(user);
-                    localStorage.setItem('user', JSON.stringify(user));
-                    return { success: true };
+                    return { success: true, message: response.data?.message };
                 }
                 return { success: false, message: response.message };
             }),
@@ -203,10 +200,10 @@ export class AuthService {
         );
     }
 
-    deleteUser(id: string): Observable<boolean> {
+    deleteUser(id: string): Observable<{ success: boolean; message?: string }> {
         return this.http.delete<any>(`${this.apiUrl}/admin/users/${id}`, { withCredentials: true }).pipe(
-            map(response => response.success),
-            catchError(() => of(false))
+            map(response => ({ success: response.success, message: response.message })),
+            catchError(err => of({ success: false, message: err.error?.message || 'Löschen fehlgeschlagen.' }))
         );
     }
 
@@ -214,6 +211,56 @@ export class AuthService {
         return this.http.patch<any>(`${this.apiUrl}/admin/users/${id}/role`, { role }, { withCredentials: true }).pipe(
             map(response => response.success),
             catchError(() => of(false))
+        );
+    }
+
+    setUserSuspended(id: string, suspended: boolean): Observable<boolean> {
+        return this.http.patch<any>(`${this.apiUrl}/admin/users/${id}/suspend`, { suspended }, { withCredentials: true }).pipe(
+            map(response => response.success),
+            catchError(() => of(false))
+        );
+    }
+
+    setUserMaxTrees(id: string, maxTrees: number): Observable<boolean> {
+        return this.http.patch<any>(`${this.apiUrl}/admin/users/${id}/max-trees`, { maxTrees }, { withCredentials: true }).pipe(
+            map(response => response.success),
+            catchError(() => of(false))
+        );
+    }
+
+    // Admin tree administration (metadata only — no genealogy payload).
+    getAllTrees(): Observable<any[]> {
+        return this.http.get<any>(`${this.apiUrl}/admin/trees`, { withCredentials: true }).pipe(
+            map(response => response.success ? (response.data ?? response.trees ?? []) : []),
+            catchError(() => of([]))
+        );
+    }
+
+    reassignTreeOwner(treeId: string, userId: string): Observable<boolean> {
+        return this.http.patch<any>(`${this.apiUrl}/admin/trees/${treeId}/owner`, { userId }, { withCredentials: true }).pipe(
+            map(response => response.success),
+            catchError(() => of(false))
+        );
+    }
+
+    verifyEmail(token: string): Observable<{ success: boolean, message?: string }> {
+        return this.http.post<any>(`${this.apiUrl}/auth/verify-email`, { token }, { withCredentials: true }).pipe(
+            map(response => ({ success: response.success, message: response.message })),
+            catchError(err => of({ success: false, message: err.error?.message || 'Verifizierung fehlgeschlagen.' }))
+        );
+    }
+
+    forgotPassword(email: string): Observable<{ success: boolean, message?: string }> {
+        return this.http.post<any>(`${this.apiUrl}/auth/forgot-password`, { email }, { withCredentials: true }).pipe(
+            map(response => ({ success: response.success, message: response.message })),
+            catchError(err => of({ success: false, message: err.error?.message || 'Anfrage fehlgeschlagen.' }))
+        );
+    }
+
+    resetPassword(token: string, password: string): Observable<{ success: boolean, message?: string }> {
+        return this.http.post<any>(`${this.apiUrl}/auth/reset-password`, { token, password }, { withCredentials: true }).pipe(
+            map(response => ({ success: response.success, message: response.message })),
+            catchError(err => of({ success: false, message: err.error?.message || 'Zurücksetzen fehlgeschlagen.' }))
         );
     }
 }

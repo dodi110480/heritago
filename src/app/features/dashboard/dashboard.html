@@ -3,6 +3,15 @@
         [description]="funStat()">
     </app-page-header>
 
+    <div class="glass-card p-10! mb-10 text-center" *ngIf="!loading() && availableTrees().length === 0">
+        <div class="text-5xl mb-4">🌳</div>
+        <h2 class="text-2xl font-black text-neutral-900 dark:text-white mb-2">Lege deinen ersten Stammbaum an</h2>
+        <p class="text-neutral-500 dark:text-neutral-400 mb-6 max-w-md mx-auto">Bevor du Personen, Familien und Medien anlegen kannst, brauchst du einen Stammbaum.</p>
+        <a routerLink="/tree-management" class="btn-primary w-auto! px-6! py-3!">Stammbaum erstellen</a>
+    </div>
+
+    <ng-container *ngIf="availableTrees().length > 0">
+
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5 mb-10" *ngIf="!loading()">
         <app-stat-card [value]="stats()?.counts?.individuals || 0" label="Personen" icon="people" accent="brand"
             routerLink="/persons">
@@ -21,7 +30,7 @@
         </app-stat-card>
         <app-stat-card [value]="completeness() + '%'" label="Progress" icon="target" accent="emerald">
             <div class="w-full h-1 bg-slate-200 dark:bg-white/10 rounded-full mt-3 overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-accent-success-500 to-accent-success-600 rounded-full shadow-sm transition-all duration-1000 ease-out"
+                <div class="h-full bg-linear-to-r from-accent-success-500 to-accent-success-600 rounded-full shadow-xs transition-all duration-1000 ease-out"
                     [style.width.%]="completeness()"></div>
             </div>
         </app-stat-card>
@@ -29,8 +38,8 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-6 mb-16">
         <a routerLink="/tree"
-            class="relative no-underline text-inherit flex items-center rounded-card transition-all duration-[180ms] overflow-hidden bg-brand-500/10 dark:bg-brand-500/15 border border-brand-500/20 dark:border-brand-500/30 p-8 gap-6 group hover:bg-brand-500/15 dark:hover:bg-brand-500/20 hover:border-brand-500/30 dark:hover:border-brand-500/40 hover:-translate-y-0.5 hover:shadow-card-light">
-            <div class="w-14 h-14 bg-white/80 dark:bg-white/10 rounded-lg flex items-center justify-center shrink-0 shadow-sm border border-white/40">
+            class="relative no-underline text-inherit flex items-center rounded-card transition-all duration-180 overflow-hidden bg-brand-500/10 dark:bg-brand-500/15 border border-brand-500/20 dark:border-brand-500/30 p-8 gap-6 group hover:bg-brand-500/15 dark:hover:bg-brand-500/20 hover:border-brand-500/30 dark:hover:border-brand-500/40 hover:-translate-y-0.5 hover:shadow-card-light">
+            <div class="w-14 h-14 bg-white/80 dark:bg-white/10 rounded-lg flex items-center justify-center shrink-0 shadow-xs border border-white/40">
                 <img src="/favicon.svg" alt="Tree" class="w-[50%] h-[50%] object-contain opacity-100" />
             </div>
             <div>
@@ -38,11 +47,11 @@
                 <p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">Erforsche deine Ahnen in der interaktiven Ansicht</p>
             </div>
             <div
-                class="text-2xl text-brand-600 ml-auto opacity-40 transition-all duration-[180ms] group-hover:translate-x-1 group-hover:opacity-100">
+                class="text-2xl text-brand-600 ml-auto opacity-40 transition-all duration-180 group-hover:translate-x-1 group-hover:opacity-100">
                 →</div>
         </a>
 
-        <div class="glass-card !p-8 flex flex-col gap-6">
+        <div class="glass-card p-8! flex flex-col gap-6">
             <div>
                 <h3 class="text-xl font-black text-slate-900 dark:text-white mb-1">Was möchten Sie heute tun?</h3>
                 <p class="text-slate-500 dark:text-slate-400 text-sm">Wählen Sie eine Aktion, um Ihren Stammbaum zu erweitern.</p>
@@ -97,29 +106,29 @@
     </div>
 
     <div
-        class="flex flex-wrap gap-2 glass-card !p-2 !rounded-xl mb-16 w-full">
+        class="flex flex-wrap gap-2 glass-card p-2! rounded-xl! mb-16 w-full">
         <a routerLink="/map" title="Karte"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-[180ms]">
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-180">
             <app-icon name="place" size="1rem"></app-icon>
             <span class="text-xs font-bold uppercase tracking-wider">Karte</span>
         </a>
         <a routerLink="/media" title="Galerie"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-[180ms]">
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-180">
             <app-icon name="media" size="1rem"></app-icon>
             <span class="text-xs font-bold uppercase tracking-wider">Galerie</span>
         </a>
         <a routerLink="/statistics" title="Statistik"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-[180ms]">
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-180">
             <app-icon name="statistics" size="1rem"></app-icon>
             <span class="text-xs font-bold uppercase tracking-wider">Statistik</span>
         </a>
         <a routerLink="/activity" title="Aktivität"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-[180ms]">
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-180">
             <app-icon name="activity" size="1rem"></app-icon>
             <span class="text-xs font-bold uppercase tracking-wider">Aktivität</span>
         </a>
         <a routerLink="/diagnostics" title="Fehlersuche"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-[180ms]">
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-neutral-500 hover:text-brand-600 hover:bg-brand-500/5 transition-all duration-180">
             <app-icon name="diagnostics" size="1rem"></app-icon>
             <span class="text-xs font-bold uppercase tracking-wider">Prüfung</span>
         </a>
@@ -128,16 +137,17 @@
     <div>
         <app-calendar-widget></app-calendar-widget>
     </div>
+    </ng-container>
 </div>
 
 <div class="fixed inset-0 bg-ui-bg/90 backdrop-blur-md flex justify-center items-center z-modal"
     *ngIf="showTreeSwitcher()" (click)="$event.stopPropagation(); toggleSwitcher()">
-    <div class="glass-card !rounded-2xl border border-neutral-200 shadow-xl max-w-lg w-full mx-4"
+    <div class="glass-card rounded-2xl! border border-neutral-200 shadow-xl max-w-lg w-full mx-4"
         (click)="$event.stopPropagation()">
         <h2 class="text-2xl font-bold text-neutral-900 mb-6">Stammbaum wählen</h2>
         <div class="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2">
             <div *ngFor="let tree of availableTrees()"
-                class="glass-card !p-4 !rounded-xl flex items-center gap-4 cursor-pointer transition-all hover:bg-brand-500/10"
+                class="glass-card p-4! rounded-xl! flex items-center gap-4 cursor-pointer transition-all hover:bg-brand-500/10"
                 [ngClass]="{'border-brand-500 bg-brand-500/10': tree.name === treeName()}" draggable="true"
                 (dragstart)="onDragStart($event, tree)" (dragend)="onDragEnd()" (click)="selectTree(tree)">
                 <div

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { TreeService } from '../../core/services/tree.service';
@@ -12,6 +12,7 @@ import { AppListViewComponent } from '../../shared/components/ui/app-list-view';
     selector: 'app-family-list',
     standalone: true,
     imports: [CommonModule, FormsModule, RouterLink, AppEntityCard, AppPageHeaderComponent, AppListViewComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './family-list.html'
 })
 export class FamilyList implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Individual, Family, NoteCategory, DisplayNote } from '../../core/models/models';
@@ -53,6 +53,7 @@ import { FamilyFeatureStore } from './family-feature.store';
         TabNotesComponent,
         TabCitationsComponent
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './family-detail.html'
 })
 export class FamilyDetail implements OnInit, OnDestroy {

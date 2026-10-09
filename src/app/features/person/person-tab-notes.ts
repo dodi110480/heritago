@@ -1,4 +1,4 @@
-import { Component, input, Output, EventEmitter } from '@angular/core';
+import { Component, input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Individual } from '../../core/models/models';
 import { TabNotesComponent } from '../../shared/components/ui/tabs/tab-notes';
@@ -7,6 +7,7 @@ import { TabNotesComponent } from '../../shared/components/ui/tabs/tab-notes';
     selector: 'app-person-tab-notes',
     standalone: true,
     imports: [CommonModule, TabNotesComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
         <app-tab-notes
             [entity]="person()"

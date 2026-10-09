@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, ViewEncapsulation, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ViewEncapsulation, ViewChild, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -16,6 +16,7 @@ import { SourceService } from '../../core/services/source.service';
     standalone: true,
     imports: [CommonModule, FormsModule, SourceModal, AppEntityCard, RepositoryList, AppPageHeaderComponent, AppListViewComponent],
     templateUrl: './source-list.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     encapsulation: ViewEncapsulation.None
 })
 export class SourceList implements OnInit {
@@ -140,23 +141,20 @@ export class SourceList implements OnInit {
         const tree = this.currentTree();
         if (!tree) return;
 
-        const reqPayload: any = { mode: 'delete', id: source.id };
-        if (reassignToId) reqPayload.reassignToId = reassignToId;
-
-        this.sourceService.saveSource(tree, reqPayload).subscribe({
+        this.sourceService.deleteSource(tree, source.id, reassignToId).subscribe({
             next: (res: any) => {
-                if (res.success) {
+                if (res?.success) {
                     if (this.selectedSource()?.id === source.id) {
                         this.selectedSource.set(null);
                     }
                     this.refreshList();
                     this.closeModal();
                 } else {
-                    alert('Fehler beim Löschen: ' + res.message);
+                    alert('Fehler beim Löschen: ' + (res?.message || 'Unbekannter Fehler'));
                 }
             },
             error: (err: any) => {
-                const usage = err.error?.usage;
+                const usage = err.error?.data?.usage;
                 const msg = usage
                     ? `${err.error?.message}\nVerknüpfungen: ${usage.totalLinks}\nWähle eine Ziel-Quelle zum Umhängen oder merge zuerst.`
                     : (err.error?.message || 'Unbekannter Fehler');

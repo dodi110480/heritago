@@ -1,4 +1,4 @@
-import { Component, inject, signal, Input, Output, EventEmitter } from '@angular/core';
+import { Component, inject, signal, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TreeService } from '../../core/services/tree.service';
@@ -12,6 +12,7 @@ import { PersonService } from '../../core/services/person.service';
     selector: 'app-person-create-modal',
     standalone: true,
     imports: [CommonModule, FormsModule, AppModalShell],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './person-create-modal.html'
 })
 export class PersonCreateModal {

@@ -1,4 +1,4 @@
-import { Component, inject, signal, Input, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, Input, OnInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TreeService } from '../../core/services/tree.service';
@@ -11,6 +11,7 @@ import { SourceService } from '../../core/services/source.service';
     selector: 'app-repository-list',
     standalone: true,
     imports: [CommonModule, FormsModule, AppEntityCard, AppModalShell],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './repository-list.html'
 })
 export class RepositoryList implements OnInit {
@@ -141,7 +142,7 @@ export class RepositoryList implements OnInit {
         if (!this.currentTree) return;
         if (!confirm(`Archiv "${repo.name}" wirklich löschen? Verknüpfte Quellen werden nicht gelöscht.`)) return;
 
-        this.sourceService.saveRepository(this.currentTree, { id: repo.id, mode: 'delete' }).subscribe({
+        this.sourceService.deleteRepository(this.currentTree, repo.id).subscribe({
             next: () => {
                 if (this.selectedRepo()?.id === repo.id) {
                     this.selectedRepo.set(null);

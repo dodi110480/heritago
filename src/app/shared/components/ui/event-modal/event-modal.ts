@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, signal, computed } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppModalShell } from '../app-modal-shell';
@@ -16,6 +16,7 @@ import { resolvePersonOption, stripPersonLabelToName } from '../../../utils/pers
     selector: 'app-event-modal',
     standalone: true,
     imports: [CommonModule, FormsModule, AppModalShell, AppNotesList, AppSourcesListComponent, AppPlaceInput],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './event-modal.html'
 })
 export class EventModal {

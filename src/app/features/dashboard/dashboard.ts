@@ -1,4 +1,4 @@
-import { Component, inject, signal, ViewChild, ElementRef, AfterViewInit, effect, ViewEncapsulation } from '@angular/core';
+import { Component, inject, signal, ViewChild, ElementRef, AfterViewInit, effect, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -19,6 +19,7 @@ import { AppIconComponent } from '../../shared/components/ui/app-icon';
     standalone: true,
     imports: [CommonModule, RouterLink, CalendarWidget, AppPageHeaderComponent, AppStatCardComponent, AppIconComponent],
     templateUrl: './dashboard.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     encapsulation: ViewEncapsulation.None
 })
 export class Dashboard implements AfterViewInit {

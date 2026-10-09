@@ -11,7 +11,7 @@
         <p class="text-lg font-medium">Noch keine Archive angelegt</p>
         <p class="text-sm text-center">Archive sind Aufbewahrungsorte für Quellen, z.B. Standesämter, Bibliotheken oder
             Kirchenbücher.</p>
-        <button class="btn-primary !w-auto !py-2 !px-5 mt-2" (click)="openAddModal()">+ Erstes Archiv anlegen</button>
+        <button class="btn-primary w-auto! py-2! px-5! mt-2" (click)="openAddModal()">+ Erstes Archiv anlegen</button>
     </div>
 
     <!-- Repository Grid -->
@@ -23,7 +23,7 @@
 
             <div actions class="flex gap-1 items-center">
                 <span *ngIf="repo.website"
-                    class="text-[10px] px-1.5 py-0.5 rounded bg-surface text-brand-300 font-medium whitespace-nowrap mr-1"
+                    class="text-[10px] px-1.5 py-0.5 rounded-sm bg-surface text-brand-300 font-medium whitespace-nowrap mr-1"
                     [title]="repo.website">🌐 Web</span>
                 <button
                     class="w-7 h-7 flex items-center justify-center rounded-lg bg-surface/50 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/20 transition-all border border-transparent hover:border-brand-500/30"

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -16,6 +16,7 @@ export interface UsageEntry {
     selector: 'app-usage-list',
     standalone: true,
     imports: [CommonModule, RouterLink],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
         <div class="space-y-4">
             <h4 *ngIf="title" class="text-base font-bold text-neutral-900 dark:text-white mb-4 flex items-center justify-between">
@@ -37,7 +38,7 @@ export interface UsageEntry {
 
             <div class="flex flex-col gap-3" *ngIf="!isLoading && usages.length > 0">
                 <div *ngFor="let u of usages" 
-                    class="group p-4 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 hover:border-brand-500/30 transition-all shadow-sm hover:shadow-md">
+                    class="group p-4 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 hover:border-brand-500/30 transition-all shadow-xs hover:shadow-md">
                     
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1 min-w-0">

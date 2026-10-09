@@ -4,7 +4,7 @@
     </app-page-header>
 
     <div
-        class="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-canvas/5 no-scrollbar animate-in slide-in-from-top-4 duration-[180ms]">
+        class="flex gap-2 overflow-x-auto pb-4 mb-6 border-b border-canvas/5 no-scrollbar animate-in slide-in-from-top-4 duration-180">
         <button *ngFor="let tab of [
             {id: 'basics', label: 'Allgemeines'},
             {id: 'timeline', label: 'Lebenslauf'},
@@ -15,8 +15,8 @@
             {id: 'citations', label: 'Quellen'}
         ]" (click)="store.setActiveTab(tab.id); store.saveError.set(null)"
             [class]="store.activeTab() === tab.id ? 
-            'px-4 py-2 rounded-lg bg-brand-500/10 text-brand-600 border border-brand-500/20 text-sm font-semibold whitespace-nowrap shadow-sm' : 
-            'px-4 py-2 rounded-lg hover:bg-canvas/5 text-neutral-500 hover:text-neutral-900 text-sm font-medium transition-all duration-[180ms] whitespace-nowrap'">
+            'px-4 py-2 rounded-lg bg-brand-500/10 text-brand-600 border border-brand-500/20 text-sm font-semibold whitespace-nowrap shadow-xs' : 
+            'px-4 py-2 rounded-lg hover:bg-canvas/5 text-neutral-500 hover:text-neutral-900 text-sm font-medium transition-all duration-180 whitespace-nowrap'">
             {{tab.label}}
         </button>
     </div>

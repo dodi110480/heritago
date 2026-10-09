@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AppAvatarComponent } from './app-avatar';
@@ -9,6 +9,7 @@ export type EntityBadgeColor = 'primary' | 'highlight' | 'success' | 'danger' | 
     selector: 'app-entity-card',
     standalone: true,
     imports: [CommonModule, RouterLink, AppAvatarComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
         <div class="glass-card flex items-start gap-3 hover:bg-ui-cardHover transition-all cursor-pointer group border-l-[3px]"
              [ngClass]="getBorderColorClass()"

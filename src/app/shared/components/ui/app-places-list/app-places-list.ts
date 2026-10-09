@@ -1,4 +1,4 @@
-import { Component, computed, input, output, signal, ViewEncapsulation } from '@angular/core';
+import { Component, computed, input, output, signal, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PlaceDisplayPipe } from '../../../pipes/place-display.pipe';
@@ -10,6 +10,7 @@ import { AppListViewComponent } from '../app-list-view';
   standalone: true,
   imports: [CommonModule, FormsModule, PlaceDisplayPipe, AppEntityCard, AppListViewComponent],
   templateUrl: './app-places-list.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   encapsulation: ViewEncapsulation.None
 })
 export class AppPlacesList {

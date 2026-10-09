@@ -36,7 +36,7 @@
     <div class="overflow-y-auto pr-2 custom-scrollbar space-y-6">
       <!-- Preview Tab -->
       <div *ngIf="activeTab() === 'preview'">
-        <div class="glass-card !p-0 overflow-hidden relative group mb-4">
+        <div class="glass-card p-0! overflow-hidden relative group mb-4">
           <label *ngIf="!selectedFile() && !isEditing()"
             class="flex flex-col items-center justify-center p-12 border-2 border-dashed border-neutral-300/30 rounded-xl bg-neutral-50/10 hover:bg-brand-500/5 hover:border-brand-500/40 transition-all cursor-pointer">
             <input type="file" accept="image/*,application/pdf" (change)="onFilePicked($event)" hidden>
@@ -106,7 +106,7 @@
               <input type="text" [ngModel]="iden.type" (ngModelChange)="updateIdentifier(i, 'type', $event)"
                 class="form-input text-sm flex-1" placeholder="Typ (z.B. AR-ID)">
               <input type="text" [ngModel]="iden.value" (ngModelChange)="updateIdentifier(i, 'value', $event)"
-                class="form-input text-sm flex-[2]" placeholder="Wert">
+                class="form-input text-sm flex-2" placeholder="Wert">
               <button (click)="removeIdentifier(i)" class="btn-icon text-accent-danger-500">✕</button>
             </div>
           </div>
@@ -140,7 +140,7 @@
             </div>
           </div>
           <button (click)="addLink()" [disabled]="!selectedPersonId() && !selectedFamilyId()"
-            class="btn-secondary !text-[10px] !py-3 w-full uppercase tracking-widest mt-4">
+            class="btn-secondary text-[10px]! py-3! w-full uppercase tracking-widest mt-4">
             Link jetzt hinzufügen
           </button>
         </div>
@@ -160,7 +160,7 @@
   <!-- Extra Actions (Left Side of Footer) -->
   <div extraActions *ngIf="isEditing()">
     <div class="flex items-center gap-2">
-      <button (click)="download()" class="btn-secondary !px-4 !py-3 md:!py-2.5 flex items-center gap-2"
+      <button (click)="download()" class="btn-secondary px-4! py-3! md:py-2.5! flex items-center gap-2"
         title="Herunterladen">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2">
@@ -172,7 +172,7 @@
       </button>
 
       <button *ngIf="mediaType() === 'PHOTO'" (click)="startCropping()"
-        class="btn-secondary !px-4 !py-3 md:!py-2.5 flex items-center gap-2" title="Beschnitt anpassen">
+        class="btn-secondary px-4! py-3! md:py-2.5! flex items-center gap-2" title="Beschnitt anpassen">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6.13 1L6 16a2 2 0 0 0 2 2h15" />

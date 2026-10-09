@@ -1,19 +1,24 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService, Tree } from '../../core/services/auth.service';
+import { InvitationService } from '../../core/services/invitation.service';
+import { ChangeRequestService } from '../../core/services/change-request.service';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 
 @Component({
     selector: 'app-tree-management',
     standalone: true,
     imports: [CommonModule, RouterModule, FormsModule, AppPageHeaderComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './tree-management.html'
 })
 export class TreeManagement implements OnInit {
     authService = inject(AuthService);
     private router = inject(Router);
+    private invitationService = inject(InvitationService);
+    private changeRequestService = inject(ChangeRequestService);
 
     availableTrees = signal<Tree[]>([]);
     loading = signal(true);
@@ -31,6 +36,21 @@ export class TreeManagement implements OnInit {
     birthDate = '';
 
     error = signal<string | null>(null);
+
+    // Share / invite state
+    showShare = signal(false);
+    shareTree = signal<Tree | null>(null);
+    invitations = signal<any[]>([]);
+    inviteEmail = '';
+    inviteLevel = 'VIEWER';
+    inviteLoading = signal(false);
+    inviteError = signal<string | null>(null);
+    inviteSuccess = signal<string | null>(null);
+
+    // Change request review state
+    showChanges = signal(false);
+    changeRequests = signal<any[]>([]);
+    myRequests = signal<any[]>([]);
 
     ngOnInit() {
         this.loadTrees();
@@ -150,5 +170,92 @@ export class TreeManagement implements OnInit {
                 alert('Fehler beim Löschen.');
             }
         });
+    }
+
+    openShare(tree: Tree) {
+        this.shareTree.set(tree);
+        this.invitations.set([]);
+        this.inviteEmail = '';
+        this.inviteLevel = 'VIEWER';
+        this.inviteError.set(null);
+        this.inviteSuccess.set(null);
+        this.showShare.set(true);
+        this.loadInvitations();
+    }
+
+    closeShare() {
+        this.showShare.set(false);
+        this.shareTree.set(null);
+    }
+
+    loadInvitations() {
+        const tree = this.shareTree();
+        if (!tree) return;
+        this.invitationService.listInvitations(tree.name).subscribe(list => this.invitations.set(list));
+    }
+
+    sendInvitation() {
+        const tree = this.shareTree();
+        if (!tree || !this.inviteEmail) return;
+        this.inviteLoading.set(true);
+        this.inviteError.set(null);
+        this.inviteSuccess.set(null);
+        this.invitationService.invite(tree.name, this.inviteEmail, this.inviteLevel).subscribe(result => {
+            this.inviteLoading.set(false);
+            if (result.success) {
+                this.inviteSuccess.set(`Einladung an ${this.inviteEmail} gesendet.`);
+                this.inviteEmail = '';
+                this.loadInvitations();
+            } else {
+                this.inviteError.set(result.message || 'Einladung fehlgeschlagen.');
+            }
+        });
+    }
+
+    revokeInvitation(id: string) {
+        const tree = this.shareTree();
+        if (!tree) return;
+        this.invitationService.revokeInvitation(tree.name, id).subscribe(success => {
+            if (success) this.loadInvitations();
+        });
+    }
+
+    openChanges(tree: Tree) {
+        this.shareTree.set(tree);
+        this.changeRequests.set([]);
+        this.myRequests.set([]);
+        this.showChanges.set(true);
+        this.loadChangeRequests();
+        this.loadMyRequests();
+    }
+
+    closeChanges() {
+        this.showChanges.set(false);
+    }
+
+    loadChangeRequests() {
+        const tree = this.shareTree();
+        if (!tree) return;
+        this.changeRequestService.listForOwner(tree.name).subscribe(list => this.changeRequests.set(list));
+    }
+
+    loadMyRequests() {
+        this.changeRequestService.myRequests().subscribe(list => this.myRequests.set(list));
+    }
+
+    approveChange(id: string) {
+        const tree = this.shareTree();
+        if (!tree) return;
+        this.changeRequestService.approve(tree.name, id).subscribe(success => { if (success) this.loadChangeRequests(); });
+    }
+
+    rejectChange(id: string) {
+        const tree = this.shareTree();
+        if (!tree) return;
+        this.changeRequestService.reject(tree.name, id).subscribe(success => { if (success) this.loadChangeRequests(); });
+    }
+
+    cancelMyChange(id: string) {
+        this.changeRequestService.cancel(id).subscribe(success => { if (success) this.loadMyRequests(); });
     }
 }

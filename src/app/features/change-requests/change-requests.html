@@ -1,0 +1,149 @@
+<app-page-header title="Änderungsvorschläge" description="Bestätige oder lehne Änderungen ab, die andere Nutzer an deinen Stammbäumen vorgeschlagen haben.">
+</app-page-header>
+
+<div class="mt-8 pb-20 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6">
+
+    <!-- Left: request list, split by status -->
+    <div class="space-y-4">
+        <div class="glass-card rounded-2xl! p-0! overflow-hidden">
+            <div class="p-4 border-b border-canvas-white/10 flex items-center justify-between">
+                <span class="text-sm font-bold text-neutral-500 uppercase tracking-wider">Ausstehend</span>
+                @if (pending().length > 0) {
+                    <span class="badge badge-xs bg-amber-500/15 text-amber-400">{{ pending().length }}</span>
+                }
+            </div>
+            @if (loading()) {
+                <div class="p-6 text-center text-neutral-500">Lade…</div>
+            } @else if (pending().length === 0) {
+                <div class="p-6 text-center text-neutral-500 text-sm">Keine ausstehenden Vorschläge.</div>
+            } @else {
+                @for (c of pending(); track c.id) {
+                    <div (click)="selectRequest(c.id)"
+                        class="p-4 border-b border-canvas-white/5 cursor-pointer hover:bg-canvas-white/5"
+                        [class.bg-brand-500/10]="selected()?.id === c.id">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-bold text-neutral-900 dark:text-white text-sm">{{ c.summary }}</span>
+                            @if (isActionable(c)) {
+                                <span class="badge badge-xs bg-accent-danger-500/15 text-accent-danger-400 shrink-0">Wartet auf dich</span>
+                            }
+                        </div>
+                        <div class="text-xs text-neutral-500">{{ c.tree?.title || c.tree?.name }} · {{ c.user?.username }}</div>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="glass-card rounded-2xl! p-0! overflow-hidden">
+            <div class="p-4 border-b border-canvas-white/10 text-sm font-bold text-neutral-500 uppercase tracking-wider">Erledigt</div>
+            @if (done().length === 0) {
+                <div class="p-6 text-center text-neutral-500 text-sm">Keine erledigten Vorschläge.</div>
+            } @else {
+                @for (c of done(); track c.id) {
+                    <div (click)="selectRequest(c.id)"
+                        class="p-4 border-b border-canvas-white/5 cursor-pointer hover:bg-canvas-white/5 opacity-70"
+                        [class.bg-brand-500/10]="selected()?.id === c.id">
+                        <div class="font-bold text-neutral-900 dark:text-white text-sm">{{ c.summary }}</div>
+                        <div class="text-xs text-neutral-500">{{ c.tree?.title || c.tree?.name }} · {{ c.user?.username }}</div>
+                        <div class="text-[10px] mt-1"
+                            [class.text-accent-success-400]="c.status === 'APPROVED'"
+                            [class.text-accent-danger-400]="c.status === 'REJECTED'"
+                            [class.text-neutral-400]="c.status === 'CANCELLED'">{{ statusLabel(c.status) }}</div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Right: detail -->
+    <div class="glass-card rounded-2xl! p-6">
+        @if (!selected()) {
+            <div class="text-center py-20 text-neutral-500">Wähle links einen Vorschlag aus.</div>
+        } @else {
+            <div class="flex items-start justify-between gap-4 mb-4">
+                <div>
+                    <h2 class="text-xl font-black text-neutral-900 dark:text-white">{{ selected().summary }}</h2>
+                    <div class="text-sm text-neutral-500 mt-1">
+                        {{ entityLabel(selected().entityType) }} · {{ operationLabel(selected().operation) }} · {{ selected().tree?.title || selected().tree?.name }}
+                    </div>
+                </div>
+                <span class="badge badge-sm shrink-0"
+                    [class.bg-amber-500/15]="selected().status === 'PENDING'"
+                    [class.text-amber-400]="selected().status === 'PENDING'"
+                    [class.bg-accent-success-500/15]="selected().status === 'APPROVED'"
+                    [class.text-accent-success-400]="selected().status === 'APPROVED'"
+                    [class.bg-accent-danger-500/15]="selected().status === 'REJECTED'"
+                    [class.text-accent-danger-400]="selected().status === 'REJECTED'"
+                    [class.bg-neutral-500/15]="selected().status === 'CANCELLED'"
+                    [class.text-neutral-400]="selected().status === 'CANCELLED'">{{ statusLabel(selected().status) }}</span>
+            </div>
+
+            <div class="mb-4 p-4 rounded-xl bg-canvas-white/5">
+                <div class="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">Vorgeschlagene Änderung</div>
+                @if (payloadEntries(selected()).length === 0) {
+                    <div class="text-sm text-neutral-500">Keine Detailangaben.</div>
+                } @else {
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+                        @for (e of payloadEntries(selected()); track e.key) {
+                            <div class="flex gap-2">
+                                <dt class="text-sm text-neutral-500 w-32 shrink-0">{{ e.key }}</dt>
+                                <dd class="text-sm text-neutral-900 dark:text-white">{{ e.value }}</dd>
+                            </div>
+                        }
+                    </dl>
+                }
+            </div>
+
+            @if (isActionable(selected())) {
+                <div class="mb-4 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5">
+                    <div class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3">Deine Entscheidung</div>
+                    @if (showReject()) {
+                        <div class="flex flex-col gap-2">
+                            <textarea [(ngModel)]="rejectReason" rows="2" placeholder="Begründung der Ablehnung…" class="form-input resize-none"></textarea>
+                            <div class="flex gap-2">
+                                <button (click)="reject()" [disabled]="!rejectReason.trim()" class="btn-secondary flex-1 py-2! disabled:opacity-50">Ablehnen bestätigen</button>
+                                <button (click)="showReject.set(false)" class="btn-ghost py-2!">Abbrechen</button>
+                            </div>
+                        </div>
+                    } @else {
+                        <div class="flex gap-2">
+                            <button (click)="approve()" class="btn-primary flex-1 py-2!">Bestätigen</button>
+                            <button (click)="showReject.set(true)" class="btn-secondary flex-1 py-2!">Ablehnen</button>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (selected().status === 'PENDING' && isProposer(selected())) {
+                <div class="mb-4 flex justify-end">
+                    <button (click)="cancel()" class="btn-ghost text-accent-danger-400 text-sm">Vorschlag zurückziehen</button>
+                </div>
+            }
+
+            <div class="border-t border-canvas-white/10 pt-4">
+                <div class="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">Diskussion</div>
+                <div class="flex flex-col gap-3 mb-4 max-h-64 overflow-y-auto">
+                    @for (m of selected().messages; track m.id) {
+                        <div class="flex" [class.justify-end]="m.senderId === authService.currentUser()?.id">
+                            <div class="max-w-[75%] p-3 rounded-xl"
+                                [class.bg-brand-500/15]="m.senderId === authService.currentUser()?.id"
+                                [class.bg-canvas-white/5]="m.senderId !== authService.currentUser()?.id">
+                                <div class="text-xs font-bold text-neutral-400">{{ m.sender?.username }}</div>
+                                <div class="text-sm text-neutral-900 dark:text-white whitespace-pre-line">{{ m.body }}</div>
+                                <div class="text-[10px] text-neutral-500 mt-1">{{ m.createdAt | date:'dd.MM.yyyy HH:mm' }}</div>
+                            </div>
+                        </div>
+                    }
+                    @if (!selected().messages || selected().messages.length === 0) {
+                        <p class="text-neutral-500 text-sm">Noch keine Nachrichten.</p>
+                    }
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" [(ngModel)]="replyText" (keyup.enter)="sendReply()" placeholder="Antworten…" class="form-input flex-1">
+                    <button (click)="sendReply()" [disabled]="!replyText.trim()" class="btn-primary w-auto! py-2! disabled:opacity-50">Senden</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+

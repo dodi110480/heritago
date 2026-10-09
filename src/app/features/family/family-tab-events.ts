@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Family } from '../../core/models/models';
 import { AppSectionHeaderComponent } from '../../shared/components/ui/app-section-header';
@@ -8,16 +8,17 @@ import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-sta
     selector: 'app-family-tab-events',
     standalone: true,
     imports: [CommonModule, AppSectionHeaderComponent, AppEmptyStateComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
+        <div class="glass-card p-6! sm:p-8! flex flex-col gap-6">
             <app-section-header title="Ereignisse" icon="📅">
-                <button actions class="btn-primary !w-auto !py-1.5 text-sm" (click)="addEventRequested.emit()">+
+                <button actions class="btn-primary w-auto! py-1.5! text-sm" (click)="addEventRequested.emit()">+
                     Ereignis</button>
             </app-section-header>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" *ngIf="family?.events?.length">
                 <div *ngFor="let ev of family?.events; let i = index" (click)="editEventRequested.emit(i)"
-                    class="glass-card !p-5 !rounded-2xl hover:scale-[1.02] transition-transform cursor-pointer group">
+                    class="glass-card p-5! rounded-2xl! hover:scale-[1.02] transition-transform cursor-pointer group">
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex items-center gap-3">
                             <div

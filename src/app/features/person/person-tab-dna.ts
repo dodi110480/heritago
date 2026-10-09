@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -11,18 +11,19 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
     selector: 'app-person-tab-dna',
     standalone: true,
     imports: [CommonModule, FormsModule, AppModalShell, AppEmptyStateComponent, AppSectionHeaderComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="glass-card shadow-sm flex flex-col">
+        <div class="glass-card shadow-xs flex flex-col">
             <div class="p-0">
                 <app-section-header title="DNA-Matches" icon="🧬">
-                    <button actions (click)="addDnaMatch()" class="btn-primary !w-auto !py-2">
+                    <button actions (click)="addDnaMatch()" class="btn-primary w-auto! py-2!">
                         + Match
                     </button>
                 </app-section-header>
 
                 <div class="space-y-6" *ngIf="person?.dnaMatches && person.dnaMatches.length > 0">
                     <div *ngFor="let m of person.dnaMatches; let i = index"
-                        class="!p-6 glass-card !bg-brand-50 !rounded-2xl space-y-4 group relative cursor-pointer hover:bg-neutral-100 transition-colors"
+                        class="p-6! glass-card bg-brand-50! rounded-2xl! space-y-4 group relative cursor-pointer hover:bg-neutral-100 transition-colors"
                         (click)="openDnaMatchEditModal(i)">
                         <div class="flex justify-between items-start">
                             <div>
@@ -76,7 +77,7 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
                     <label class="form-label">Provider</label>
                     <select [ngModel]="newDnaMatchDraft().provider"
                         (ngModelChange)="newDnaMatchDraft.update(v => ({ ...v, provider: $event }))"
-                        class="form-input !py-2.5">
+                        class="form-input py-2.5!">
                         <option value="">Wählen...</option>
                         <option value="ANCESTRY">Ancestry</option>
                         <option value="MYHERITAGE">MyHeritage</option>
@@ -110,9 +111,9 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div>
                         <label class="form-label">Provider</label>
-                        <select [ngModel]="editDnaMatchDraft()?.provider"
+                        <select [ngModel]="$safeNavigationMigration(editDnaMatchDraft()?.provider)"
                             (ngModelChange)="editDnaMatchDraft.set({ ...editDnaMatchDraft(), provider: $event })"
-                            class="form-input form-input-sm !py-2.5">
+                            class="form-input form-input-sm py-2.5!">
                             <option value="">Wählen...</option>
                             <option value="ANCESTRY">Ancestry</option>
                             <option value="MYHERITAGE">MyHeritage</option>
@@ -123,9 +124,9 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
                     <div class="md:col-span-2 space-y-1">
                         <label class="form-label">Match Person</label>
                         <div class="flex items-center gap-3">
-                            <input type="text" list="dna-person-options" [ngModel]="editDnaMatchDraft()?.matchPersonInput"
+                            <input type="text" list="dna-person-options" [ngModel]="$safeNavigationMigration(editDnaMatchDraft()?.matchPersonInput)"
                                 (ngModelChange)="onEditMatchPersonInput($event)"
-                                placeholder="Name, UUID oder @I...@" class="flex-1 form-input form-input-sm !py-2.5">
+                                placeholder="Name, UUID oder @I...@" class="flex-1 form-input form-input-sm py-2.5!">
                             <datalist id="dna-person-options">
                                 <option *ngFor="let opt of personOptions()" [value]="personOptionLabel(opt)"></option>
                             </datalist>
@@ -134,9 +135,9 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
                     </div>
                     <div>
                         <label class="form-label">cM Wert</label>
-                        <input type="number" [ngModel]="editDnaMatchDraft()?.totalCm"
+                        <input type="number" [ngModel]="$safeNavigationMigration(editDnaMatchDraft()?.totalCm)"
                             (ngModelChange)="editDnaMatchDraft.set({ ...editDnaMatchDraft(), totalCm: $event })"
-                            class="form-input form-input-sm !py-2.5">
+                            class="form-input form-input-sm py-2.5!">
                     </div>
                 </div>
 
@@ -152,16 +153,16 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
                             <input type="text" [ngModel]="s.chromosome"
                                 (ngModelChange)="s.chromosome = $event; editDnaMatchDraft.set(editDnaMatchDraft())"
                                 placeholder="Chr"
-                                class="form-input form-input-xs border-neutral-300/70 !rounded-lg text-center">
+                                class="form-input form-input-xs border-neutral-300/70 rounded-lg! text-center">
                             <input type="number" [ngModel]="s.startPosition"
                                 (ngModelChange)="s.startPosition = $event; editDnaMatchDraft.set(editDnaMatchDraft())"
-                                placeholder="Start" class="form-input form-input-xs border-neutral-300/70 !rounded-lg">
+                                placeholder="Start" class="form-input form-input-xs border-neutral-300/70 rounded-lg!">
                             <input type="number" [ngModel]="s.endPosition"
                                 (ngModelChange)="s.endPosition = $event; editDnaMatchDraft.set(editDnaMatchDraft())"
-                                placeholder="Ende" class="form-input form-input-xs border-neutral-300/70 !rounded-lg">
+                                placeholder="Ende" class="form-input form-input-xs border-neutral-300/70 rounded-lg!">
                             <input type="number" [ngModel]="s.cm"
                                 (ngModelChange)="s.cm = $event; editDnaMatchDraft.set(editDnaMatchDraft())" placeholder="cM"
-                                class="form-input form-input-xs border-neutral-300/70 !rounded-lg text-center">
+                                class="form-input form-input-xs border-neutral-300/70 rounded-lg! text-center">
                             <button (click)="removeDnaSegmentDraft(si)"
                                 class="opacity-70 hover:opacity-100 text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-full w-6 h-6 flex items-center justify-center transition-all ml-auto">✕</button>
                         </div>

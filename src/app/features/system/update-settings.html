@@ -83,14 +83,14 @@
 
                 <div class="mt-auto flex flex-wrap gap-4">
                     <button *ngIf="!updateStatus?.hasUpdate" (click)="checkUpdate()" [disabled]="checking"
-                        class="grow btn-primary !py-4 !rounded-2xl">
+                        class="grow btn-primary py-4! rounded-2xl!">
                         <span *ngIf="checking"
                             class="w-4 h-4 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin mr-2"></span>
                         {{ checking ? 'Suche...' : 'Nach Updates suchen' }}
                     </button>
 
                     <button *ngIf="updateStatus?.hasUpdate" (click)="performUpdate()" [disabled]="updating"
-                        class="grow btn-primary !bg-gradient-to-r !from-emerald-600 !to-teal-600 !py-4 !rounded-2xl">
+                        class="grow btn-primary bg-linear-to-r! !from-emerald-600 !to-teal-600 py-4! rounded-2xl!">
                         <span *ngIf="updating"
                             class="w-4 h-4 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin mr-2"></span>
                         {{ updating ? 'Wird installiert...' : 'Version ' + updateStatus.latestVersion + '
@@ -98,7 +98,7 @@
                     </button>
 
                     <button *ngIf="updateStatus" (click)="updateStatus = null"
-                        class="btn-secondary !py-4 !px-8 !rounded-2xl">
+                        class="btn-secondary py-4! px-8! rounded-2xl!">
                         Abbrechen
                     </button>
                 </div>

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, inject, computed } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Individual, TreeData } from '../../core/models/models';
@@ -11,6 +11,7 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
     selector: 'app-person-tab-basics',
     standalone: true,
     imports: [CommonModule, FormsModule, AppSectionHeaderComponent, AppModalShell],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
         <div class="space-y-6">
             <div class="glass-card relative overflow-hidden animate-in zoom-in-95 duration-300">
@@ -32,7 +33,7 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                             </div>
                             <!-- Edit Overlay -->
                             <div class="absolute inset-0 bg-brand-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
-                                <span class="text-[9px] font-bold text-white uppercase tracking-widest bg-brand-600/80 px-2 py-1 rounded shadow-lg">Bearbeiten</span>
+                                <span class="text-[9px] font-bold text-white uppercase tracking-widest bg-brand-600/80 px-2 py-1 rounded-sm shadow-lg">Bearbeiten</span>
                             </div>
                         </div>
                     </div>
@@ -77,7 +78,7 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                             <span class="w-1 h-3 bg-brand-500 rounded-full"></span> Beteiligt als...
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div *ngFor="let part of participations" class="glass-card !p-4 flex items-start gap-4 hover:bg-neutral-black/20 transition-all">
+                            <div *ngFor="let part of participations" class="glass-card p-4! flex items-start gap-4 hover:bg-neutral-black/20 transition-all">
                                 <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg shadow-inner">
                                     {{ getRoleIcon(part.role) }}
                                 </div>
@@ -116,7 +117,7 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                         </div>
 
                         <button type="button" (click)="deleteRequested.emit()"
-                            class="p-2.5 rounded-xl text-accent-danger-500/40 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 transition-all border border-transparent hover:border-accent-danger-500/20 shadow-sm"
+                            class="p-2.5 rounded-xl text-accent-danger-500/40 hover:text-accent-danger-500 hover:bg-accent-danger-500/10 transition-all border border-transparent hover:border-accent-danger-500/20 shadow-xs"
                             title="Person löschen">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -145,7 +146,7 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div class="form-group mb-0">
                             <label class="form-label">Geschlecht</label>
-                            <select [(ngModel)]="basicsDraft.gender" class="form-input !py-2.5">
+                            <select [(ngModel)]="basicsDraft.gender" class="form-input py-2.5!">
                                 <option value="M">Männlich</option>
                                 <option value="F">Weiblich</option>
                                 <option value="X">Divers</option>
@@ -154,14 +155,14 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                         </div>
                         <div class="form-group mb-0">
                             <label class="form-label">Status</label>
-                            <select [(ngModel)]="basicsDraft.isLiving" class="form-input !py-2.5">
+                            <select [(ngModel)]="basicsDraft.isLiving" class="form-input py-2.5!">
                                 <option [ngValue]="true">Lebend</option>
                                 <option [ngValue]="false">Verstorben</option>
                             </select>
                         </div>
                         <div class="form-group mb-0">
                             <label class="form-label">Datenschutz</label>
-                            <select [(ngModel)]="basicsDraft.privacyLevel" class="form-input !py-2.5">
+                            <select [(ngModel)]="basicsDraft.privacyLevel" class="form-input py-2.5!">
                                 <option value="PUBLIC">Öffentlich</option>
                                 <option value="FAMILY">Familie</option>
                                 <option value="PRIVATE">Privat</option>

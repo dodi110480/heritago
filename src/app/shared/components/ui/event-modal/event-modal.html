@@ -35,10 +35,10 @@
         <!-- Event / Fact Switch -->
         <div class="flex gap-0 rounded-lg overflow-hidden border border-neutral-200 dark:border-neutral-700 w-fit">
           <button (click)="onItemKindChange('event')"
-            [class]="itemKind === 'event' ? 'bg-brand-500 text-white shadow-sm' : 'bg-canvas/50 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+            [class]="itemKind === 'event' ? 'bg-brand-500 text-white shadow-xs' : 'bg-canvas/50 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
             class="px-5 py-2 text-sm font-bold transition-all">📅 Ereignis</button>
           <button (click)="onItemKindChange('fact')"
-            [class]="itemKind === 'fact' ? 'bg-brand-500 text-white shadow-sm' : 'bg-canvas/50 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
+            [class]="itemKind === 'fact' ? 'bg-brand-500 text-white shadow-xs' : 'bg-canvas/50 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'"
             class="px-5 py-2 text-sm font-bold transition-all">📋 Fakt</button>
         </div>
 
@@ -88,12 +88,12 @@
                 (ngModelChange)="onPartnerInputChange($event)"
                 (focus)="onPartnerInputFocus()"
                 (blur)="onPartnerInputBlur()"
-                class="form-input !bg-white/50 dark:!bg-black/50"
+                class="form-input bg-white/50! dark:bg-black/50!"
                 placeholder="Partner suchen oder Name eingeben...">
               
               <!-- Search Results Overlay -->
               <div *ngIf="partnerInputFocused() && allPersonsOptions.length > 0" 
-                class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-neutral-900 border border-canvas/10 dark:border-white/10 rounded-xl shadow-2xl z-[150] max-h-60 overflow-y-auto">
+                class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-neutral-900 border border-canvas/10 dark:border-white/10 rounded-xl shadow-2xl z-150 max-h-60 overflow-y-auto">
                 <button *ngFor="let opt of allPersonsOptions" 
                   type="button" (mousedown)="$event.preventDefault()" (click)="selectPartnerOption(opt.displayName)"
                   class="w-full text-left px-4 py-2.5 text-sm hover:bg-brand-500/10 hover:text-brand-500 transition-colors border-b last:border-0 border-canvas/5 dark:border-white/5 flex items-center justify-between group">
@@ -110,7 +110,7 @@
 
         <div class="flex items-center gap-2 pt-2">
           <input type="checkbox" [(ngModel)]="item.isPrimary" id="eventPrimary"
-            class="w-4 h-4 rounded border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900/50 text-brand-500 focus:ring-brand-500">
+            class="w-4 h-4 rounded-sm border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900/50 text-brand-500 focus:ring-brand-500">
           <label for="eventPrimary" class="text-sm text-neutral-700 dark:text-neutral-300">Als Haupt-Ereignis
             markieren</label>
         </div>
@@ -120,14 +120,14 @@
       <div *ngIf="activeTab() === 'participants'" class="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
         <div class="flex justify-between items-center mb-2">
           <h4 class="text-xs font-bold text-neutral-500 uppercase tracking-widest">Beteiligte Personen</h4>
-          <button (click)="addParticipant()" class="btn-primary !w-auto !py-1 !px-3 text-[10px]">+ Beteiligte/r</button>
+          <button (click)="addParticipant()" class="btn-primary w-auto! py-1! px-3! text-[10px]">+ Beteiligte/r</button>
         </div>
         <div *ngIf="!item.associations?.length" class="text-center py-10 opacity-50 italic text-sm">Noch keine
           Beteiligten hinzugefügt.</div>
 
         <div class="grid grid-cols-1 gap-3">
           <div *ngFor="let p of item.associations; let pIdx = index"
-            class="glass-card !p-4 flex justify-between items-center group">
+            class="glass-card p-4! flex justify-between items-center group">
             <div class="flex items-center gap-4">
               <div class="w-10 h-10 rounded-full bg-brand-500/10 flex items-center justify-center text-lg shadow-inner">
                 {{ p.role === 'GODPARENT' ? '🕊️' : p.role === 'WITNESS' ? '📜' : p.role === 'CLERGY' ? '⛪' : p.role ===
@@ -139,7 +139,7 @@
                 </p>
                 <p
                   class="text-[10px] text-neutral-500 font-medium uppercase tracking-wider flex items-center gap-1.5 mt-0.5">
-                  <span class="bg-brand-500/10 text-brand-600 px-1.5 py-0.5 rounded">{{ getRoleLabel(p.role) }}</span>
+                  <span class="bg-brand-500/10 text-brand-600 px-1.5 py-0.5 rounded-sm">{{ getRoleLabel(p.role) }}</span>
                   <span *ngIf="p.relationText" class="text-neutral-400">•</span>
                   <span *ngIf="p.relationText">{{ p.relationText }}</span>
                 </p>
@@ -182,7 +182,7 @@
           <div class="space-y-4">
             <div class="form-group mb-0">
               <label class="form-label text-[10px]">Quelle</label>
-              <select [(ngModel)]="sourceDraft().sourceId" class="form-input !py-1.5 text-sm">
+              <select [(ngModel)]="sourceDraft().sourceId" class="form-input py-1.5! text-sm">
                 <option value="">-- Quelle wählen --</option>
                 <option *ngFor="let s of availableSources" [value]="s.id">{{s.title}}</option>
               </select>
@@ -192,20 +192,20 @@
                 <label class="form-label text-[10px]">Seite/Ort</label>
                 <input type="text" [ngModel]="sourceDraft().whereInSource"
                   (ngModelChange)="sourceDraft.update(v => ({ ...v, whereInSource: $event }))" 
-                  class="form-input !py-1.5 text-sm" placeholder="z.B. S. 12">
+                  class="form-input py-1.5! text-sm" placeholder="z.B. S. 12">
               </div>
               <div class="form-group mb-0">
                 <label class="form-label text-[10px]">Datum im Beleg</label>
                 <input type="text" [ngModel]="sourceDraft().date"
                   (ngModelChange)="sourceDraft.update(v => ({ ...v, date: $event }))"
-                  class="form-input !py-1.5 text-sm" placeholder="z.B. 1900">
+                  class="form-input py-1.5! text-sm" placeholder="z.B. 1900">
               </div>
             </div>
             <div class="form-group mb-0">
               <label class="form-label text-[10px]">Qualität</label>
               <select [ngModel]="sourceDraft().confidence"
                 (ngModelChange)="sourceDraft.update(v => ({ ...v, confidence: $event }))"
-                class="form-input !py-1.5 text-sm">
+                class="form-input py-1.5! text-sm">
                 <option value="">Wählen...</option>
                 <option value="CERTAIN">Sicher (3)</option>
                 <option value="VERY_LIKELY">Sehr wahrscheinlich (2)</option>
@@ -217,7 +217,7 @@
               <label class="form-label text-[10px]">Zitat / Ausschnitt</label>
               <textarea [ngModel]="sourceDraft().text"
                 (ngModelChange)="sourceDraft.update(v => ({ ...v, text: $event }))"
-                class="form-input !py-1.5 text-sm min-h-[60px]" placeholder="Zitierter Text"></textarea>
+                class="form-input py-1.5! text-sm min-h-[60px]" placeholder="Zitierter Text"></textarea>
             </div>
           </div>
         </app-modal-shell>
@@ -227,16 +227,16 @@
         <div class="flex justify-between items-center mb-2">
           <h4 class="text-xs font-bold text-neutral-500 uppercase tracking-widest">Medien</h4>
           <div class="flex gap-2">
-            <button (click)="emitOpenUpload()" class="btn-primary !w-auto !py-1 !px-3 text-[10px]"><span
+            <button (click)="emitOpenUpload()" class="btn-primary w-auto! py-1! px-3! text-[10px]"><span
                 class="mr-1">📤</span> Upload</button>
-            <button (click)="emitOpenGallery()" class="btn-secondary !w-auto !py-1 !px-3 text-[10px]"><span
+            <button (click)="emitOpenGallery()" class="btn-secondary w-auto! py-1! px-3! text-[10px]"><span
                 class="mr-1">🖼️</span> Galerie</button>
           </div>
         </div>
         <div *ngIf="!item.media?.length" class="text-center py-10 opacity-50 italic text-sm">Keine Medien hinzugefügt.
         </div>
         <div class="grid grid-cols-3 md:grid-cols-4 gap-3">
-          <div *ngFor="let med of item.media; let mIdx = index" class="glass-card !p-0 overflow-hidden relative group">
+          <div *ngFor="let med of item.media; let mIdx = index" class="glass-card p-0! overflow-hidden relative group">
             <button (click)="emitRemoveMedia(mIdx)"
               class="absolute top-1 right-1 z-10 bg-black/50 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-accent-danger-500 transition-colors opacity-0 group-hover:opacity-100">✕</button>
             <button (click)="$event.stopPropagation(); emitOpenViewer(med)" title="Vorschau"
@@ -323,7 +323,7 @@
         
         <!-- Search Results Overlay -->
         <div *ngIf="participantInputFocused() && allPersonsOptions.length > 0" 
-          class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-neutral-900 border border-canvas/10 dark:border-white/10 rounded-xl shadow-2xl z-[150] max-h-60 overflow-y-auto">
+          class="absolute left-0 right-0 top-full mt-1 bg-white dark:bg-neutral-900 border border-canvas/10 dark:border-white/10 rounded-xl shadow-2xl z-150 max-h-60 overflow-y-auto">
           <button *ngFor="let opt of allPersonsOptions" 
             type="button" (mousedown)="$event.preventDefault()" (click)="selectParticipantOption(opt.displayName)"
             class="w-full text-left px-4 py-2.5 text-sm hover:bg-brand-500/10 hover:text-brand-500 transition-colors border-b last:border-0 border-canvas/5 dark:border-white/5 flex items-center justify-between group">
@@ -335,7 +335,7 @@
     </div>
     <div class="form-group mb-0">
       <label class="form-label">Rolle</label>
-      <select [(ngModel)]="newParticipantDraft().role" class="form-input !py-2.5">
+      <select [(ngModel)]="newParticipantDraft().role" class="form-input py-2.5!">
         <option value="GODPARENT">Pate / Gevatter</option>
         <option value="WITNESS">Zeuge / Trauzeuge</option>
         <option value="CLERGY">Pfarrer / Priester</option>

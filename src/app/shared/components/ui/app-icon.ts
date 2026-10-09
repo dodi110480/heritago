@@ -1,4 +1,4 @@
-import { Component, Input, inject, signal, effect } from '@angular/core';
+import { Component, Input, inject, signal, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -15,6 +15,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
          [innerHTML]="safeSvg()">
     </div>
   `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
     :host { display: inline-block; line-height: 0; }
     :host ::ng-deep svg { width: 100%; height: 100%; display: block; }

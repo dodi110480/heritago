@@ -10,11 +10,11 @@
         <!-- Tab Switcher -->
         <div class="flex p-1 bg-neutral-100 dark:bg-neutral-900 rounded-xl mb-2">
             <button (click)="activeTab.set('details')" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
-                [ngClass]="activeTab() === 'details' ? 'bg-white dark:bg-neutral-800 text-brand-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-700'">
+                [ngClass]="activeTab() === 'details' ? 'bg-white dark:bg-neutral-800 text-brand-600 shadow-xs' : 'text-neutral-500 hover:text-neutral-700'">
                 Details
             </button>
             <button (click)="activeTab.set('notes')" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
-                [ngClass]="activeTab() === 'notes' ? 'bg-white dark:bg-neutral-800 text-brand-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-700'">
+                [ngClass]="activeTab() === 'notes' ? 'bg-white dark:bg-neutral-800 text-brand-600 shadow-xs' : 'text-neutral-500 hover:text-neutral-700'">
                 Notizen ({{ notes().length }})
             </button>
         </div>
@@ -53,18 +53,18 @@
                 <div class="space-y-1.5">
                     <label class="form-label text-xs uppercase tracking-wider font-bold text-neutral-500">Quellentyp</label>
                     <select [ngModel]="sourceType()" (ngModelChange)="sourceType.set($event)" class="form-input">
-                        <option value="BUCH">📖 Buch</option>
-                        <option value="WEBSEITE">🌐 Webseite</option>
-                        <option value="DOKUMENT">📜 Dokument</option>
-                        <option value="ZEITUNG">📰 Zeitung</option>
-                        <option value="ARCHIV">🏛️ Archiv</option>
-                        <option value="FOTO">📷 Foto</option>
+                        <option value="BOOK">📖 Buch</option>
+                        <option value="WEBSITE">🌐 Webseite</option>
+                        <option value="DOCUMENT">📜 Dokument</option>
+                        <option value="NEWSPAPER">📰 Zeitung</option>
+                        <option value="ARCHIVE">🏛️ Archiv</option>
+                        <option value="PHOTO">📷 Foto</option>
                         <option value="AUDIO">🔊 Audio</option>
                         <option value="VIDEO">🎥 Video</option>
-                        <option value="PERIODISCH">📅 Periodisch</option>
-                        <option value="KIRCHBUCH">⛪ Kirchbuch</option>
-                        <option value="VOLKSZAEHLUNG">👥 Volkszählung</option>
-                        <option value="ANDERE">❓ Andere</option>
+                        <option value="PERIODICAL">📅 Periodisch</option>
+                        <option value="CHURCH_RECORD">⛪ Kirchbuch</option>
+                        <option value="CENSUS">👥 Volkszählung</option>
+                        <option value="OTHER">❓ Andere</option>
                     </select>
                 </div>
                 <div class="space-y-1.5">
@@ -117,7 +117,7 @@
                                 </ng-container>
                             </select>
                             <button (click)="mergeSource()" [disabled]="!mergeTargetId()"
-                                class="btn-secondary !w-auto !py-2 !px-4 disabled:opacity-50">
+                                class="btn-secondary w-auto! py-2! px-4! disabled:opacity-50">
                                 Merge
                             </button>
                         </div>

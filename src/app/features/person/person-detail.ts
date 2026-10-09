@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, ViewEncapsulation, ChangeDetectorRef } from '@angular/core';
+import { Component, inject, signal, OnInit, ViewEncapsulation, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -42,6 +42,7 @@ import { PersonTabTimelineComponent } from './person-tab-timeline';
         // Media UI handled within tabs
     ],
     templateUrl: './person-detail.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     encapsulation: ViewEncapsulation.None
 })
 export class PersonDetail implements OnInit {

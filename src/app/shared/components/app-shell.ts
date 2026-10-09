@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { Navbar } from './navbar';
 import { AppPageContainerComponent } from './ui/app-page-container';
@@ -8,6 +8,7 @@ import { filter, map, mergeMap } from 'rxjs/operators';
   selector: 'app-shell',
   standalone: true,
   imports: [RouterOutlet, Navbar, AppPageContainerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div class="min-h-screen text-neutral-200">
       <!-- Central Navbar -->

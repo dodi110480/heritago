@@ -1,8 +1,6 @@
 <app-page-header title="Tree Management" description="Organize, edit, or delete your family trees.">
-    <button actions class="btn-primary !w-auto !py-2 disabled:opacity-50 disabled:cursor-not-allowed" 
-        [disabled]="!authService.currentUser()?.isAdmin && availableTrees().length >= 1"
-        (click)="openCreate()"
-        [title]="!authService.currentUser()?.isAdmin && availableTrees().length >= 1 ? 'Du kannst maximal einen Stammbaum besitzen' : ''">
+    <button actions class="btn-primary w-auto! py-2!" 
+        (click)="openCreate()">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -19,12 +17,12 @@
     </div>
 
     <div class="flex flex-col gap-4" *ngIf="!loading() && showForm() === 'none'">
-        <div class="p-20 text-center glass-card !rounded-[40px]" *ngIf="availableTrees().length === 0">
+        <div class="p-20 text-center glass-card rounded-[40px]!" *ngIf="availableTrees().length === 0">
             <p class="text-neutral-800 dark:text-neutral-200 font-medium">No trees created yet.</p>
         </div>
 
         <div *ngFor="let tree of availableTrees()"
-            class="group flex items-center glass-card !rounded-3xl p-6 transition-all duration-300 hover:bg-surface/60 hover:border-brand-500/30 hover:-translate-y-1 shadow-lg"
+            class="group flex items-center glass-card rounded-3xl! p-6 transition-all duration-300 hover:bg-surface/60 hover:border-brand-500/30 hover:-translate-y-1 shadow-lg"
             [class.ring-2]="tree.id === authService.currentTree()?.id"
             [class.ring-brand-500/50]="tree.id === authService.currentTree()?.id">
 
@@ -41,6 +39,14 @@
             </div>
 
             <div class="flex items-center gap-2 pl-6 border-l border-canvas-white/5">
+                <button (click)="openShare(tree)" title="Teilen"
+                    class="p-3 rounded-xl hover:bg-canvas-white/5 text-neutral-400 hover:text-brand-400 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                </button>
+                <button (click)="openChanges(tree)" title="Änderungen prüfen"
+                    class="p-3 rounded-xl hover:bg-canvas-white/5 text-neutral-400 hover:text-amber-400 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                </button>
                 <button (click)="openEdit(tree)"
                     class="p-3 rounded-xl hover:bg-canvas-white/5 text-neutral-400 hover:text-canvas-white transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -63,7 +69,7 @@
         </div>
     </div>
 
-    <div class="glass-card !rounded-[40px] p-8 md:p-12 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300"
+    <div class="glass-card rounded-[40px]! p-8 md:p-12 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300"
         *ngIf="showForm() !== 'none'">
         <div class="modal-glow-blue opacity-50"></div>
 
@@ -101,8 +107,8 @@
                 <div class="form-error mt-2 mb-0" *ngIf="error()">{{ error() }}</div>
 
                 <div class="flex gap-4 mt-8">
-                    <button class="flex-1 btn-secondary !py-4" (click)="cancelForm()">Cancel</button>
-                    <button class="flex-[2] btn-primary !py-4 text-lg" (click)="saveTree()">
+                    <button class="flex-1 btn-secondary py-4!" (click)="cancelForm()">Cancel</button>
+                    <button class="flex-2 btn-primary py-4! text-lg" (click)="saveTree()">
                         {{ showForm() === 'create' ? 'Create' : 'Save' }}
                     </button>
                 </div>
@@ -120,5 +126,88 @@
             </svg>
             <span>Back to Settings</span>
         </a>
+    </div>
+
+    <div class="fixed inset-0 bg-ui-bg/90 backdrop-blur-md flex justify-center items-center z-modal" *ngIf="showShare()" (click)="closeShare()">
+        <div class="glass-card rounded-2xl! border border-neutral-200 shadow-xl max-w-lg w-full mx-4" (click)="$event.stopPropagation()">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">Baum teilen</h2>
+                <button (click)="closeShare()" class="text-neutral-500 hover:text-neutral-300">✕</button>
+            </div>
+
+            <div class="flex flex-col gap-4">
+                <div class="flex gap-2">
+                    <input type="email" [(ngModel)]="inviteEmail" placeholder="E-Mail-Adresse" class="form-input flex-1">
+                    <select [(ngModel)]="inviteLevel" class="form-input w-auto">
+                        <option value="VIEWER">Lesen</option>
+                        <option value="EDITOR">Bearbeiten</option>
+                        <option value="COMMENTER">Kommentieren</option>
+                    </select>
+                </div>
+                <button (click)="sendInvitation()" [disabled]="inviteLoading() || !inviteEmail" class="btn-primary w-auto! py-2! disabled:opacity-50">
+                    {{ inviteLoading() ? 'Sende…' : 'Einladen' }}
+                </button>
+                <div class="form-error" *ngIf="inviteError()">{{ inviteError() }}</div>
+                <div class="text-accent-success-400 text-sm font-bold" *ngIf="inviteSuccess()">{{ inviteSuccess() }}</div>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="text-sm font-bold text-neutral-500 uppercase tracking-wider mb-3">Offene Einladungen</h3>
+                <div class="flex flex-col gap-2" *ngIf="invitations().length > 0">
+                    <div *ngFor="let inv of invitations()" class="flex items-center justify-between p-3 rounded-xl bg-canvas-white/5 border border-canvas-white/10">
+                        <div>
+                            <span class="text-neutral-900 dark:text-white font-medium">{{ inv.email }}</span>
+                            <span class="ml-2 text-xs text-neutral-500">{{ inv.level }}</span>
+                        </div>
+                        <button (click)="revokeInvitation(inv.id)" class="text-xs text-accent-danger-400 hover:underline">Widerrufen</button>
+                    </div>
+                </div>
+                <p class="text-neutral-500 text-sm" *ngIf="invitations().length === 0">Keine offenen Einladungen.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 bg-ui-bg/90 backdrop-blur-md flex justify-center items-center z-modal" *ngIf="showChanges()" (click)="closeChanges()">
+        <div class="glass-card rounded-2xl! border border-neutral-200 shadow-xl max-w-xl w-full mx-4" (click)="$event.stopPropagation()">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">Änderungen</h2>
+                <button (click)="closeChanges()" class="text-neutral-500 hover:text-neutral-300">✕</button>
+            </div>
+
+            <h3 class="text-sm font-bold text-neutral-500 uppercase tracking-wider mb-3">Zur Bestätigung (als Besitzer)</h3>
+            <div class="flex flex-col gap-2 mb-6">
+                <div *ngFor="let cr of changeRequests()" class="p-3 rounded-xl bg-canvas-white/5 border border-canvas-white/10">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="font-bold text-neutral-900 dark:text-white">{{ cr.user?.username || 'Unbekannt' }}</span>
+                            <span class="ml-2 text-xs text-neutral-500">{{ cr.summary }}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button (click)="approveChange(cr.id)" class="text-xs text-accent-success-400 hover:underline">Bestätigen</button>
+                            <button (click)="rejectChange(cr.id)" class="text-xs text-accent-danger-400 hover:underline">Ablehnen</button>
+                        </div>
+                    </div>
+                    <div class="text-[10px] text-neutral-400 mt-1">{{ cr.createdAt | date:'dd.MM.yyyy HH:mm' }}</div>
+                </div>
+                <p class="text-neutral-500 text-sm" *ngIf="changeRequests().length === 0">Keine offenen Änderungen.</p>
+            </div>
+
+            <h3 class="text-sm font-bold text-neutral-500 uppercase tracking-wider mb-3">Meine Änderungen</h3>
+            <div class="flex flex-col gap-2">
+                <div *ngFor="let cr of myRequests()" class="p-3 rounded-xl bg-canvas-white/5 border border-canvas-white/10">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="font-bold text-neutral-900 dark:text-white">{{ cr.summary }}</span>
+                            <span class="ml-2 text-xs text-neutral-500">{{ cr.tree?.title || cr.tree?.name }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-neutral-500" [class.text-amber-400]="cr.status === 'PENDING'">{{ cr.status === 'PENDING' ? 'Wartet auf Bestätigung' : cr.status }}</span>
+                            <button *ngIf="cr.status === 'PENDING'" (click)="cancelMyChange(cr.id)" class="text-xs text-accent-danger-400 hover:underline">Stornieren</button>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-neutral-500 text-sm" *ngIf="myRequests().length === 0">Keine eigenen Änderungen.</p>
+            </div>
+        </div>
     </div>
 </div>

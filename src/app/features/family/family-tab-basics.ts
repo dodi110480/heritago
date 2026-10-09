@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Family, Individual } from '../../core/models/models';
@@ -9,11 +9,12 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
     selector: 'app-family-tab-basics',
     standalone: true,
     imports: [CommonModule, RouterLink, AppAvatarComponent, AppSectionHeaderComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="glass-card !p-6 sm:!p-8 flex flex-col gap-6">
+        <div class="glass-card p-6! sm:p-8! flex flex-col gap-6">
             <app-section-header title="Partner" [accent]="true"></app-section-header>
             <div
-                class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-10 items-center bg-canvas/5 dark:bg-white/5 !rounded-2xl p-6 md:p-10 relative border border-canvas/10 dark:border-white/10">
+                class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-10 items-center bg-canvas/5 dark:bg-white/5 rounded-2xl! p-6 md:p-10 relative border border-canvas/10 dark:border-white/10">
                 
                 <!-- Husband -->
                 <div class="flex items-center gap-5">
@@ -25,7 +26,7 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
                             class="text-xs text-neutral-500 dark:text-neutral-400 font-semibold uppercase tracking-wider mb-1">Ehemann</span>
                         <span class="text-lg font-bold text-neutral-900 dark:text-white">{{
                             getPersonName(husband) }}</span>
-                        <a [routerLink]="['/person', husband?.id]"
+                        <a [routerLink]="['/person', $safeNavigationMigration(husband?.id)]"
                             class="text-sm text-brand-600 dark:text-brand-400 hover:underline mt-1">Profil
                             ansehen</a>
                     </div>
@@ -44,7 +45,7 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
                             class="text-xs text-neutral-500 dark:text-neutral-400 font-semibold uppercase tracking-wider mb-1">Ehefrau</span>
                         <span class="text-lg font-bold text-neutral-900 dark:text-white">{{
                             getPersonName(wife) }}</span>
-                        <a [routerLink]="['/person', wife?.id]"
+                        <a [routerLink]="['/person', $safeNavigationMigration(wife?.id)]"
                             class="text-sm text-brand-600 dark:text-brand-400 hover:underline mt-1">Profil
                             ansehen</a>
                     </div>

@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject, signal, ElementRef, ViewChild, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, signal, ElementRef, ViewChild, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PlaceService } from '../../../core/services/place.service';
@@ -22,7 +22,7 @@ import { AuthService } from '../../../core/services/auth.service';
                 autocomplete="off">
             
             <div *ngIf="showSuggestions() && suggestions().length > 0" 
-                class="absolute z-[100] w-full mt-1 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                class="absolute z-navbar w-full mt-1 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-xl max-h-60 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                 <ul class="py-1">
                     <li *ngFor="let suggestion of suggestions()" 
                         (click)="selectSuggestion(suggestion)"
@@ -33,6 +33,7 @@ import { AuthService } from '../../../core/services/auth.service';
             </div>
         </div>
     `,
+    changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
         :host { display: block; width: 100%; }
         /* Custom scrollbar for suggestions */

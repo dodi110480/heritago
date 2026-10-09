@@ -12,7 +12,7 @@
     [sortDirection]="sortDirection()"
     (sortDirectionChange)="sortDirection.set($event)">
     <div actions class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-        <button class="btn-primary flex-shrink-0 w-full md:w-auto" (click)="createPerson()" [disabled]="isCreating">
+        <button class="btn-primary shrink-0 w-full md:w-auto" (click)="createPerson()" [disabled]="isCreating">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -47,7 +47,7 @@
         (onClick)="rememberFocus(p.id)">
 
         <div actions class="flex items-center gap-2">
-            <span class="text-[10px] px-2 py-1 rounded-lg font-bold border transition-colors shadow-sm" 
+            <span class="text-[10px] px-2 py-1 rounded-lg font-bold border transition-colors shadow-xs" 
                 [ngClass]="completionCardClass(completionFor(p).score)"
                 [attr.title]="completionTooltip(p)">
                 {{ completionFor(p).score }}%

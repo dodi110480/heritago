@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, signal, computed, input } from '@angular/core';
+import { Component, Output, EventEmitter, signal, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -11,6 +11,7 @@ import { Citation } from '../../../../core/models/models';
     selector: 'app-tab-citations',
     standalone: true,
     imports: [CommonModule, FormsModule, AppSectionHeaderComponent, AppSourcesListComponent, CitationModalComponent],
+    changeDetection: ChangeDetectionStrategy.Eager,
     template: `
         <div class="glass-card flex flex-col">
             <div class="p-0">
@@ -21,13 +22,13 @@ import { Citation } from '../../../../core/models/models';
                                 type="text" 
                                 [(ngModel)]="searchText"
                                 placeholder="Quellen durchsuchen..."
-                                class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
+                                class="w-full bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800 rounded-btn pl-10 pr-4 py-2 text-sm focus:outline-hidden focus:ring-2 focus:ring-brand-500/20 transition-all font-medium"
                             >
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                             </span>
                         </div>
-                        <button (click)="addCitation()" class="btn-primary !w-auto !py-2">
+                        <button (click)="addCitation()" class="btn-primary w-auto! py-2!">
                             + Beleg
                         </button>
                     </div>
