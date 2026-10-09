@@ -20,6 +20,80 @@ const GITHUB_REPO = () => process.env.GITHUB_REPO || 'heritago';
 /** Public GitHub URL of the repository this installation was cloned from. */
 const repositoryUrl = () => `https://github.com/${GITHUB_OWNER()}/${GITHUB_REPO()}`;
 
+const GITHUB_HEADERS = { 'Accept': 'application/vnd.github.v3+json' };
+
+/** Semver parts of a version string ("v1.2.3" -> [1, 2, 3]; null if unparsable). */
+const versionParts = (version: string | null | undefined): number[] | null => {
+    if (!version || !TAG_PATTERN.test(version)) return null;
+    return version.replace(/^v/, '').split('.').map(Number);
+};
+
+/** Highest semver-like tag of a list (GitHub's tag order is not guaranteed). */
+const highestVersion = (tags: (string | null | undefined)[]): string | null => {
+    let best: string | null = null;
+    let bestParts: number[] | null = null;
+
+    for (const tag of tags) {
+        const parts = versionParts(tag);
+        if (!parts) continue;
+        for (let i = 0; i < 3; i++) {
+            if (!bestParts || parts[i] > bestParts[i]) {
+                best = tag as string;
+                bestParts = parts;
+                break;
+            }
+            if (parts[i] < bestParts[i]) break;
+        }
+    }
+
+    return best;
+};
+
+/**
+ * Reads a resource of the configured repository from the GitHub API.
+ *
+ * The token is optional - the repository is public. A configured but invalid or
+ * expired token must never disable the update check, so any request rejected with
+ * 401/403 (bad credentials / exhausted quota) is retried without credentials.
+ * Returns null when the resource does not exist (e.g. no release published yet)
+ * or when the API is unreachable; write to the console then explains why.
+ */
+const githubGet = async (resource: string): Promise<any | null> => {
+    const token = (process.env.GITHUB_TOKEN || '').trim();
+    const url = `https://api.github.com/repos/${GITHUB_OWNER()}/${GITHUB_REPO()}${resource}`;
+
+    const request = (withToken: boolean) => axios.get(url, {
+        headers: withToken ? { ...GITHUB_HEADERS, 'Authorization': `token ${token}` } : GITHUB_HEADERS,
+        timeout: 10000,
+        // Inspect the status code here instead of letting axios throw on 4xx.
+        validateStatus: () => true
+    });
+
+    try {
+        let response = await request(Boolean(token));
+
+        if (token && (response.status === 401 || response.status === 403)) {
+            console.warn(`[server]: GitHub rejected GITHUB_TOKEN (HTTP ${response.status}) - retrying anonymously.`);
+            response = await request(false);
+        }
+
+        if (response.status === 404) {
+            console.warn(`[server]: GitHub resource ${resource} not found (HTTP 404).`);
+            return null;
+        }
+
+        if (response.status >= 400) {
+            console.warn(`[server]: GitHub resource ${resource} failed (HTTP ${response.status}).`);
+            return null;
+        }
+
+        return response.data;
+    } catch (error: any) {
+        console.warn(`[server]: GitHub request ${resource} failed:`, error.message);
+        return null;
+    }
+};
+
 /**
  * Runs a git command inside the installation and returns trimmed stdout.
  * Resolves to null when the command fails (e.g. missing .git directory).
@@ -110,51 +184,66 @@ export const systemRoutes = () => {
     });
 
     router.get('/check-update', async (req, res) => {
-        try {
-            const token = process.env.GITHUB_TOKEN;
-            const owner = GITHUB_OWNER();
-            const repo = GITHUB_REPO();
+        // Local revision metadata - always available, independent of GitHub.
+        const git = await readGitInfo();
+        const installed = {
+            currentVersion: git.gitTag || git.gitCommit || 'unknown',
+            currentCommit: git.gitCommit,
+            currentBranch: git.gitBranch,
+            currentCommitDate: git.gitCommitDate,
+            currentDescribe: git.gitDescribe,
+            repositoryUrl: repositoryUrl()
+        };
 
-            const headers: any = { 'Accept': 'application/vnd.github.v3+json' };
-            if (token) {
-                headers['Authorization'] = `token ${token}`;
+        /** The remote check is not a precondition for the installed app to work. */
+        const unavailablePayload = () => ({
+            success: true,
+            data: {
+                ...installed,
+                hasUpdate: false,
+                unavailable: true,
+                message: 'Die Prüfung auf neue Versionen ist derzeit nicht möglich. Die installierte Version läuft unverändert weiter - bitte später erneut suchen.',
+                latestVersion: null,
+                releaseName: null,
+                releasePublishedAt: null,
+                details: null
+            }
+        });
+
+        try {
+            // Preferred source: the newest GitHub release (it carries the release notes).
+            // Fallback: the newest tag - installing a tag is exactly what POST /update does,
+            // so a missing GitHub release must not block the update page.
+            const release = await githubGet('/releases/latest');
+            let latestVersion: string | null = release?.tag_name ?? null;
+
+            if (!latestVersion) {
+                const tags = await githubGet('/tags');
+                if (Array.isArray(tags)) {
+                    latestVersion = highestVersion(tags.map((entry: any) => entry?.name));
+                }
             }
 
-            const response = await axios.get(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, {
-                headers
-            });
-
-            const latestRelease: any = response.data;
-            const latestTag = latestRelease.tag_name;
-
-            const git = await readGitInfo();
-            const currentTag = git.gitTag || git.gitCommit || 'unknown';
-
-            const hasUpdate = currentTag !== latestTag;
+            if (!latestVersion) {
+                return res.json(unavailablePayload());
+            }
 
             res.json({
                 success: true,
                 data: {
-                    hasUpdate,
-                    currentVersion: currentTag,
-                    currentCommit: git.gitCommit,
-                    currentBranch: git.gitBranch,
-                    currentCommitDate: git.gitCommitDate,
-                    currentDescribe: git.gitDescribe,
-                    latestVersion: latestTag,
-                    releaseName: latestRelease.name,
-                    releasePublishedAt: formatDate(latestRelease.published_at),
-                    repositoryUrl: repositoryUrl(),
-                    details: latestRelease.body
+                    ...installed,
+                    hasUpdate: installed.currentVersion !== latestVersion,
+                    unavailable: false,
+                    message: null,
+                    latestVersion,
+                    releaseName: release?.name || latestVersion,
+                    releasePublishedAt: formatDate(release?.published_at),
+                    details: release?.body ?? null
                 }
             });
         } catch (error: any) {
-            console.error('[server]: Update check failed:', error.response?.data?.message || error.message);
-            res.status(500).json({
-                success: false,
-                message: 'Es konnte nicht nach Updates gesucht werden.',
-                code: 'SYSTEM_UPDATE_CHECK_FAILED'
-            });
+            console.error('[server]: Update check failed:', error.message);
+            res.json(unavailablePayload());
         }
     });
 

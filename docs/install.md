@@ -140,6 +140,16 @@ MAIL_FROM="Heritago <no-reply@deine-domain.de>"
 # Bot-Schutz / Rate Limiting (optional – es gelten sichere Defaults)
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX=20
+
+# Update-Prüfung (optional)
+# Quelle ist das GitHub-Repository, aus dem installiert wurde. Ohne Angabe wird
+# dodi110480/heritago verwendet. Ein GITHUB_TOKEN ist nur nötig, wenn das anonyme
+# Limit der GitHub-API (60 Anfragen/Stunde) nicht reicht oder das Repository privat
+# ist – ein ungültiger oder abgelaufener Token wird ignoriert und die Prüfung läuft
+# dann anonym weiter.
+GITHUB_OWNER="dodi110480"
+GITHUB_REPO="heritago"
+# GITHUB_TOKEN="ghp_..."
 ```
 
 > [!IMPORTANT]
@@ -355,6 +365,24 @@ sudo journalctl -u heritago -n 50    # Letzte 50 Log-Zeilen
 sudo nginx -t                        # Config prüfen
 sudo tail -f /var/log/nginx/error.log # Nginx Error-Log
 ```
+
+### „Prüfung nicht möglich" auf der Seite Einstellungen → System & Updates
+
+Die Update-Prüfung fragt die GitHub-API ab. Schlägt das fehl (Server ohne Internetzugang,
+Rate-Limit erreicht, Repository noch ohne Release/Tag), zeigt die Seite die installierte
+Version weiter an und meldet nur, dass die Prüfung derzeit nicht möglich ist.
+
+```bash
+# Erreichbarkeit der GitHub-API prüfen
+curl -s -o /dev/null -w '%{http_code}\n' https://api.github.com/repos/dodi110480/heritago/tags
+
+# Ursache im Backend-Log
+sudo journalctl -u heritago -n 50 | grep -i 'github\|update check'
+```
+
+Meldet das Log `GitHub rejected GITHUB_TOKEN` oder `Bad credentials`, ist der in `server/.env`
+hinterlegte Token abgelaufen: entweder einen neuen Personal Access Token setzen oder
+`GITHUB_TOKEN` ganz entfernen (das Repository ist öffentlich, die Prüfung läuft dann anonym).
 
 ### Datenbank-Fehler (z.B. "invalid input syntax")
 ```bash
