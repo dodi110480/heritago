@@ -6,6 +6,7 @@
     "start": "ng serve --host 0.0.0.0",
     "dev": "ng serve --host 0.0.0.0",
     "build": "ng build",
+    "postbuild": "node scripts/copy-licenses.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
