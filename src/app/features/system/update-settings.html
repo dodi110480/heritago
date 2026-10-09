@@ -14,7 +14,7 @@
     <div class="flex flex-col gap-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <div
-                class="glass-card shadow-xl flex flex-col gap-6 group hover:border-brand-500/20 transition-all duration-300">
+                class="glass-card flex flex-col gap-6 group hover:border-brand-500/20 transition-all duration-300">
                 <div class="flex justify-between items-start">
                     <h3 class="text-xl font-bold text-canvas-white flex items-center gap-2">
                         <span class="w-1.5 h-6 bg-brand-500 rounded-full"></span>
@@ -89,7 +89,7 @@
             </div>
 
             <div
-                class="glass-card shadow-xl flex flex-col gap-6 group hover:border-accent-highlight-500/20 transition-all duration-300">
+                class="glass-card flex flex-col gap-6 group hover:border-accent-highlight-500/20 transition-all duration-300">
                 <div class="flex items-center gap-4">
                     <div
                         class="w-12 h-12 rounded-2xl bg-accent-highlight-500/10 flex items-center justify-center text-accent-highlight-400 border border-accent-highlight-500/20 group-hover:scale-110 transition-transform">
@@ -111,14 +111,14 @@
 
                 <div class="mt-auto flex flex-wrap gap-4">
                     <button *ngIf="!updateStatus?.hasUpdate" (click)="checkUpdate()" [disabled]="checking"
-                        class="grow btn-primary py-4! rounded-2xl!">
+                        class="grow btn-primary py-4! rounded-2xl">
                         <span *ngIf="checking"
                             class="w-4 h-4 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin mr-2"></span>
                         {{ checking ? 'Suche...' : 'Nach Updates suchen' }}
                     </button>
 
                     <button *ngIf="updateStatus?.hasUpdate" (click)="performUpdate()" [disabled]="updating"
-                        class="grow btn-primary bg-linear-to-r! !from-accent-success-600 !to-accent-success-600 py-4! rounded-2xl!">
+                        class="grow btn-primary bg-linear-to-r! !from-accent-success-600 !to-accent-success-600 py-4! rounded-2xl">
                         <span *ngIf="updating"
                             class="w-4 h-4 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin mr-2"></span>
                         {{ updating ? 'Wird installiert...' : 'Version ' + updateStatus.latestVersion + '
@@ -126,7 +126,7 @@
                     </button>
 
                     <button *ngIf="updateStatus" (click)="updateStatus = null"
-                        class="btn-secondary py-4! px-8! rounded-2xl!">
+                        class="btn-secondary py-4! px-8! rounded-2xl">
                         Abbrechen
                     </button>
                 </div>
@@ -135,7 +135,7 @@
 
         <div class="flex flex-col gap-6">
             <div *ngIf="updateStatus?.hasUpdate"
-                class="glass-card shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                class="glass-card animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <h4 class="text-lg font-black text-accent-success-400 uppercase tracking-widest mb-6 px-1">Gefundenes
                     Update</h4>
 

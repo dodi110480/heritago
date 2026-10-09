@@ -25,7 +25,7 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                             <img *ngIf="profileImageUrl" [src]="profileImageUrl" 
                                  class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                                  alt="Profilbild">
-                            <div *ngIf="!profileImageUrl" class="w-full h-full flex flex-col items-center justify-center text-neutral-600 bg-neutral-100/5">
+                            <div *ngIf="!profileImageUrl" class="w-full h-full flex flex-col items-center justify-center text-brand-500/50 bg-canvas-white/5">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="opacity-10">
                                     <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="12" cy="7" r="4"></circle>

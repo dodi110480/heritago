@@ -139,15 +139,21 @@
   --shadow-danger-glow: 0 0 25px rgba(244, 63, 94, 0.4);
   --shadow-inner-glow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
 
-  /* Central radius scale – ad-hoc utilities like rounded-xl/2xl/3xl resolve here,
-     so every surface shares one visual language. */
+  /* Central radius scale.
+     Canonical (semantic) names – use these in new code:
+       --radius-card   0.75rem  cards, panels, list items, tab containers
+       --radius-modal  1rem     modals and floating overlays
+       --radius-btn    0.5rem   buttons, inputs, small controls
+     The numeric Tailwind steps resolve to the same values, so utilities like
+     rounded-xl and rounded-2xl can never drift apart from the card radius:
+       0.25 (xs) · 0.375 (sm) · 0.5 (md) · 0.625 (lg) · 0.75 (xl/2xl/3xl) · 1rem (4xl) */
   --radius-xs: 0.25rem;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.625rem;
   --radius-xl: 0.75rem;
   --radius-2xl: 0.75rem;
-  --radius-3xl: 0.875rem;
+  --radius-3xl: 0.75rem;
   --radius-4xl: 1rem;
 
   --radius-card: 0.75rem;

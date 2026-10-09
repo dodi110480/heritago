@@ -49,7 +49,7 @@ import { AppIconComponent } from './app-icon';
 
         <div *ngIf="showSort" class="flex items-center gap-1.5 w-full sm:w-auto shrink-0">
           <select 
-              class="glass-card px-3! py-2.5! rounded-2xl! text-neutral-900 dark:text-neutral-100 text-sm outline-hidden focus:ring-2 focus:ring-brand-500/30 transition-all min-w-[160px] flex-1 sm:flex-none"
+              class="glass-card px-3! py-2.5! rounded-2xl text-neutral-900 dark:text-neutral-100 text-sm outline-hidden focus:ring-2 focus:ring-brand-500/30 transition-all min-w-[160px] flex-1 sm:flex-none"
               [ngModel]="sortValue()" (ngModelChange)="sortValue.set($event)">
             <option *ngFor="let opt of sortOptions" [value]="opt.value" class="bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
               {{ opt.label }}

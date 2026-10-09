@@ -59,7 +59,7 @@
 
             <div class="mt-auto pt-4">
                 <button (click)="importGedcom()" [disabled]="isImporting || !selectedFile" class="w-full btn-secondary">
-                    <span *ngIf="isImporting" class="w-4 h-4 border-2 border-neutral-300 border-l-neutral-600 rounded-full animate-spin"></span>
+                    <span *ngIf="isImporting" class="w-4 h-4 border-2 border-canvas-white/20 border-l-brand-500 rounded-full animate-spin"></span>
                     {{ isImporting ? 'Importiere...' : 'Import starten' }}
                 </button>
             </div>

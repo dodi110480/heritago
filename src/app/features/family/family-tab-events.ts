@@ -18,7 +18,7 @@ import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-sta
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" *ngIf="family?.events?.length">
                 <div *ngFor="let ev of family?.events; let i = index" (click)="editEventRequested.emit(i)"
-                    class="glass-card p-5! rounded-2xl! hover:scale-[1.02] transition-transform cursor-pointer group">
+                    class="glass-card p-5! rounded-2xl hover:scale-[1.02] transition-transform cursor-pointer group">
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex items-center gap-3">
                             <div

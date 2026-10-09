@@ -59,7 +59,7 @@ export class AppAvatarComponent {
   });
 
   containerClasses = computed(() => {
-    const base = 'relative overflow-hidden flex items-center justify-center bg-brand-100 shrink-0';
+    const base = 'relative overflow-hidden flex items-center justify-center bg-brand-500/15 shrink-0';
     const sizeMap = {
       xs: 'w-6 h-6',
       sm: 'w-8 h-8',

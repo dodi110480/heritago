@@ -38,7 +38,7 @@
       <div *ngIf="activeTab() === 'preview'">
         <div class="glass-card p-0! overflow-hidden relative group mb-4">
           <label *ngIf="!selectedFile() && !isEditing()"
-            class="flex flex-col items-center justify-center p-12 border-2 border-dashed border-neutral-300/30 rounded-xl bg-neutral-50/10 hover:bg-brand-500/5 hover:border-brand-500/40 transition-all cursor-pointer">
+            class="flex flex-col items-center justify-center p-12 border-2 border-dashed border-ui-border rounded-card bg-canvas-white/5 hover:bg-brand-500/5 hover:border-brand-500/40 transition-all cursor-pointer">
             <input type="file" accept="image/*,application/pdf" (change)="onFilePicked($event)" hidden>
             <div class="bg-brand-500/10 p-4 rounded-xl text-brand-500 mb-4 group-hover:scale-110 transition-transform">
               <!-- icon -->

@@ -14,7 +14,7 @@ import { DisplayNote, NoteCategory } from '../../../../core/models/models';
     imports: [CommonModule, FormsModule, AppNotesList, AppNoteModal, AppSectionHeaderComponent],
     changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="glass-card shadow-xs flex flex-col">
+        <div class="glass-card flex flex-col">
             <div class="p-0">
                 <app-section-header title="Notizen" icon="📝">
                     <div actions class="flex items-center gap-3">

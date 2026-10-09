@@ -13,7 +13,7 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
     imports: [CommonModule, FormsModule, AppModalShell, AppEmptyStateComponent, AppSectionHeaderComponent],
     changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="glass-card shadow-xs flex flex-col">
+        <div class="glass-card flex flex-col">
             <div class="p-0">
                 <app-section-header title="DNA-Matches" icon="🧬">
                     <button actions (click)="addDnaMatch()" class="btn-primary w-auto! py-2!">
@@ -23,7 +23,7 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
 
                 <div class="space-y-6" *ngIf="person?.dnaMatches && person.dnaMatches.length > 0">
                     <div *ngFor="let m of person.dnaMatches; let i = index"
-                        class="p-6! glass-card bg-brand-50! rounded-2xl! space-y-4 group relative cursor-pointer hover:bg-neutral-100 transition-colors"
+                        class="p-6! glass-card bg-brand-500/10 space-y-4 group relative cursor-pointer hover:bg-brand-500/15 transition-colors"
                         (click)="openDnaMatchEditModal(i)">
                         <div class="flex justify-between items-start">
                             <div>
@@ -46,7 +46,7 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
                             </button>
                         </div>
 
-                        <div *ngIf="m.segments && m.segments.length > 0" class="mt-4 pt-4 border-t border-neutral-300/50">
+                        <div *ngIf="m.segments && m.segments.length > 0" class="mt-4 pt-4 border-t border-ui-border">
                             <h4 class="text-xs font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest mb-2">Segmente
                                 ({{ m.segments.length }})</h4>
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -141,7 +141,7 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
                     </div>
                 </div>
 
-                <div class="space-y-4 p-4 bg-brand-100 rounded-xl">
+                <div class="space-y-4 p-4 bg-brand-500/10 rounded-card">
                     <div class="flex justify-between items-center">
                         <h4 class="text-xs font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest">Segmente</h4>
                         <button (click)="addDnaSegmentDraft()"
@@ -153,16 +153,16 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
                             <input type="text" [ngModel]="s.chromosome"
                                 (ngModelChange)="s.chromosome = $event; editDnaMatchDraft.set(editDnaMatchDraft())"
                                 placeholder="Chr"
-                                class="form-input form-input-xs border-neutral-300/70 rounded-lg! text-center">
+                                class="form-input form-input-xs rounded-lg text-center">
                             <input type="number" [ngModel]="s.startPosition"
                                 (ngModelChange)="s.startPosition = $event; editDnaMatchDraft.set(editDnaMatchDraft())"
-                                placeholder="Start" class="form-input form-input-xs border-neutral-300/70 rounded-lg!">
+                                placeholder="Start" class="form-input form-input-xs rounded-lg">
                             <input type="number" [ngModel]="s.endPosition"
                                 (ngModelChange)="s.endPosition = $event; editDnaMatchDraft.set(editDnaMatchDraft())"
-                                placeholder="Ende" class="form-input form-input-xs border-neutral-300/70 rounded-lg!">
+                                placeholder="Ende" class="form-input form-input-xs rounded-lg">
                             <input type="number" [ngModel]="s.cm"
                                 (ngModelChange)="s.cm = $event; editDnaMatchDraft.set(editDnaMatchDraft())" placeholder="cM"
-                                class="form-input form-input-xs border-neutral-300/70 rounded-lg! text-center">
+                                class="form-input form-input-xs rounded-lg text-center">
                             <button (click)="removeDnaSegmentDraft(si)"
                                 class="opacity-70 hover:opacity-100 text-accent-danger-500 hover:bg-accent-danger-500/10 rounded-full w-6 h-6 flex items-center justify-center transition-all ml-auto">✕</button>
                         </div>

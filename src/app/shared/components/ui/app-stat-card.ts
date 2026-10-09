@@ -11,7 +11,7 @@ import { AppIconComponent } from './app-icon';
   imports: [CommonModule, AppIconComponent],
   changeDetection: ChangeDetectionStrategy.Eager,
   template: `
-    <div class="group relative glass-card flex flex-col shadow-lg overflow-hidden transition-all duration-300 cursor-pointer p-5! border-transparent"
+    <div class="group relative glass-card flex flex-col overflow-hidden transition-all duration-300 cursor-pointer p-5!"
       [ngClass]="accentClasses()">
       <div class="text-2xl md:text-4xl font-black mb-1 leading-none tracking-tight" [ngClass]="valueClasses()">
         {{ value }}

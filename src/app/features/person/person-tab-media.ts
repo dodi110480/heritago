@@ -18,7 +18,7 @@ import { DisplayMedia } from '../../core/models/models';
     imports: [CommonModule, FormsModule, MediaSelector, ImageViewer, MediaAddModal, AppSectionHeaderComponent, AppMediaList],
     changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="glass-card shadow-xs flex flex-col">
+        <div class="glass-card flex flex-col">
             <div class="p-0">
                 <app-section-header title="Medien & Galerie" icon="🖼️" description="Bilder und Dokumente der Person.">
                     <div actions class="flex items-center gap-3">

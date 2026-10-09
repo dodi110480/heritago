@@ -32,7 +32,7 @@ import { PersonFeatureStore } from './person-feature.store';
     ],
     changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="glass-card shadow-xs flex flex-col">
+        <div class="glass-card flex flex-col">
             <div class="p-0">
                 <app-section-header title="Familie & Beziehungen" icon="👨‍👩‍👧‍👦" description="Verwalte Ehepartner, Eltern und Kinder.">
                     <div actions class="flex items-center gap-3">

@@ -5,7 +5,7 @@
 
     <!-- Left: request list, split by status -->
     <div class="space-y-4">
-        <div class="glass-card rounded-2xl! p-0! overflow-hidden">
+        <div class="glass-card rounded-2xl p-0! overflow-hidden">
             <div class="p-4 border-b border-canvas-white/10 flex items-center justify-between">
                 <span class="text-sm font-bold text-neutral-500 uppercase tracking-wider">Ausstehend</span>
                 @if (pending().length > 0) {
@@ -33,7 +33,7 @@
             }
         </div>
 
-        <div class="glass-card rounded-2xl! p-0! overflow-hidden">
+        <div class="glass-card rounded-2xl p-0! overflow-hidden">
             <div class="p-4 border-b border-canvas-white/10 text-sm font-bold text-neutral-500 uppercase tracking-wider">Erledigt</div>
             @if (done().length === 0) {
                 <div class="p-6 text-center text-neutral-500 text-sm">Keine erledigten Vorschläge.</div>
@@ -55,7 +55,7 @@
     </div>
 
     <!-- Right: detail -->
-    <div class="glass-card rounded-2xl! p-6">
+    <div class="glass-card rounded-2xl p-6">
         @if (!selected()) {
             <div class="text-center py-20 text-neutral-500">Wähle links einen Vorschlag aus.</div>
         } @else {

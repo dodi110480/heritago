@@ -19,7 +19,7 @@ import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-sta
             </app-section-header>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" *ngIf="children.length">
-                <div class="glass-card p-4! rounded-2xl! flex items-center gap-4 hover:scale-[1.02] transition-transform cursor-pointer"
+                <div class="glass-card p-4! rounded-2xl flex items-center gap-4 hover:scale-[1.02] transition-transform cursor-pointer"
                     *ngFor="let child of children" [routerLink]="['/person', child.id]">
                     <app-avatar [imageUrl]="getPersonImage(child)"
                         [gender]="child.gender" size="sm" [alt]="getPersonName(child)"></app-avatar>

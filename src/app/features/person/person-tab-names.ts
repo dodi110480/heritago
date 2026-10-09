@@ -12,7 +12,7 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
     imports: [CommonModule, FormsModule, AppModalShell, AppEmptyStateComponent, AppSectionHeaderComponent],
     changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="glass-card shadow-xs flex flex-col">
+        <div class="glass-card flex flex-col">
             <div class="p-0">
                 <app-section-header title="Namen" icon="🧾">
                     <button actions (click)="openNameModal()" class="btn-primary w-auto! py-2!">
@@ -22,7 +22,7 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
 
                 <div class="space-y-4">
                     <div *ngFor="let n of person?.names; let i = index"
-                        class="p-5! glass-card bg-brand-50! rounded-2xl! space-y-4 group relative cursor-pointer hover:bg-neutral-100 transition-colors"
+                        class="p-5! glass-card bg-brand-500/10 space-y-4 group relative cursor-pointer hover:bg-brand-500/15 transition-colors"
                         (click)="openNameEditModal(i)">
                         <div class="flex justify-between items-start">
                             <div>

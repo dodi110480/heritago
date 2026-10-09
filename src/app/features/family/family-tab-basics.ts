@@ -14,7 +14,7 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
         <div class="glass-card p-6! sm:p-8! flex flex-col gap-6">
             <app-section-header title="Partner" [accent]="true"></app-section-header>
             <div
-                class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-10 items-center bg-canvas/5 dark:bg-white/5 rounded-2xl! p-6 md:p-10 relative border border-canvas/10 dark:border-white/10">
+                class="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-6 md:gap-10 items-center bg-canvas/5 dark:bg-white/5 rounded-2xl p-6 md:p-10 relative border border-canvas/10 dark:border-white/10">
                 
                 <!-- Husband -->
                 <div class="flex items-center gap-5">

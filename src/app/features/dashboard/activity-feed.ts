@@ -33,9 +33,9 @@ import { AnalyticsService } from '../../core/services/analytics.service';
                 <div *ngFor="let group of groupedLogs()" class="flex flex-col gap-4">
                     <h3 class="text-meta uppercase text-neutral-500 tracking-[0.2em] font-bold text-[10px] ml-4 mt-8 first:mt-0">{{ group.dateLabel }}</h3>
                     
-                    <div class="glass-card p-0! overflow-hidden bg-white/80 dark:bg-slate-900/80 border-neutral-200/50 dark:border-slate-800/50 shadow-lg">
+                    <div class="glass-card p-0! overflow-hidden">
                         <div *ngFor="let log of group.logs" 
-                             class="flex items-center gap-4 py-3 px-6 hover:bg-neutral-50 dark:hover:bg-slate-800/40 transition-all cursor-pointer group border-b border-neutral-100 dark:border-slate-800/50 last:border-0"
+                             class="flex items-center gap-4 py-3 px-6 hover:bg-canvas-white/5 transition-all cursor-pointer group border-b border-ui-border last:border-0"
                              (click)="navigateToEntity(log)">
                              
                             <!-- Action Marker Dot -->
