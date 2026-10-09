@@ -338,6 +338,8 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
   private router = inject(Router);
 
   private treeData = signal<any[]>([]);
+  /** Entry point for the chart, computed by the backend (see chart-data endpoint). */
+  private defaultMainPersonId = '';
   public configOpen = signal(false);
 
   public config = {
@@ -365,7 +367,8 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
       this.http.get<any>(`${environment.apiUrl}/tree/${treeName}/chart-data`, { withCredentials: true }).subscribe({
         next: (res) => {
           if (res.success) {
-            this.treeData.set(res.data);
+            this.treeData.set(res.data?.nodes ?? []);
+            this.defaultMainPersonId = res.data?.mainPersonId ?? '';
             if (this.chartElement) {
               this.renderChart();
             }
@@ -427,9 +430,20 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
     cont.innerHTML = '';
 
     const storedMainId = localStorage.getItem(this.FOCUS_PERSON_KEY);
-    const mainId = (storedMainId && data.find((d: any) => d.id === storedMainId))
-      ? storedMainId
-      : (data[0]?.id || '');
+    const storedNode = storedMainId ? data.find((d: any) => d.id === storedMainId) : undefined;
+
+    // A remembered person without any relation would render a nearly empty chart
+    // (e.g. a person whose GEDCOM links were never imported). In that case fall
+    // back to the entry point computed by the backend.
+    const storedIsConnected = !!storedNode && (
+      storedNode.rels.parents.length > 0 ||
+      storedNode.rels.spouses.length > 0 ||
+      storedNode.rels.children.length > 0
+    );
+
+    const mainId = storedIsConnected
+      ? (storedMainId as string)
+      : (this.defaultMainPersonId || data[0]?.id || '');
 
     if (mainId) {
       localStorage.setItem(this.FOCUS_PERSON_KEY, mainId);

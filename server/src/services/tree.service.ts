@@ -772,6 +772,7 @@ export class TreeService {
         const [persons, families] = await Promise.all([
             this.prisma.person.findMany({
                 where: { treeId },
+                orderBy: { id: 'asc' },
                 include: {
                     names: { where: { isPrimary: true } },
                     events: { where: { type: { in: ['BIRT', 'DEAT'] } } },
@@ -790,7 +791,7 @@ export class TreeService {
 
         const individualIds = new Set(persons.map(p => p.id));
 
-        return persons.map(p => {
+        const nodes = persons.map(p => {
             const primaryMedia = p.mediaLinks.find(ml => ml.isPrimary)?.media || p.mediaLinks[0]?.media;
             const bEvent = p.events.find(e => e.type === 'BIRT');
             const dEvent = p.events.find(e => e.type === 'DEAT');
@@ -845,5 +846,70 @@ export class TreeService {
 
             return node;
         });
+
+        return {
+            nodes,
+            mainPersonId: this.pickMainPersonId(nodes)
+        };
+    }
+
+    /**
+     * Picks the default focus person for the family chart.
+     *
+     * The chart only renders the main person plus its ancestry/progeny, so an
+     * isolated individual (e.g. a person whose GEDCOM links were never imported)
+     * would render an almost empty chart. Therefore the largest connected
+     * component is selected first and the most connected person inside it
+     * becomes the entry point. Purely deterministic - no randomness involved.
+     */
+    private pickMainPersonId(nodes: any[]): string | null {
+        if (nodes.length === 0) return null;
+
+        const byId = new Map<string, any>(nodes.map((n) => [n.id, n]));
+        const neighbors = (node: any): string[] => [
+            ...node.rels.parents,
+            ...node.rels.spouses,
+            ...node.rels.children
+        ];
+
+        const visited = new Set<string>();
+        let best: any = null;
+        let bestDegree = -1;
+
+        for (const startNode of nodes) {
+            if (visited.has(startNode.id)) continue;
+
+            // Collect the whole connected component of this node (iterative BFS).
+            const component: any[] = [];
+            const queue: string[] = [startNode.id];
+            visited.add(startNode.id);
+
+            while (queue.length > 0) {
+                const currentId = queue.pop() as string;
+                const currentNode = byId.get(currentId);
+                if (!currentNode) continue;
+
+                component.push(currentNode);
+                for (const neighborId of neighbors(currentNode)) {
+                    if (!visited.has(neighborId) && byId.has(neighborId)) {
+                        visited.add(neighborId);
+                        queue.push(neighborId);
+                    }
+                }
+            }
+
+            // Only a component larger than the current best can beat it.
+            if (best && component.length < best.componentSize) continue;
+
+            for (const node of component) {
+                const degree = neighbors(node).length;
+                if (degree > bestDegree || (degree === bestDegree && best && component.length > best.componentSize)) {
+                    best = { node, componentSize: component.length };
+                    bestDegree = degree;
+                }
+            }
+        }
+
+        return best ? (best.node.id as string) : null;
     }
 }
