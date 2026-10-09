@@ -42,16 +42,7 @@
                 <span>Orte</span>
             </a>
             </ng-container>
-            <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/admin/users" routerLinkActive="bg-brand-500/20! text-brand-500! dark:text-brand-400! border-brand-500/40! shadow-brand-sm"
-                class="flex items-center gap-2 px-4 py-1.5 rounded-full text-neutral-500 dark:text-neutral-400 hover:bg-brand-500/10 hover:text-brand-500 transition-all font-bold text-sm border border-transparent">
-                <app-icon name="people" size="1.1rem"></app-icon>
-                <span>Benutzer</span>
-            </a>
-            <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/admin/trees" routerLinkActive="bg-brand-500/20! text-brand-500! dark:text-brand-400! border-brand-500/40! shadow-brand-sm"
-                class="flex items-center gap-2 px-4 py-1.5 rounded-full text-neutral-500 dark:text-neutral-400 hover:bg-brand-500/10 hover:text-brand-500 transition-all font-bold text-sm border border-transparent">
-                <app-icon name="tree" size="1.1rem"></app-icon>
-                <span>Stammbäume</span>
-            </a>
+            <!-- Admin links (users, tree administration) intentionally live in /settings, not here. -->
             <a routerLink="/change-requests" routerLinkActive="bg-brand-500/20! text-brand-500! dark:text-brand-400! border-brand-500/40! shadow-brand-sm"
                 class="flex items-center gap-2 px-4 py-1.5 rounded-full text-neutral-500 dark:text-neutral-400 hover:bg-brand-500/10 hover:text-brand-500 transition-all font-bold text-sm border border-transparent">
                 <svg xmlns="http://www.w3.org/2000/svg" width="1.1rem" height="1.1rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path><rect x="9" y="3" width="6" height="4" rx="2"></rect><path d="m9 14 2 2 4-4"></path></svg>
@@ -169,14 +160,7 @@
             <span>Orte</span>
         </a>
         </ng-container>
-        <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/admin/users" class="mobile-nav-link" routerLinkActive="active">
-            <app-icon name="people" size="1.25rem"></app-icon>
-            <span>Benutzerverwaltung</span>
-        </a>
-        <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/admin/trees" class="mobile-nav-link" routerLinkActive="active">
-            <app-icon name="tree" size="1.25rem"></app-icon>
-            <span>Stammbaumverwaltung</span>
-        </a>
+        <!-- Admin links (users, tree administration) intentionally live in /settings, not here. -->
         <a routerLink="/change-requests" class="mobile-nav-link" routerLinkActive="active">
             <svg xmlns="http://www.w3.org/2000/svg" width="1.25rem" height="1.25rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"></path><rect x="9" y="3" width="6" height="4" rx="2"></rect><path d="m9 14 2 2 4-4"></path></svg>
             <span>Änderungsvorschläge</span>

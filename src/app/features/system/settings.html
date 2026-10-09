@@ -20,8 +20,25 @@
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-bold text-neutral-100 mb-1">Stammbaumverwaltung</h3>
+                    <h3 class="text-lg font-bold text-neutral-100 mb-1">Meine Stammbäume</h3>
                     <p class="text-sm text-neutral-400">Erstellen, wechseln oder bearbeiten</p>
+                </a>
+
+                <!-- Admin: tree administration (all trees, owners, orphaned trees) -->
+                <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/admin/trees"
+                    class="group p-6 rounded-2xl bg-canvas-white/5 border border-canvas-white/10 hover:border-accent-highlight-500/50 hover:bg-accent-highlight-500/5 transition-all duration-300">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-accent-highlight-500/10 flex items-center justify-center text-accent-highlight-400 mb-4 group-hover:scale-110 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <path d="M12 20v-8"></path>
+                            <path d="M5 20v-2a7 7 0 0 1 14 0v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-neutral-100 mb-1">Stammbaum-Administration</h3>
+                    <p class="text-sm text-neutral-400">Alle Bäume, Besitzer und verwaiste Bäume</p>
                 </a>
 
                 <a *ngIf="authService.currentUser()?.isAdmin" routerLink="/admin/users"
