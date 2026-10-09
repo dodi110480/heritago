@@ -21,7 +21,7 @@
                         Installierte Version
                     </h3>
                     <span
-                        class="px-4 py-1.5 rounded-full bg-brand-500/10 text-brand-400 text-sm font-bold border border-brand-500/20 shadow-lg shadow-blue-500/10">
+                        class="px-4 py-1.5 rounded-full bg-brand-500/10 text-brand-400 text-sm font-bold border border-brand-500/20 shadow-lg shadow-accent-violet-500/10">
                         {{ currentVersion }}
                     </span>
                 </div>
@@ -30,17 +30,45 @@
                     <div class="p-4 bg-canvas-white/5 rounded-2xl border border-canvas-white/5">
                         <span
                             class="block text-[10px] uppercase tracking-widest text-neutral-800 dark:text-neutral-200 font-bold mb-1">Node.js</span>
-                        <span class="text-neutral-200 font-medium">{{ systemInfo?.nodeVersion || '...' }}</span>
+                        <span class="text-neutral-200 font-medium">{{ systemInfo?.nodeVersion || '…' }}</span>
                     </div>
                     <div class="p-4 bg-canvas-white/5 rounded-2xl border border-canvas-white/5">
                         <span
                             class="block text-[10px] uppercase tracking-widest text-neutral-800 dark:text-neutral-200 font-bold mb-1">Platform</span>
-                        <span class="text-neutral-200 font-medium">{{ systemInfo?.platform || '...' }}</span>
+                        <span class="text-neutral-200 font-medium">{{ systemInfo?.platform || '…' }}</span>
+                    </div>
+                    <div class="p-4 bg-canvas-white/5 rounded-2xl border border-canvas-white/5">
+                        <span
+                            class="block text-[10px] uppercase tracking-widest text-neutral-800 dark:text-neutral-200 font-bold mb-1">Branch</span>
+                        <span class="text-neutral-200 font-medium">{{ currentBranch || '—' }}</span>
+                    </div>
+                    <div class="p-4 bg-canvas-white/5 rounded-2xl border border-canvas-white/5">
+                        <span
+                            class="block text-[10px] uppercase tracking-widest text-neutral-800 dark:text-neutral-200 font-bold mb-1">Build</span>
+                        <span class="text-neutral-200 font-medium">{{ currentCommitDate || '—' }}</span>
                     </div>
                 </div>
 
+                <!-- Installed commit: identical to the revision shown on GitHub -->
+                @if (currentCommit) {
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                    <span
+                        class="font-bold uppercase tracking-widest text-[10px] text-neutral-800 dark:text-neutral-200">Commit</span>
+                    @if (commitUrl) {
+                    <a [href]="commitUrl" target="_blank" rel="noopener noreferrer"
+                        class="font-mono text-brand-400 hover:text-brand-300 hover:underline transition-colors"
+                        title="Diesen Commit auf GitHub ansehen">{{ currentCommit }}</a>
+                    } @else {
+                    <span class="font-mono text-neutral-300">{{ currentCommit }}</span>
+                    }
+                    @if (systemInfo?.gitDescribe) {
+                    <span class="text-neutral-500">· {{ systemInfo.gitDescribe }}</span>
+                    }
+                </div>
+                }
+
                 <div *ngIf="updateStatus" class="mt-auto p-4 rounded-2xl flex items-center gap-3 transition-colors"
-                    [ngClass]="updateStatus.hasUpdate ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'">
+                    [ngClass]="updateStatus.hasUpdate ? 'bg-accent-highlight-500/10 text-accent-highlight-400 border border-accent-highlight-500/20' : 'bg-accent-success-500/10 text-accent-success-400 border border-accent-success-500/20'">
                     <div class="p-2 rounded-full bg-current/10">
                         <svg *ngIf="!updateStatus.hasUpdate" xmlns="http://www.w3.org/2000/svg" width="20"
                             height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -90,7 +118,7 @@
                     </button>
 
                     <button *ngIf="updateStatus?.hasUpdate" (click)="performUpdate()" [disabled]="updating"
-                        class="grow btn-primary bg-linear-to-r! !from-emerald-600 !to-teal-600 py-4! rounded-2xl!">
+                        class="grow btn-primary bg-linear-to-r! !from-accent-success-600 !to-accent-success-600 py-4! rounded-2xl!">
                         <span *ngIf="updating"
                             class="w-4 h-4 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin mr-2"></span>
                         {{ updating ? 'Wird installiert...' : 'Version ' + updateStatus.latestVersion + '
@@ -108,7 +136,7 @@
         <div class="flex flex-col gap-6">
             <div *ngIf="updateStatus?.hasUpdate"
                 class="glass-card shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h4 class="text-lg font-black text-emerald-400 uppercase tracking-widest mb-6 px-1">Gefundenes
+                <h4 class="text-lg font-black text-accent-success-400 uppercase tracking-widest mb-6 px-1">Gefundenes
                     Update</h4>
 
                 <div class="flex flex-col md:flex-row items-center gap-8 justify-center py-6">
@@ -128,28 +156,28 @@
                     </div>
 
                     <div
-                        class="flex flex-col items-center gap-2 p-6 bg-emerald-500/10 rounded-3xl border border-emerald-500/20 min-w-[160px] shadow-lg shadow-emerald-500/5">
+                        class="flex flex-col items-center gap-2 p-6 bg-accent-success-500/10 rounded-3xl border border-accent-success-500/20 min-w-[160px] shadow-lg shadow-accent-success-500/5">
                         <span
-                            class="text-[10px] font-bold text-emerald-400/60 uppercase tracking-widest">Verfügbar</span>
-                        <span class="text-2xl font-black text-emerald-400">{{ updateStatus.latestVersion }}</span>
+                            class="text-[10px] font-bold text-accent-success-400/60 uppercase tracking-widest">Verfügbar</span>
+                        <span class="text-2xl font-black text-accent-success-400">{{ updateStatus.latestVersion }}</span>
                     </div>
                 </div>
 
                 <div *ngIf="updateStatus.releaseName"
-                    class="mt-8 pt-6 border-t border-emerald-500/10 flex items-center gap-3">
+                    class="mt-8 pt-6 border-t border-accent-success-500/10 flex items-center gap-3">
                     <span class="text-neutral-800 dark:text-neutral-200 font-bold text-sm uppercase">Release:</span>
-                    <span class="text-emerald-300 font-semibold">{{ updateStatus.releaseName }}</span>
+                    <span class="text-accent-success-300 font-semibold">{{ updateStatus.releaseName }}</span>
                 </div>
 
                 <div *ngIf="updateStatus.details"
-                    class="mt-6 p-6 bg-neutral-black/40 rounded-2xl border border-canvas-white/5 font-mono text-sm text-neutral-400 overflow-x-auto max-h-[300px]">
+                    class="mt-6 p-6 bg-canvas-black/40 rounded-2xl border border-canvas-white/5 font-mono text-sm text-neutral-400 overflow-x-auto max-h-[300px]">
                     <pre class="whitespace-pre-wrap">{{ updateStatus.details }}</pre>
                 </div>
             </div>
 
             <div *ngIf="updateStatus && !updateStatus.hasUpdate"
-                class="p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-4 text-emerald-400">
-                <div class="p-2 rounded-full bg-emerald-500/20 animate-pulse">
+                class="p-6 bg-accent-success-500/10 border border-accent-success-500/20 rounded-2xl flex items-center gap-4 text-accent-success-400">
+                <div class="p-2 rounded-full bg-accent-success-500/20 animate-pulse">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
@@ -160,10 +188,10 @@
             </div>
 
             <div *ngIf="updateResult"
-                class="bg-emerald-900/20 border border-emerald-500/30 rounded-3xl p-8 shadow-2xl">
+                class="bg-accent-success-700/20 border border-accent-success-500/30 rounded-3xl p-8 shadow-2xl">
                 <div class="flex items-center gap-4 mb-6">
                     <div
-                        class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-canvas-white shadow-lg shadow-emerald-500/30">
+                        class="w-10 h-10 rounded-full bg-accent-success-500 flex items-center justify-center text-canvas-white shadow-lg shadow-accent-success-500/30">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
                             stroke-linejoin="round">
@@ -173,7 +201,7 @@
                     <h4 class="text-xl font-bold text-canvas-white">{{ updateResult.message }}</h4>
                 </div>
                 <div *ngIf="updateResult.output"
-                    class="p-6 bg-neutral-black/40 rounded-2xl border border-canvas-white/5 font-mono text-xs text-emerald-400/80 overflow-x-auto max-h-[400px]">
+                    class="p-6 bg-canvas-black/40 rounded-2xl border border-canvas-white/5 font-mono text-xs text-accent-success-400/80 overflow-x-auto max-h-[400px]">
                     <pre>{{ updateResult.output }}</pre>
                 </div>
             </div>

@@ -27,6 +27,7 @@ import { changeRequestRoutes } from './routes/change-request.routes';
 import { myChangeRequestRoutes } from './routes/change-request.me.routes';
 import { systemRoutes } from './routes/system.routes';
 import { adminTreeRoutes } from './routes/admin-trees.routes';
+import { requireAdmin } from './middleware/requireAdmin';
 import { treeAuth } from './middleware/treeAuth';
 import { devAuth } from './middleware/devAuth';
 import { authJwt } from './middleware/authJwt';
@@ -106,7 +107,7 @@ app.use('/api/admin', adminTreeRoutes(prisma));
 // Removed unscoped person routes; use tree-scoped routes only
 app.use('/api/family', familyRoutes(prisma));
 app.use('/api/media', mediaRoutes(prisma));
-app.use('/api/system', systemRoutes());
+app.use('/api/system', requireAdmin(prisma), systemRoutes());
 app.use('/api/notifications', notificationRoutes(prisma));
 app.use('/api/change-requests', myChangeRequestRoutes(prisma));
 

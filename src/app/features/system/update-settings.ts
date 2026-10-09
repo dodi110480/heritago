@@ -18,7 +18,16 @@ export class UpdateSettings implements OnInit {
     public checking = false;
     public updating = false;
     public error: string | null = null;
-    public currentVersion: string = '...';
+
+    /**
+     * Installed revision, resolved from the local git checkout via /api/system/info.
+     * Values stay available even while the GitHub API is unreachable or rate limited.
+     */
+    public currentVersion: string = '…';
+    public currentCommit: string | null = null;
+    public currentBranch: string | null = null;
+    public currentCommitDate: string | null = null;
+    public repositoryUrl: string | null = null;
 
     private apiUrl = `${environment.apiUrl}/system`;
     private cdr = inject(ChangeDetectorRef);
@@ -30,15 +39,43 @@ export class UpdateSettings implements OnInit {
 
     async loadSystemInfo() {
         try {
-            const res = await fetch(`${this.apiUrl}/info`);
+            const res = await fetch(`${this.apiUrl}/info`, { credentials: 'include' });
             const data = await res.json();
             if (data.success) {
-                this.systemInfo = data;
+                this.systemInfo = data.data;
+                this.applyInstalledInfo(data.data);
                 this.cdr.detectChanges();
             }
         } catch (err) {
             console.error('Failed to load system info', err);
         }
+    }
+
+    /** Link to the installed commit on GitHub (null while unknown). */
+    get commitUrl(): string | null {
+        return this.repositoryUrl && this.currentCommit
+            ? `${this.repositoryUrl}/commit/${this.currentCommit}`
+            : null;
+    }
+
+    /**
+     * Copies the revision metadata into the view model. The backend already delivers
+     * prepared display values (backend-first), so nothing is formatted here.
+     *
+     * Fallback semantics: loadSystemInfo() and checkUpdate() run concurrently, and
+     * /check-update does not carry the git fields. Anything missing must therefore
+     * keep the value already resolved by /info instead of resetting it to null.
+     */
+    private applyInstalledInfo(info: any): void {
+        if (!info) return;
+
+        // Prefer the release tag, then the commit hash, then the package version.
+        this.currentVersion =
+            info.gitTag || info.currentVersion || info.gitCommit || info.version || this.currentVersion;
+        this.currentCommit = info.gitCommit || this.currentCommit;
+        this.currentBranch = info.gitBranch || this.currentBranch;
+        this.currentCommitDate = info.gitCommitDate || this.currentCommitDate;
+        this.repositoryUrl = info.repositoryUrl || this.repositoryUrl;
     }
 
     async checkUpdate() {
@@ -49,11 +86,11 @@ export class UpdateSettings implements OnInit {
         this.cdr.detectChanges();
 
         try {
-            const res = await fetch(`${this.apiUrl}/check-update`);
+            const res = await fetch(`${this.apiUrl}/check-update`, { credentials: 'include' });
             const data = await res.json();
             if (data.success) {
-                this.updateStatus = data;
-                this.currentVersion = data.currentVersion || this.currentVersion;
+                this.updateStatus = data.data;
+                this.applyInstalledInfo(data.data);
             } else {
                 this.error = data.message;
             }
@@ -80,14 +117,15 @@ export class UpdateSettings implements OnInit {
             const res = await fetch(`${this.apiUrl}/update`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ tag: this.updateStatus.latestVersion })
             });
             const data = await res.json();
             if (data.success) {
-                this.updateResult = data;
-                this.currentVersion = this.updateStatus.latestVersion;
+                this.updateResult = data.data;
                 this.updateStatus = null;
-                setTimeout(() => this.loadSystemInfo(), 2000);
+                // Re-read the revision metadata - the checkout is already updated on disk.
+                await this.loadSystemInfo();
             } else {
                 this.error = data.message;
             }
