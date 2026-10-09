@@ -1,14 +1,18 @@
-import { Component, ElementRef, OnInit, ViewChild, AfterViewInit, inject, signal, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, ViewChild, AfterViewInit, inject, signal, computed, ViewEncapsulation, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService, TreeAccessLevel } from '../../core/services/auth.service';
 import { TreeService } from '../../core/services/tree.service';
+import { PersonService } from '../../core/services/person.service';
 import { environment } from '../../environment';
 import * as d3 from 'd3';
 
 import { MediaService } from '../../core/services/media.service';
+import { AppContextMenuComponent, ContextMenuItem } from '../../shared/components/ui/app-context-menu';
+import { AppRelationModal, RelationDraft } from '../../shared/components/ui/app-relation-modal/app-relation-modal';
+import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 // @ts-ignore
 import * as f3 from 'family-chart';
 import 'family-chart/styles/family-chart.css';
@@ -16,7 +20,7 @@ import 'family-chart/styles/family-chart.css';
 @Component({
   selector: 'app-family-chart',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppContextMenuComponent, AppRelationModal, AppModalShell],
   encapsulation: ViewEncapsulation.None,
   template: `
     <div class="f3-literal-wrapper">
@@ -123,6 +127,92 @@ import 'family-chart/styles/family-chart.css';
       }
 
       <div #familyChart class="f3 w-full h-full flex-1" id="FamilyChart"></div>
+
+      <!-- Feedback for actions triggered from a card's context menu -->
+      @if (actionMessage(); as message) {
+        <div
+          class="absolute bottom-5 left-1/2 -translate-x-1/2 z-[1000] max-w-[90%] px-5 py-2.5 rounded-btn text-sm font-medium backdrop-blur-xl border"
+          [ngClass]="{
+            'bg-accent-success-500/15 text-accent-success-300 border-accent-success-500/30': message.type === 'success',
+            'bg-accent-highlight-500/15 text-accent-highlight-300 border-accent-highlight-500/30': message.type === 'pending',
+            'bg-accent-danger-500/15 text-accent-danger-300 border-accent-danger-500/30': message.type === 'error'
+          }"
+          role="status"
+        >{{ message.text }}</div>
+      }
+
+      <!-- Right-click menu for profile cards -->
+      <app-context-menu
+        [visible]="contextMenu().visible"
+        [x]="contextMenu().x"
+        [y]="contextMenu().y"
+        [title]="contextMenu().title"
+        [subtitle]="contextMenu().subtitle"
+        [items]="contextMenuItems()"
+        (itemSelected)="onContextMenuAction($event)"
+        (closed)="closeContextMenu()"
+      ></app-context-menu>
+
+      <!-- Quick add: insert a sibling into the person's birth family -->
+      <app-modal-shell
+        [visible]="siblingModalVisible()"
+        title="Geschwister einfügen"
+        size="sm"
+        saveText="Einfügen"
+        [loading]="siblingSaving()"
+        [disabledSave]="!siblingDraft.firstName.trim()"
+        (close)="closeSiblingModal()"
+        (save)="saveSibling()"
+      >
+        <div class="space-y-4">
+          <p class="text-sm text-neutral-500">
+            Neues Kind der Familie von
+            <span class="font-medium text-neutral-900 dark:text-canvas-white">{{ siblingParentLabel() }}</span>.
+          </p>
+
+          @if (siblingError(); as error) {
+            <div class="px-3.5 py-2.5 rounded-btn text-sm bg-accent-danger-500/15 text-accent-danger-300 border border-accent-danger-500/30">
+              {{ error }}
+            </div>
+          }
+
+          <div class="form-group">
+            <label class="form-label">Vorname</label>
+            <input type="text" class="form-input" [(ngModel)]="siblingDraft.firstName" placeholder="z.B. Maria">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nachname</label>
+            <input type="text" class="form-input" [(ngModel)]="siblingDraft.lastName">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+              <label class="form-label">Geschlecht</label>
+              <select class="form-input" [(ngModel)]="siblingDraft.gender">
+                <option value="M">männlich</option>
+                <option value="F">weiblich</option>
+                <option value="U">unbekannt</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Geburtsjahr</label>
+              <input type="text" class="form-input" [(ngModel)]="siblingDraft.birthYear" placeholder="z.B. 1875">
+            </div>
+          </div>
+        </div>
+      </app-modal-shell>
+
+      <!-- Add a relation to the selected person -->
+      <app-relation-modal
+        [visible]="relationModalVisible()"
+        [relation]="relationDraftInput"
+        [allPersonsOptions]="chartPersonOptions()"
+        [errorMessage]="relationError()"
+        (close)="closeRelationModal()"
+        (save)="saveRelationFromChart($event)"
+        (navigateToPerson)="navigateToPerson($event)"
+      ></app-relation-modal>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.Eager,
@@ -334,7 +424,7 @@ import 'family-chart/styles/family-chart.css';
     #FamilyChart { width: 100%; height: 100%; background-color: transparent; }
     `]
 })
-export class FamilyChartComponent implements OnInit, AfterViewInit {
+export class FamilyChartComponent implements OnInit, AfterViewInit, OnDestroy {
     public mediaService = inject(MediaService);
     public authService = inject(AuthService);
     private http = inject(HttpClient);
@@ -350,6 +440,40 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
   public configOpen = signal(false);
   /** User facing message when the chart cannot be loaded or drawn. */
   public chartError = signal<string | null>(null);
+
+  private personService = inject(PersonService);
+
+  /** Own access level on the active tree (gates the write actions of the card menu). */
+  private treePermission = signal<TreeAccessLevel | null>(null);
+
+  /** Position, target person and caption of the card context menu. */
+  public contextMenu = signal<{
+    visible: boolean;
+    x: number;
+    y: number;
+    personId: string;
+    title: string;
+    subtitle: string;
+  }>({ visible: false, x: 0, y: 0, personId: '', title: '', subtitle: '' });
+
+  /** Full profile of the person the menu was opened for (loaded lazily). */
+  private menuProfile = signal<any | null>(null);
+  public menuProfileLoading = signal(false);
+
+  /** Feedback banner for actions triggered from the context menu. */
+  public actionMessage = signal<{ type: 'success' | 'pending' | 'error'; text: string } | null>(null);
+  private actionMessageTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /** Relation modal state (adds a relation to the selected person). */
+  public relationModal = signal<{ visible: boolean; personId: string }>({ visible: false, personId: '' });
+  public relationError = signal<string | null>(null);
+  public relationSaving = signal(false);
+
+  /** Quick-add modal for a new sibling (child of the person's parents). */
+  public siblingModalVisible = signal(false);
+  public siblingError = signal<string | null>(null);
+  public siblingSaving = signal(false);
+  public siblingDraft = { firstName: '', lastName: '', gender: 'U', birthYear: '' };
 
   public config = {
     is_horizontal: false,
@@ -369,8 +493,16 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.loadSavedConfig();
-    const activeTree = this.authService.currentTree();
-    const treeName = activeTree?.name;
+    this.loadTreePermission();
+    this.loadChartData();
+  }
+
+  /**
+   * Loads the chart data of the active tree and renders the chart.
+   * Reused after mutations (e.g. inserting a sibling) to refresh the tree.
+   */
+  private loadChartData() {
+    const treeName = this.authService.currentTree()?.name;
     
     if (treeName) {
       this.http.get<any>(`${environment.apiUrl}/tree/${treeName}/chart-data`, { withCredentials: true }).subscribe({
@@ -396,6 +528,425 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
       this.renderChart();
     }
   }
+
+  ngOnDestroy() {
+    // The delegated card listeners live on the chart container; releasing them
+    // explicitly prevents keeping the component alive through its own closures.
+    const container = this.chartElement?.nativeElement;
+    if (container) {
+      d3.select(container).on('dblclick', null).on('contextmenu', null);
+    }
+
+    if (this.actionMessageTimer) {
+      clearTimeout(this.actionMessageTimer);
+      this.actionMessageTimer = null;
+    }
+  }
+
+  /**
+   * Resolves the current user's access level for the active tree. Only used to
+   * gate the write actions of the card context menu - the backend remains the
+   * enforcing authority.
+   */
+  private loadTreePermission() {
+    const activeTree = this.authService.currentTree();
+    if (activeTree?.permission) {
+      this.treePermission.set(activeTree.permission);
+      return;
+    }
+
+    this.authService.getTrees().subscribe({
+      next: (trees) => {
+        const match = trees.find(t => t.id === activeTree?.id || t.name === activeTree?.name);
+        this.treePermission.set(match?.permission ?? null);
+      },
+      error: () => this.treePermission.set(null)
+    });
+  }
+
+  /**
+   * Resolves the person behind a chart card from a DOM event.
+   *
+   * family-chart binds the tree datum to the card *container* (`div.card_cont`),
+   * while the visible `div.card` is injected via `innerHTML` and therefore carries
+   * no datum of its own. The datum is a d3 hierarchy node whose `.data` holds the
+   * chart node (`{ id, data, rels }`). Placeholder cards ("add relative", unknown,
+   * new relation) carry no person id and are ignored.
+   */
+  private resolveCardPerson(event: Event): { personId: string; node: any } | null {
+    const target = event.target as Element | null;
+    const cardContainer = target?.closest?.('.card_cont');
+    if (!cardContainer) return null;
+
+    const datum: any = d3.select(cardContainer).datum();
+    const chartNode = datum?.data;
+    const personId = chartNode?.id;
+    if (!personId) return null;
+    if (chartNode.to_add || chartNode.unknown || chartNode._new_rel_data) return null;
+
+    const id = String(personId);
+    // The chart library mutates its own copy of the nodes (positions, `main`, ...),
+    // so the pristine payload from the backend is preferred for display data.
+    const node = this.treeData().find(entry => String(entry.id) === id) ?? chartNode;
+
+    return { personId: id, node };
+  }
+
+  /** Opens the context menu for a card, anchored at the cursor position. */
+  public openContextMenu(x: number, y: number, node: any) {
+    const personId = String(node?.id ?? '');
+    if (!personId) return;
+
+    this.menuProfile.set(null);
+    this.contextMenu.set({
+      visible: true,
+      x,
+      y,
+      personId,
+      title: this.getNodeDisplayName(node),
+      subtitle: this.getNodeLifeSpan(node)
+    });
+    this.loadMenuProfile(personId);
+  }
+
+  public closeContextMenu() {
+    this.contextMenu.update(state => ({ ...state, visible: false }));
+  }
+
+  /** Menu entries, gated by the user's access level on the active tree. */
+  public contextMenuItems = computed<ContextMenuItem[]>(() => {
+    const items: ContextMenuItem[] = [
+      { id: 'open', label: 'Person öffnen' },
+      { id: 'focus', label: 'Als Startperson setzen' },
+      {
+        id: 'ancestry',
+        label: 'Vorfahren erweitern',
+        hint: this.config.ancestry_depth >= 6 ? 'Maximale Tiefe erreicht' : `Aktuell ${this.config.ancestry_depth} Generationen`,
+        disabled: this.config.ancestry_depth >= 6
+      },
+      {
+        id: 'progeny',
+        label: 'Nachfahren erweitern',
+        hint: this.config.progeny_depth >= 6 ? 'Maximale Tiefe erreicht' : `Aktuell ${this.config.progeny_depth} Generationen`,
+        disabled: this.config.progeny_depth >= 6
+      },
+      { id: 'copyId', label: 'Personen-ID kopieren' }
+    ];
+
+    if (this.canEditChart()) {
+      const birthFamily = this.birthFamilyOfMenuPerson();
+
+      items.push({ id: 'addRelation', label: 'Beziehung hinzufügen…', groupStart: true });
+      items.push({
+        id: 'addSibling',
+        label: 'Geschwister einfügen…',
+        disabled: !birthFamily,
+        hint: birthFamily
+          ? 'Neues Kind derselben Eltern'
+          : (this.menuProfileLoading() ? 'Eltern werden geladen…' : 'Nur möglich, wenn die Person Eltern hat')
+      });
+      items.push({ id: 'manageRelations', label: 'Beziehungen verwalten' });
+    }
+
+    return items;
+  });
+
+  public onContextMenuAction(itemId: string) {
+    const personId = this.contextMenu().personId;
+    if (!personId) return;
+
+    switch (itemId) {
+      case 'open':
+      case 'manageRelations':
+        this.router.navigate(['/person', personId]);
+        break;
+      case 'focus':
+        this.setAsMainPerson(personId);
+        break;
+      case 'ancestry':
+        this.config.ancestry_depth = Math.min(6, this.config.ancestry_depth + 1);
+        this.updateTree();
+        break;
+      case 'progeny':
+        this.config.progeny_depth = Math.min(6, this.config.progeny_depth + 1);
+        this.updateTree();
+        break;
+      case 'copyId':
+        this.copyPersonId(personId);
+        break;
+      case 'addRelation':
+        this.openRelationModal(personId);
+        break;
+      case 'addSibling':
+        this.openSiblingModal(personId);
+        break;
+    }
+  }
+
+  public navigateToPerson(personId: string) {
+    this.router.navigate(['/person', personId]);
+  }
+
+  /** Makes the given person the anchor of the rendered chart. */
+  private setAsMainPerson(personId: string) {
+    localStorage.setItem(this.FOCUS_PERSON_KEY, personId);
+    if (this.f3Chart) {
+      this.f3Chart.updateMainId(personId).updateTree({ initial: true });
+    }
+  }
+
+  private async copyPersonId(personId: string) {
+    try {
+      await navigator.clipboard.writeText(personId);
+      this.setActionMessage('success', 'Personen-ID wurde in die Zwischenablage kopiert.');
+    } catch {
+      this.setActionMessage('error', 'Die Personen-ID konnte nicht kopiert werden.');
+    }
+  }
+
+  /** Loads the full profile that backs the profile dependent menu actions. */
+  private loadMenuProfile(personId: string) {
+    const treeName = this.authService.currentTree()?.name;
+    if (!treeName || !personId) return;
+
+    this.menuProfileLoading.set(true);
+    this.personService.getFullProfile(treeName, personId).subscribe({
+      next: (profile) => {
+        this.menuProfileLoading.set(false);
+        this.menuProfile.set(profile);
+      },
+      error: () => {
+        this.menuProfileLoading.set(false);
+        this.menuProfile.set(null);
+      }
+    });
+  }
+
+  /**
+   * Birth family of the person the menu was opened for. A sibling can only be
+   * added when that person has at least one parent (shared family).
+   */
+  private birthFamilyOfMenuPerson(): { familyId: string; parentRelations: RelationDraft[] } | null {
+    const profile: any = this.menuProfile();
+    const relations: any[] = Array.isArray(profile?.relations) ? profile.relations : [];
+    const parentTypes = ['FATHER', 'MOTHER', 'PARENT'];
+
+    const parents = relations.filter(rel => parentTypes.includes(rel.type) && rel.personId && rel.familyId);
+    if (parents.length === 0) return null;
+
+    const familyId = String(parents[0].familyId);
+    const familyParents = parents.filter(rel => String(rel.familyId) === familyId);
+
+    // Every parent keeps its GEDCOM role; parents with an unknown role ("PARENT")
+    // are assigned to the remaining free slot deterministically.
+    let fatherUsed = familyParents.some(rel => rel.type === 'FATHER');
+    let motherUsed = familyParents.some(rel => rel.type === 'MOTHER');
+
+    const parentRelations: RelationDraft[] = familyParents.map(rel => {
+      let type = rel.type;
+      if (type === 'PARENT') {
+        if (!fatherUsed) {
+          type = 'FATHER';
+          fatherUsed = true;
+        } else if (!motherUsed) {
+          type = 'MOTHER';
+          motherUsed = true;
+        } else {
+          type = 'FATHER';
+        }
+      }
+      return { type, personId: String(rel.personId), familyId } as RelationDraft;
+    });
+
+    return { familyId, parentRelations };
+  }
+
+  // ---------------------------------------------------------------------
+  // Add relation
+  // ---------------------------------------------------------------------
+
+  /**
+   * The context menu only *adds* relations, so the modal always starts with an
+   * empty draft (the modal re-initializes on every `visible` change).
+   */
+  public readonly relationDraftInput: RelationDraft | null = null;
+
+  public relationModalVisible = computed(() => this.relationModal().visible);
+
+  private openRelationModal(personId: string) {
+    this.relationError.set(null);
+    this.relationModal.set({ visible: true, personId });
+    this.loadMenuProfile(personId);
+  }
+
+  public closeRelationModal() {
+    this.relationModal.update(state => ({ ...state, visible: false }));
+    this.relationError.set(null);
+  }
+
+  public saveRelationFromChart(draft: RelationDraft) {
+    const treeName = this.authService.currentTree()?.name;
+    const treeId = this.authService.currentTree()?.id;
+    const personId = this.relationModal().personId;
+    const profile: any = this.menuProfile();
+
+    if (!treeName || !treeId || !personId || !profile) {
+      this.relationError.set('Die Person konnte nicht geladen werden. Bitte erneut versuchen.');
+      return;
+    }
+
+    const person = profile.person ?? {};
+    const existingRelations: any[] = Array.isArray(profile.relations) ? profile.relations : [];
+
+    this.relationError.set(null);
+    this.relationSaving.set(true);
+
+    // The write service replaces the complete relation set of the person, so the
+    // existing relations are resent together with the new one.
+    this.personService.savePerson(treeName, {
+      ...person,
+      id: personId,
+      treeId,
+      relations: [...existingRelations, draft]
+    }).subscribe({
+      next: (data: any) => {
+        this.relationSaving.set(false);
+        this.closeRelationModal();
+        this.loadChartData();
+        this.reportWriteResult(data, 'Beziehung wurde gespeichert.');
+      },
+      error: (err) => {
+        this.relationSaving.set(false);
+        this.relationError.set(err?.error?.message || 'Die Beziehung konnte nicht gespeichert werden.');
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Insert sibling
+  // ---------------------------------------------------------------------
+
+  private openSiblingModal(personId: string) {
+    const node = this.treeData().find(entry => entry.id === personId);
+    this.siblingDraft = {
+      firstName: '',
+      lastName: node?.data?.['last name'] ?? '',
+      gender: 'U',
+      birthYear: ''
+    };
+    this.siblingError.set(null);
+    this.siblingModalVisible.set(true);
+    this.loadMenuProfile(personId);
+  }
+
+  public closeSiblingModal() {
+    this.siblingModalVisible.set(false);
+    this.siblingError.set(null);
+  }
+
+  /** Names of the parents the new sibling will be attached to. */
+  public siblingParentLabel = computed(() => {
+    const profile: any = this.menuProfile();
+    const relations: any[] = Array.isArray(profile?.relations) ? profile.relations : [];
+    const names = relations
+      .filter(rel => ['FATHER', 'MOTHER', 'PARENT'].includes(rel.type) && rel.personName)
+      .map(rel => rel.personName);
+
+    return names.length > 0 ? names.join(' & ') : 'den Eltern';
+  });
+
+  /**
+   * Creates a new person as a child of the selected person's birth family.
+   * Non-owners only create a change request (surfaced as a pending message).
+   */
+  public saveSibling() {
+    const treeName = this.authService.currentTree()?.name;
+    const treeId = this.authService.currentTree()?.id;
+    const birthFamily = this.birthFamilyOfMenuPerson();
+
+    const firstName = this.siblingDraft.firstName.trim();
+    if (!firstName) {
+      this.siblingError.set('Bitte einen Vornamen angeben.');
+      return;
+    }
+    if (!treeName || !treeId || !birthFamily) {
+      this.siblingError.set('Die Eltern der Person konnten nicht ermittelt werden.');
+      return;
+    }
+
+    const birthYear = this.siblingDraft.birthYear.trim();
+
+    this.siblingError.set(null);
+    this.siblingSaving.set(true);
+
+    this.personService.savePerson(treeName, {
+      treeId,
+      firstName,
+      lastName: this.siblingDraft.lastName.trim(),
+      sex: this.siblingDraft.gender,
+      relations: birthFamily.parentRelations,
+      // Only sent when a year was entered; an empty timeline would clear nothing.
+      timeline: birthYear ? [{ tag: 'BIRT', dateText: birthYear }] : []
+    }).subscribe({
+      next: (data: any) => {
+        this.siblingSaving.set(false);
+        this.closeSiblingModal();
+        this.loadChartData();
+        this.reportWriteResult(data, 'Geschwister wurde eingefügt.');
+      },
+      error: (err) => {
+        this.siblingSaving.set(false);
+        this.siblingError.set(err?.error?.message || 'Das Geschwister konnte nicht eingefügt werden.');
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------
+  // Shared helpers
+  // ---------------------------------------------------------------------
+
+  /** Owners write directly, every other role produces a change request. */
+  private reportWriteResult(data: any, successText: string) {
+    if (data?.pending) {
+      this.setActionMessage('pending', 'Der Vorschlag wurde gespeichert und wartet auf die Bestätigung des Baum-Besitzers.');
+      return;
+    }
+    this.setActionMessage('success', successText);
+  }
+
+  private setActionMessage(type: 'success' | 'pending' | 'error', text: string) {
+    this.actionMessage.set({ type, text });
+    if (this.actionMessageTimer) {
+      clearTimeout(this.actionMessageTimer);
+    }
+    this.actionMessageTimer = setTimeout(() => this.actionMessage.set(null), 6000);
+  }
+
+  /** Write actions are hidden only when the access level is known to be read-only. */
+  private canEditChart(): boolean {
+    const permission = this.treePermission();
+    return permission === null || permission === 'OWNER' || permission === 'EDITOR';
+  }
+
+  private getNodeDisplayName(node: any): string {
+    const name = [node?.data?.['first name'], node?.data?.['last name']].filter(Boolean).join(' ').trim();
+    return name || 'Unbekannte Person';
+  }
+
+  private getNodeLifeSpan(node: any): string {
+    const birth = node?.data?.birthday;
+    const death = node?.data?.death;
+    if (!birth && !death) return '';
+    return `${birth || '?'} – ${death || '?'}`;
+  }
+
+  /** Options for the relation modal's person autocomplete (all persons in the tree). */
+  public chartPersonOptions = computed(() => this.treeData()
+    .filter(node => node?.id && node?.data)
+    .map(node => ({
+      id: String(node.id),
+      displayName: this.getNodeDisplayName(node)
+    })));
 
   public toggleConfig() {
     this.configOpen.set(!this.configOpen());
@@ -503,15 +1054,21 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
         this.f3Chart.updateMainId(d.data.id).updateTree({});
       });
 
-    // Handle single click navigation vs double click focus via a custom timer if desired
-    // For now, we prefer the library's built-in focus behavior and add a small navigation hook
-    d3.select(cont).on('dblclick', (e: any) => {
-      const targetElement = (e.target as Element).closest('.f3-html-card');
-      if (targetElement) {
-        const d = d3.select(targetElement).datum() as any;
-        this.router.navigate(['/person', d.data.id]);
-      }
-    });
+    // Card interactions the library does not cover itself. Delegated on the chart
+    // container, so they survive every re-render triggered by updateTree().
+    d3.select(cont)
+      .on('dblclick', (e: any) => {
+        const resolved = this.resolveCardPerson(e);
+        if (resolved) {
+          this.navigateToPerson(resolved.personId);
+        }
+      })
+      .on('contextmenu', (e: any) => {
+        const resolved = this.resolveCardPerson(e);
+        if (!resolved) return; // outside a person card: keep the native menu
+        e.preventDefault();
+        this.openContextMenu(e.clientX, e.clientY, resolved.node);
+      });
 
     this.f3Chart.editTree();
     this.f3Chart.updateMainId(mainId).updateTree({ initial: true });
