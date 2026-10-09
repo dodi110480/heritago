@@ -790,6 +790,15 @@ export class TreeService {
         ]);
 
         const individualIds = new Set(persons.map(p => p.id));
+        const familiesById = new Map<string, any>(families.map((f) => [f.id, f]));
+
+        // GEDCOM permits exactly one birth family (FAMC) per person. Imports
+        // occasionally violate this and list the same child in two families,
+        // which results in more than two parents. family-chart aborts the whole
+        // render in that case ("child has more than 1 parent") and shows nothing,
+        // so the conflict is resolved here - deterministically - instead of
+        // letting a single dirty record blank the entire chart.
+        const birthFamilyByPerson = this.resolveBirthFamilies(families, individualIds);
 
         const nodes = persons.map(p => {
             const primaryMedia = p.mediaLinks.find(ml => ml.isPrimary)?.media || p.mediaLinks[0]?.media;
@@ -813,21 +822,19 @@ export class TreeService {
                 }
             };
 
-            // Parents
-            const birthFams = families.filter(f => 
-                f.familyMembers.some(m => m.personId === p.id && m.role === 'CHILD')
-            );
-            for (const fam of birthFams) {
-                const parents = fam.familyMembers.filter(m => m.role === 'SPOUSE').map(m => m.personId);
-                parents.forEach(pId => {
-                    if (individualIds.has(pId) && !node.rels.parents.includes(pId)) {
-                        node.rels.parents.push(pId);
-                    }
-                });
+            // Parents: taken from the single resolved birth family. family-chart
+            // supports at most two parents, so the list is capped deterministically.
+            const birthFamily = familiesById.get(birthFamilyByPerson.get(p.id) as string);
+            if (birthFamily) {
+                node.rels.parents = birthFamily.familyMembers
+                    .filter((m: any) => m.role === 'SPOUSE' && individualIds.has(m.personId))
+                    .map((m: any) => m.personId)
+                    .sort()
+                    .slice(0, 2);
             }
 
             // Spouses and Children
-            const ownFamilies = families.filter(f => 
+            const ownFamilies = families.filter(f =>
                 f.familyMembers.some(m => m.personId === p.id && m.role === 'SPOUSE')
             );
             for (const fam of ownFamilies) {
@@ -836,9 +843,13 @@ export class TreeService {
                     node.rels.spouses.push(spouseId);
                 }
 
-                const children = fam.familyMembers.filter(m => m.role === 'CHILD').map(m => m.personId);
+                // Only children whose resolved birth family is this one - keeps
+                // parent/child links symmetric and removes duplicate child links.
+                const children = fam.familyMembers
+                    .filter(m => m.role === 'CHILD' && individualIds.has(m.personId) && birthFamilyByPerson.get(m.personId) === fam.id)
+                    .map(m => m.personId);
                 children.forEach(cId => {
-                    if (individualIds.has(cId) && !node.rels.children.includes(cId)) {
+                    if (!node.rels.children.includes(cId)) {
                         node.rels.children.push(cId);
                     }
                 });
@@ -911,5 +922,39 @@ export class TreeService {
         }
 
         return best ? (best.node.id as string) : null;
+    }
+
+    /**
+     * Resolves exactly one birth family per person (GEDCOM: FAMC).
+     *
+     * Duplicate child links - the same person listed as CHILD in two families -
+     * are a known GEDCOM import artifact. They lead to more than two parents and
+     * make family-chart abort with "child has more than 1 parent", leaving the
+     * chart blank. The conflict is resolved deterministically:
+     *   1. prefer the family with the most parents present in this tree,
+     *   2. then the lowest GEDCOM id (fallback: database id).
+     */
+    private resolveBirthFamilies(families: any[], individualIds: Set<string>): Map<string, string> {
+        const parentCount = (fam: any): number =>
+            fam.familyMembers.filter((m: any) => m.role === 'SPOUSE' && individualIds.has(m.personId)).length;
+
+        const ranked = [...families].sort((a, b) => {
+            const byParentCount = parentCount(b) - parentCount(a);
+            if (byParentCount !== 0) return byParentCount;
+            return String(a.gedcomId ?? a.id).localeCompare(String(b.gedcomId ?? b.id));
+        });
+
+        const birthFamily = new Map<string, string>();
+        for (const fam of ranked) {
+            for (const member of fam.familyMembers) {
+                if (member.role !== 'CHILD') continue;
+                if (!individualIds.has(member.personId)) continue;
+                if (!birthFamily.has(member.personId)) {
+                    birthFamily.set(member.personId, fam.id);
+                }
+            }
+        }
+
+        return birthFamily;
     }
 }
