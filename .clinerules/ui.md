@@ -36,6 +36,9 @@ paths:
   - `neutral` / `slate` → Sekundärtext & Flächen
   - `note-*` → Notiz-Kategorien · `media-*` → Medientypen · `gender-*` → Geschlechterfarben
 - Fehlt ein Token: im Token-System (`src/styles.css`) ergänzen – keine Farbe ad-hoc erfinden.
+- **Namensfalle:** Die Palette `--color-neutral-*` enthält die **Slate**-Werte (blaustichig), nicht
+  echte Neutraltöne. `text-neutral-500` ist also `#64748b`. Für Flächen und Rahmen daher die
+  semantischen Tokens (`ui-bg`, `ui-card`, `ui-border`, `canvas-white`) bevorzugen.
 
 ## 4. Layout & Spacing
 
@@ -84,10 +87,36 @@ paths:
 
 ## 9. Glass & Cards
 
-- `.glass-card` / `app-glass-card`: blur 12–16 px, `bg-canvas/65–75`, `border-white/18`,
-  `dark:border-black/14`, `shadow-sm`
+- **Ein zentraler Kartenstil:** Karten sind `.glass-card` (bzw. `<app-glass-card>`). Das Muster
+  liefert Hintergrund, Blur, Innenabstand, Radius, Schatten und Rahmen bereits mit.
+- **Keine Overrides auf `.glass-card`.** Insbesondere **nicht** erlaubt:
+  - Radius umdefinieren (`rounded-xl!`, `rounded-2xl!`, `rounded-[40px]!`) – Radius kommt zentral,
+  - Schatten ersetzen (`shadow-lg`, `shadow-xl`, `shadow-2xl`, `shadow-xs`) – Ausnahme: schwebende
+    Overlays nutzen `shadow-modal`,
+  - Rahmen ersetzen (`border-transparent`, `border-neutral-200`, `border border-canvas/10`) – der
+    Rahmen kommt aus `border-glass-border`,
+  - Hintergrund überschreiben (`bg-white/80`, `bg-neutral-100`, `bg-brand-50`).
+  Ein `!` an einer Utility ist immer ein Alarmsignal: Es überschreibt die zentrale Definition und
+  erzeugt genau die Inkonsistenz, die das Token-System verhindern soll.
+- **Radius-Skala** (`src/styles.css`): kanonisch sind `rounded-card` (0.75rem, Karten/Panels),
+  `rounded-modal` (1rem, Modals/Overlays) und `rounded-btn` (0.5rem, Buttons/Inputs). Die
+  numerischen Stufen `rounded-xl`/`2xl`/`3xl` liefern **denselben** Wert wie `rounded-card`
+  (0.75rem), `rounded-4xl` denselben wie `rounded-modal` (1rem).
+- **Schatten-Skala:** `shadow-card-light` (hell) / `shadow-card-dark` (dunkel) / `shadow-card-hover`
+  (Hover) / `shadow-modal` (Overlays) / `shadow-brand-glow` (Markenakzente).
 - Fallback: `bg-canvas/90` + `shadow-md`
 - Kontrast immer ≥ 4.5:1
+
+**Dark-First-Regel (verbindlich):** Es gibt **keinen** hellen Ausgangszustand. Klassen wie
+`border-neutral-200`, `bg-neutral-100`, `bg-neutral-50/50`, `bg-brand-100`, `bg-white`, `text-neutral-600`
+ohne `dark:`-Variante sind **Fehler**, weil sie im dunklen Theme fast weiß bzw. unlesbar erscheinen.
+Für Oberflächen sind die semantischen Tokens zu verwenden: `border-ui-border`, `bg-canvas-white/5`,
+`bg-ui-card`, `border-glass-border`.
+
+> Hintergrund: Am Beispiel `/tree-management` vs. `/admin/users` ließ sich per Pixelmessung zeigen,
+> dass der 1 px-Rahmen beider Karten **identisch** war – der wahrgenommene Unterschied stammte
+> ausschließlich aus Radius-, Schatten- und Hell-Mode-Overrides. Deshalb ist das Verbot von
+> Overrides auf `.glass-card` keine Stilfrage, sondern die Ursache des Problems.
 
 ## 10. Bilder & Avatare
 
@@ -101,4 +130,5 @@ paths:
 
 > „UI-Komponenten + Tokens only. Neue Control-Flow-Syntax & Signals. Glass mit Kontrast/Fallback.
 > Dark nicht vergessen. Mobile first. Datenlisten = app-list-view. Padding/Spacing konsistent.
-> Keine Business-Logik in UI."
+> Keine Business-Logik in UI. **Karten sind `.glass-card` – niemals Radius, Schatten, Rahmen
+> oder Hintergrund überschreiben, und niemals `!` an einer Utility.**"

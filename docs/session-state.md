@@ -302,6 +302,47 @@ Glocken-Dropdown in `navbar`, `gedcom-io`-Dropzone, `image-cropper`, `media-gall
 - `rounded-[32px]` (`map-view`) → `rounded-4xl`, `rounded-3xl!` (`statistics`) → zentral.
 - **Verifikation:** Nach dem Fix sind Radius-Kurve und Rahmenzeile beider Seiten **pixelgenau gleich**
   (`41,39,37,36,35,34,33,33,33,32`); Build ✅; `border-neutral-200` ohne `dark:`-Variante = **0**.
+### Phase 2: Overrides systematisch abbauen
+
+Nach der Analyse war klar, dass die Ursache **nicht** einzelne Seiten waren, sondern ein Muster:
+Utilities, die die zentrale `.glass-card`-Definition überschreiben. Der Bestand wurde daraufhin
+vollständig abgeräumt.
+
+| Override-Art | Anzahl | Behandlung |
+|---|---|---|
+| Radius (`rounded-xl!`, `rounded-2xl!`, `rounded-lg!`) | 23 | `!important` entfernt; Werte sind identisch mit `--radius-card`, daher verhaltensneutral |
+| Schatten (`shadow-lg`, `shadow-xl`, `shadow-2xl`, `shadow-xs`) | 9 | entfernt; schwebende Overlays (Toolbar, Dropdown, Empty-State) nutzen `shadow-modal` |
+| Rahmen (`border-transparent`, `border-neutral-200/300`, `border-canvas/10 dark:border-white/10`) | 16 | entfernt bzw. auf `border-glass-border` / `border-ui-border` gemappt |
+| Hintergrund (`bg-white/80`, `bg-neutral-100`, `bg-brand-50/100`, `bg-neutral-50/10`) | 8 | auf `bg-canvas-white/5` bzw. `bg-brand-500/10` gemappt |
+
+**Wichtigster Einzelfund:** `app-stat-card` trug `border-transparent` und `shadow-lg`. Damit war der
+goldene Kartenrahmen auf dem **Dashboard** komplett unsichtbar – die Statistik-Karten sahen wie
+randlose Flächen aus, während alle anderen Seiten gerahmte Karten zeigten. Nach dem Entfernen greift
+`border-glass-border` wieder. Das war der einzige Fix mit sichtbarer struktureller Wirkung; alle
+übrigen sind Angleichungen im Millimetermaßstab bzw. Dark-Mode-Korrektheiten.
+
+**Radius-Skala rationalisiert:** `--radius-2xl` (0.75rem) war ein stilles Duplikat von `--radius-xl`
+und `--radius-card`, `--radius-3xl` (0.875rem) ein willkürlicher Zwischenwert ohne Anwendungsfall.
+`3xl` wurde auf 0.75rem gezogen; die Skala hat jetzt drei klare Ebenen – 0.75rem (Karten),
+1rem (Modals), 0.5rem (Buttons/Inputs). Dokumentiert in `src/styles.css` und `.clinerules/ui.md`.
+
+**Testinfrastruktur:** Der Dev-Proxy (`/tmp/heritago-proxy.js`) bekam `/__seed?next=<pfad>`. Er
+schreibt den aktiven Baum in `localStorage` (`activeTree`, vom `treeGuard` gelesen) und leitet dann
+weiter. Nur so sind tree-scoped Seiten (`/statistics`, `/media`, `/activity`, `/map`) aus einem
+headless CLI-Screenshot-Lauf erreichbar – vorher landete man immer auf `/tree-management`.
+
+> **Fallstrick bei der Verifikation:** `/dashboard` und `/analytics/statistics` existieren **nicht**
+> als Routen (`NG04002`). Korrekt sind `/` (Dashboard) und `/statistics`. Ein leerer Screenshot war
+> hier zunächst als Regression fehlinterpretiert worden – erst der Console-Log zeigte, dass es eine
+> falsche Test-URL war.
+
+**Verifikation nach Phase 2:** Build ✅ (Frontend + Backend), alle `rounded-*!` = **0**,
+`border-neutral-200/300` ohne `dark:`-Variante = **0**, helle Hintergründe ohne `dark:` = **0**,
+`glass-card`-Zeilen mit Schatten- oder Hell-Hintergrund-Override = **0**. Visuell geprüft:
+`/`, `/activity`, `/statistics`, `/media`, `/map`, `/tree-management`, `/admin/users`,
+`/change-requests`, `/settings/update`, `/settings`, `/gedcom-io`, `/persons`.
+
+
 
 **Weiterhin offen (Phase 2):** 26 `rounded-*!`- und 9 `shadow-*`-Overrides auf `.glass-card`,
 69× rohe `.glass-card`-Klasse vs. nur 3× `<app-glass-card>`, 41× `bg-canvas-white/5` und 4× `bg-ui-card`
