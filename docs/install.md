@@ -131,6 +131,12 @@ MAIL_USER="dein-smtp-user"
 MAIL_PASS="dein-smtp-passwort"
 MAIL_FROM="Heritago <no-reply@deine-domain.de>"
 
+# Cookie-Sicherheit (optional)
+# Standard: in Produktion werden die Auth-Cookies mit `Secure` gesetzt.
+# Wird die Anwendung ohne TLS (reines HTTP) betrieben, verwirft der Browser diese
+# Cookies und der Login hält nicht – dann hier explizit abschalten.
+# COOKIE_SECURE=false
+
 # Bot-Schutz / Rate Limiting (optional – es gelten sichere Defaults)
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX=20

@@ -32,3 +32,19 @@ export const authJwt = (prisma: PrismaClient) => {
 
 export const getAuthCookieName = () => ACCESS_COOKIE;
 export const getRefreshCookieName = () => REFRESH_COOKIE;
+
+/**
+ * Whether auth cookies are marked `Secure`.
+ *
+ * Browsers only store `Secure` cookies when the page is served over HTTPS, so a
+ * plain-HTTP deployment (e.g. an internal test server) would silently lose the
+ * session after login. Such a host opts out explicitly via `COOKIE_SECURE=false`;
+ * without the variable the production default (secure) applies.
+ */
+export const isSecureCookie = (): boolean => {
+    const explicit = process.env.COOKIE_SECURE;
+    if (explicit !== undefined && explicit !== '') {
+        return explicit.toLowerCase() === 'true';
+    }
+    return process.env.NODE_ENV === 'production';
+};

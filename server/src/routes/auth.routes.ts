@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthService } from '../services/auth.service';
 import jwt from 'jsonwebtoken';
-import { getAuthCookieName, getRefreshCookieName } from '../middleware/authJwt';
+import { getAuthCookieName, getRefreshCookieName, isSecureCookie } from '../middleware/authJwt';
 import { authRateLimiter } from '../middleware/rateLimit';
 import { requireAdmin as requireAdminMiddleware } from '../middleware/requireAdmin';
 
@@ -36,13 +36,13 @@ export const authRoutes = (prisma: PrismaClient) => {
             const refreshToken = jwt.sign({ id: result.id, type: 'refresh' }, secret, { expiresIn: '7d' });
             res.cookie(getAuthCookieName(), accessToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: isSecureCookie(),
                 sameSite: 'strict',
                 maxAge: 60 * 60 * 1000
             });
             res.cookie(getRefreshCookieName(), refreshToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: isSecureCookie(),
                 sameSite: 'strict',
                 maxAge: 7 * 24 * 60 * 60 * 1000
             });
@@ -94,7 +94,7 @@ export const authRoutes = (prisma: PrismaClient) => {
             const accessToken = jwt.sign({ id: user.id, type: 'access' }, secret, { expiresIn: '1h' });
             res.cookie(getAuthCookieName(), accessToken, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
+                secure: isSecureCookie(),
                 sameSite: 'strict',
                 maxAge: 60 * 60 * 1000
             });
