@@ -25,7 +25,7 @@ import { invitationRoutes } from './routes/invitation.routes';
 import { notificationRoutes } from './routes/notification.routes';
 import { changeRequestRoutes } from './routes/change-request.routes';
 import { myChangeRequestRoutes } from './routes/change-request.me.routes';
-import { systemRoutes } from './routes/system.routes';
+import { systemRoutes, recoverInterruptedUpdate } from './routes/system.routes';
 import { adminTreeRoutes } from './routes/admin-trees.routes';
 import { requireAdmin } from './middleware/requireAdmin';
 import { treeAuth } from './middleware/treeAuth';
@@ -101,6 +101,8 @@ async function ensureDefaultUser() {
 ensureDefaultUser().catch(console.error);
 
 // --- Routes ---
+// Finalize an update that was interrupted while the API was down (reboot or crash).
+recoverInterruptedUpdate();
 app.use('/api/auth', authRoutes(prisma));
 app.use('/api/admin', authRoutes(prisma));
 app.use('/api/admin', adminTreeRoutes(prisma));

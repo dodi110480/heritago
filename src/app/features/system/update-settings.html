@@ -130,25 +130,31 @@
                     diese mit einem Klick.</p>
 
                 <div class="mt-auto flex flex-wrap gap-4">
-                    <button *ngIf="!updateStatus?.hasUpdate" (click)="checkUpdate()" [disabled]="checking"
-                        class="grow btn-primary py-4! rounded-2xl">
-                        <span *ngIf="checking"
+                    @if (updating) {
+                    <button disabled class="grow btn-primary py-4! rounded-2xl min-h-11">
+                        <span
                             class="w-4 h-4 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin mr-2"></span>
-                        {{ checking ? 'Suche...' : 'Nach Updates suchen' }}
+                        Update läuft …
+                    </button>
+                    } @else if (updateStatus?.hasUpdate) {
+                    <button (click)="performUpdate()"
+                        class="grow btn-primary bg-linear-to-r! !from-accent-success-600 !to-accent-success-600 py-4! rounded-2xl min-h-11">
+                        Version {{ updateStatus.latestVersion }} installieren
                     </button>
 
-                    <button *ngIf="updateStatus?.hasUpdate" (click)="performUpdate()" [disabled]="updating"
-                        class="grow btn-primary bg-linear-to-r! !from-accent-success-600 !to-accent-success-600 py-4! rounded-2xl">
-                        <span *ngIf="updating"
-                            class="w-4 h-4 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin mr-2"></span>
-                        {{ updating ? 'Wird installiert...' : 'Version ' + updateStatus.latestVersion + '
-                        installieren' }}
-                    </button>
-
-                    <button *ngIf="updateStatus" (click)="updateStatus = null"
-                        class="btn-secondary py-4! px-8! rounded-2xl">
+                    <button (click)="updateStatus = null" class="btn-secondary py-4! px-8! rounded-2xl min-h-11">
                         Abbrechen
                     </button>
+                    } @else {
+                    <button (click)="checkUpdate()" [disabled]="checking"
+                        class="grow btn-primary py-4! rounded-2xl min-h-11">
+                        @if (checking) {
+                        <span
+                            class="w-4 h-4 border-2 border-canvas-white/20 border-l-white rounded-full animate-spin mr-2"></span>
+                        }
+                        {{ checking ? 'Suche...' : 'Nach Updates suchen' }}
+                    </button>
+                    }
                 </div>
             </div>
         </div>
@@ -224,24 +230,86 @@
             </div>
             }
 
-            <div *ngIf="updateResult"
-                class="bg-accent-success-700/20 border border-accent-success-500/30 rounded-3xl p-8 shadow-2xl">
-                <div class="flex items-center gap-4 mb-6">
-                    <div
-                        class="w-10 h-10 rounded-full bg-accent-success-500 flex items-center justify-center text-canvas-white shadow-lg shadow-accent-success-500/30">
+            @if (updateProgress) {
+            <div class="glass-card flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div class="flex items-start gap-4">
+                    <div class="p-2 rounded-full shrink-0" [ngClass]="updateProgress.status === 'failed'
+                        ? 'bg-accent-danger-500/20 text-accent-danger-400'
+                        : 'bg-accent-success-500/20 text-accent-success-400'">
+                        @if (updateProgress.status === 'failed') {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        } @else if (updateProgress.running) {
+                        <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 2v6h-6"></path>
+                            <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                            <path d="M3 22v-6h6"></path>
+                            <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                        </svg>
+                        } @else {
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                             fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"
                             stroke-linejoin="round">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
+                        }
                     </div>
-                    <h4 class="text-xl font-bold text-canvas-white">{{ updateResult.message }}</h4>
+
+                    <div class="flex flex-col gap-1">
+                        <h4 class="text-lg font-bold text-canvas-white">{{ updateProgress.message }}</h4>
+
+                        @if (updateProgress.running) {
+                        <span class="text-sm text-neutral-400">
+                            Schritt {{ updateProgress.stepIndex }} von {{ updateProgress.stepTotal }}{{ updateProgress.startedAtFormatted ? ' · gestartet ' + updateProgress.startedAtFormatted : '' }}
+                        </span>
+                        } @else if (updateProgress.finishedAtFormatted) {
+                        <span class="text-sm text-neutral-400">
+                            Abgeschlossen: {{ updateProgress.finishedAtFormatted }}
+                        </span>
+                        }
+                    </div>
                 </div>
-                <div *ngIf="updateResult.output"
-                    class="p-6 bg-canvas-black/40 rounded-2xl border border-canvas-white/5 font-mono text-xs text-accent-success-400/80 overflow-x-auto max-h-[400px]">
-                    <pre>{{ updateResult.output }}</pre>
+
+                <!-- Only the percentage comes from the backend; the look stays in the template -->
+                <div class="w-full h-2 rounded-full bg-canvas-white/10 overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-500"
+                        [ngClass]="updateProgress.status === 'failed' ? 'bg-accent-danger-500' : 'bg-accent-success-500'"
+                        [style.width.%]="updateProgress.progressPercent"></div>
                 </div>
+
+                @if (updateProgress.logTail) {
+                <details>
+                    <summary
+                        class="cursor-pointer min-h-11 flex items-center text-sm text-neutral-400 hover:text-neutral-200">
+                        Protokoll anzeigen
+                    </summary>
+                    <pre
+                        class="mt-2 p-4 bg-canvas-black/40 rounded-card border border-canvas-white/5 font-mono text-xs text-neutral-400 overflow-x-auto max-h-[300px] whitespace-pre-wrap">{{ updateProgress.logTail }}</pre>
+                </details>
+                }
+
+                @if (!updateProgress.running) {
+                <div class="flex flex-wrap items-center gap-4">
+                    <button (click)="dismissUpdateProgress()" class="btn-secondary py-3! px-6! rounded-2xl min-h-11">
+                        Ausblenden
+                    </button>
+
+                    @if (updateProgress.targetTag) {
+                    <span class="text-sm text-neutral-400">
+                        Ziel-Version: <strong class="text-neutral-200">{{ updateProgress.targetTag }}</strong>
+                    </span>
+                    }
+                </div>
+                }
             </div>
+            }
 
             <div *ngIf="error"
                 class="p-6 bg-accent-danger-500/10 border border-accent-danger-500/20 rounded-2xl flex items-center gap-4 text-accent-danger-500 animate-bounce">

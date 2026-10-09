@@ -147,6 +147,211 @@ const readGitInfo = async () => {
     };
 };
 
+// ---------------------------------------------------------------------------
+// Update pipeline (git checkout + build + restart)
+// ---------------------------------------------------------------------------
+
+/**
+ * Directory shared between the web process and the update worker. The web process only
+ * queues a request and reads progress; the worker (own systemd unit, run as root) does
+ * the checkout, both builds and the service restart. Created by the installer
+ * (see docs/install.md).
+ */
+const UPDATE_STATE_DIR = process.env.HERITAGO_STATE_DIR || '/var/lib/heritago';
+
+const UPDATE_REQUEST_FILE = path.join(UPDATE_STATE_DIR, 'update-request.txt');
+const UPDATE_STATE_FILE = path.join(UPDATE_STATE_DIR, 'update-state.txt');
+const UPDATE_LOG_FILE = path.join(UPDATE_STATE_DIR, 'update.log');
+
+/** Worker script (part of the repository) and the unit that executes it. */
+const UPDATE_SCRIPT = path.join(APP_ROOT, 'scripts/update.sh');
+const UPDATE_UNIT = process.env.HERITAGO_UPDATE_UNIT || 'heritago-update.service';
+
+/**
+ * Steps of the worker in execution order. The worker publishes the keys only, so the
+ * German labels for the UI are defined here (single source of truth, see backend-first.md).
+ */
+const UPDATE_STEPS: { key: string; label: string }[] = [
+    { key: 'fetch', label: 'Neue Version wird geladen' },
+    { key: 'checkout', label: 'Version wird installiert' },
+    { key: 'install-frontend', label: 'Frontend-Abhängigkeiten werden installiert' },
+    { key: 'build-frontend', label: 'Frontend wird gebaut' },
+    { key: 'install-backend', label: 'Backend-Abhängigkeiten werden installiert' },
+    { key: 'prisma-generate', label: 'Datenbank-Client wird erzeugt' },
+    { key: 'build-backend', label: 'Backend wird gebaut' },
+    { key: 'restart', label: 'Dienst wird neu gestartet' }
+];
+
+const UPDATE_STEP_TOTAL = UPDATE_STEPS.length;
+
+/** Grace period for a queued update whose worker has not published its pid yet. */
+const UPDATE_QUEUE_GRACE_MS = 60 * 1000;
+
+type UpdateState = Record<string, string>;
+
+interface UpdateStateFile {
+    state: UpdateState;
+    modifiedMs: number;
+}
+
+const readUpdateStateFile = (): UpdateStateFile | null => {
+    try {
+        const raw = fs.readFileSync(UPDATE_STATE_FILE, 'utf8');
+        const { mtimeMs } = fs.statSync(UPDATE_STATE_FILE);
+
+        const state: UpdateState = {};
+        for (const line of raw.split('\n')) {
+            const separator = line.indexOf('=');
+            if (separator > 0) {
+                state[line.slice(0, separator)] = line.slice(separator + 1).trim();
+            }
+        }
+
+        return { state, modifiedMs: mtimeMs };
+    } catch {
+        // No update has ever been started on this installation.
+        return null;
+    }
+};
+
+/** Writes the state file atomically (tmp + rename), so readers never see it half-written. */
+const writeUpdateState = (state: UpdateState): void => {
+    const body = Object.entries(state).map(([key, value]) => `${key}=${value}`).join('\n');
+    const tmp = `${UPDATE_STATE_FILE}.api-tmp`;
+
+    fs.writeFileSync(tmp, `${body}\n`, { mode: 0o644 });
+    fs.renameSync(tmp, UPDATE_STATE_FILE);
+};
+
+/** True while a process with this pid exists (EPERM means it exists but is not ours). */
+const processAlive = (pid: string | undefined): boolean => {
+    const value = Number(pid);
+    if (!Number.isInteger(value) || value <= 0) return false;
+
+    try {
+        process.kill(value, 0);
+        return true;
+    } catch (error: any) {
+        return error?.code === 'EPERM';
+    }
+};
+
+/** Last lines of the worker log, for the progress view in the UI. */
+const readUpdateLogTail = (lines = 40): string | null => {
+    try {
+        const content = fs.readFileSync(UPDATE_LOG_FILE, 'utf8').trimEnd();
+        return content ? content.split('\n').slice(-lines).join('\n') : null;
+    } catch {
+        return null;
+    }
+};
+
+/**
+ * Finalizes an update whose worker is gone (crash, reboot, killed process) instead of
+ * leaving the UI in "running" forever. A living worker always stays authoritative, so
+ * long build steps are never cut short by a timeout.
+ */
+const reconcileUpdateState = (file: UpdateStateFile | null): UpdateStateFile | null => {
+    if (!file || file.state.status !== 'running') return file;
+
+    const { state, modifiedMs } = file;
+
+    if (processAlive(state.pid)) return file;
+
+    // No pid yet: the worker was just queued and still has to take over.
+    const queued = !(Number(state.pid) > 0);
+    if (queued && Date.now() - modifiedMs < UPDATE_QUEUE_GRACE_MS) return file;
+
+    // Reaching the restart step means everything was installed already, and the fact
+    // that this code runs at all proves the service came back up.
+    const interrupted = state.step !== 'restart';
+    const finished: UpdateState = {
+        ...state,
+        status: interrupted ? 'failed' : 'success',
+        finished: new Date().toISOString(),
+        pid: '',
+        error: interrupted
+            ? 'Der Update-Prozess wurde unterbrochen. Details stehen im Update-Log.'
+            : ''
+    };
+
+    try {
+        writeUpdateState(finished);
+    } catch (error: any) {
+        console.warn('[server]: Could not persist update state:', error.message);
+    }
+
+    return { state: finished, modifiedMs: Date.now() };
+};
+
+/**
+ * Prepared display data for the update progress. The frontend renders these values
+ * as-is - no formatting or status translation in the client (see backend-first.md).
+ */
+const updateStatusPayload = (file: UpdateStateFile | null) => {
+    if (!file) {
+        return {
+            status: 'idle',
+            running: false,
+            step: null,
+            stepLabel: null,
+            stepIndex: 0,
+            stepTotal: UPDATE_STEP_TOTAL,
+            progressPercent: 0,
+            targetTag: null,
+            fromVersion: null,
+            startedAt: null,
+            startedAtFormatted: null,
+            finishedAt: null,
+            finishedAtFormatted: null,
+            error: null,
+            message: 'Es läuft kein Update.',
+            logTail: null
+        };
+    }
+
+    const { state } = file;
+    const status = state.status || 'idle';
+    const done = status === 'success' || status === 'failed';
+    const step = UPDATE_STEPS.find(entry => entry.key === state.step) || null;
+    const index = Number(state.index) || 0;
+
+    return {
+        status,
+        running: status === 'running',
+        step: state.step || null,
+        stepLabel: status === 'success'
+            ? 'Update abgeschlossen'
+            : (status === 'failed' ? 'Update fehlgeschlagen' : (step ? step.label : null)),
+        stepIndex: index,
+        stepTotal: UPDATE_STEP_TOTAL,
+        progressPercent: status === 'success'
+            ? 100
+            : Math.round((Math.max(index, 1) - (done ? 0 : 1)) / UPDATE_STEP_TOTAL * 100),
+        targetTag: state.target || null,
+        fromVersion: state.from || null,
+        startedAt: state.started || null,
+        startedAtFormatted: formatDate(state.started),
+        finishedAt: state.finished || null,
+        finishedAtFormatted: formatDate(state.finished),
+        error: state.error || null,
+        message: status === 'success'
+            ? `Update auf ${state.target} wurde installiert. Die neue Version ist aktiv.`
+            : (status === 'failed'
+                ? (state.error || 'Das Update ist fehlgeschlagen.')
+                : (step ? `${step.label} …` : 'Update wird installiert …')),
+        logTail: readUpdateLogTail()
+    };
+};
+
+/**
+ * Finalizes an update that was interrupted while the API was down (reboot, crash).
+ * Called once at API startup; the status endpoint applies the same logic on demand.
+ */
+export const recoverInterruptedUpdate = (): void => {
+    reconcileUpdateState(readUpdateStateFile());
+};
+
 export const systemRoutes = () => {
     const router = Router();
 
@@ -251,38 +456,104 @@ export const systemRoutes = () => {
         }
     });
 
-    router.post('/update', async (req, res) => {
+    // Progress of the update pipeline. Runs the same reconciliation as the startup
+    // recovery, so an interrupted update never stays "running" in the UI.
+    router.get('/update/status', async (req, res) => {
         try {
-            const { tag } = req.body || {};
-
-            if (typeof tag !== 'string' || !TAG_PATTERN.test(tag)) {
-                return res.status(400).json({ success: false, message: 'Ungültige Ziel-Version. Erwartet wird ein Tag wie "v1.2.3".', code: 'VALIDATION_ERROR' });
-            }
-
-            console.log(`[server]: Starting application update to ${tag}...`);
-            await execFileAsync('git', ['fetch', '--tags'], { cwd: APP_ROOT });
-            const { stdout, stderr } = await execFileAsync('git', ['checkout', `tags/${tag}`], { cwd: APP_ROOT });
-            console.log('[server]: git checkout output:', stdout.trim());
-
-            if (stderr && !stderr.includes('HEAD is now at')) {
-                console.warn('[server]: git checkout warning:', stderr);
-            }
-
-            const git = await readGitInfo();
-
-            res.json({
-                success: true,
-                data: {
-                    message: `Update auf ${tag} erfolgreich. Für Änderungen am Backend ist ein Neustart des Servers erforderlich.`,
-                    tag,
-                    commit: git.gitCommit,
-                    output: stdout
-                }
-            });
+            const state = reconcileUpdateState(readUpdateStateFile());
+            res.json({ success: true, data: updateStatusPayload(state) });
         } catch (error: any) {
-            console.error('[server]: Update execution failed:', error.message);
-            res.status(500).json({ success: false, message: 'Das Update konnte nicht installiert werden.', code: 'SYSTEM_UPDATE_FAILED' });
+            console.error('[server]: Failed to read update status:', error.message);
+            res.status(500).json({ success: false, message: 'Der Update-Status konnte nicht gelesen werden.', code: 'SYSTEM_UPDATE_STATUS_FAILED' });
         }
+    });
+
+    // Installs a release tag: the heavy work (checkout, both builds, service restart) is
+    // handed to the update unit, because this process is stopped by that restart.
+    router.post('/update', async (req, res) => {
+        const { tag } = req.body || {};
+
+        if (typeof tag !== 'string' || !TAG_PATTERN.test(tag)) {
+            return res.status(400).json({ success: false, message: 'Ungültige Ziel-Version. Erwartet wird ein Tag wie "v1.2.3".', code: 'VALIDATION_ERROR' });
+        }
+
+        const current = updateStatusPayload(reconcileUpdateState(readUpdateStateFile()));
+        if (current.running) {
+            return res.status(409).json({ success: false, message: `Es läuft bereits ein Update auf ${current.targetTag}. Bitte abwarten.`, code: 'SYSTEM_UPDATE_IN_PROGRESS' });
+        }
+
+        if (!fs.existsSync(UPDATE_SCRIPT)) {
+            console.error(`[server]: Update script ${UPDATE_SCRIPT} is missing.`);
+            return res.status(500).json({ success: false, message: 'Das automatische Update ist auf diesem Server nicht eingerichtet. Bitte die Einrichtung gemäß docs/install.md nachholen.', code: 'SYSTEM_UPDATE_UNAVAILABLE' });
+        }
+
+        const git = await readGitInfo();
+        const fromVersion = git.gitTag || '';
+        const startedAt = new Date().toISOString();
+
+        // The worker reads this file; nothing is ever passed on a command line, so no
+        // user input reaches the privileged unit.
+        try {
+            fs.mkdirSync(UPDATE_STATE_DIR, { recursive: true });
+            fs.writeFileSync(UPDATE_REQUEST_FILE, `tag=${tag}\nfrom=${fromVersion}\n`, { mode: 0o644 });
+        } catch (error: any) {
+            console.error('[server]: Update request could not be written:', error.message);
+            return res.status(500).json({ success: false, message: 'Das Update konnte nicht vorbereitet werden (Zustandsverzeichnis nicht beschreibbar).', code: 'SYSTEM_UPDATE_UNAVAILABLE' });
+        }
+
+        // Publish "queued" before the worker takes over, so the UI shows progress at once.
+        // pid=0 marks the short window until the worker publishes its own pid.
+        const queuedState: UpdateState = {
+            status: 'running',
+            step: 'fetch',
+            index: '1',
+            total: String(UPDATE_STEP_TOTAL),
+            target: tag,
+            from: fromVersion,
+            started: startedAt,
+            finished: '',
+            pid: '0',
+            error: ''
+        };
+
+        try {
+            writeUpdateState(queuedState);
+        } catch (error: any) {
+            console.warn('[server]: Could not publish queued update state:', error.message);
+        }
+
+        try {
+            await execFileAsync('sudo', ['-n', 'systemctl', 'start', '--no-block', UPDATE_UNIT], { timeout: 20000 });
+        } catch (error: any) {
+            console.error('[server]: Update unit could not be started:', error.message);
+
+            try {
+                fs.unlinkSync(UPDATE_REQUEST_FILE);
+            } catch { /* request may already be gone */ }
+
+            try {
+                writeUpdateState({
+                    ...queuedState,
+                    status: 'failed',
+                    finished: new Date().toISOString(),
+                    pid: '',
+                    error: 'Das Update konnte nicht gestartet werden.'
+                });
+            } catch { /* state is best effort */ }
+
+            return res.status(500).json({ success: false, message: 'Das Update konnte nicht gestartet werden. Bitte die Einrichtung gemäß docs/install.md prüfen.', code: 'SYSTEM_UPDATE_UNAVAILABLE' });
+        }
+
+        console.log(`[server]: Update to ${tag} queued (${UPDATE_UNIT}).`);
+
+        res.json({
+            success: true,
+            data: {
+                ...updateStatusPayload(readUpdateStateFile()),
+                targetTag: tag,
+                message: `Update auf ${tag} wird installiert. Der Dienst startet dabei automatisch neu.`
+            }
+        });
     });
 
     return router;

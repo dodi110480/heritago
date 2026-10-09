@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { environment } from '../../environment';
@@ -11,13 +11,27 @@ import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-head
     changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './update-settings.html'
 })
-export class UpdateSettings implements OnInit {
+export class UpdateSettings implements OnInit, OnDestroy {
     public systemInfo: any = null;
     public updateStatus: any = null;
-    public updateResult: any = null;
     public checking = false;
     public updating = false;
     public error: string | null = null;
+
+    /**
+     * Progress of the running (or last) update, prepared by the backend. The whole
+     * pipeline runs on the server, so the UI only renders what it is told here.
+     */
+    public updateProgress: any = null;
+
+    private pollTimer: ReturnType<typeof setTimeout> | null = null;
+    private pollFailures = 0;
+
+    /** Poll interval while an update runs - the backend restarts once in between. */
+    private readonly pollIntervalMs = 2500;
+
+    /** Tolerated failed polls (the API is unreachable while the service restarts). */
+    private readonly pollFailureLimit = 40;
 
     /**
      * Installed revision, resolved from the local git checkout via /api/system/info.
@@ -35,6 +49,12 @@ export class UpdateSettings implements OnInit {
     ngOnInit() {
         this.loadSystemInfo();
         this.checkUpdate();
+        // Re-attach to an update that is already running (page reload, service restart).
+        this.resumeUpdateStatus();
+    }
+
+    ngOnDestroy() {
+        this.clearPollTimer();
     }
 
     async loadSystemInfo() {
@@ -82,7 +102,6 @@ export class UpdateSettings implements OnInit {
         this.checking = true;
         this.error = null;
         this.updateStatus = null;
-        this.updateResult = null;
         this.cdr.detectChanges();
 
         try {
@@ -102,6 +121,10 @@ export class UpdateSettings implements OnInit {
         }
     }
 
+    /**
+     * Queues the update on the server and follows its progress. The backend performs
+     * checkout, both builds and the service restart; the browser only polls the status.
+     */
     async performUpdate() {
         if (!this.updateStatus?.latestVersion) {
             this.error = 'Keine Ziel-Version gefunden. Bitte zuerst auf Updates prüfen.';
@@ -111,6 +134,7 @@ export class UpdateSettings implements OnInit {
 
         this.updating = true;
         this.error = null;
+        this.updateProgress = null;
         this.cdr.detectChanges();
 
         try {
@@ -121,19 +145,121 @@ export class UpdateSettings implements OnInit {
                 body: JSON.stringify({ tag: this.updateStatus.latestVersion })
             });
             const data = await res.json();
-            if (data.success) {
-                this.updateResult = data.data;
-                this.updateStatus = null;
-                // Re-read the revision metadata - the checkout is already updated on disk.
-                await this.loadSystemInfo();
-            } else {
+
+            if (!data.success) {
                 this.error = data.message;
+                this.updating = false;
+                this.cdr.detectChanges();
+                return;
             }
+
+            // The found-update card steps aside for the progress card.
+            this.updateProgress = data.data;
+            this.updateStatus = null;
+            this.pollFailures = 0;
+            this.schedulePoll();
         } catch (err) {
-            this.error = 'Update-Prozess fehlgeschlagen.';
-        } finally {
+            this.error = 'Update-Prozess konnte nicht gestartet werden.';
             this.updating = false;
-            this.cdr.detectChanges();
         }
+
+        this.cdr.detectChanges();
+    }
+
+    /**
+     * Re-attaches to an update that is already running (page reload, restart of the
+     * browser tab). The server owns the state, so nothing is tracked in the client.
+     */
+    async resumeUpdateStatus() {
+        const status = await this.fetchUpdateStatus();
+        if (!status) return;
+
+        if (status.running) {
+            this.updateProgress = status;
+            this.updating = true;
+            this.updateStatus = null;
+            this.pollFailures = 0;
+            this.schedulePoll();
+        } else if (status.status === 'success' || status.status === 'failed') {
+            this.updateProgress = status;
+        }
+
+        this.cdr.detectChanges();
+    }
+
+    /** Hides the result card of a finished update. */
+    dismissUpdateProgress() {
+        this.updateProgress = null;
+        this.error = null;
+        this.cdr.detectChanges();
+    }
+
+    private async fetchUpdateStatus(): Promise<any | null> {
+        try {
+            const res = await fetch(`${this.apiUrl}/update/status`, { credentials: 'include' });
+            const data = await res.json();
+            return data.success ? data.data : null;
+        } catch {
+            // The service is restarting right now; the caller decides about retries.
+            return null;
+        }
+    }
+
+    private schedulePoll() {
+        this.clearPollTimer();
+        this.pollTimer = setTimeout(() => this.pollUpdate(), this.pollIntervalMs);
+    }
+
+    private clearPollTimer() {
+        if (this.pollTimer) {
+            clearTimeout(this.pollTimer);
+            this.pollTimer = null;
+        }
+    }
+
+    private async pollUpdate() {
+        this.pollTimer = null;
+
+        const status = await this.fetchUpdateStatus();
+
+        if (!status) {
+            // Tolerate the window in which the backend restarts itself.
+            this.pollFailures++;
+            if (this.pollFailures > this.pollFailureLimit) {
+                this.updating = false;
+                this.error = 'Der Server ist nicht erreichbar. Bitte die Seite neu laden.';
+                this.cdr.detectChanges();
+                return;
+            }
+            this.schedulePoll();
+            return;
+        }
+
+        this.pollFailures = 0;
+        this.updateProgress = status;
+        this.cdr.detectChanges();
+
+        if (status.running) {
+            this.schedulePoll();
+            return;
+        }
+
+        await this.finishUpdate(status);
+    }
+
+    private async finishUpdate(status: any) {
+        this.updating = false;
+        this.clearPollTimer();
+
+        if (status.status === 'failed') {
+            this.error = status.error || 'Das Update ist fehlgeschlagen.';
+            this.cdr.detectChanges();
+            return;
+        }
+
+        // A successful update changed the revision on disk - re-read it.
+        await this.loadSystemInfo();
+        await this.checkUpdate();
+        this.cdr.detectChanges();
     }
 }
