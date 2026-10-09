@@ -11,10 +11,20 @@ export interface User {
     isAdmin: boolean;
 }
 
+export type TreeAccessLevel = 'OWNER' | 'EDITOR' | 'VIEWER' | 'COMMENTER';
+
 export interface Tree {
     id: string; // Changed to string for UUID support
     name: string;
     title: string;
+    description?: string;
+    isPublic?: boolean;
+    /**
+     * Own access level for this tree. Delivered by `GET /api/trees`
+     * (see .clinerules/auth-rbac.md) and used to gate write actions in the UI.
+     */
+    permission?: TreeAccessLevel | null;
+    _count?: { persons?: number; families?: number; media?: number };
 }
 
 @Injectable({

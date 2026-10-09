@@ -60,12 +60,21 @@ export const treeRoutes = (prisma: PrismaClient) => {
             const trees = await prisma.tree.findMany({
                 where: { permissions: { some: { userId: user.id } } },
                 include: {
+                    permissions: { where: { userId: user.id }, select: { level: true } },
                     _count: {
                         select: { persons: true, families: true, media: true }
                     }
                 }
             });
-            res.json({ success: true, data: trees });
+            // The own access level is part of the contract: the frontend needs it to
+            // gate write actions (see .clinerules/auth-rbac.md, section 4).
+            res.json({
+                success: true,
+                data: trees.map(tree => {
+                    const { permissions, ...rest } = tree;
+                    return { ...rest, permission: permissions[0]?.level ?? null };
+                })
+            });
         } catch (error: any) {
             res.status(500).json({ success: false, message: error.message, code: 'TREES_FETCH_FAILED' });
         }
