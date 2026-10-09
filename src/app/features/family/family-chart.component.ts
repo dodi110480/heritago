@@ -115,6 +115,13 @@ import 'family-chart/styles/family-chart.css';
         </div>
       </div>
 
+      @if (chartError(); as chartErrorMessage) {
+        <div
+          class="absolute top-5 left-1/2 -translate-x-1/2 z-[1000] px-5 py-2.5 rounded-btn text-sm font-medium bg-accent-danger-500/15 text-accent-danger-300 border border-accent-danger-500/30 backdrop-blur-xl"
+          role="status"
+        >{{ chartErrorMessage }}</div>
+      }
+
       <div #familyChart class="f3 w-full h-full flex-1" id="FamilyChart"></div>
     </div>
   `,
@@ -341,6 +348,8 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
   /** Entry point for the chart, computed by the backend (see chart-data endpoint). */
   private defaultMainPersonId = '';
   public configOpen = signal(false);
+  /** User facing message when the chart cannot be loaded or drawn. */
+  public chartError = signal<string | null>(null);
 
   public config = {
     is_horizontal: false,
@@ -374,7 +383,10 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
             }
           }
         },
-        error: (err) => console.error('Error fetching chart data', err)
+        error: (err) => {
+          console.error('Error fetching chart data', err);
+          this.chartError.set('Der Stammbaum konnte nicht geladen werden.');
+        }
       });
     }
   }
@@ -413,7 +425,23 @@ export class FamilyChartComponent implements OnInit, AfterViewInit {
     }
   }
 
+  /**
+   * Renders the chart and keeps the failure inside this component: the chart
+   * library aborts on inconsistent data, which previously left the user with an
+   * empty page and no feedback at all.
+   */
   private renderChart() {
+    try {
+      this.drawChart();
+      this.chartError.set(null);
+    } catch (e) {
+      console.error('Family chart rendering failed', e);
+      this.f3Chart = undefined;
+      this.chartError.set('Der Stammbaum konnte nicht gezeichnet werden.');
+    }
+  }
+
+  private drawChart() {
     const data = JSON.parse(JSON.stringify(this.treeData()));
     
     // Resolve avatar URLs
