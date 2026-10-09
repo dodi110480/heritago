@@ -212,21 +212,25 @@ export const systemRoutes = () => {
 
         try {
             // Preferred source: the newest GitHub release (it carries the release notes).
-            // Fallback: the newest tag - installing a tag is exactly what POST /update does,
-            // so a missing GitHub release must not block the update page.
-            const release = await githubGet('/releases/latest');
-            let latestVersion: string | null = release?.tag_name ?? null;
+            // Because POST /update installs a tag, an existing tag is a valid update as well -
+            // a tag pushed without (or ahead of) a published GitHub release must not be hidden.
+            const [release, tags] = await Promise.all([
+                githubGet('/releases/latest'),
+                githubGet('/tags')
+            ]);
 
-            if (!latestVersion) {
-                const tags = await githubGet('/tags');
-                if (Array.isArray(tags)) {
-                    latestVersion = highestVersion(tags.map((entry: any) => entry?.name));
-                }
-            }
+            const newestTag = Array.isArray(tags)
+                ? highestVersion(tags.map((entry: any) => entry?.name))
+                : null;
+
+            const latestVersion = highestVersion([release?.tag_name, newestTag]);
 
             if (!latestVersion) {
                 return res.json(unavailablePayload());
             }
+
+            // Release notes describe the release - only usable when it is the newest version.
+            const releaseIsLatest = Boolean(release?.tag_name) && release.tag_name === latestVersion;
 
             res.json({
                 success: true,
@@ -236,9 +240,9 @@ export const systemRoutes = () => {
                     unavailable: false,
                     message: null,
                     latestVersion,
-                    releaseName: release?.name || latestVersion,
-                    releasePublishedAt: formatDate(release?.published_at),
-                    details: release?.body ?? null
+                    releaseName: releaseIsLatest ? (release.name || latestVersion) : latestVersion,
+                    releasePublishedAt: releaseIsLatest ? formatDate(release.published_at) : null,
+                    details: releaseIsLatest ? (release.body ?? null) : null
                 }
             });
         } catch (error: any) {

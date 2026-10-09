@@ -333,6 +333,11 @@ sudo systemctl restart heritago
 > [!TIP]
 > Du kannst Updates auch bequem über die Weboberfläche unter **Einstellungen → System & Updates** durchführen!
 
+> [!NOTE]
+> Als neue Version zählt sowohl das neueste GitHub-Release als auch der höchste Tag. Ein Tag,
+> für den noch kein Release veröffentlicht wurde, wird also ebenfalls als Update angeboten –
+> denn die Web-Oberfläche installiert genau diesen Tag (`git checkout tags/<tag>`).
+
 ---
 
 ## Verzeichnisstruktur
