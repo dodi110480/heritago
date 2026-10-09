@@ -461,3 +461,62 @@ Datenqualitätsproblem aus dem GEDCOM-Import, das separat zu bereinigen ist.
 **Verifikation:** Backend- und Frontend-Build grün; Live-Request gegen
 `/api/tree/sperlich/chart-data` liefert `{ nodes: 182, mainPersonId }`.
 
+### 8.3 Nachtrag: Chart blieb trotzdem leer – `family-chart` brach ab
+
+Nach 8.2 war der Chart weiterhin leer (`/tree` zeigte nur den „Einstellungen"-Button, keine Karten
+und kein Suchfeld). Ursache war **nicht** die Hauptperson, sondern ein Datenfehler, der die
+Chart-Bibliothek zum Abbruch bringt.
+
+**Symptomanalyse (headless):** Da kein X-Server verfügbar ist, wurde das Rendering isoliert mit
+`google-chrome --headless` über das DevTools-Protokoll nachgestellt (echter `chart-data`-Payload,
+identische `family-chart`-Aufrufkette). Ergebnis:
+
+```
+createChart OK
+setCardHtml OK
+editTree OK
+EXCEPTION: Error: child has more than 1 parent
+  at createRelsToAdd (family-chart.esm.js)
+  at calculateTree (…) → updateTree(…)
+```
+
+**Ursache:** `family-chart` baut Beziehungen in `createRelsToAdd()` auf und wirft
+`child has more than 1 parent`, sobald ein Kind in mehr als zwei Eltern-Knoten hängt. Die
+Fehlermeldung ist irreführend – der Fall tritt auch bei **drei** Eltern ein. Im Baum `sperlich`
+betrifft das **Wolfgang Schulze**, der als `CHILD` in **zwei** Familien steht:
+
+| Familie | GEDCOM | SPOUSE | CHILD |
+|---|---|---|---|
+| `7bc78642…` | `@X83@` | Otto Alfred Schulze, Stefanie Zaißenberger | Wolfgang Schulze |
+| `b58ba8ec…` | `@F0051@` | Otto Alfred Schulze, Anna Sperlich | Wolfgang Schulze |
+
+Otto Alfred Schulze ist in beiden Familien Ehemann → Wolfgang bekam **3 Eltern**
+(Otto, Stefanie, Anna). Ein einzelner inkonsistenter Import-Datensatz hat damit den **kompletten**
+Chart lahmgelegt – der Benutzer sah eine leere Seite ohne Fehlermeldung.
+
+**Behebung (backend-first, `.clinerules/backend-first.md`):**
+- `server/src/services/tree.service.ts` – neue private `resolveBirthFamilies()` löst pro Person
+  **genau eine** Geburtsfamilie auf (GEDCOM: `FAMC` – eine Person ist in höchstens einer Familie
+  Kind). Reihung deterministisch: erst die Familie mit den meisten im Baum vorhandenen Elternteilen,
+  dann die kleinere GEDCOM-ID (Fallback: Datenbank-ID).
+- `getFamilyChartData()` nutzt nur noch diese Geburtsfamilie für `rels.parents`, begrenzt auf
+  **maximal 2 Eltern** und nimmt `children` ausschließlich aus Familien, die auch die aufgelöste
+  Geburtsfamilie sind → Eltern-/Kind-Verknüpfungen bleiben symmetrisch, Doppel-Kind-Links entfallen.
+
+**Ergebnis:** `resolveBirthFamilies` wählt für Wolfgang Schulze die Familie `@F0051@`
+(→ Eltern Anna Sperlich + Otto Alfred Schulze; Stefanie Zaißenberger behält Otto als Ehemann).
+Damit: **0 Knoten mit >2 Eltern**, `createRelsToAdd` läuft fehlerfrei.
+
+**Verifikation:** Headless-Test `createChart/setCardHtml/editTree/updateTree` **ohne Exception**,
+Screenshot zeigt 19 Karten, zentriert auf „Else Bertha Arnold". Backend- und Frontend-Build grün.
+
+**Zusätzliches Sicherheitsnetz (UI):**
+- `src/app/features/family/family-chart.component.ts` – `renderChart()` ist jetzt eine
+  Fehler-Boundary (`try/catch` um das eigentliche `drawChart()`); bei Fehlern sowie bei einem
+  fehlgeschlagenen `chart-data`-Request erscheint eine deutsche Statusmeldung
+  („Der Stammbaum konnte nicht geladen/gezeichnet werden.") statt einer leeren Seite.
+
+**Backlog (Datenqualität):** Wolfgang Schulze muss in der GEDCOM-Quelle genau einer Familie
+zugeordnet werden (vermutlich `@F0051@`, da Otto/Anna/Wolfgang dort fortlaufende `I152…`-IDs
+besitzen). Ergänzend zu den drei isolierten Personen aus 8.2.
+
