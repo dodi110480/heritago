@@ -520,3 +520,40 @@ Screenshot zeigt 19 Karten, zentriert auf „Else Bertha Arnold". Backend- und F
 zugeordnet werden (vermutlich `@F0051@`, da Otto/Anna/Wolfgang dort fortlaufende `I152…`-IDs
 besitzen). Ergänzend zu den drei isolierten Personen aus 8.2.
 
+---
+
+## 9. Nachtrag: Lizenz-/Copyright-Sichtbarkeit (`family-chart`, MIT)
+
+**Frage:** Ist der Copyright-Vermerk von `family-chart` (MIT) in der Software noch auffindbar?
+
+**Befund:**
+
+| Ort | Ergebnis |
+|---|---|
+| `node_modules/family-chart/LICENSE.txt` | `MIT License` / `Copyright (c) 2021 Donat Soric` |
+| `node_modules/family-chart/package.json` | `"license": "ISC"` – irreführend, der Lizenztext ist MIT |
+| `dist/heritago/3rdpartylicenses.txt` | enthält den vollständigen MIT-Text als **ersten** Eintrag |
+| ausgelieferte JS/CSS-Chunks | **kein** Hinweis – `donatso` 0 Treffer |
+| Repo (eigene `LICENSE`/`NOTICE`-Datei) | keine vorhanden |
+
+- Der Quellbanner `// https://donatso.github.io/family-chart/ v0.9.0 Copyright 2025 donatso` ist
+  **kein** „legal comment" (kein `@license`/`@preserve`/`//!`) und wird von esbuild beim
+  Minifizieren entfernt. Erhalten bleiben nur markierte Banner (z. B.
+  `/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */`).
+- Die Lizenzliste wird von Angulars `extractLicenses` (in Produktion Default `true`) erzeugt.
+- **Lücke:** Die Datei entsteht in `dist/heritago/` – **eine Ebene über** dem Webroot. Nginx
+  serviert laut `docs/install.md` `root /opt/heritago/dist/heritago/browser;`, dadurch war der
+  Vermerk per HTTP **nicht erreichbar** (MIT verlangt die Mitlieferung des Hinweises in allen
+  Kopien/Teilen der Software).
+
+**Behebung (nur Compliance, keine UI-Änderung):**
+- Neu: `scripts/copy-licenses.js` – kopiert `3rdpartylicenses.txt` in den Webroot; fehlt die Datei
+  (z. B. Build ohne `extractLicenses`), bricht der Build **nicht** ab, sondern überspringt den Schritt.
+- `package.json` – `"postbuild": "node scripts/copy-licenses.js"` läuft automatisch nach `npm run build`.
+- `docs/install.md` – dokumentiert den zusätzlichen Output.
+
+**Verifikation:** `npm run build` → `[copy-licenses] written dist/heritago/browser/3rdpartylicenses.txt`;
+Datei identisch zur Quelle (33 218 Bytes). Statische Auslieferung wie bei Nginx simuliert:
+`GET /3rdpartylicenses.txt` → **HTTP 200**, `text/plain`, Inhalt beginnt mit dem
+`family-chart`-MIT-Block. Graceful-Skip bei fehlender Datei geprüft (`exit=0`).
+

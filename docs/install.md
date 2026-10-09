@@ -91,6 +91,9 @@ npm run build
 ```
 
 > Der Build erstellt den produktionsfertigen Output in `dist/heritago/browser/`.
+> Der `postbuild`-Schritt kopiert zusätzlich `3rdpartylicenses.txt` in den Webroot
+> (`scripts/copy-licenses.js`), damit die Lizenz- und Copyright-Hinweise der
+> verwendeten Bibliotheken unter `/3rdpartylicenses.txt` abrufbar sind.
 
 ---
 
