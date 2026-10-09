@@ -108,7 +108,11 @@ npm install
 
 ### 5.2 Umgebungsvariablen konfigurieren
 
+Eine vollständige Vorlage **aller** Variablen liegt im Repository unter
+`server/.env.example` – am einfachsten von dort kopieren und anpassen:
+
 ```bash
+cp /opt/heritago/server/.env.example /opt/heritago/server/.env
 nano /opt/heritago/server/.env
 ```
 
@@ -358,6 +362,15 @@ sudo journalctl -u heritago-update -f          # Fortschritt verfolgen
 cat /var/lib/heritago/update-state.txt         # Ergebnis (status=success/failed)
 ```
 
+**f) Fehlgeschlagene Updates (automatischer Rollback)**
+
+Schlägt ein Schritt **nach** dem Auschecken fehl (typisch: Frontend- oder Backend-Build),
+bleibt die Installation nicht halbfertig zurück. `update.sh` lädt die vorher installierte
+Version erneut, baut sie und startet den Dienst wieder darauf. Die Oberfläche meldet dann
+„Vorherige Version wiederhergestellt", in `/var/lib/heritago/update-state.txt` steht
+`status=rolled_back`. Schlägt auch der Rollback fehl, steht dort `status=failed` – dann ist
+ein manueller Eingriff per SSH nötig (Log siehe unten).
+
 > `update.sh` akzeptiert als Ziel-Version nur ein Tag im Format `v1.2.3` (oder `1.2.3`).
 > Lokale Änderungen im Installationsverzeichnis blockieren den Checkout: Die Datei
 > `package-lock.json` wird automatisch zurückgesetzt, alles andere muss vorher
@@ -481,6 +494,26 @@ sudo journalctl -u heritago -n 50 | grep -i 'github\|update check'
 Meldet das Log `GitHub rejected GITHUB_TOKEN` oder `Bad credentials`, ist der in `server/.env`
 hinterlegte Token abgelaufen: entweder einen neuen Personal Access Token setzen oder
 `GITHUB_TOKEN` ganz entfernen (das Repository ist öffentlich, die Prüfung läuft dann anonym).
+
+Ohne Token erlaubt die GitHub-API nur **60 Anfragen pro Stunde**. Ist das Kontingent
+aufgebraucht, antwortet GitHub mit HTTP 403 und `x-ratelimit-remaining: 0`. In diesem Fall
+zeigt die Seite ausdrücklich „Die GitHub-API ist derzeit limitiert …" und
+`/api/system/check-update` setzt `rateLimited: true` (unterscheidbar von einem echten
+Verbindungsfehler). Abhilfe: später erneut suchen oder ein Fine-grained Token mit
+Lesezugriff auf *Contents* und *Metadata* als `GITHUB_TOKEN` in `server/.env` hinterlegen und
+den Dienst neu starten.
+
+### Update schlägt fehl / „Vorherige Version wiederhergestellt"
+
+```bash
+cat /var/lib/heritago/update-state.txt      # status=rolled_back (ok) oder failed (Eingriff nötig)
+tail -n 60 /var/lib/heritago/update.log     # welcher Schritt gescheitert ist
+git -C /opt/heritago describe --tags --always   # welche Version jetzt läuft
+```
+
+Nach `status=rolled_back` läuft die vorherige Version weiter – es ist nichts weiter zu tun.
+Bei `status=failed` hat auch die Wiederherstellung nicht funktioniert: Fehler im Log beheben
+und das Update per SSH erneut anstoßen (Abschnitt 7.3 e).
 
 ### Datenbank-Fehler (z.B. "invalid input syntax")
 ```bash
