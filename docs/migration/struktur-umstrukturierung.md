@@ -1,5 +1,6 @@
-Anweisung: Umstrukturierung der Backend-Services
-Ziel:
+# Umstrukturierung der Backend-Services
+
+## Ziel
 
 Die bestehenden *.service.ts-Dateien sollen nach dem Repository-Pattern umstrukturiert werden, um Redundanzen zu reduzieren, die Testbarkeit zu verbessern und die Wartbarkeit zu erhöhen.
 

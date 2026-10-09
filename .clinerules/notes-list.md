@@ -1,4 +1,12 @@
+---
+paths:
+  - "src/app/shared/components/ui/app-notes-list/**"
+---
+
 # app-notes-list – Wiederverwendbare Standalone-Komponente für Notizen
+
+> **Verbindlichkeit:** verbindlich · **Geltungsbereich:** `app-notes-list` · **Aktivierung:** `paths:` (siehe oben)
+> Ergänzend gelten `ui.md` (Design/Angular), `api.md` (Endpunkte) und `backend-first.md`.
 
 ## Wichtig: Dies ist eine eigenständige, generische Komponente!
 `app-notes-list` ist **kein** Event- oder Person-spezifischer Tab-Inhalt.  
@@ -28,8 +36,7 @@ Begründung: Einheitliches Design, Wartbarkeit, konsistentes Verhalten (Hover, A
     GlassCardComponent, // Zwingend erforderlich!
     // weitere Module nach Bedarf
   ],
-  templateUrl: './notes-list.component.html',
-  styleUrls: ['./notes-list.component.scss'],
+  templateUrl: './app-notes-list.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NotesListComponent { … }
@@ -74,8 +81,10 @@ export class NotesListComponent { … }
 interface DisplayNote {
   id: string;
   text: string;
-  noteType?: 'FORSCHUNG' | 'HINWEIS' | 'FRAGE' | 'TRANSKRIPTION' | 'AUFGABE' | 'KOMMENTAR' | 'ANDERE';
+  noteType?: 'RESEARCH' | 'HINT' | 'QUESTION' | 'TRANSCRIPTION' | 'TODO' | 'COMMENT' | 'OTHER';
   createdAt: Date;
+  /** Vom Backend vorformatiert geliefert (backend-first), z.B. '07.03.2026' */
+  createdAtFormatted?: string;
   updatedAt?: Date;
   createdBy?: { id: string; username: string; avatarUrl?: string };
   linkedEntity?: { type: EntityType; id: string; label: string; url?: string };
@@ -173,7 +182,7 @@ interface DisplayNote {
             </span>
 
             @for (tag of note.tags; track tag) {
-              <span class="badge badge-outline text-xs">#{{ tag }}</span>
+              <span class="badge badge-highlight text-xs">#{{ tag }}</span>
             }
 
           </div>
@@ -185,13 +194,14 @@ interface DisplayNote {
               : note.text
             }}
 
-            <button
-              *ngIf="note.text.length > 220"
-              (click)="note.expanded = !note.expanded; $event.stopPropagation()"
-              class="text-xs text-brand-600"
-            >
-              {{ note.expanded ? 'Weniger' : 'Mehr anzeigen' }}
-            </button>
+            @if (note.text.length > 220) {
+              <button
+                (click)="note.expanded = !note.expanded; $event.stopPropagation()"
+                class="text-xs text-brand-600"
+              >
+                {{ note.expanded ? 'Weniger' : 'Mehr anzeigen' }}
+              </button>
+            }
 
           </div>
 
@@ -199,18 +209,20 @@ interface DisplayNote {
 
             <span>
               von {{ note.createdBy?.username || 'Unbekannt' }}
-              · {{ note.createdAt | date:'dd.MM.yyyy' }}
+              · {{ note.createdAtFormatted || note.createdAt }}
             </span>
 
-            <span *ngIf="note.linkedEntity">
-              <a
-                [routerLink]="note.linkedEntity.url"
-                class="text-brand-600 hover:underline"
-                (click)="$event.stopPropagation()"
-              >
-                → {{ note.linkedEntity.label }}
-              </a>
-            </span>
+            @if (note.linkedEntity) {
+              <span>
+                <a
+                  [routerLink]="note.linkedEntity.url"
+                  class="text-brand-600 hover:underline"
+                  (click)="$event.stopPropagation()"
+                >
+                  → {{ note.linkedEntity.label }}
+                </a>
+              </span>
+            }
 
           </div>
 
@@ -218,13 +230,15 @@ interface DisplayNote {
 
         <ng-container actions>
 
-          <button
-            *ngIf="allowEdit() && !readOnly()"
-            (click)="deleteNote(note.id); $event.stopPropagation()"
-            class="btn btn-xs btn-ghost text-red-500"
-          >
-            🗑️
-          </button>
+          @if (allowEdit() && !readOnly()) {
+            <button
+              (click)="deleteNote(note.id); $event.stopPropagation()"
+              class="btn-ghost text-red-500"
+              aria-label="Notiz löschen"
+            >
+              🗑️
+            </button>
+          }
 
         </ng-container>
 
@@ -248,6 +262,16 @@ interface DisplayNote {
 - **Löschen direkt aus der Karte**
 - **Keine `.glass-card` Divs** – nur `<app-glass-card>`
 - **Event Propagation stoppen** bei Buttons (`$event.stopPropagation()`)
+
+---
+
+# Suchverhalten (Abgrenzung zu `backend-first.md`)
+
+Die Suche in `app-notes-list` filtert **lokal** über die bereits geladene, kleine `notesDisplay`-Liste
+(Komfort-Suche). Das ist gemäß `backend-first.md` ausdrücklich **erlaubt**.
+
+Sobald Notizen **serverseitig** durchsucht oder ausgewählt werden sollen (großer Bestand,
+Pagination), wandert die Suche ins Backend (`searchChanged` → API-Query).
 
 ---
 

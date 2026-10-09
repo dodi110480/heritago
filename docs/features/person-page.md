@@ -1,5 +1,26 @@
-# Regelwerk – Seite /Person  
+# Feature-Spezifikation – Seite /Person
 (Neue Person anlegen & bestehende Person bearbeiten)
+
+> **Typ:** Feature-Spezifikation/Vision – **keine** verbindliche Coding-Regel.
+> Diese Datei beschreibt ein Zielbild. Sie liegt bewusst unter `docs/features/`, damit sie
+> die tägliche Arbeit nicht mit Regeln belastet. Verbindliche Regeln stehen in `.clinerules/`.
+
+> **Hinweis zur Umsetzung:** Mehrere Punkte sind bewusst visionär (Zwei-Modi-Ansatz, Undo/Redo,
+> Gramps-ID-Editing, „Rohdaten"-Ansicht). Vor Umsetzung sind sie gegen die Architektur-Regeln
+> (`.clinerules/backend-first.md`, `db-first.md`, `ui.md`, `api.md`) abzugleichen.
+>
+> **Offene Konflikte / zu klären:**
+> - Der komplexe Datums-Parser ist hier im **Frontend** skizziert; `backend-first.md` verlangt
+>   Parsing/Formatierung im Backend. → gegen Backend-First auflösen.
+> - „Person nur für mich sichtbar" (Record-Level-Sichtbarkeit) existiert im Datenmodell noch nicht;
+>   `api.md`/`db-first.md` kennen bisher nur Tree-Permissions. → Datenmodell-Erweiterung nötig.
+> - Validierung: Das Projekt nutzt **TypeScript/Express + Angular**; genanntes `Pydantic` (Python)
+>   ist nicht relevant, hier gilt TypeScript (z. B. Zod) bzw. serverseitige Validierung.
+
+---
+
+## Ausgangslage (ursprüngliche Notiz)
+
 
 Ziel: Mächtige, Gramps-ähnliche Funktionalität, aber mit deutlich flacherer Einstiegshürde  
 → Zwei-Modi-Ansatz: **Einfacher Modus** (Default) vs. **Experten-Modus**

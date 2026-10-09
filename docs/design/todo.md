@@ -1,4 +1,4 @@
-# DESIGN_TODO
+# Design TODO
 
 ## Ziel
 Einheitliches Design über gemeinsame UI-Komponenten und globale Utility-Muster statt seitenlokaler Einzel-Styles.
@@ -93,7 +93,7 @@ Einheitliches Design über gemeinsame UI-Komponenten und globale Utility-Muster 
 - [ ] Navbar-Klassen reduzieren und auf Design-Tokens/Helper-Klassen konsolidieren.
 
 ## 5) Priorisierte Umsetzungsreihenfolge
-- [x] 1. Design-Richtlinie in `DESIGN_TODO.md` finalisieren und als Team-Referenz nutzen.
+- [x] 1. Design-Richtlinie in `docs/design/todo.md` finalisieren und als Team-Referenz nutzen.
 - [x] 2. Layout-Standardisierung: Standardseiten auf `app-page-container` + `app-page-header` gezogen; Sonderlayouts dokumentieren.
 - [x] 3. Modal-Standardisierung: lokale Modals auf `app-modal-shell` migriert (Login als Sonderfall).
 - [ ] 4. Card-Standardisierung: lokale Kartenmuster in `app-card`/`app-entity-card`/`app-stat-card` überführen (Rest: person-detail).

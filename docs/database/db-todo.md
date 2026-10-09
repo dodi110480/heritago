@@ -1,4 +1,4 @@
-# DB_TODO.md — Frontend-Lücken gegenüber Datenbankmodell
+# DB TODO — Frontend-Lücken gegenüber Datenbankmodell
 
 Dieses Dokument analysiert das Prisma-Schema und listet alle Felder, Relationen und Modelle,
 die noch **kein Frontend** haben. Stand: **2026-03-03**.

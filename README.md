@@ -71,6 +71,13 @@ Dieses Projekt folgt strikt der **FamilySearch GEDCOM 7.0** Spezifikation. Jede 
 
 ---
 
+## 📚 Dokumentation
+
+- **Projekt-Doku:** [`docs/`](docs/) (Installation, Design, Datenbank, Migration)
+- **Entwicklungsregeln:** [`.clinerules/`](.clinerules/) (verbindliche Konventionen für API, UI, Backend-First, DB-First, Medien)
+
+---
+
 ## 🛡 Lizenz
 
 © 2026 Heritago Team. Alle Rechte vorbehalten.

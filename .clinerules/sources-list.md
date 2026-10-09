@@ -1,4 +1,12 @@
+---
+paths:
+  - "src/app/shared/components/ui/app-sources-list/**"
+---
+
 # `app-sources-list` – Wiederverwendbare Standalone-Komponente für Quellen
+
+> **Verbindlichkeit:** verbindlich · **Geltungsbereich:** `app-sources-list` · **Aktivierung:** `paths:` (siehe oben)
+> Ergänzend gelten `ui.md` (Design/Angular), `api.md` (Endpunkte) und `backend-first.md`.
 
 ## Wichtig
 - **Standalone & generisch**: Kein Event-/Person-spezifischer Tab-Inhalt.
@@ -8,6 +16,15 @@
 - **Design-Vorgabe**: Einheitliche Darstellung über `app-glass-card`.
 - **Keine Inline-Bearbeitung**: Bearbeitung erfolgt ausschließlich über ein Modal.
 - **UI-State getrennt vom Datenmodell** (z.B. Expanded-Zustände).
+
+## Enum-Konvention (projektweit)
+- **Alle Enums sind ENGLISCH** (semantische Werte, gemäß `backend-first.md`):
+  `EntityType` (`'PERSON'`, `'EVENT'`, …), `SourceType` (`'BOOK'`, `'WEBSITE'`, …),
+  `SourceCategory` (`'PRIMARY'`, `'SECONDARY'`), `NoteType` (`'RESEARCH'`, `'HINT'`, …),
+  `ConfidenceLevel` (`'CERTAIN'`, `'VERY_LIKELY'`, …).
+- **Deutsche Labels** (`'Buch'`, `'Webseite'`, …) sind reine Präsentation und werden im Frontend
+  gemappt (z. B. `SOURCE_TYPE_LABELS`, `getConfidenceLabel`) – nie als Enum-Werte gespeichert.
+- Diese Trennung ist verbindlich und einheitlich beizubehalten (Frontend **und** Backend).
 
 ---
 
@@ -27,8 +44,8 @@
     GlassCardComponent,
     SourceSummaryPipe
   ],
-  templateUrl: './sources-list.component.html',
-  styleUrls: ['./sources-list.component.scss'],
+  templateUrl: './app-sources-list.html',
+  styleUrls: ['./app-sources-list.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SourcesListComponent {
@@ -53,9 +70,9 @@ export class SourcesListComponent {
   enableEntityLinking = input<boolean>(false);
 
   typeOptions = input<SourceType[]>([
-    'BUCH','WEBSEITE','DOKUMENT','ZEITUNG','ARCHIV',
-    'FOTO','AUDIO','VIDEO','PERIODISCH',
-    'KIRCHBUCH','VOLKSZAEHLUNG','ANDERE'
+    'BOOK','WEBSITE','DOCUMENT','NEWSPAPER','ARCHIVE',
+    'PHOTO','AUDIO','VIDEO','PERIODICAL',
+    'CHURCH_RECORD','CENSUS','OTHER'
   ]);
 
   debounceTimeInput = input<number>(300);
@@ -99,13 +116,19 @@ export class SourcesListComponent {
 
   filteredSources = computed(() => {
 
-    const query = this.searchQuery.toLowerCase();
-
     let sources = this.sourcesDisplay().filter(s => !s.isArchived);
 
     if (this.filterByCategory()) {
       sources = sources.filter(s => s.category === this.filterByCategory());
     }
+
+    // Server-side search mode: backend is the single source of truth and already
+    // delivered the filtered list. Never re-filter locally.
+    if (this.enableVirtualScroll()) {
+      return sources;
+    }
+
+    const query = this.searchQuery.toLowerCase();
 
     if (!query) return sources;
 
@@ -215,11 +238,11 @@ export class SourcesListComponent {
 
     switch (type) {
 
-      case 'BUCH': return 'book';
-      case 'WEBSEITE': return 'globe';
-      case 'ZEITUNG': return 'newspaper';
-      case 'ARCHIV': return 'archive';
-      case 'FOTO': return 'image';
+      case 'BOOK': return 'book';
+      case 'WEBSITE': return 'globe';
+      case 'NEWSPAPER': return 'newspaper';
+      case 'ARCHIVE': return 'archive';
+      case 'PHOTO': return 'image';
 
       default:
         return 'file-text';
@@ -227,23 +250,28 @@ export class SourcesListComponent {
 
   }
 
+  getSourceTypeLabel(type?: SourceType): string {
+    if (!type) return '';
+    return SOURCE_TYPE_LABELS[type] ?? type;
+  }
+
 }
 
 
 Datenmodel (DisplaySource)
 type SourceType =
-  | 'BUCH'
-  | 'WEBSEITE'
-  | 'DOKUMENT'
-  | 'ZEITUNG'
-  | 'ARCHIV'
-  | 'FOTO'
+  | 'BOOK'
+  | 'WEBSITE'
+  | 'DOCUMENT'
+  | 'NEWSPAPER'
+  | 'ARCHIVE'
+  | 'PHOTO'
   | 'AUDIO'
   | 'VIDEO'
-  | 'PERIODISCH'
-  | 'KIRCHBUCH'
-  | 'VOLKSZAEHLUNG'
-  | 'ANDERE';
+  | 'PERIODICAL'
+  | 'CHURCH_RECORD'
+  | 'CENSUS'
+  | 'OTHER';
 
 type SourceCategory = 'PRIMARY' | 'SECONDARY';
 
@@ -331,16 +359,25 @@ interface DisplaySource {
 
 
 
-Entwicklerregeln
+### Entwicklerregeln
 
-Bearbeitung immer über Modal
+- Bearbeitung immer über Modal
+- Nur `DisplaySource` im UI verwenden
+- Counts vom Backend liefern (keine Arrays laden)
+- Große Listen → Virtual Scroll
+- Reihenfolge optional über `priority` + Drag & Drop
+- UI-State nicht im Datenmodell speichern
+- Master-Daten-Aktionen (Löschen mit Reassign, Merge) laufen über dedizierte Backend-Endpunkte;
+  die Komponente orchestriert nur – kein `treeService.getTreeData()` für Quelllisten, kein
+  `mode: 'delete'`-Hack.
 
-Nur DisplaySource im UI verwenden
+### Suchverhalten (Abgrenzung zu `backend-first.md`)
 
-Counts vom Backend liefern (keine Arrays laden)
+Die Suche filtert **lokal** über die bereits geladene, kleine `sourcesDisplay`-Liste (Komfort-Suche)
+– gemäß `backend-first.md` erlaubt. Für serverseitige Suche über den gesamten Bestand
+(`enableVirtualScroll` / `loadMore`) wird `searchChanged` an die API weitergegeben.
 
-Große Listen → Virtual Scroll
-
-Reihenfolge optional über priority + Drag & Drop
-
-UI-State nicht im Datenmodell speichern
+**Logikweiche:** Ist `enableVirtualScroll = true`, überspringt `filteredSources` die lokale
+Textfilterung vollständig. Das Backend ist dann die alleinige Quelle der Wahrheit und liefert die
+bereits gefilterte Liste über `sourcesDisplay`. Es darf **keine** zweite, lokale Filterung über die
+serverseitig gelieferten Daten erfolgen (verhindert Doppelfilterung und flackernde UI-Zustände).

@@ -116,6 +116,21 @@ PORT=3000
 DATABASE_URL="postgresql://heritago:dein_sicheres_passwort@127.0.0.1:5432/heritago?schema=public"
 JWT_SECRET="ein-langes-zufaelliges-geheimnis"
 NODE_ENV=production
+
+# Öffentliche Basis-URL der Anwendung (für Links in E-Mails)
+APP_URL="https://deine-domain.de"
+
+# E-Mail (SMTP) – für E-Mail-Verifizierung & Passwort-Reset
+# Ohne MAIL_HOST werden E-Mails im Dev-Modus nur in die Konsole geloggt.
+MAIL_HOST="smtp.example.com"
+MAIL_PORT=587
+MAIL_USER="dein-smtp-user"
+MAIL_PASS="dein-smtp-passwort"
+MAIL_FROM="Heritago <no-reply@deine-domain.de>"
+
+# Bot-Schutz / Rate Limiting (optional – es gelten sichere Defaults)
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX=20
 ```
 
 > [!IMPORTANT]
@@ -129,8 +144,8 @@ cd /opt/heritago/server
 # Prisma Client generieren
 npx prisma generate
 
-# Datenbank-Schema direkt anwenden (bei Erstinstallation)
-npx prisma db push
+# Datenbank-Migrationen anwenden (sicher, nicht-destruktiv)
+npx prisma migrate deploy
 
 # TypeScript kompilieren
 npm run build
@@ -289,7 +304,7 @@ npm run build
 cd server
 npm install
 npx prisma generate
-npx prisma db push
+npx prisma migrate deploy
 npm run build
 
 # Backend neustarten
