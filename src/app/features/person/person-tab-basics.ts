@@ -78,7 +78,7 @@ import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
                             <span class="w-1 h-3 bg-brand-500 rounded-full"></span> Beteiligt als...
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div *ngFor="let part of participations" class="glass-card p-4! flex items-start gap-4 hover:bg-neutral-black/20 transition-all">
+                            <div *ngFor="let part of participations" class="glass-card p-4! flex items-start gap-4 hover:bg-canvas-black/20 transition-all">
                                 <div class="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-lg shadow-inner">
                                     {{ getRoleIcon(part.role) }}
                                 </div>

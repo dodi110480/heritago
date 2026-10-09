@@ -81,8 +81,8 @@
                 </button>
 
                 <button (click)="toggleSwitcher()"
-                    class="flex items-center gap-4 p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-neutral-200 dark:border-white/10 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all group text-left">
-                    <div class="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
+                    class="flex items-center gap-4 p-4 rounded-xl bg-white/50 dark:bg-white/5 border border-neutral-200 dark:border-white/10 hover:border-accent-violet-500/50 hover:bg-accent-violet-500/5 transition-all group text-left">
+                    <div class="w-10 h-10 rounded-lg bg-accent-violet-500/10 text-accent-violet-600 flex items-center justify-center group-hover:bg-accent-violet-500/20 transition-colors">
                         <app-icon name="tree" size="1.2rem"></app-icon>
                     </div>
                     <div>
@@ -142,20 +142,20 @@
 
 <div class="fixed inset-0 bg-ui-bg/90 backdrop-blur-md flex justify-center items-center z-modal"
     *ngIf="showTreeSwitcher()" (click)="$event.stopPropagation(); toggleSwitcher()">
-    <div class="glass-card rounded-2xl! border border-neutral-200 shadow-xl max-w-lg w-full mx-4"
+    <div class="glass-card border border-glass-border max-w-lg w-full mx-4"
         (click)="$event.stopPropagation()">
-        <h2 class="text-2xl font-bold text-neutral-900 mb-6">Stammbaum wählen</h2>
+        <h2 class="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">Stammbaum wählen</h2>
         <div class="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2">
             <div *ngFor="let tree of availableTrees()"
-                class="glass-card p-4! rounded-xl! flex items-center gap-4 cursor-pointer transition-all hover:bg-brand-500/10"
+                class="glass-card p-4! flex items-center gap-4 cursor-pointer transition-all hover:bg-brand-500/10"
                 [ngClass]="{'border-brand-500 bg-brand-500/10': tree.name === treeName()}" draggable="true"
                 (dragstart)="onDragStart($event, tree)" (dragend)="onDragEnd()" (click)="selectTree(tree)">
                 <div
-                    class="w-10 h-10 shrink-0 bg-neutral-100 rounded-xl flex items-center justify-center border border-neutral-200">
+                    class="w-10 h-10 shrink-0 bg-canvas-white/5 rounded-card flex items-center justify-center border border-ui-border">
                     <img src="/favicon.svg" alt="Tree" class="w-6 h-6" />
                 </div>
                 <div class="flex flex-col">
-                    <span class="block font-bold text-neutral-900">{{ tree.title }}</span>
+                    <span class="block font-bold text-neutral-900 dark:text-neutral-100">{{ tree.title }}</span>
                     <span class="text-[10px] uppercase font-bold tracking-widest text-neutral-400">{{ tree.name }}</span>
                 </div>
             </div>

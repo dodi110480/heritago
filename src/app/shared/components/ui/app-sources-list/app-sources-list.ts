@@ -310,11 +310,11 @@ export class AppSourcesListComponent {
 
   getConfidenceClass(conf?: string): string {
     switch (conf) {
-      case 'CERTAIN': return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
-      case 'VERY_LIKELY': return 'bg-green-500/10 text-green-600 border-green-500/20';
-      case 'LIKELY': return 'bg-blue-500/10 text-blue-600 border-blue-500/20';
-      case 'POSSIBLE': return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
-      case 'UNLIKELY': return 'bg-red-500/10 text-red-600 border-red-500/20';
+      case 'CERTAIN': return 'bg-accent-success-500/10 text-accent-success-600 border-accent-success-500/20';
+      case 'VERY_LIKELY': return 'bg-accent-success-500/10 text-accent-success-600 border-accent-success-500/20';
+      case 'LIKELY': return 'bg-accent-violet-500/10 text-accent-violet-600 border-accent-violet-500/20';
+      case 'POSSIBLE': return 'bg-accent-highlight-500/10 text-accent-highlight-600 border-accent-highlight-500/20';
+      case 'UNLIKELY': return 'bg-accent-danger-500/10 text-accent-danger-600 border-accent-danger-500/20';
       default: return 'bg-neutral-500/10 text-neutral-600 border-neutral-500/20';
     }
   }

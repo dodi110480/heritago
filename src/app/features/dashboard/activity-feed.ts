@@ -41,7 +41,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
                             <!-- Action Marker Dot -->
                             <div class="w-1 h-6 rounded-full shrink-0"
                                  [ngClass]="{
-                                    'bg-accent-emerald-500': log.action === 'CREATE',
+                                    'bg-accent-success-500': log.action === 'CREATE',
                                     'bg-brand-500': log.action === 'UPDATE',
                                     'bg-accent-danger-500': log.action === 'DELETE'
                                  }">

@@ -247,7 +247,7 @@
                 <div class="grid grid-cols-4 gap-3">
                     <div *ngFor="let med of draft().weddingEvent?.media; let mIdx = index" class="glass-card p-0! overflow-hidden relative group">
                         <button (click)="draft().weddingEvent?.media?.splice(mIdx, 1)"
-                          class="absolute top-1 right-1 z-10 bg-black/50 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-500 transition-colors opacity-0 group-hover:opacity-100">✕</button>
+                          class="absolute top-1 right-1 z-10 bg-black/50 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-accent-danger-500 transition-colors opacity-0 group-hover:opacity-100">✕</button>
                         <div (click)="openViewer.emit(med)" class="aspect-square flex items-center justify-center overflow-hidden cursor-pointer relative">
                             <img *ngIf="med.id" [src]="getMediaUrl(med.id, 'thumbs')" class="w-full h-full object-cover transition-transform group-hover:scale-110">
                             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

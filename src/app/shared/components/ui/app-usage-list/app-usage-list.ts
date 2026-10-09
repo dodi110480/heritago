@@ -64,9 +64,9 @@ export interface UsageEntry {
 
                         <div *ngIf="u.confidence" class="shrink-0 flex items-center gap-1.5 px-2 py-1 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-100 dark:border-neutral-700">
                             <span class="w-1.5 h-1.5 rounded-full" [ngClass]="{
-                                'bg-emerald-500': u.confidence === 'CERTAIN' || u.confidence === 'VERY_LIKELY',
-                                'bg-amber-500': u.confidence === 'LIKELY' || u.confidence === 'POSSIBLE',
-                                'bg-rose-500': u.confidence === 'UNLIKELY'
+                                'bg-accent-success-500': u.confidence === 'CERTAIN' || u.confidence === 'VERY_LIKELY',
+                                'bg-accent-highlight-500': u.confidence === 'LIKELY' || u.confidence === 'POSSIBLE',
+                                'bg-accent-danger-500': u.confidence === 'UNLIKELY'
                             }"></span>
                             <span class="text-[10px] font-bold text-neutral-500">{{ u.confidence }}</span>
                         </div>

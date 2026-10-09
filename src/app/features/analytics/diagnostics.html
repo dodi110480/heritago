@@ -32,7 +32,7 @@
             Fehler ({{ getIssueCount('error') }})
         </button>
         <button (click)="filterType.set('warning')" 
-            [class]="filterType() === 'warning' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/30' : 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20'"
+            [class]="filterType() === 'warning' ? 'bg-accent-highlight-500 text-white shadow-lg shadow-accent-highlight-500/30' : 'bg-accent-highlight-500/10 text-accent-highlight-600 hover:bg-accent-highlight-500/20'"
             class="px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
             Warnungen ({{ getIssueCount('warning') }})
         </button>
@@ -57,7 +57,7 @@
                 <!-- ICON AREA -->
                 <div class="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center shadow-xs transition-transform group-hover:scale-110"
                     [class.bg-accent-danger-500/10]="issue.type === 'error'"
-                    [class.bg-amber-500/10]="issue.type === 'warning'"
+                    [class.bg-accent-highlight-500/10]="issue.type === 'warning'"
                     [class.bg-brand-500/10]="issue.type === 'todo'">
                     
                     <svg *ngIf="issue.type === 'error'" class="text-accent-danger-500"
@@ -66,7 +66,7 @@
                         <path d="M12 2L1 21h22L12 2zM12 6l7.53 13H4.47L12 6zm-1 4v4h2v-4h-2zm0 6v2h2v-2h-2z"/>
                     </svg>
 
-                    <svg *ngIf="issue.type === 'warning'" class="text-amber-500" xmlns="http://www.w3.org/2000/svg"
+                    <svg *ngIf="issue.type === 'warning'" class="text-accent-highlight-500" xmlns="http://www.w3.org/2000/svg"
                         width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
@@ -88,7 +88,7 @@
                         <div class="truncate">
                             <div class="text-[8px] font-bold uppercase tracking-wider mb-0.5 leading-none"
                                 [class.text-accent-danger-500]="issue.type === 'error'"
-                                [class.text-amber-600]="issue.type === 'warning'"
+                                [class.text-accent-highlight-600]="issue.type === 'warning'"
                                 [class.text-brand-500]="issue.type === 'todo'">
                                 {{ issue.type === 'error' ? 'FEHLER' : (issue.type === 'warning' ? 'WARNUNG' : 'AUFGABE') }} • {{ issue.code }}
                             </div>
@@ -128,14 +128,14 @@
     <div class="flex flex-col items-center justify-center py-32 text-center animate-in zoom-in-95 duration-700"
         *ngIf="!isLoading() && issues().length === 0">
         <div
-            class="w-32 h-32 bg-accent-emerald-500/10 border border-accent-emerald-500/20 rounded-[48px] flex items-center justify-center text-accent-emerald-500 shadow-brand-glow mb-8 scale-in duration-700">
+            class="w-32 h-32 bg-accent-success-500/10 border border-accent-success-500/20 rounded-[48px] flex items-center justify-center text-accent-success-500 shadow-brand-glow mb-8 scale-in duration-700">
             <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
         </div>
-        <h2 class="text-3xl font-black text-neutral-900 tracking-tight mb-4">Stammbaum ist konsistent</h2>
+        <h2 class="text-3xl font-black text-neutral-900 dark:text-neutral-100 tracking-tight mb-4">Stammbaum ist konsistent</h2>
         <p class="text-neutral-800 dark:text-neutral-200 max-w-md mx-auto leading-relaxed">Es wurden keine logischen Konflikte oder Daten-Integritätsprobleme im Stammbaum gefunden.</p>
     </div>
 </main>

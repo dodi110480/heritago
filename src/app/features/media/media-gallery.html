@@ -25,7 +25,7 @@
   class="glass-card mb-8 py-4! flex flex-wrap items-center justify-around gap-6 border-brand-500/10 bg-ui-card/40 backdrop-blur-md">
   <div class="flex flex-col items-center gap-1">
     <span class="text-neutral-500 text-[10px] font-bold uppercase tracking-[0.2em]">Gesamt</span>
-    <strong class="text-2xl text-neutral-900 font-black tracking-tight">{{ stats().total }}</strong>
+    <strong class="text-2xl text-neutral-900 dark:text-neutral-100 font-black tracking-tight">{{ stats().total }}</strong>
   </div>
   <div class="w-px h-8 bg-neutral-200/50 hidden sm:block"></div>
   <div class="flex flex-col items-center gap-1">
@@ -45,7 +45,7 @@
 </section>
 
 <!-- Tabs + View Toggle -->
-<div class="flex items-center justify-between mb-6 border-b border-neutral-200">
+<div class="flex items-center justify-between mb-6 border-b border-ui-border">
   <div class="flex gap-8 overflow-x-auto no-scrollbar">
     <button class="pb-4 text-sm font-bold uppercase tracking-widest transition-all relative"
       [class.text-brand-500]="filterType() === 'ALLE'" [class.text-neutral-500]="filterType() !== 'ALLE'"

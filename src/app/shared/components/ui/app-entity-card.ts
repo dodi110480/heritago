@@ -44,7 +44,7 @@ export type EntityBadgeColor = 'primary' | 'highlight' | 'success' | 'danger' | 
                         <div *ngIf="badgeText" class="text-[8px] font-bold uppercase tracking-wider mb-0.5 leading-none" [ngClass]="getTextColorClass()">
                             {{ badgeText }}
                         </div>
-                        <h3 class="text-sm font-bold text-neutral-900 truncate leading-tight group-hover:text-brand-700 transition-colors">
+                        <h3 class="text-sm font-bold text-neutral-900 dark:text-neutral-100 truncate leading-tight group-hover:text-brand-700 transition-colors">
                             {{ title }}
                         </h3>
                     </div>
@@ -55,7 +55,7 @@ export type EntityBadgeColor = 'primary' | 'highlight' | 'success' | 'danger' | 
                     </div>
                 </div>
                 
-                <div *ngIf="subtitle" class="text-meta leading-tight text-neutral-700 truncate mt-0.5">
+                <div *ngIf="subtitle" class="text-meta leading-tight text-neutral-700 dark:text-neutral-300 truncate mt-0.5">
                     {{ subtitle }}
                 </div>
                 

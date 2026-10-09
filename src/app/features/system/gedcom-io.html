@@ -16,7 +16,7 @@
         <div class="glass-card flex flex-col gap-6 animate-in slide-in-from-left duration-500">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-brand-500/10 text-brand-500 rounded-xl flex items-center justify-center text-2xl">📤</div>
-                <h3 class="text-xl font-bold text-neutral-900 tracking-tight">Exportieren</h3>
+                <h3 class="text-xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">Exportieren</h3>
             </div>
             <p class="text-neutral-500 leading-relaxed text-sm">
                 Sichere deinen aktuellen Stammbaum als standardisierte GEDCOM-Datei für Backups oder den Umzug auf externe Dienste.
@@ -33,7 +33,7 @@
         <div class="glass-card flex flex-col gap-6 animate-in slide-in-from-right duration-500">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-accent-highlight-500/10 text-accent-highlight-500 rounded-xl flex items-center justify-center text-2xl">📥</div>
-                <h3 class="text-xl font-bold text-neutral-900 tracking-tight">Importieren</h3>
+                <h3 class="text-xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">Importieren</h3>
             </div>
             <p class="text-neutral-500 leading-relaxed text-sm">
                 Lade eine GEDCOM-Datei hoch, um sie in diesen Stammbaum zu importieren.
@@ -42,9 +42,9 @@
             <div class="space-y-4">
                 <input type="file" (change)="onFileSelected($event)" accept=".ged" id="gedcomFile" class="hidden" #fileInput>
                 <div (click)="fileInput.click()" 
-                    class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-neutral-200 rounded-xl bg-neutral-50/50 hover:border-brand-400 hover:bg-brand-50/50 cursor-pointer transition-all group">
+                    class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-ui-border rounded-card bg-canvas-white/5 hover:border-brand-400 hover:bg-brand-500/5 cursor-pointer transition-all group">
                     <span class="text-neutral-400 text-[10px] font-bold uppercase tracking-widest mb-1">Datei auswählen</span>
-                    <span class="text-neutral-700 font-bold truncate max-w-full">
+                    <span class="text-neutral-700 dark:text-neutral-300 font-bold truncate max-w-full">
                         {{ selectedFile ? selectedFile.name : 'Keine Datei gewählt' }}
                     </span>
                 </div>

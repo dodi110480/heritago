@@ -16,20 +16,9 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <script>
-    // Synchronization with system color scheme
-    function updateTheme() {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-
-    // Initial check
-    updateTheme();
-
-    // Listen for system changes
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme);
+    // Heritago uses a dark, gold-accented theme by default.
+    // The `.dark` class activates every `dark:` variant across the app.
+    document.documentElement.classList.add('dark');
   </script>
 </head>
 

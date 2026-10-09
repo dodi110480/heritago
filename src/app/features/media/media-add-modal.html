@@ -4,7 +4,7 @@
   (delete)="deleteItem()">
 
   <div *ngIf="!treeId() && !isEditing()"
-    class="mb-4 mx-6 p-3 rounded-lg bg-accent-amber-500/10 border border-accent-amber-500/20 text-accent-amber-600 text-sm flex items-center gap-2">
+    class="mb-4 mx-6 p-3 rounded-lg bg-accent-highlight-500/10 border border-accent-highlight-500/20 text-accent-highlight-600 text-sm flex items-center gap-2">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
       stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="10"></circle>
@@ -43,7 +43,7 @@
             <div class="bg-brand-500/10 p-4 rounded-xl text-brand-500 mb-4 group-hover:scale-110 transition-transform">
               <!-- icon -->
             </div>
-            <span class="text-neutral-800 font-bold">Datei auswählen</span>
+            <span class="text-neutral-800 dark:text-neutral-200 font-bold">Datei auswählen</span>
             <span class="text-neutral-500 text-xs mt-1">Bilder oder PDF</span>
           </label>
 

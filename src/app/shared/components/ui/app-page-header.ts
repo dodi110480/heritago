@@ -27,7 +27,7 @@ import { AppIconComponent } from './app-icon';
             }
           }
         </div>
-        <h1 class="font-bold text-neutral-900 tracking-tight transition-all" 
+        <h1 class="font-bold text-neutral-900 dark:text-brand-100 tracking-tight transition-all" 
             [class.text-3xl]="!flat" [class.text-xl]="flat">
           {{ title }}
         </h1>

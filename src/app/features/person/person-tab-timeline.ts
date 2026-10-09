@@ -54,7 +54,7 @@ import { PersonFeatureStore } from './person-feature.store';
                             <div *ngIf="!item.editing" class="space-y-2">
                                 <div class="flex justify-between items-start">
                                     <div class="space-y-1">
-                                        <div class="text-[10px] font-bold text-neutral-800 uppercase tracking-widest">
+                                        <div class="text-[10px] font-bold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest">
                                             {{ item.label || item.tag }}
                                         </div>
                                         <div class="flex items-baseline gap-2">
@@ -73,7 +73,7 @@ import { PersonFeatureStore } from './person-feature.store';
                                         <span class="text-xs">📍</span> {{ item.place }}
                                     </span>
                                 </div>
-                                <div class="text-xs text-neutral-800 leading-relaxed"
+                                <div class="text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed"
                                     *ngIf="item.value || item.description">
                                     {{ item.value || item.description }}
                                 </div>

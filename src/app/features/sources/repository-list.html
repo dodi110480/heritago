@@ -23,10 +23,10 @@
 
             <div actions class="flex gap-1 items-center">
                 <span *ngIf="repo.website"
-                    class="text-[10px] px-1.5 py-0.5 rounded-sm bg-surface text-brand-300 font-medium whitespace-nowrap mr-1"
+                    class="text-[10px] px-1.5 py-0.5 rounded-sm bg-canvas-white/10 text-brand-300 font-medium whitespace-nowrap mr-1"
                     [title]="repo.website">🌐 Web</span>
                 <button
-                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-surface/50 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/20 transition-all border border-transparent hover:border-brand-500/30"
+                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-canvas-white/5 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/20 transition-all border border-transparent hover:border-brand-500/30"
                     (click)="$event.stopPropagation(); openEditModal(repo)" title="Bearbeiten">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">
@@ -35,7 +35,7 @@
                     </svg>
                 </button>
                 <button
-                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-surface/50 text-neutral-400 hover:text-rose-400 hover:bg-rose-500/20 transition-all border border-transparent hover:border-rose-500/30"
+                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-canvas-white/5 text-neutral-400 hover:text-accent-danger-400 hover:bg-accent-danger-500/20 transition-all border border-transparent hover:border-accent-danger-500/30"
                     (click)="$event.stopPropagation(); deleteRepo(repo)" title="Löschen">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">

@@ -77,12 +77,12 @@ export class AppNotesList {
 
   getNoteTypeClass(type?: NoteCategory): string {
     switch (type) {
-      case 'RESEARCH': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20';
-      case 'HINT': return 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20';
-      case 'QUESTION': return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20';
-      case 'TRANSCRIPTION': return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
-      case 'TODO': return 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20';
-      case 'COMMENT': return 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border border-gray-500/20';
+      case 'RESEARCH': return 'bg-accent-violet-500/10 text-accent-violet-600 dark:text-accent-violet-400 border border-accent-violet-500/20';
+      case 'HINT': return 'bg-accent-violet-500/10 text-accent-violet-600 dark:text-accent-violet-400 border border-accent-violet-500/20';
+      case 'QUESTION': return 'bg-accent-highlight-500/10 text-accent-highlight-600 dark:text-accent-highlight-400 border border-accent-highlight-500/20';
+      case 'TRANSCRIPTION': return 'bg-accent-success-500/10 text-accent-success-600 dark:text-accent-success-400 border border-accent-success-500/20';
+      case 'TODO': return 'bg-accent-danger-500/10 text-accent-danger-600 dark:text-accent-danger-400 border border-accent-danger-500/20';
+      case 'COMMENT': return 'bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border border-neutral-500/20';
       default: return 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20';
     }
   }

@@ -84,7 +84,7 @@ export class PersonTimelineService {
     getConfidenceColorClass(conf: string): string {
         switch (conf) {
             case 'CERTAIN': return 'badge-success';
-            case 'VERY_LIKELY': return 'bg-emerald-500/10 text-emerald-500'; 
+            case 'VERY_LIKELY': return 'bg-accent-success-500/10 text-accent-success-500'; 
             case 'LIKELY': return 'badge-highlight';
             case 'POSSIBLE': return 'badge-warn';
             case 'UNLIKELY': return 'badge-danger';

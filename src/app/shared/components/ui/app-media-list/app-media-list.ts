@@ -117,11 +117,11 @@ export class AppMediaList {
 
   getRoleClass(role?: string): string {
     switch (role) {
-      case 'PORTRAIT': return 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20';
-      case 'DOCUMENT': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20';
-      case 'CERTIFICATE': return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
-      case 'GRAVESTONE': return 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border border-gray-500/20';
-      case 'SIGNATURE': return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20';
+      case 'PORTRAIT': return 'bg-accent-violet-500/10 text-accent-violet-600 dark:text-accent-violet-400 border border-accent-violet-500/20';
+      case 'DOCUMENT': return 'bg-accent-violet-500/10 text-accent-violet-600 dark:text-accent-violet-400 border border-accent-violet-500/20';
+      case 'CERTIFICATE': return 'bg-accent-success-500/10 text-accent-success-600 dark:text-accent-success-400 border border-accent-success-500/20';
+      case 'GRAVESTONE': return 'bg-neutral-500/10 text-neutral-600 dark:text-neutral-400 border border-neutral-500/20';
+      case 'SIGNATURE': return 'bg-accent-highlight-500/10 text-accent-highlight-600 dark:text-accent-highlight-400 border border-accent-highlight-500/20';
       default: return 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border border-brand-500/20';
     }
   }

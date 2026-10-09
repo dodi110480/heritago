@@ -65,9 +65,9 @@
             <a routerLink="/diagnostics"
                 class="relative p-2 rounded-full transition-all duration-300 flex items-center justify-center group"
                 [class.text-accent-danger-500]="errorCount() > 0"
-                [class.text-amber-500]="errorCount() === 0 && warningCount() > 0"
+                [class.text-accent-highlight-500]="errorCount() === 0 && warningCount() > 0"
                 [class.bg-accent-danger-500\/10]="errorCount() > 0"
-                [class.bg-amber-500\/10]="errorCount() === 0 && warningCount() > 0"
+                [class.bg-accent-highlight-500\/10]="errorCount() === 0 && warningCount() > 0"
                 title="Fehlerdiagnose" *ngIf="errorCount() > 0 || warningCount() > 0">
                 
                 <!-- Red Triangle for Errors -->
@@ -83,7 +83,7 @@
                     {{ errorCount() }}
                 </span>
                 <span *ngIf="errorCount() === 0 && warningCount() > 0"
-                    class="absolute -top-1 -right-1 bg-amber-600 text-white text-[10px] min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full font-bold shadow-lg ring-2 ring-white dark:ring-slate-900 z-10">
+                    class="absolute -top-1 -right-1 bg-accent-highlight-600 text-white text-[10px] min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full font-bold shadow-lg ring-2 ring-white dark:ring-slate-900 z-10">
                     {{ warningCount() }}
                 </span>
             </a>
@@ -102,7 +102,7 @@
                     </span>
                 </button>
 
-                <div *ngIf="showNotifications()" class="absolute right-0 mt-2 w-80 glass-card rounded-xl! border border-neutral-200 shadow-xl z-50 overflow-hidden">
+                <div *ngIf="showNotifications()" class="absolute right-0 mt-2 w-80 glass-card border border-glass-border z-50 overflow-hidden">
                     <div class="flex items-center justify-between p-3 border-b border-canvas-white/10">
                         <span class="font-bold text-neutral-900 dark:text-white text-sm">Benachrichtigungen</span>
                         <button *ngIf="notifications().length > 0" (click)="markAllNotificationsRead()" class="text-xs text-brand-500 hover:underline">Alle gelesen</button>
@@ -140,7 +140,7 @@
 
 <!-- Mobile Navigation Overlay (Extracted for viewport positioning) -->
 <div *ngIf="authService.isAuthenticated() && isMobileMenuOpen()" 
-     class="fixed inset-x-0 bottom-0 top-14 bg-canvas/95 backdrop-blur-2xl z-navbar flex flex-col p-6 overflow-y-auto animate-fade-in md:hidden border-t border-neutral-200/10 shadow-2xl">
+     class="fixed inset-x-0 bottom-0 top-14 bg-canvas/95 backdrop-blur-2xl z-navbar flex flex-col p-6 overflow-y-auto animate-fade-in md:hidden border-t border-canvas-white/10 shadow-modal">
     
     <div class="flex flex-col gap-2 mt-4">
         <ng-container *ngIf="authService.currentTree()">

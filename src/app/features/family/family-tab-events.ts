@@ -59,7 +59,7 @@ import { AppEmptyStateComponent } from '../../shared/components/ui/app-empty-sta
                     <div class="flex flex-wrap gap-2 mt-4"
                         *ngIf="ev.citations?.length || ev.media?.length || ev.notes?.length">
                         <span *ngIf="ev.citations?.length"
-                            class="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase rounded-full border border-emerald-500/20">
+                            class="px-2 py-0.5 bg-accent-success-500/10 text-accent-success-600 dark:text-accent-success-400 text-[10px] font-bold uppercase rounded-full border border-accent-success-500/20">
                             📖 {{ ev.citations.length }}
                         </span>
                         <span *ngIf="ev.media?.length"

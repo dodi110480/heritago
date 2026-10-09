@@ -6,31 +6,47 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Self-hosted display font (variable) – elegant serif for headings.
+   Served from /public/fonts, so the app stays fully offline-capable. */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/fonts/cormorant-garamond.woff2') format('woff2');
+}
+
 @theme {
   --color-*: initial;
   --color-transparent: transparent;
   --color-white: #ffffff;
   --color-black: #000000;
 
-  --color-brand-50: #f6fff5ff;
-  --color-brand-100: #feefebff;
-  --color-brand-200: #dce3fd;
-  --color-brand-300: #c2cdfa;
-  --color-brand-400: #a3aff5;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
-  --color-brand: #6366f1;
+  /* ── Brand = Gold (edler Hauptakzent) ──────────────────────────────── */
+  --color-brand-50: #fdfaf0;
+  --color-brand-100: #f9f0d5;
+  --color-brand-200: #f0dea6;
+  --color-brand-300: #e5c975;
+  --color-brand-400: #d9b449;
+  --color-brand-500: #c9a227;
+  --color-brand-600: #ab871d;
+  --color-brand-700: #866917;
+  --color-brand-800: #614c11;
+  --color-brand-900: #3d300b;
+  --color-brand-950: #221a06;
+  --color-brand: #c9a227;
 
-  --color-canvas: #8cc4c1ff;
-  --color-canvas-dark: #020617;
+  /* ── Canvas = Anthrazit (edle dunkle Grundfläche) ──────────────────── */
+  --color-canvas: #15151b;
+  --color-canvas-dark: #0c0c10;
   --color-canvas-white: #ffffff;
   --color-canvas-black: #000000;
 
-  --color-glass-bg: rgba(255, 255, 255, 0.7);
-  --color-glass-border: rgba(255, 255, 255, 0.4);
-  --color-glass-bg-dark: rgba(15, 23, 42, 0.75);
-  --color-glass-border-dark: rgba(255, 255, 255, 0.1);
+  /* ── Glass-Optik auf dunklem Grund, goldener Schimmer ──────────────── */
+  --color-glass-bg: rgba(255, 255, 255, 0.045);
+  --color-glass-border: rgba(201, 162, 39, 0.16);
+  --color-glass-bg-dark: rgba(255, 255, 255, 0.03);
+  --color-glass-border-dark: rgba(201, 162, 39, 0.14);
 
   --color-accent-highlight-300: #fcd34d;
   --color-accent-highlight-400: #fbbf24;
@@ -75,9 +91,9 @@
   --color-slate-900: #0f172a;
   --color-slate-950: #020617;
 
-  --color-ui-bg: #fcfcfb;
-  --color-ui-border: #e2e8f0;
-  --color-ui-card: #ffffff;
+  --color-ui-bg: #15151b;
+  --color-ui-border: #2a2a33;
+  --color-ui-card: #1c1c24;
 
   --color-accent-violet-300: #c4b5fd;
   --color-accent-violet-400: #a78bfa;
@@ -89,9 +105,9 @@
   --color-gender-female: #db2777;
   --color-gender-neutral: #94a3b8;
 
-  --font-body: Inter, system-ui, sans-serif;
-  --font-display: Inter, system-ui, sans-serif;
-  --font-mono: JetBrains Mono, monospace;
+  --font-body: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Cormorant Garamond', 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
 
   --text-xs: 0.75rem;
   --text-xs--line-height: 1.5;
@@ -118,14 +134,25 @@
   --shadow-card-hover:
     0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 10px 20px -5px rgba(0, 0, 0, 0.1);
   --shadow-modal: 0 35px 60px -15px rgba(0, 0, 0, 0.5);
-  --shadow-brand-glow: 0 0 25px rgba(99, 102, 241, 0.4);
-  --shadow-brand-sm: 0 4px 12px rgba(99, 102, 241, 0.25);
+  --shadow-brand-glow: 0 0 25px rgba(201, 162, 39, 0.35);
+  --shadow-brand-sm: 0 4px 12px rgba(201, 162, 39, 0.22);
   --shadow-danger-glow: 0 0 25px rgba(244, 63, 94, 0.4);
   --shadow-inner-glow: inset 0 1px 1px rgba(255, 255, 255, 0.15);
 
-  --radius-card: 0.2rem;
-  --radius-modal: 0.4rem;
-  --radius-btn: 0.2rem;
+  /* Central radius scale – ad-hoc utilities like rounded-xl/2xl/3xl resolve here,
+     so every surface shares one visual language. */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 0.875rem;
+  --radius-4xl: 1rem;
+
+  --radius-card: 0.75rem;
+  --radius-modal: 1rem;
+  --radius-btn: 0.5rem;
 
   --z-index-navbar: 100;
   --z-index-dropdown: 200;
@@ -169,7 +196,15 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-ui-border, currentcolor);
+  }
+
+  /* Elegant serif display face for all headings (central typography rule). */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
   }
 }
 
@@ -178,7 +213,7 @@
   @apply bg-glass-bg
             backdrop-blur-3xl
             rounded-card
-            p-6 md:p-4
+            p-6
             transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]
             
             shadow-card-light
@@ -189,8 +224,53 @@
   }
 
   &:hover {
-    @apply -translate-y-2 shadow-card-hover border-glass-border/60 scale-[1.01];
+    @apply -translate-y-1 shadow-card-hover border-glass-border/60;
   }
+}
+
+/*
+  Modal & Auth surfaces.
+  These were referenced by the auth pages (modal-container, modal-glass,
+  modal-glow-*, form-group, form-error) but never defined anywhere – the only
+  rule that took effect was the hard-coded `bg-neutral-400`, which produced the
+  bright block on the login screen. Defined centrally here so every modal and
+  auth page shares one visual language.
+*/
+.modal-container {
+  @apply fixed inset-0 z-modal flex items-center justify-center p-4 overflow-y-auto;
+  background-color: rgb(0 0 0 / 0.45);
+  background-image: radial-gradient(
+    at 50% 0%,
+    --alpha(var(--color-brand-500) / 10%) 0px,
+    transparent 60%
+  );
+  backdrop-filter: blur(4px);
+}
+
+.modal-glass {
+  @apply relative w-full rounded-modal overflow-hidden
+         bg-glass-bg-dark backdrop-blur-3xl
+         border border-glass-border-dark shadow-modal;
+}
+
+.modal-glow-brand {
+  @apply pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full;
+  background-color: --alpha(var(--color-brand-500) / 18%);
+  filter: blur(80px);
+}
+
+.modal-glow-highlight {
+  @apply pointer-events-none absolute -bottom-24 -left-24 w-72 h-72 rounded-full;
+  background-color: --alpha(var(--color-brand-400) / 14%);
+  filter: blur(80px);
+}
+
+.form-group {
+  @apply flex flex-col w-full;
+}
+
+.form-error {
+  @apply text-sm font-medium text-accent-danger-400 mb-2;
 }
 
 .page-header {
@@ -199,7 +279,7 @@
 }
 
 .page-title {
-  @apply m-0 text-3xl md:text-4xl font-bold text-neutral-900 dark:text-white tracking-tight leading-tight;
+  @apply m-0 font-display text-3xl md:text-4xl font-bold text-neutral-900 dark:text-brand-100 tracking-tight leading-tight;
 }
 
 .page-subtitle {
@@ -349,26 +429,25 @@
 
     body,
     html {
-        @apply m-0 p-0 w-full min-h-screen text-slate-900 antialiased font-body bg-canvas transition-colors duration-500 selection:bg-brand-500/30;
+        @apply m-0 p-0 w-full min-h-screen text-neutral-100 antialiased font-body bg-canvas transition-colors duration-500 selection:bg-brand-500/30;
         background-attachment: fixed;
         overflow-x: hidden;
         
-        /* Deep Vibrant Mesh Gradient using Theme Tokens */
+        /* Subtile goldene Mesh-Verläufe auf Anthrazit */
         background-image: 
-            radial-gradient(at 0% 0%, --alpha(var(--color-brand-500) / 15%) 0px, transparent 50%),
-            radial-gradient(at 100% 0%, --alpha(var(--color-accent-danger-500) / 12%) 0px, transparent 50%),
-            radial-gradient(at 100% 100%, --alpha(var(--color-accent-violet-500) / 10%) 0px, transparent 50%),
-            radial-gradient(at 0% 100%, rgba(20, 184, 166, 0.08) 0px, transparent 50%),
-            radial-gradient(at 50% 50%, --alpha(var(--color-brand-500) / 5%) 0px, transparent 80%);
+            radial-gradient(at 0% 0%, --alpha(var(--color-brand-500) / 12%) 0px, transparent 50%),
+            radial-gradient(at 100% 0%, --alpha(var(--color-brand-700) / 10%) 0px, transparent 50%),
+            radial-gradient(at 100% 100%, --alpha(var(--color-brand-400) / 6%) 0px, transparent 55%),
+            radial-gradient(at 0% 100%, --alpha(var(--color-brand-600) / 8%) 0px, transparent 50%);
     }
 
     .dark body, .dark html {
-        @apply text-slate-100 bg-canvas-dark;
+        @apply text-neutral-100 bg-canvas-dark;
         background-image: 
-            radial-gradient(at 0% 0%, --alpha(var(--color-brand-500) / 20%) 0px, transparent 55%),
-            radial-gradient(at 100% 0%, --alpha(var(--color-accent-danger-500) / 15%) 0px, transparent 55%),
+            radial-gradient(at 0% 0%, --alpha(var(--color-brand-500) / 14%) 0px, transparent 55%),
+            radial-gradient(at 100% 0%, --alpha(var(--color-brand-700) / 10%) 0px, transparent 55%),
             radial-gradient(at 50% 100%, var(--color-canvas-dark) 0px, transparent 100%),
-            radial-gradient(at 50% 0%, --alpha(var(--color-accent-violet-500) / 10%) 0px, transparent 60%);
+            radial-gradient(at 50% 0%, --alpha(var(--color-brand-400) / 7%) 0px, transparent 60%);
     }
 
     button, a, input, select, [role="button"] {

@@ -10,7 +10,7 @@ import { AuthService } from '../../core/services/auth.service';
     imports: [CommonModule, FormsModule, RouterModule],
     changeDetection: ChangeDetectionStrategy.Eager,
     template: `
-        <div class="modal-container bg-neutral-400">
+        <div class="modal-container">
             <div class="modal-glass max-w-[440px]">
                 <div class="modal-glow-brand"></div>
                 <div class="modal-glow-highlight"></div>

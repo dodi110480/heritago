@@ -71,7 +71,7 @@
             }
           </div>
 
-          <div class="text-sm font-semibold text-neutral-900 mt-1">
+          <div class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mt-1">
             {{ source | sourceSummary:source.title }}
           </div>
           
@@ -95,7 +95,7 @@
           }
 
           @if (source.description) {
-            <div class="text-sm whitespace-pre-line text-neutral-700">
+            <div class="text-sm whitespace-pre-line text-neutral-700 dark:text-neutral-300">
               {{
                 source.description.length > 220 && !expandedSources().has(source.id)
                 ? (source.description | slice:0:220) + '...'
@@ -153,7 +153,7 @@
           <button
             *ngIf="allowEdit() && !readOnly()"
             (click)="deleteSource(source.id); $event.stopPropagation()"
-            class="btn btn-xs btn-ghost text-red-500"
+            class="btn btn-xs btn-ghost text-accent-danger-500"
             title="Quelle löschen"
           >
             <i class="feather icon-trash-2"></i>

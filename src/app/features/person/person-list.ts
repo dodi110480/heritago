@@ -151,24 +151,24 @@ export class PersonList {
     }
 
     completionColorClass(score: number): string {
-        if (score >= 80) return 'text-accent-emerald-600';
-        if (score >= 60) return 'text-accent-emerald-500';
+        if (score >= 80) return 'text-accent-success-600';
+        if (score >= 60) return 'text-accent-success-500';
         if (score >= 40) return 'text-accent-highlight-500';
-        return 'text-accent-amber-600';
+        return 'text-accent-highlight-600';
     }
 
     completionDotClass(score: number): string {
-        if (score >= 80) return 'bg-accent-emerald-600';
-        if (score >= 60) return 'bg-accent-emerald-500';
+        if (score >= 80) return 'bg-accent-success-600';
+        if (score >= 60) return 'bg-accent-success-500';
         if (score >= 40) return 'bg-accent-highlight-500';
-        return 'bg-accent-amber-600';
+        return 'bg-accent-highlight-600';
     }
 
     completionCardClass(score: number): string {
-        if (score >= 80) return 'bg-accent-emerald-500/10 text-accent-emerald-600 border-accent-emerald-500/20';
-        if (score >= 60) return 'bg-accent-emerald-500/5 text-accent-emerald-500 border-accent-emerald-500/10';
+        if (score >= 80) return 'bg-accent-success-500/10 text-accent-success-600 border-accent-success-500/20';
+        if (score >= 60) return 'bg-accent-success-500/5 text-accent-success-500 border-accent-success-500/10';
         if (score >= 40) return 'bg-accent-highlight-500/10 text-accent-highlight-600 border-accent-highlight-500/20';
-        return 'bg-accent-amber-500/10 text-accent-amber-600 border-accent-amber-500/20';
+        return 'bg-accent-highlight-500/10 text-accent-highlight-600 border-accent-highlight-500/20';
     }
 
     completionTooltip(person: Individual): string {

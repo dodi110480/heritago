@@ -28,12 +28,12 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
                         <div class="flex justify-between items-start">
                             <div>
                                 <div class="flex items-center gap-3">
-                                    <h3 class="font-bold text-lg text-neutral-900">Match: <span class="text-brand-400">{{
+                                    <h3 class="font-bold text-lg text-neutral-900 dark:text-neutral-100">Match: <span class="text-brand-400">{{
                                             m.matchPersonName || m.matchPersonId || 'Unbekannt' }}</span></h3>
                                     <span class="badge badge-primary py-0.5 px-2">{{ m.totalCm ? m.totalCm + ' cM' :
                                         'unbekannt' }}</span>
                                 </div>
-                                <p class="text-sm text-neutral-800 dark:text-neutral-200 mt-1">Provider: <span class="font-semibold text-neutral-900">{{
+                                <p class="text-sm text-neutral-800 dark:text-neutral-200 mt-1">Provider: <span class="font-semibold text-neutral-900 dark:text-neutral-100">{{
                                         m.provider || 'Unbekannt' }}</span></p>
                             </div>
                             <button (click)="$event.stopPropagation(); removeDnaMatch(i)"
@@ -52,7 +52,7 @@ import { personOptionLabel as personOptionLabelUtil, resolvePersonOption, stripI
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                 <div *ngFor="let s of m.segments"
                                     class="bg-brand-100/50 p-2 rounded-lg border border-neutral-300/30 text-xs text-neutral-800 dark:text-neutral-200">
-                                    <span class="font-bold text-neutral-900">Chr {{ s.chromosome }}</span>: {{
+                                    <span class="font-bold text-neutral-900 dark:text-neutral-100">Chr {{ s.chromosome }}</span>: {{
                                     s.startPosition }} - {{ s.endPosition }} ({{ s.cm }} cM)
                                 </div>
                             </div>

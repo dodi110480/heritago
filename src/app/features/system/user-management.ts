@@ -54,7 +54,7 @@ import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-head
                             </td>
                             <td class="px-6 py-4">
                                 <span *ngIf="user.isEmailVerified" class="text-accent-success-400 font-bold">✓</span>
-                                <span *ngIf="!user.isEmailVerified" class="text-amber-400 font-bold">✗</span>
+                                <span *ngIf="!user.isEmailVerified" class="text-accent-highlight-400 font-bold">✗</span>
                             </td>
                             <td class="px-6 py-4">
                                 <span class="px-2 py-1 rounded-full bg-canvas-white/10 text-neutral-300 text-[10px] font-bold">{{ user._count.permissions }}</span>

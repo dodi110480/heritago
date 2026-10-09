@@ -27,7 +27,7 @@ import { AppSectionHeaderComponent } from '../../shared/components/ui/app-sectio
                         <div class="flex justify-between items-start">
                             <div>
                                 <div class="flex items-center gap-2 mb-1">
-                                    <h3 class="font-bold text-lg text-neutral-900">{{ n.given }} {{ n.surname }}</h3>
+                                    <h3 class="font-bold text-lg text-neutral-900 dark:text-neutral-100">{{ n.given }} {{ n.surname }}</h3>
                                     <span *ngIf="n.isPrimary" class="badge badge-primary text-[10px] py-0.5 px-2">Primär</span>
                                 </div>
                                 <p class="text-sm text-neutral-800 dark:text-neutral-200 flex items-center gap-1">

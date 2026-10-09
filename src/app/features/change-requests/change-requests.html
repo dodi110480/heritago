@@ -9,7 +9,7 @@
             <div class="p-4 border-b border-canvas-white/10 flex items-center justify-between">
                 <span class="text-sm font-bold text-neutral-500 uppercase tracking-wider">Ausstehend</span>
                 @if (pending().length > 0) {
-                    <span class="badge badge-xs bg-amber-500/15 text-amber-400">{{ pending().length }}</span>
+                    <span class="badge badge-xs bg-accent-highlight-500/15 text-accent-highlight-400">{{ pending().length }}</span>
                 }
             </div>
             @if (loading()) {
@@ -67,8 +67,8 @@
                     </div>
                 </div>
                 <span class="badge badge-sm shrink-0"
-                    [class.bg-amber-500/15]="selected().status === 'PENDING'"
-                    [class.text-amber-400]="selected().status === 'PENDING'"
+                    [class.bg-accent-highlight-500/15]="selected().status === 'PENDING'"
+                    [class.text-accent-highlight-400]="selected().status === 'PENDING'"
                     [class.bg-accent-success-500/15]="selected().status === 'APPROVED'"
                     [class.text-accent-success-400]="selected().status === 'APPROVED'"
                     [class.bg-accent-danger-500/15]="selected().status === 'REJECTED'"
@@ -94,8 +94,8 @@
             </div>
 
             @if (isActionable(selected())) {
-                <div class="mb-4 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5">
-                    <div class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-3">Deine Entscheidung</div>
+                <div class="mb-4 p-4 rounded-xl border border-accent-highlight-500/30 bg-accent-highlight-500/5">
+                    <div class="text-xs font-bold text-accent-highlight-400 uppercase tracking-wider mb-3">Deine Entscheidung</div>
                     @if (showReject()) {
                         <div class="flex flex-col gap-2">
                             <textarea [(ngModel)]="rejectReason" rows="2" placeholder="Begründung der Ablehnung…" class="form-input resize-none"></textarea>
