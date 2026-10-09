@@ -52,14 +52,21 @@ export class PersonDetail implements OnInit {
     private router = inject(Router);
 
     showDeleteModal = signal(false);
+    /** Data-integrity hints panel: closed by default, toggled via the header warning icon */
+    showIntegrityDetails = signal(false);
 
     ngOnInit() {
         this.route.paramMap.subscribe(params => {
             const id = params.get('id');
             if (id) {
+                this.showIntegrityDetails.set(false);
                 this.store.init(id);
             }
         });
+    }
+
+    toggleIntegrityDetails() {
+        this.showIntegrityDetails.update(visible => !visible);
     }
 
     openDeleteModal() {
