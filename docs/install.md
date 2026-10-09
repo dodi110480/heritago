@@ -273,6 +273,82 @@ sudo systemctl status heritago
 
 ---
 
+### 7.3 Automatische Updates einrichten (optional, empfohlen)
+
+Die Seite **Einstellungen → System & Updates** kann eine neue Version vollständig
+installieren: Tag auschecken, Frontend und Backend bauen, Dienst neu starten. Dafür
+sind drei Bausteine nötig, die **einmalig als root** eingerichtet werden – danach
+genügt in der Weboberfläche ein Klick. Ohne diese Einrichtung lehnt die Anwendung das
+Update mit einer verständlichen Meldung ab; es wird nichts halb installiert.
+
+Der Build läuft dabei bewusst **nicht** im Web-Prozess: dieser wird durch den Neustart
+beendet, den das Update auslöst. Stattdessen startet der Web-Prozess eine eigene
+systemd-Unit (`heritago-update.service`), die Checkout, Builds und Neustart übernimmt.
+
+**a) Zustandsverzeichnis** (Austausch von Fortschritt/Protokoll zwischen Web-Prozess
+und Update-Worker):
+
+```bash
+sudo install -d -o www-data -g www-data -m 0755 /var/lib/heritago
+```
+
+**b) Worker-Unit erstellen**
+
+```bash
+sudo nano /etc/systemd/system/heritago-update.service
+```
+
+```ini
+[Unit]
+Description=Heritago Update (Checkout, Build, Neustart)
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/heritago
+ExecStart=/opt/heritago/scripts/update.sh
+```
+
+**c) Freigabe für den Web-User** – `www-data` darf ausschließlich diese eine Unit
+starten (exakter Befehl, kein Wildcard). Die Ziel-Version übergibt die Anwendung über
+die Datei `/var/lib/heritago/update-request.txt`, also **nicht** über die
+Kommandozeile:
+
+```bash
+sudo nano /etc/sudoers.d/heritago-update
+```
+
+```
+www-data ALL=(root) NOPASSWD: /usr/bin/systemctl start --no-block heritago-update.service
+```
+
+```bash
+sudo chmod 0440 /etc/sudoers.d/heritago-update
+sudo visudo -c                                   # Syntax prüfen
+sudo chmod +x /opt/heritago/scripts/update.sh
+sudo systemctl daemon-reload
+```
+
+**d) Prüfen**
+
+```bash
+sudo -u www-data sudo -n systemctl start --no-block heritago-update.service
+sudo systemctl status heritago-update            # sollte kurz "activating/active" zeigen
+tail -n 20 /var/lib/heritago/update.log          # Protokoll des Workers
+```
+
+Fortschritt und Protokoll sind zusätzlich im Fortschrittsdialog der Update-Seite
+sichtbar; der Worker schreibt seinen Zustand nach
+`/var/lib/heritago/update-state.txt`.
+
+> **Optionale Umgebungsvariablen** (in der Worker-Unit bzw. beim Web-Service):
+> `HERITAGO_STATE_DIR` (Standard `/var/lib/heritago`), `HERITAGO_APP_ROOT`
+> (Standard `/opt/heritago`), `HERITAGO_SERVICE_NAME` (Standard `heritago`),
+> `HERITAGO_WEB_USER` (Standard `www-data`) sowie `HERITAGO_UPDATE_UNIT`
+> (Standard `heritago-update.service`) für das Backend.
+
+---
+
 ## 8. Firewall konfigurieren (optional)
 
 ```bash
