@@ -418,3 +418,46 @@ Frontend (Dev-Server mit `/api`-Proxy) wie gewohnt laufen lassen.
 - `.clinerules/auth-rbac.md` (insb. § 8 Messaging, § 9 Änderungs-Bestätigung)
 - `docs/architecture/multi-tenancy-audit.md`
 - `docs/install.md`
+
+---
+
+## 8. Nachtrag: Admin-Navigation & Stammbaum-Chart
+
+### 8.1 Admin-Links aus der Navbar entfernt
+Die Desktop- und Mobile-Navbar war mit `/admin/users` und `/admin/trees` überladen. Beide Links
+leben jetzt ausschließlich in `/settings` (die Kacheln sind weiterhin über
+`authService.currentUser()?.isAdmin` gated).
+
+- `src/app/shared/components/navbar.html` – Desktop- und Mobile-Block entfernt
+- `src/app/features/system/settings.html` – Kachel „Stammbaum-Administration" (`/admin/trees`)
+  ergänzt; die bestehende `/tree-management`-Kachel heißt zur Abgrenzung jetzt „Meine Stammbäume"
+
+### 8.2 Chart zeigte (fast) nichts an, obwohl 182 Personen existierten
+
+**Symptom:** `/tree` im Baum `sperlich` blieb leer, obwohl `/persons` 182 Einträge listete.
+
+**Ursache:** Der `chart-data`-Endpunkt gab ein flaches Knoten-Array zurück. Das Frontend nahm
+naiv `data[0]` als Hauptperson und `Person.findMany` hatte **kein `orderBy`** – PostgreSQL lieferte
+also eine beliebige Zeile zuerst. Im Baum `sperlich` fiel die Wahl auf „Dominik Sperlich", eine
+**isolierte Person ohne jede Relation**. Da `family-chart` nur die Hauptperson plus Vorfahren/
+Nachfahren zeichnet, blieb genau **eine Karte** sichtbar.
+
+**Datenlage `sperlich`:** 182 Personen, 69 Familien, aber **4 Zusammenhangskomponenten**
+(179 + 1 + 1 + 1). Isoliert sind: Dominik Sperlich, Julius Pachsteffl, Elise Herold – ein
+Datenqualitätsproblem aus dem GEDCOM-Import, das separat zu bereinigen ist.
+
+**Behebung:**
+- `server/src/services/tree.service.ts` – `getFamilyChartData()` liefert jetzt
+  `{ nodes, mainPersonId }`. `mainPersonId` wird deterministisch bestimmt: größte
+  Zusammenhangskomponente → darin die am höchsten vernetzte Person (`pickMainPersonId`).
+  Zusätzlich `orderBy: { id: 'asc' }` gegen die nicht-deterministische Reihenfolge.
+- `src/app/features/family/family-chart.component.ts` – liest `res.data.nodes` und
+  `res.data.mainPersonId`. Eine im `localStorage` gemerkte Fokus-Person wird nur noch genutzt,
+  wenn sie Relationen besitzt – sonst greift der Backend-Wert (verhindert erneut einen leeren Chart).
+
+**Ergebnis:** `mainPersonId` = „Else Bertha Arnold" (11 Kanten, größte Komponente). Bei
+`ancestry_depth`/`progeny_depth` = 2 sind damit 18 statt 1 Person sichtbar (Optimum wären 21).
+
+**Verifikation:** Backend- und Frontend-Build grün; Live-Request gegen
+`/api/tree/sperlich/chart-data` liefert `{ nodes: 182, mainPersonId }`.
+
