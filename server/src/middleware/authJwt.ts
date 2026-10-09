@@ -18,7 +18,7 @@ export const authJwt = (prisma: PrismaClient) => {
         try {
             const payload = jwt.verify(token, secret) as { id: string };
             const user = await prisma.user.findUnique({ where: { id: payload.id } });
-            if (user) {
+            if (user && !user.isSuspended) {
                 (req as any).user = user;
             }
             return next();

@@ -33,18 +33,11 @@ export const treeAuth = (prisma: PrismaClient) => {
                 return next(); // No tree specified, continue (e.g. general routes)
             }
 
-            // 1. Admin Bypass
+            // Resolve the authenticated user. Admins are NOT auto-granted tree access:
+            // they need an explicit TreePermission (or the tree must be public) like anyone else.
             const user = (req as any).user || (userId ? await prisma.user.findUnique({ where: { id: userId as string } }) : null);
-            console.log(`[treeAuth] Check: User ${userId} (${user?.username || 'Unknown'}), Role: ${user?.globalRole}, Tree: ${tree.name} (${tree.id})`);
 
-            if (user?.globalRole === 'ADMIN') {
-                console.log(`[treeAuth] Admin bypass granted for ${user.username}`);
-                (req as any).tree = tree;
-                (req as any).permission = 'OWNER';
-                return next();
-            }
-
-            // 2. Public Tree Check (Read-only)
+            // 1. Public Tree Check (Read-only)
             if (tree.isPublic && req.method === 'GET') {
                 (req as any).tree = tree;
                 (req as any).permission = 'VIEWER';
@@ -80,16 +73,8 @@ export const treeAuth = (prisma: PrismaClient) => {
             return res.status(403).json({ 
                 success: false, 
                 message: 'Access denied to this tree',
-                _debug: { 
-                    userId, 
-                    treeId: tree.id, 
-                    treeName: tree.name, 
-                    method: req.method, 
-                    role: user?.globalRole,
-                    userName: user?.username,
-                    hasReqUser: !!(req as any).user,
-                    reqUserRole: (req as any).user?.globalRole
-                }
+                code: 'TREE_ACCESS_DENIED'
+                
             });
         } catch (error: any) {
             console.error('[treeAuth]: Middleware error', error);

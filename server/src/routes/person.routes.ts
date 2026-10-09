@@ -5,6 +5,7 @@ import { PersonWriteService } from '../services/person/person.write.service';
 import { PersonRepository } from '../repositories/person.repository';
 import { AuditService } from '../services/audit.service';
 import { NotesService } from '../services/notes.service';
+import { ChangeRequestService } from '../services/change-request.service';
 
 export const personRoutes = (prisma: PrismaClient) => {
     const router = Router({ mergeParams: true });
@@ -15,6 +16,7 @@ export const personRoutes = (prisma: PrismaClient) => {
     const notesService = new NotesService(prisma);
     const personReadService = new PersonReadService(personRepo);
     const personWriteService = new PersonWriteService(personRepo, auditService, notesService);
+    const changeRequestService = new ChangeRequestService(prisma);
 
     router.get('/:id', async (req: any, res) => {
         try {
@@ -78,13 +80,17 @@ export const personRoutes = (prisma: PrismaClient) => {
     router.post('/', async (req: any, res) => {
         try {
             const tree = req.tree;
-            const { mode, id } = req.body;
 
-            if (mode === 'delete' && id) {
-                await personWriteService.deletePerson(id, tree.id, req.user?.id);
-                return res.json({ success: true, data: null });
+            // Non-owners propose changes instead of applying them directly.
+            if (req.permission !== 'OWNER') {
+                const operation = req.body.id ? 'UPDATE' : 'CREATE';
+                const summary = `${req.body.firstName || ''} ${req.body.lastName || ''}`.trim() || 'Person';
+                const cr = await changeRequestService.proposeChange(tree.id, req.user.id, 'PERSON', req.body.id || null, operation, req.body, summary);
+                return res.status(202).json({ success: true, data: { pending: true, changeRequestId: cr.id, message: 'Änderung zur Bestätigung vorgeschlagen.' } });
             }
-            
+
+            const { id } = req.body;
+
             const userId = req.user?.id;
             
             let beforeState = null;

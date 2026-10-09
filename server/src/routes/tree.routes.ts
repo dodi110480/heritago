@@ -12,7 +12,7 @@ export const treeRoutes = (prisma: PrismaClient) => {
     const familyService = new FamilyService(prisma);
     const auditService = new AuditService(prisma);
 
-    // Ensure req.tree is populated for /tree/:tree routes when treeAuth isn't used
+    // Resolve the tree AND enforce permission for tree-scoped data routes.
     router.use('/tree/:tree', async (req: any, res, next) => {
         if (req.tree) return next();
         try {
@@ -23,8 +23,29 @@ export const treeRoutes = (prisma: PrismaClient) => {
                 tree = await prisma.tree.findUnique({ where: { id: treeParam } });
             }
             if (!tree) return res.status(404).json({ success: false, message: 'Tree not found', code: 'TREE_NOT_FOUND' });
-            req.tree = tree;
-            next();
+
+            const userId = req.user?.id;
+
+            // Public tree: read-only access for GET requests.
+            if (tree.isPublic && req.method === 'GET') {
+                req.tree = tree;
+                req.permission = 'VIEWER';
+                return next();
+            }
+
+            // Explicit permission required (no admin bypass).
+            if (userId) {
+                const permission = await prisma.treePermission.findUnique({
+                    where: { treeId_userId: { treeId: tree.id, userId } }
+                });
+                if (permission) {
+                    req.tree = tree;
+                    req.permission = permission.level;
+                    return next();
+                }
+            }
+
+            return res.status(403).json({ success: false, message: 'Access denied to this tree', code: 'TREE_ACCESS_DENIED' });
         } catch (error: any) {
             console.error('Error resolving tree:', error);
             res.status(500).json({ success: false, message: error.message, code: 'TREE_RESOLVE_FAILED' });
@@ -35,19 +56,15 @@ export const treeRoutes = (prisma: PrismaClient) => {
         try {
             const user = (req as any).user;
             if (!user) return res.status(401).json({ success: false, message: 'Authentication required', code: 'AUTH_REQUIRED' });
-            let trees;
-            if (user.globalRole === 'ADMIN') {
-                trees = await treeService.getTrees();
-            } else {
-                trees = await prisma.tree.findMany({
-                    where: { permissions: { some: { userId: user.id } } },
-                    include: {
-                        _count: {
-                            select: { persons: true, families: true, media: true }
-                        }
+            // All users (including admins) only see trees they have explicit access to.
+            const trees = await prisma.tree.findMany({
+                where: { permissions: { some: { userId: user.id } } },
+                include: {
+                    _count: {
+                        select: { persons: true, families: true, media: true }
                     }
-                });
-            }
+                }
+            });
             res.json({ success: true, data: trees });
         } catch (error: any) {
             res.status(500).json({ success: false, message: error.message, code: 'TREES_FETCH_FAILED' });

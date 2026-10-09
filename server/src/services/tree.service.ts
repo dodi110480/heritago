@@ -57,8 +57,8 @@ export class TreeService {
                 const ownerCount = await this.prisma.treePermission.count({
                     where: { userId, level: 'OWNER' }
                 });
-                if (ownerCount >= 1) {
-                    throw new Error('Du kannst nur einen Stammbaum besitzen.');
+                if (ownerCount >= user.maxTrees) {
+                    throw new Error(`Du kannst maximal ${user.maxTrees} Stammbaum/Stammbäume besitzen.`);
                 }
             }
         }
@@ -131,6 +131,83 @@ export class TreeService {
 
         return this.prisma.tree.delete({ where: { id } });
     }
+
+    /**
+     * Admin-only listing of all trees with metadata only (no genealogy payload).
+     * Returns owners, collaborators, counts and an `isOrphaned` flag so the admin
+     * can spot trees that lost their owner (e.g. after a user was deleted).
+     */
+    async listAllTreesForAdmin() {
+        const trees = await this.prisma.tree.findMany({
+            orderBy: { createdAt: 'desc' },
+            include: {
+                permissions: {
+                    include: {
+                        user: { select: { id: true, username: true, email: true } }
+                    }
+                },
+                _count: {
+                    select: { persons: true, families: true, media: true }
+                }
+            }
+        });
+
+        return trees.map((tree) => {
+            const owners = tree.permissions
+                .filter((p) => p.level === 'OWNER')
+                .map((p) => ({ id: p.user.id, username: p.user.username, email: p.user.email }));
+            const collaborators = tree.permissions
+                .filter((p) => p.level !== 'OWNER')
+                .map((p) => ({ id: p.user.id, username: p.user.username, email: p.user.email, level: p.level }));
+
+            return {
+                id: tree.id,
+                name: tree.name,
+                title: tree.title,
+                isPublic: tree.isPublic,
+                createdAt: tree.createdAt,
+                isOrphaned: owners.length === 0,
+                owners,
+                collaborators,
+                counts: {
+                    persons: tree._count.persons,
+                    families: tree._count.families,
+                    media: tree._count.media
+                }
+            };
+        });
+    }
+
+    /**
+     * Transfer ownership of a tree to another user. Replaces existing OWNER
+     * permissions while leaving EDITOR/VIEWER/COMMENTER permissions untouched.
+     */
+    async reassignTreeOwner(treeId: string, userId: string) {
+        const tree = await this.prisma.tree.findUnique({ where: { id: treeId } });
+        if (!tree) {
+            throw new Error('Stammbaum nicht gefunden.');
+        }
+
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) {
+            throw new Error('Benutzer nicht gefunden.');
+        }
+
+        return this.prisma.$transaction(async (tx) => {
+            // Remove existing owners (single ownership transfer).
+            await tx.treePermission.deleteMany({ where: { treeId, level: 'OWNER' } });
+
+            // Set the new owner; keep other collaborator roles untouched.
+            await tx.treePermission.upsert({
+                where: { treeId_userId: { treeId, userId } },
+                create: { treeId, userId, level: 'OWNER' },
+                update: { level: 'OWNER' }
+            });
+
+            return tx.tree.findUnique({ where: { id: treeId } });
+        });
+    }
+
 
     async getMapData(treeId: string) {
         const dbTree = await this.prisma.tree.findUnique({

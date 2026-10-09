@@ -4,6 +4,7 @@ import { FamilyReadService } from '../services/family/family.read.service';
 import { FamilyWriteService } from '../services/family/family.write.service';
 import { FamilyRepository } from '../repositories/family.repository';
 import { AuditService } from '../services/audit.service';
+import { ChangeRequestService } from '../services/change-request.service';
 
 export const familyRoutes = (prisma: PrismaClient) => {
     const router = Router({ mergeParams: true });
@@ -13,6 +14,7 @@ export const familyRoutes = (prisma: PrismaClient) => {
     const auditService = new AuditService(prisma);
     const familyReadService = new FamilyReadService(familyRepo);
     const familyWriteService = new FamilyWriteService(familyRepo, auditService);
+    const changeRequestService = new ChangeRequestService(prisma);
 
     router.get('/:id/full-profile', async (req, res) => {
         const treeId = (req as any).tree.id;
@@ -32,6 +34,12 @@ export const familyRoutes = (prisma: PrismaClient) => {
 
         try {
             const userId = (req as any).user?.id;
+
+            // Non-owners propose changes instead of applying them directly.
+            if ((req as any).permission !== 'OWNER') {
+                const cr = await changeRequestService.proposeChange(treeId, userId, 'FAMILY', data.id || null, data.id ? 'UPDATE' : 'CREATE', data, 'Familie');
+                return res.status(202).json({ success: true, data: { pending: true, changeRequestId: cr.id, message: 'Änderung zur Bestätigung vorgeschlagen.' } });
+            }
             
             let beforeState = null;
             if (data.id) {

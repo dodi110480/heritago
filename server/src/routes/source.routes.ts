@@ -62,25 +62,38 @@ export const sourceRoutes = (prisma: PrismaClient) => {
         }
     });
 
+    router.delete('/:id', async (req, res) => {
+        const treeId = (req as any).tree.id;
+        const { id } = req.params;
+        const reassignToId = (req as any).body?.reassignToId || req.query.reassignToId;
+
+        try {
+            const result = await sourceService.deleteSource(treeId, id, reassignToId);
+            if ('inUse' in result) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Die Quelle ist noch in Verwendung. Bitte wähle eine Ziel-Quelle zum Umhängen oder führe sie zuerst zusammen.',
+                    code: 'SOURCE_IN_USE',
+                    data: { usage: result.usageCount }
+                });
+            }
+            return res.json({ success: true, data: null });
+        } catch (error: any) {
+            const msg = error.message || '';
+            const status = msg.includes('not found') ? 404 : (msg.includes('reassignToId') ? 400 : 500);
+            res.status(status).json({
+                success: false,
+                message: status === 404 ? 'Quelle nicht gefunden.' : (status === 400 ? 'Ungültige Ziel-Quelle.' : 'Die Quelle konnte nicht gelöscht werden.'),
+                code: status === 404 ? 'SOURCE_NOT_FOUND' : (status === 400 ? 'SOURCE_VALIDATION_ERROR' : 'SOURCE_DELETE_FAILED')
+            });
+        }
+    });
+
     router.post('/', async (req, res) => {
         const treeId = (req as any).tree.id;
-        const { mode, id, reassignToId } = req.body;
         const currentUserId = (req as any).user?.id;
 
         try {
-            if (mode === 'delete' && id) {
-                const result = await sourceService.deleteSource(treeId, id, reassignToId);
-                if ('inUse' in result) {
-                    return res.status(409).json({
-                        success: false,
-                        message: 'Source is still in use. Provide reassignToId or merge first.',
-                        code: 'SOURCE_IN_USE',
-                        data: { usage: result.usageCount }
-                    });
-                }
-                return res.json({ success: true, data: null });
-            }
-
             await sourceService.saveSource(treeId, req.body, currentUserId);
             res.json({ success: true, data: null });
         } catch (error: any) {

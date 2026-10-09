@@ -21,7 +21,12 @@ import { treeRoutes } from './routes/tree.routes';
 import { placeRoutes } from './routes/place.routes';
 import { sourceRoutes } from './routes/source.routes';
 import { repositoryRoutes } from './routes/repository.routes';
+import { invitationRoutes } from './routes/invitation.routes';
+import { notificationRoutes } from './routes/notification.routes';
+import { changeRequestRoutes } from './routes/change-request.routes';
+import { myChangeRequestRoutes } from './routes/change-request.me.routes';
 import { systemRoutes } from './routes/system.routes';
+import { adminTreeRoutes } from './routes/admin-trees.routes';
 import { treeAuth } from './middleware/treeAuth';
 import { devAuth } from './middleware/devAuth';
 import { authJwt } from './middleware/authJwt';
@@ -37,9 +42,19 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter } as any);
 const port = process.env.PORT || 3000;
 
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:4200')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
 app.use(cors({
     origin: (origin, callback) => {
-        callback(null, true);
+        // Allow non-browser requests (curl, server-to-server) and explicitly allowed origins only
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
     },
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -58,19 +73,28 @@ app.use('/uploads', express.static(MEDIA_ROOT));
 
 // --- Auth & User Seed ---
 async function ensureDefaultUser() {
-    const dodi = await prisma.user.findUnique({ where: { username: 'Dodi' } });
-    if (!dodi) {
-        const hashedPassword = await bcrypt.hash('heritago123', 12);
-        await prisma.user.create({
-            data: {
-                username: 'Dodi',
-                email: 'admin@heritago.de',
-                password: hashedPassword, 
-                globalRole: 'ADMIN',
-                isEmailVerified: true
-            }
-        });
-        console.log('[server]: Default user Dodi created with hashed password');
+    const username = process.env.SEED_ADMIN_USERNAME || 'Dodi';
+    const email = process.env.SEED_ADMIN_EMAIL || 'admin@heritago.de';
+
+    const existing = await prisma.user.findUnique({ where: { username } });
+    if (existing) return;
+
+    const rawPassword = process.env.SEED_ADMIN_PASSWORD || crypto.randomBytes(16).toString('hex');
+    const hashedPassword = await bcrypt.hash(rawPassword, 12);
+    await prisma.user.create({
+        data: {
+            username,
+            email,
+            password: hashedPassword,
+            globalRole: 'ADMIN',
+            isEmailVerified: true
+        }
+    });
+
+    if (process.env.SEED_ADMIN_PASSWORD) {
+        console.log(`[server]: Default admin user "${username}" created (password from env).`);
+    } else {
+        console.warn(`[server]: Default admin user "${username}" created. Generated password: ${rawPassword}`);
     }
 }
 ensureDefaultUser().catch(console.error);
@@ -78,10 +102,13 @@ ensureDefaultUser().catch(console.error);
 // --- Routes ---
 app.use('/api/auth', authRoutes(prisma));
 app.use('/api/admin', authRoutes(prisma));
+app.use('/api/admin', adminTreeRoutes(prisma));
 // Removed unscoped person routes; use tree-scoped routes only
 app.use('/api/family', familyRoutes(prisma));
 app.use('/api/media', mediaRoutes(prisma));
 app.use('/api/system', systemRoutes());
+app.use('/api/notifications', notificationRoutes(prisma));
+app.use('/api/change-requests', myChangeRequestRoutes(prisma));
 
 // Tree-scoped routes middleware
 const treeScope = treeAuth(prisma);
@@ -93,6 +120,8 @@ app.use('/api/tree/:tree/place', treeScope, placeRoutes(prisma));
 app.use('/api/tree/:tree/media', treeScope, mediaRoutes(prisma));
 app.use('/api/tree/:tree/source', treeScope, sourceRoutes(prisma));
 app.use('/api/tree/:tree/repository', treeScope, repositoryRoutes(prisma));
+app.use('/api/tree/:tree/invitations', treeScope, invitationRoutes(prisma));
+app.use('/api/tree/:tree/change-requests', treeScope, changeRequestRoutes(prisma));
 app.use('/api/tree/:tree/search', treeScope, searchRoutes(prisma));
 
 // General Tree & GEDCOM Routes

@@ -265,6 +265,8 @@ model Tree {
   researchLogs ResearchLog[]
   changeLogs   ChangeLog[]
   permissions  TreePermission[]
+  invitations  Invitation[]
+  changeRequests ChangeRequest[]
   imports      Import[]
 
   submissions    Submission[]
@@ -289,6 +291,19 @@ model User {
 
   isEmailVerified  Boolean @default(false)
   verificationCode String?
+  verificationExpiresAt DateTime?
+
+  // Password reset (hashed token + expiry)
+  resetToken     String?
+  resetExpiresAt DateTime?
+
+  // Configurable tree limit (admin-adjustable); admins bypass
+  maxTrees Int @default(5)
+
+  // Admin suspend & login brute-force protection
+  isSuspended         Boolean  @default(false)
+  failedLoginAttempts Int      @default(0)
+  lockedUntil         DateTime?
 
   permissions  TreePermission[]
   researchLogs ResearchLog[]
@@ -297,6 +312,13 @@ model User {
   // Neue Relationen für Communication
   sentCommunications     Communication[] @relation("SentCommunications")
   receivedCommunications Communication[] @relation("ReceivedCommunications")
+
+  sentInvitations Invitation[] @relation("InvitedBy")
+
+  changeRequests          ChangeRequest[]  @relation("ChangeRequestAuthor")
+  reviewedChangeRequests  ChangeRequest[]  @relation("ChangeRequestReviewer")
+  notifications           Notification[]
+  sentMessages            ConversationMessage[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -316,6 +338,84 @@ model TreePermission {
 
   @@unique([treeId, userId])
   @@index([treeId])
+}
+
+model Invitation {
+  id        String          @id @default(uuid())
+  treeId    String
+  tree      Tree            @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  email     String
+  level     TreeAccessLevel
+  tokenHash String          @unique
+
+  invitedById String?
+  invitedBy   User?         @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  claimedAt DateTime?
+  expiresAt DateTime
+  createdAt DateTime        @default(now())
+
+  @@index([treeId])
+  @@index([email])
+}
+
+enum ChangeRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model ChangeRequest {
+  id          String              @id @default(uuid())
+  treeId      String
+  tree        Tree                @relation(fields: [treeId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User                @relation("ChangeRequestAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  entityType  String
+  entityId    String?
+  operation   String
+  payload     Json
+  summary     String
+  status      ChangeRequestStatus @default(PENDING)
+  rejectReason String?
+  createdAt   DateTime            @default(now())
+  reviewedAt  DateTime?
+  reviewedById String?
+  reviewedBy  User?               @relation("ChangeRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  messages ConversationMessage[]
+
+  @@index([treeId, status])
+  @@index([userId])
+}
+
+model ConversationMessage {
+  id              String        @id @default(uuid())
+  changeRequestId String
+  changeRequest   ChangeRequest @relation(fields: [changeRequestId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  body            String
+  createdAt       DateTime      @default(now())
+
+  @@index([changeRequestId])
+  @@index([senderId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  entityId  String?
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
 }
 
 //////////////////////////////////////////////////
@@ -697,7 +797,7 @@ model Source {
   repositoryId String?
   repository   Repository? @relation(fields: [repositoryId], references: [id], onDelete: SetNull)
 
-  sourceType  String? // e.g. 'BUCH', 'WEBSEITE'
+  sourceType  String? // e.g. 'BOOK', 'WEBSITE'
   category    String? // e.g. 'PRIMARY', 'SECONDARY'
 
   citations   Citation[]

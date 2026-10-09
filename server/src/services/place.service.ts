@@ -185,14 +185,10 @@ export class PlaceService {
 
     async savePlace(treeId: string, currentUserId: string | null, data: any) {
         const {
-            id, name, latitude, longitude, mode, jurisdiction,
-            historicNames, parentId, reassignToId, form, phrase, level,
+            id, name, latitude, longitude, jurisdiction,
+            historicNames, parentId, form, phrase, level,
             lang, formTemplate, translations, identifiers, notes
         } = data;
-
-        if (mode === 'delete' && (name || id)) {
-            return this.deletePlace(treeId, id, name, reassignToId);
-        }
 
         const lat = (latitude !== undefined && latitude !== '') ? parseFloat(latitude) : null;
         const lng = (longitude !== undefined && longitude !== '') ? parseFloat(longitude) : null;

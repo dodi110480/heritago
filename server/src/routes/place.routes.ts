@@ -84,6 +84,23 @@ export const placeRoutes = (prisma: PrismaClient) => {
         }
     });
 
+    router.delete('/:id', async (req: any, res) => {
+        try {
+            const tree = req.tree;
+            const { id } = req.params;
+            const reassignToId = req.body?.reassignToId || req.query.reassignToId;
+            await placeWriteService.deletePlace(tree.id, id, undefined, reassignToId, req.user?.id);
+            res.json({ success: true, data: null });
+        } catch (error: any) {
+            const status = error.statusCode || error.status || 500;
+            res.status(status).json({
+                success: false,
+                message: error.message,
+                code: status === 409 ? 'PLACE_IN_USE' : (status === 400 ? 'PLACE_VALIDATION_ERROR' : 'PLACE_DELETE_FAILED')
+            });
+        }
+    });
+
     router.post('/', async (req: any, res) => {
         try {
             const tree = req.tree;

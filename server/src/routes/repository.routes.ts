@@ -16,16 +16,27 @@ export const repositoryRoutes = (prisma: PrismaClient) => {
         }
     });
 
-    router.post('/', async (req, res) => {
+    router.delete('/:id', async (req, res) => {
         const treeId = (req as any).tree.id;
-        const { id, mode } = req.body;
+        const { id } = req.params;
 
         try {
-            if (mode === 'delete' && id) {
-                await repositoryService.deleteRepository(treeId, id);
-                return res.json({ success: true, data: null });
-            }
+            await repositoryService.deleteRepository(treeId, id);
+            res.json({ success: true, data: null });
+        } catch (error: any) {
+            const status = error.message.includes('not found') ? 404 : 500;
+            res.status(status).json({
+                success: false,
+                message: status === 404 ? 'Archiv nicht gefunden.' : 'Das Archiv konnte nicht gelöscht werden.',
+                code: status === 404 ? 'REPOSITORY_NOT_FOUND' : 'REPOSITORY_DELETE_FAILED'
+            });
+        }
+    });
 
+    router.post('/', async (req, res) => {
+        const treeId = (req as any).tree.id;
+
+        try {
             await repositoryService.saveRepository(treeId, req.body);
             res.json({ success: true, data: null });
         } catch (error: any) {
