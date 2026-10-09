@@ -22,6 +22,17 @@ const repositoryUrl = () => `https://github.com/${GITHUB_OWNER()}/${GITHUB_REPO(
 
 const GITHUB_HEADERS = { 'Accept': 'application/vnd.github.v3+json' };
 
+/**
+ * Outcome of a GitHub API call. `rateLimited` marks the exhausted quota (anonymously
+ * only 60 requests/hour), which is the most common reason a check fails and needs a
+ * different message than an unreachable API.
+ */
+interface GithubResult {
+    data: any | null;
+    status: number;
+    rateLimited: boolean;
+}
+
 /** Semver parts of a version string ("v1.2.3" -> [1, 2, 3]; null if unparsable). */
 const versionParts = (version: string | null | undefined): number[] | null => {
     if (!version || !TAG_PATTERN.test(version)) return null;
@@ -58,7 +69,7 @@ const highestVersion = (tags: (string | null | undefined)[]): string | null => {
  * Returns null when the resource does not exist (e.g. no release published yet)
  * or when the API is unreachable; write to the console then explains why.
  */
-const githubGet = async (resource: string): Promise<any | null> => {
+const githubGet = async (resource: string): Promise<GithubResult> => {
     const token = (process.env.GITHUB_TOKEN || '').trim();
     const url = `https://api.github.com/repos/${GITHUB_OWNER()}/${GITHUB_REPO()}${resource}`;
 
@@ -68,6 +79,11 @@ const githubGet = async (resource: string): Promise<any | null> => {
         // Inspect the status code here instead of letting axios throw on 4xx.
         validateStatus: () => true
     });
+
+    /** GitHub answers 403/429 with `x-ratelimit-remaining: 0` once the quota is gone. */
+    const isRateLimited = (response: any): boolean =>
+        (response.status === 403 || response.status === 429) &&
+        String(response.headers?.['x-ratelimit-remaining'] ?? '') === '0';
 
     try {
         let response = await request(Boolean(token));
@@ -79,18 +95,19 @@ const githubGet = async (resource: string): Promise<any | null> => {
 
         if (response.status === 404) {
             console.warn(`[server]: GitHub resource ${resource} not found (HTTP 404).`);
-            return null;
+            return { data: null, status: 404, rateLimited: false };
         }
 
         if (response.status >= 400) {
-            console.warn(`[server]: GitHub resource ${resource} failed (HTTP ${response.status}).`);
-            return null;
+            const rateLimited = isRateLimited(response);
+            console.warn(`[server]: GitHub resource ${resource} failed (HTTP ${response.status}${rateLimited ? ', rate limit exhausted' : ''}).`);
+            return { data: null, status: response.status, rateLimited };
         }
 
-        return response.data;
+        return { data: response.data, status: response.status, rateLimited: false };
     } catch (error: any) {
         console.warn(`[server]: GitHub request ${resource} failed:`, error.message);
-        return null;
+        return { data: null, status: 0, rateLimited: false };
     }
 };
 
@@ -179,7 +196,8 @@ const UPDATE_STEPS: { key: string; label: string }[] = [
     { key: 'install-backend', label: 'Backend-Abhängigkeiten werden installiert' },
     { key: 'prisma-generate', label: 'Datenbank-Client wird erzeugt' },
     { key: 'build-backend', label: 'Backend wird gebaut' },
-    { key: 'restart', label: 'Dienst wird neu gestartet' }
+    { key: 'restart', label: 'Dienst wird neu gestartet' },
+    { key: 'rollback', label: 'Vorherige Version wird wiederhergestellt' }
 ];
 
 const UPDATE_STEP_TOTAL = UPDATE_STEPS.length;
@@ -312,20 +330,32 @@ const updateStatusPayload = (file: UpdateStateFile | null) => {
 
     const { state } = file;
     const status = state.status || 'idle';
-    const done = status === 'success' || status === 'failed';
+    // Terminal states: no further poll, the result card stays on screen.
+    const done = status === 'success' || status === 'failed' || status === 'rolled_back';
     const step = UPDATE_STEPS.find(entry => entry.key === state.step) || null;
     const index = Number(state.index) || 0;
+
+    const stepLabel =
+        status === 'success' ? 'Update abgeschlossen'
+            : status === 'rolled_back' ? 'Vorherige Version wiederhergestellt'
+                : status === 'failed' ? 'Update fehlgeschlagen'
+                    : (step ? step.label : null);
+
+    const message =
+        status === 'success' ? `Update auf ${state.target} wurde installiert. Die neue Version ist aktiv.`
+            // The worker already wrote the German sentence (it knows the failed step).
+            : status === 'rolled_back' ? (state.error || `Update auf ${state.target} ist fehlgeschlagen. Die vorherige Version läuft weiter.`)
+                : status === 'failed' ? (state.error || 'Das Update ist fehlgeschlagen.')
+                    : (step ? `${step.label} …` : 'Update wird installiert …');
 
     return {
         status,
         running: status === 'running',
         step: state.step || null,
-        stepLabel: status === 'success'
-            ? 'Update abgeschlossen'
-            : (status === 'failed' ? 'Update fehlgeschlagen' : (step ? step.label : null)),
+        stepLabel,
         stepIndex: index,
         stepTotal: UPDATE_STEP_TOTAL,
-        progressPercent: status === 'success'
+        progressPercent: (status === 'success' || status === 'rolled_back')
             ? 100
             : Math.round((Math.max(index, 1) - (done ? 0 : 1)) / UPDATE_STEP_TOTAL * 100),
         targetTag: state.target || null,
@@ -335,11 +365,7 @@ const updateStatusPayload = (file: UpdateStateFile | null) => {
         finishedAt: state.finished || null,
         finishedAtFormatted: formatDate(state.finished),
         error: state.error || null,
-        message: status === 'success'
-            ? `Update auf ${state.target} wurde installiert. Die neue Version ist aktiv.`
-            : (status === 'failed'
-                ? (state.error || 'Das Update ist fehlgeschlagen.')
-                : (step ? `${step.label} …` : 'Update wird installiert …')),
+        message,
         logTail: readUpdateLogTail()
     };
 };
@@ -401,13 +427,18 @@ export const systemRoutes = () => {
         };
 
         /** The remote check is not a precondition for the installed app to work. */
-        const unavailablePayload = () => ({
+        const unavailablePayload = (rateLimited: boolean) => ({
             success: true,
             data: {
                 ...installed,
                 hasUpdate: false,
                 unavailable: true,
-                message: 'Die Prüfung auf neue Versionen ist derzeit nicht möglich. Die installierte Version läuft unverändert weiter - bitte später erneut suchen.',
+                // Distinguishes "quota exhausted" from "API unreachable" so the UI can
+                // point at the real cause instead of showing a generic message.
+                rateLimited,
+                message: rateLimited
+                    ? 'Die GitHub-API ist derzeit limitiert (ohne Token sind nur 60 Anfragen pro Stunde möglich). Bitte später erneut suchen oder ein GITHUB_TOKEN in server/.env hinterlegen.'
+                    : 'Die Prüfung auf neue Versionen ist derzeit nicht möglich. Die installierte Version läuft unverändert weiter - bitte später erneut suchen.',
                 latestVersion: null,
                 releaseName: null,
                 releasePublishedAt: null,
@@ -419,10 +450,13 @@ export const systemRoutes = () => {
             // Preferred source: the newest GitHub release (it carries the release notes).
             // Because POST /update installs a tag, an existing tag is a valid update as well -
             // a tag pushed without (or ahead of) a published GitHub release must not be hidden.
-            const [release, tags] = await Promise.all([
+            const [releaseResult, tagsResult] = await Promise.all([
                 githubGet('/releases/latest'),
                 githubGet('/tags')
             ]);
+
+            const release = releaseResult.data;
+            const tags = tagsResult.data;
 
             const newestTag = Array.isArray(tags)
                 ? highestVersion(tags.map((entry: any) => entry?.name))
@@ -431,7 +465,8 @@ export const systemRoutes = () => {
             const latestVersion = highestVersion([release?.tag_name, newestTag]);
 
             if (!latestVersion) {
-                return res.json(unavailablePayload());
+                // Both calls share the same quota, so either one flags the rate limit.
+                return res.json(unavailablePayload(releaseResult.rateLimited || tagsResult.rateLimited));
             }
 
             // Release notes describe the release - only usable when it is the newest version.
@@ -443,6 +478,7 @@ export const systemRoutes = () => {
                     ...installed,
                     hasUpdate: installed.currentVersion !== latestVersion,
                     unavailable: false,
+                    rateLimited: false,
                     message: null,
                     latestVersion,
                     releaseName: releaseIsLatest ? (release.name || latestVersion) : latestVersion,
@@ -452,7 +488,7 @@ export const systemRoutes = () => {
             });
         } catch (error: any) {
             console.error('[server]: Update check failed:', error.message);
-            res.json(unavailablePayload());
+            res.json(unavailablePayload(false));
         }
     });
 

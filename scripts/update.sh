@@ -5,6 +5,10 @@
 # Installs a release tag into an existing installation: fetch the tag, check it out,
 # rebuild frontend and backend, then restart the web service.
 #
+# If a step after the checkout fails, the previously installed revision is restored
+# (checkout + rebuild + restart), so a failed update never leaves a half-built,
+# unbuildable installation behind. The result is reported as status=rolled_back.
+#
 # It runs from its own systemd unit ("heritago-update.service", see docs/install.md)
 # on purpose: the build must not live inside the web process, because that process is
 # killed by the restart this script triggers at the end.
@@ -27,11 +31,12 @@ REQUEST_FILE="$STATE_DIR/update-request.txt"
 
 # Step keys, in execution order. The German display labels live in the backend
 # (system.routes.ts) - never duplicate user-facing texts in shell code.
-STEPS=(fetch checkout install-frontend build-frontend install-backend prisma-generate build-backend restart)
+STEPS=(fetch checkout install-frontend build-frontend install-backend prisma-generate build-backend restart rollback)
 TOTAL=${#STEPS[@]}
 
 TAG=""
 FROM=""
+ROLLBACK_REF=""
 STEP=""
 STARTED_AT="$(date -Is)"
 FINISHED_AT=""
@@ -73,10 +78,59 @@ write_state() {
 }
 
 fail() {
+    local reason="$1"
+    log "FAILED: $reason"
+
+    # Once the working copy was touched (from the checkout step on) the previous
+    # revision is restored instead of leaving a broken installation behind.
+    if [ -n "$ROLLBACK_REF" ]; then
+        attempt_rollback "$reason"
+        return
+    fi
+
     FINISHED_AT="$(date -Is)"
-    log "FAILED: $1"
-    write_state failed "$STEP" "$1"
+    write_state failed "$STEP" "$reason"
     rm -f "$REQUEST_FILE"
+    exit 1
+}
+
+# Restores the revision that was installed before this run: check it out again,
+# rebuild frontend and backend and restart the service on it. Reports
+# status=rolled_back on success and status=failed when even the rollback breaks.
+attempt_rollback() {
+    local reason="$1"
+    local ok=1
+
+    STEP="rollback"
+    write_state running "$STEP"
+    log "--- rollback to ${FROM:-$ROLLBACK_REF}"
+
+    git -C "$APP_ROOT" checkout "$ROLLBACK_REF" >> "$LOG_FILE" 2>&1 || ok=0
+
+    if [ "$ok" = "1" ]; then
+        bash -c "cd '$APP_ROOT' && env -u NODE_ENV npm install --no-audit --no-fund" >> "$LOG_FILE" 2>&1 || ok=0
+        bash -c "cd '$APP_ROOT' && npm run build" >> "$LOG_FILE" 2>&1 || ok=0
+        bash -c "cd '$APP_ROOT/server' && npm install --no-audit --no-fund" >> "$LOG_FILE" 2>&1 || ok=0
+        bash -c "cd '$APP_ROOT/server' && npx prisma generate" >> "$LOG_FILE" 2>&1 || ok=0
+        bash -c "cd '$APP_ROOT/server' && npm run build" >> "$LOG_FILE" 2>&1 || ok=0
+    fi
+
+    if [ "$ok" = "1" ]; then
+        chown -R "$WEB_USER:$WEB_USER" "$APP_ROOT/dist" "$APP_ROOT/server/dist" >> "$LOG_FILE" 2>&1 || true
+        systemctl restart "$SERVICE_NAME" >> "$LOG_FILE" 2>&1 || ok=0
+    fi
+
+    FINISHED_AT="$(date -Is)"
+    rm -f "$REQUEST_FILE"
+
+    if [ "$ok" = "1" ]; then
+        log "=== rollback finished - ${FROM:-$ROLLBACK_REF} is active again ==="
+        write_state rolled_back "$STEP" "Update auf $TAG ist fehlgeschlagen ($reason). Die vorherige Version ${FROM:-$ROLLBACK_REF} wurde wiederhergestellt und läuft wieder."
+    else
+        log "=== rollback FAILED - manual intervention required ==="
+        write_state failed "$STEP" "Update auf $TAG ist fehlgeschlagen und die automatische Wiederherstellung ebenfalls. Bitte das Update-Log auf dem Server prüfen."
+    fi
+
     exit 1
 }
 
@@ -136,6 +190,10 @@ if [ -n "$LOCAL_CHANGES" ]; then
     printf '%s\n' "$LOCAL_CHANGES" >> "$LOG_FILE"
     fail "Das Installationsverzeichnis enthält lokale Änderungen. Bitte diese zuerst zurücksetzen."
 fi
+
+# Remember what is installed right now: this is the revision the rollback returns to
+# if any of the following steps fails.
+ROLLBACK_REF="${FROM:-$(git -C "$APP_ROOT" rev-parse HEAD 2>/dev/null)}"
 
 run_step checkout git -C "$APP_ROOT" checkout "tags/$TAG"
 

@@ -24,6 +24,12 @@ export class UpdateSettings implements OnInit, OnDestroy {
      */
     public updateProgress: any = null;
 
+    /**
+     * Local UI state only: the worker log inside the progress card is collapsed by
+     * default and toggled by the user. Not part of the backend status payload.
+     */
+    public showLog = false;
+
     private pollTimer: ReturnType<typeof setTimeout> | null = null;
     private pollFailures = 0;
 
@@ -135,6 +141,7 @@ export class UpdateSettings implements OnInit, OnDestroy {
         this.updating = true;
         this.error = null;
         this.updateProgress = null;
+        this.showLog = false;
         this.cdr.detectChanges();
 
         try {
@@ -179,9 +186,11 @@ export class UpdateSettings implements OnInit, OnDestroy {
             this.updating = true;
             this.updateStatus = null;
             this.pollFailures = 0;
+            this.showLog = false;
             this.schedulePoll();
-        } else if (status.status === 'success' || status.status === 'failed') {
+        } else if (status.status === 'success' || status.status === 'failed' || status.status === 'rolled_back') {
             this.updateProgress = status;
+            this.showLog = false;
         }
 
         this.cdr.detectChanges();
@@ -190,7 +199,14 @@ export class UpdateSettings implements OnInit, OnDestroy {
     /** Hides the result card of a finished update. */
     dismissUpdateProgress() {
         this.updateProgress = null;
+        this.showLog = false;
         this.error = null;
+        this.cdr.detectChanges();
+    }
+
+    /** Shows or hides the worker log inside the progress card. */
+    toggleLog() {
+        this.showLog = !this.showLog;
         this.cdr.detectChanges();
     }
 
