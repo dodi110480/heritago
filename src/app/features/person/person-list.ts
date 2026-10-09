@@ -106,6 +106,20 @@ export class PersonList {
         });
     }
 
+    /**
+     * Meta line of a person card: the gender symbol only.
+     * Technical identifiers (UUIDs) are never shown on the card - they are noise
+     * for the user and the card already links to the full person record.
+     */
+    genderSymbol(person: Individual): string {
+        switch (person.gender) {
+            case 'M': return '♂';
+            case 'F': return '♀';
+            case 'X': return '⚧';
+            default: return '';
+        }
+    }
+
     getLifespan(person: Individual): string {
         const birth = person.birthDate || '';
         const death = person.deathDate || '';

@@ -37,7 +37,7 @@
     <app-entity-card *ngFor="let p of filteredIndividuals()" 
         [title]="p.name" 
         [subtitle]="getLifespan(p) | cleanDate"
-        [meta]="p.id + (p.gender ? ' • ' + (p.gender === 'M' ? '♂' : (p.gender === 'F' ? '♀' : '⚧')) : '')"
+        [meta]="genderSymbol(p)"
         [avatarUrl]="getAvatarUrl(p)" 
         [gender]="p.gender" 
         [isFocused]="p.id === focusedPersonId()"
