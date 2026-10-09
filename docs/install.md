@@ -347,6 +347,23 @@ sichtbar; der Worker schreibt seinen Zustand nach
 > `HERITAGO_WEB_USER` (Standard `www-data`) sowie `HERITAGO_UPDATE_UNIT`
 > (Standard `heritago-update.service`) für das Backend.
 
+**e) Update ohne Weboberfläche** (gleicher Weg, den die Anwendung auslöst) – nützlich
+für Wartung per SSH:
+
+```bash
+sudo install -d -o www-data -g www-data -m 0755 /var/lib/heritago
+echo 'tag=v1.0.0' | sudo tee /var/lib/heritago/update-request.txt
+sudo systemctl start heritago-update
+sudo journalctl -u heritago-update -f          # Fortschritt verfolgen
+cat /var/lib/heritago/update-state.txt         # Ergebnis (status=success/failed)
+```
+
+> `update.sh` akzeptiert als Ziel-Version nur ein Tag im Format `v1.2.3` (oder `1.2.3`).
+> Lokale Änderungen im Installationsverzeichnis blockieren den Checkout: Die Datei
+> `package-lock.json` wird automatisch zurückgesetzt, alles andere muss vorher
+> zurückgenommen werden (`git checkout -- <datei>`).
+
+
 ---
 
 ## 8. Firewall konfigurieren (optional)
