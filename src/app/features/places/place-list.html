@@ -22,8 +22,7 @@
 <app-places-list 
     [placesDisplay]="hierarchy()" 
     [isLoading]="loading()"
-    (placeEditRequested)="openEditModal($event)" 
-    (placeCreateRequested)="openAddModal()">
+    (placeEditRequested)="openEditModal($event)">
 </app-places-list>
 
 <app-place-modal [visible]="isModalOpen()" [mode]="modalMode()" [initialData]="selectedPlaceData()" (saved)="onPlaceSaved()"
