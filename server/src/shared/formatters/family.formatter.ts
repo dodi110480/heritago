@@ -31,6 +31,18 @@ export class FamilyFormatter {
             childNames: children.map((cId: string) => getName(cId)).join(', '),
             children,
             ...meta,
+            // Media links are delivered so the family page can show, remove and
+            // re-save them (the save replaces the link set, see FamilyWriteService).
+            media: (fam.mediaLinks || [])
+                .filter((ml: any) => ml.media)
+                .map((ml: any) => ({
+                    id: ml.media.id,
+                    title: ml.media.title,
+                    mediaType: ml.media.mediaType,
+                    mimeType: ml.media.mimeType,
+                    path: ml.media.path,
+                    isPrimary: !!ml.isPrimary
+                })),
             events: (fam.events || []).map((e: any) => ({
                 id: e.id,
                 type: e.type,

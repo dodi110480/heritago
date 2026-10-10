@@ -51,13 +51,14 @@ export const familyRoutes = (prisma: PrismaClient) => {
             res.json({ success: true, data: result });
         } catch (error: any) {
             console.error('Save family error:', error);
-            const message = error?.message || 'Failed to save family';
-            // Placeholder: simplified validation error handling
-            res.status(500).json({
-                success: false,
-                message,
-                code: 'FAMILY_SAVE_FAILED'
-            });
+            const status = error?.statusCode || error?.status || 500;
+            const code = error?.code || 'FAMILY_SAVE_FAILED';
+            // Only errors raised deliberately (statusCode set) may surface their
+            // message – Prisma/DB internals stay in the log (see `.clinerules/api.md`).
+            const message = error?.statusCode
+                ? error.message
+                : 'Die Familie konnte nicht gespeichert werden. Bitte erneut versuchen.';
+            res.status(status).json({ success: false, message, code });
         }
     });
 

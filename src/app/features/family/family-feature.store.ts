@@ -27,6 +27,8 @@ export class FamilyFeatureStore {
     searchResults = signal<any[]>([]);
     loading = signal(true);
     isSaving = signal(false);
+    /** Last save failure – rendered as a banner on the family detail page. */
+    saveError = signal<string | null>(null);
     activeTab = signal<'basics' | 'children' | 'events' | 'notes' | 'citations' | 'media'>('basics');
     availableSources = signal<any[]>([]);
 
@@ -126,6 +128,7 @@ export class FamilyFeatureStore {
         if (!fam || !treeName) return;
 
         this.isSaving.set(true);
+        this.saveError.set(null);
         this.familyService.saveFamily(treeName, fam).subscribe({
             next: (res) => {
                 if (res) {
@@ -134,7 +137,10 @@ export class FamilyFeatureStore {
                 }
                 this.isSaving.set(false);
             },
-            error: () => this.isSaving.set(false)
+            error: (err) => {
+                this.isSaving.set(false);
+                this.saveError.set(err?.error?.message || 'Die Familie konnte nicht gespeichert werden.');
+            }
         });
     }
 

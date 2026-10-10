@@ -32,22 +32,43 @@ export class FamilyRepository {
         });
     }
 
+    /**
+     * Only scalar `Family` columns may reach Prisma.
+     *
+     * Relation arrays (`events`, `notes`, `citations`, `media`, `identifiers`) and
+     * display-only fields from the API DTO are persisted by `FamilyWriteService`.
+     * Spreading the raw request body into `family.upsert()` (as this method used to
+     * do) made every save that carried notes or citations fail with a Prisma
+     * validation error (HTTP 500), the same defect that broke media metadata saves.
+     */
+    private static readonly SCALAR_FIELDS = [
+        'gedcomId',
+        'importId',
+        'restrictionNotice',
+        'childCount',
+        'chanDate',
+        'extensions'
+    ] as const;
+
     async saveFamily(data: any, tx?: any) {
         const client = tx || this.prisma;
-        const { id, treeId, ...rest } = data;
-        
-        // Remove virtual fields that don't belong to the database model
-        const { 
-            husband, wife, children, husbandName, wifeName, childNames, 
-            status, statusLabel, marriageLabel, childrenCount, profileImageUrl, 
-            events, media, beforeState, updatedAt, ...dbData 
-        } = rest;
+        const { id, treeId } = data;
+
+        const scalars: Record<string, any> = {};
+        for (const field of FamilyRepository.SCALAR_FIELDS) {
+            if (data?.[field] !== undefined) scalars[field] = data[field];
+        }
 
         return client.family.upsert({
             where: { id: id || '', treeId },
-            create: { ...dbData, treeId },
-            update: dbData
+            create: { ...scalars, treeId },
+            update: scalars
         });
+    }
+
+    /** Raw Prisma client – used by write services that need their own transaction. */
+    get client() {
+        return this.prisma;
     }
 
     async deleteFamily(id: string, treeId: string) {

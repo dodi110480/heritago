@@ -427,8 +427,6 @@ export class PlaceModal implements OnInit {
                 this.isSaving.set(false);
                 if (res && (res.success || res.id)) {
                     this.saved.emit(payload);
-                } else if (res && res._debug) {
-                    this.errorMessage.set(`${res.message} (UID: ${res._debug.userId}, Tree: ${res._debug.treeName})`);
                 } else {
                     this.errorMessage.set(res?.message || 'Fehler beim Speichern.');
                 }

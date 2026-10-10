@@ -35,6 +35,8 @@ export class PersonCreateModal {
     });
 
     isSaving = signal(false);
+    /** Last save failure – shown inline instead of a generic alert. */
+    saveError = signal<string | null>(null);
     searchResults = signal<Individual[]>([]);
     showResults = signal(false);
 
@@ -47,6 +49,7 @@ export class PersonCreateModal {
             });
             this.searchResults.set([]);
             this.showResults.set(false);
+            this.saveError.set(null);
         }
     }
 
@@ -81,6 +84,7 @@ export class PersonCreateModal {
         if (!tree || !data.firstName) return;
 
         this.isSaving.set(true);
+        this.saveError.set(null);
         const payload = {
             firstName: data.firstName,
             lastName: data.lastName,
@@ -99,9 +103,9 @@ export class PersonCreateModal {
                     this.close();
                 }
             },
-            error: () => {
+            error: (err: any) => {
                 this.isSaving.set(false);
-                alert('Fehler beim Anlegen der Person');
+                this.saveError.set(err?.error?.message || 'Die Person konnte nicht angelegt werden.');
             }
         });
     }

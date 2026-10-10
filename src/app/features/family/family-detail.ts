@@ -99,6 +99,12 @@ export class FamilyDetail implements OnInit, OnDestroy {
     }
 
     // --- Modal Orchestration ---
+
+    /** Thumbnail URL for a linked media entry (the DTO carries no URL). */
+    mediaUrl(media: any): string {
+        return media?.url || this.mediaService.getMediaUrl(media?.id, 'thumb');
+    }
+
     openViewer(media: any) {
         if (!media) return;
         const url = media.id ? this.mediaService.getMediaUrl(media.id) : (media.url ? this.mediaService.getMediaUrl(media.url) : null);
@@ -336,11 +342,6 @@ export class FamilyDetail implements OnInit, OnDestroy {
     }
 
     // --- Helpers ---
-    isImageUrl(url: string | undefined): boolean {
-        if (!url) return false;
-        return /\.(jpeg|jpg|gif|png|webp|svg)$/i.test(url);
-    }
-
     onPlaceSaved(place: any) {
         this.showPlaceModal.set(false);
     }

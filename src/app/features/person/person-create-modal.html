@@ -88,6 +88,28 @@
                 </div>
             </div>
         </div>
+        <!-- Save error display -->
+        <div *ngIf="saveError()"
+            class="mx-1 p-3 bg-accent-danger-500/10 border border-accent-danger-500/20 rounded-2xl flex items-start gap-3">
+            <div class="p-1.5 bg-accent-danger-500/20 text-accent-danger-600 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+            </div>
+            <p class="flex-1 text-xs text-accent-danger-600 font-medium leading-relaxed">{{ saveError() }}</p>
+            <button (click)="saveError.set(null)" class="p-1 hover:bg-accent-danger-500/10 rounded-lg transition-colors"
+                aria-label="Fehlermeldung schließen">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
         <div class="flex gap-4 pt-4 px-1">
             <button (click)="close()"
                 class="flex-1 py-4 bg-canvas-white/5 hover:bg-canvas-white/10 text-neutral-400 font-bold rounded-2xl border border-canvas-white/10 transition-colors">

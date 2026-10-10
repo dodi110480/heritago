@@ -108,7 +108,12 @@ export const placeRoutes = (prisma: PrismaClient) => {
             const result = await placeWriteService.savePlace(tree.id, req.body, userId);
             res.json({ success: true, data: result });
         } catch (error: any) {
-            res.status(500).json({ success: false, message: error.message });
+            console.error('Save place error:', error);
+            const status = error?.statusCode || error?.status || 500;
+            const code = error?.code || 'PLACE_SAVE_FAILED';
+            // Deliberate errors keep their message, unexpected ones stay generic.
+            const message = error?.statusCode ? error.message : 'Der Ort konnte nicht gespeichert werden. Bitte erneut versuchen.';
+            res.status(status).json({ success: false, message, code });
         }
     });
 

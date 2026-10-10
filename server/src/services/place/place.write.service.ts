@@ -23,7 +23,7 @@ export class PlaceWriteService {
         } = data;
 
         if (!name || !name.trim()) {
-            throw new Error('Name is required.');
+            throw this.httpError(400, 'PLACE_VALIDATION_ERROR', 'Ein Ortsname ist erforderlich.');
         }
 
         const lat = (latitude !== undefined && latitude !== null && latitude !== '') ? parseFloat(latitude) : null;
@@ -38,8 +38,8 @@ export class PlaceWriteService {
         // Validate parent reference (existence + no self-reference)
         if (normalizedParentId) {
             const parent = await prisma.place.findFirst({ where: { id: normalizedParentId, treeId } });
-            if (!parent) throw new Error('Invalid parentId for this tree.');
-            if (id && normalizedParentId === id) throw new Error('A place cannot be its own parent.');
+            if (!parent) throw this.httpError(400, 'PLACE_VALIDATION_ERROR', 'Der übergeordnete Ort wurde nicht gefunden.');
+            if (id && normalizedParentId === id) throw this.httpError(400, 'PLACE_VALIDATION_ERROR', 'Ein Ort kann nicht sein eigener übergeordneter Ort sein.');
         }
 
         return prisma.$transaction(async (tx: any) => {
@@ -50,7 +50,7 @@ export class PlaceWriteService {
 
             if (id) {
                 beforeState = await tx.place.findFirst({ where: { id, treeId } });
-                if (!beforeState) throw new Error('Place not found.');
+                if (!beforeState) throw this.httpError(404, 'PLACE_NOT_FOUND', 'Der Ort wurde nicht gefunden.');
                 result = await tx.place.update({
                     where: { id: beforeState.id },
                     data: {
@@ -196,6 +196,14 @@ export class PlaceWriteService {
         }
 
         return null;
+    }
+
+    /** Error carrying HTTP status + API error code (see `.clinerules/api.md`). */
+    private httpError(status: number, code: string, message: string) {
+        const error: any = new Error(message);
+        error.statusCode = status;
+        error.code = code;
+        return error;
     }
 
     private async updateSubEntitiesTransaction(
