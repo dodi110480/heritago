@@ -51,6 +51,7 @@ export class MediaAddModal {
 
     @Input() set item(val: any) {
         if (val) {
+            this.saveError.set(null);
             this.isEditing.set(true);
             this.isOrphan.set(!!val.orphanFile);
             this.id.set(val.id || '');
@@ -93,6 +94,8 @@ export class MediaAddModal {
     previewUrl = signal('');
     currentFileUrl = signal('');
     uploading = signal(false);
+    /** User-facing error banner (German) – set when a save/delete/unlink fails. */
+    saveError = signal<string | null>(null);
 
     // Identifiers
     identifiers = signal<any[]>([]);
@@ -205,9 +208,9 @@ export class MediaAddModal {
                 this.saved.emit(res);
                 this.close();
             },
-            error: () => {
+            error: (err: any) => {
                 this.uploading.set(false);
-                this.close();
+                this.saveError.set(this.describeError(err, 'Der Bildausschnitt konnte nicht gespeichert werden.'));
             }
         });
     }
@@ -255,8 +258,12 @@ export class MediaAddModal {
 
                     this.mediaService.updateMedia(tree.name, newMedia.id, data).subscribe({
                         next: (updRes) => {
-                            this.syncLinks(tree.name, newMedia.id).then(() => {
+                            this.syncLinks(tree.name, newMedia.id).then((failed) => {
                                 this.uploading.set(false);
+                                if (failed.length > 0) {
+                                    this.saveError.set(failed[0]);
+                                    return;
+                                }
                                 if (this.mediaType() === 'PHOTO') {
                                     this.startCropping();
                                 } else {
@@ -266,20 +273,18 @@ export class MediaAddModal {
                             });
                         },
                         error: (err) => {
+                            // Metadata failed, but the upload succeeded – surface the
+                            // reason instead of silently continuing.
                             this.syncLinks(tree.name, newMedia.id).then(() => {
                                 this.uploading.set(false);
-                                if (this.mediaType() === 'PHOTO') {
-                                    this.startCropping();
-                                } else {
-                                    this.saved.emit(newMedia);
-                                    this.close();
-                                }
+                                this.saveError.set(this.describeError(err, 'Die Metadaten konnten nicht gespeichert werden.'));
                             });
                         }
                     });
                 },
                 error: (err) => {
                     this.uploading.set(false);
+                    this.saveError.set(this.describeError(err, 'Der Upload ist fehlgeschlagen.'));
                 }
             });
         } else if (this.isEditing() && this.id()) {
@@ -324,25 +329,41 @@ export class MediaAddModal {
     }
 
     private updateMetadata(treeName: string, id: string, data: any) {
+        this.saveError.set(null);
         this.mediaService.updateMedia(treeName, id, data).subscribe({
             next: (res) => {
-                this.syncLinks(treeName, id).then(() => {
+                this.syncLinks(treeName, id).then((failed) => {
                     this.uploading.set(false);
+                    if (failed.length > 0) {
+                        // Metadata is saved, but at least one link failed – keep the
+                        // modal open so the user sees what went wrong.
+                        this.saveError.set(failed[0]);
+                        return;
+                    }
                     this.saved.emit(res || { ...data, id });
                     this.close();
                 });
             },
             error: (err) => {
                 this.uploading.set(false);
+                this.saveError.set(this.describeError(err, 'Das Medium konnte nicht gespeichert werden.'));
             }
         });
     }
 
-    private syncLinks(treeName: string, mediaId: string): Promise<void> {
+    /** Maps an HTTP error to a short German message for the modal banner. */
+    private describeError(err: any, fallback: string): string {
+        const message = err?.error?.message;
+        return typeof message === 'string' && message.trim() ? message : fallback;
+    }
+
+    /** Creates the pending links; returns the error messages of the failures. */
+    private syncLinks(treeName: string, mediaId: string): Promise<string[]> {
         const pending = this.links().filter(l => !l.id);
-        if (pending.length === 0) return Promise.resolve();
+        if (pending.length === 0) return Promise.resolve([]);
 
         return new Promise((resolve) => {
+            const failures: string[] = [];
             let remaining = pending.length;
             pending.forEach(l => {
                 const payload: any = { };
@@ -363,10 +384,12 @@ export class MediaAddModal {
                             this.links.set([...current, link]);
                         }
                     },
-                    error: () => {},
+                    error: (err: any) => {
+                        failures.push(this.describeError(err, 'Die Verknüpfung konnte nicht gespeichert werden.'));
+                    },
                     complete: () => {
                         remaining -= 1;
-                        if (remaining <= 0) resolve();
+                        if (remaining <= 0) resolve(failures);
                     }
                 });
             });
@@ -390,6 +413,25 @@ export class MediaAddModal {
             },
             error: (err) => {
                 this.uploading.set(false);
+                this.saveError.set(this.describeError(err, 'Das Medium konnte nicht gelöscht werden.'));
+            }
+        });
+    }
+
+    /** Removes an existing link of this media (Links tab). */
+    onUnlinkRequested(linkId: string) {
+        const tree = this.authService.currentTree();
+        if (!tree || !linkId) return;
+
+        this.saveError.set(null);
+        this.mediaService.unlinkMedia(tree.name, linkId).subscribe({
+            next: () => {
+                this.links.set(this.links().filter(l => l.id !== linkId));
+                this.fetchUsage();
+                this.saved.emit({ id: this.id() });
+            },
+            error: (err) => {
+                this.saveError.set(this.describeError(err, 'Die Verknüpfung konnte nicht entfernt werden.'));
             }
         });
     }
@@ -429,8 +471,11 @@ export class MediaAddModal {
                     this.links.set([...this.links(), link]);
                     this.selectedPersonId.set('');
                     this.selectedFamilyId.set('');
+                    this.fetchUsage();
                 },
-                error: (err) => console.error('Link create failed', err)
+                error: (err) => {
+                    this.saveError.set(this.describeError(err, 'Die Verknüpfung konnte nicht angelegt werden.'));
+                }
             });
         } else {
             const placeholder: any = {};
@@ -453,7 +498,9 @@ export class MediaAddModal {
                 next: () => {
                     this.links.set(this.links().filter((_, idx) => idx !== i));
                 },
-                error: (err) => console.error('Failed to remove link', err)
+                error: (err) => {
+                    this.saveError.set(this.describeError(err, 'Die Verknüpfung konnte nicht entfernt werden.'));
+                }
             });
         } else {
             this.links.set(this.links().filter((_, idx) => idx !== i));
@@ -484,5 +531,6 @@ export class MediaAddModal {
         this.showCropper.set(false);
         this.cropImageUrl.set(null);
         this.rawImageFile.set(null);
+        this.saveError.set(null);
     }
 }

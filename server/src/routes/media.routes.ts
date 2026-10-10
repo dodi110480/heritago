@@ -16,7 +16,7 @@ export const mediaRoutes = (prisma: PrismaClient) => {
     const auditService = new AuditService(prisma);
     const notesService = new NotesService(prisma);
     const mediaReadService = new MediaReadService(mediaRepo);
-    const mediaWriteService = new MediaWriteService(mediaRepo, auditService);
+    const mediaWriteService = new MediaWriteService(mediaRepo, auditService, notesService);
     
     // Legacy service for complex operations
     const legacyMediaService = new MediaService(prisma, notesService);
@@ -79,6 +79,7 @@ export const mediaRoutes = (prisma: PrismaClient) => {
     });
 
     // Save/Update media metadata
+    // Update metadata of an existing media (title, type, identifiers, notes, citations)
     router.patch('/:id', async (req: any, res) => {
         try {
             const tree = req.tree;
@@ -86,7 +87,17 @@ export const mediaRoutes = (prisma: PrismaClient) => {
             const media = await mediaWriteService.saveMedia(tree.id, { ...req.body, id: req.params.id }, userId);
             res.json({ success: true, data: media });
         } catch (error: any) {
-            res.status(500).json({ success: false, message: error.message });
+            const status = error.statusCode || 500;
+            if (status >= 500) {
+                console.error('[MediaRoutes] Failed to save media:', error);
+            }
+            res.status(status).json({
+                success: false,
+                message: status >= 500
+                    ? 'Das Medium konnte nicht gespeichert werden.'
+                    : error.message,
+                code: error.code || 'MEDIA_SAVE_FAILED'
+            });
         }
     });
 

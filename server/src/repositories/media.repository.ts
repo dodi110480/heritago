@@ -1,9 +1,51 @@
 // server/src/repositories/media.repository.ts
 import { PrismaClient } from '@prisma/client';
-import { includeStandardRelations } from '../shared/relations.utils';
+
+/**
+ * Include for a fully populated media row.
+ *
+ * `includeStandardRelations()` cannot be used here: the `Media` model names its
+ * link relation `links` (not `mediaLinks`) and additionally owns `identifiers`
+ * and `variants`. Using the generic helper made every findById/findAll request
+ * fail with "Unknown field `mediaLinks`", and a missing `identifiers` include
+ * silently dropped external ids on the next save.
+ */
+const includeMediaRelations = () => ({
+    noteLinks: {
+        include: {
+            note: {
+                include: {
+                    createdBy: true
+                }
+            }
+        }
+    },
+    citations: {
+        include: {
+            source: true,
+            citationTexts: true
+        }
+    },
+    links: {
+        include: {
+            person: { include: { names: { where: { isPrimary: true } } } },
+            family: { include: { mediaLinks: { include: { media: true } } } }
+        }
+    },
+    identifiers: true,
+    variants: true
+});
 
 export class MediaRepository {
     constructor(private prisma: PrismaClient) {}
+
+    /**
+     * Prisma client accessor for services that need to orchestrate multi-table
+     * transactions (see MediaWriteService). Read/write helpers stay here.
+     */
+    get client(): PrismaClient {
+        return this.prisma;
+    }
 
     async findById(id: string, treeId: string) {
         return this.prisma.media.findFirst({
@@ -14,19 +56,7 @@ export class MediaRepository {
                     { gedcomId: id }
                 ]
             },
-            include: {
-                ...includeStandardRelations(),
-                variants: true
-            }
-        });
-    }
-
-    async saveMedia(data: any) {
-        const { id, treeId, ...rest } = data;
-        return this.prisma.media.upsert({
-            where: { id: id || '', treeId },
-            create: { ...rest, treeId },
-            update: rest
+            include: includeMediaRelations()
         });
     }
 
@@ -43,10 +73,7 @@ export class MediaRepository {
     async findAll(treeId: string) {
         return this.prisma.media.findMany({
             where: { treeId },
-            include: {
-                ...includeStandardRelations(),
-                variants: true
-            },
+            include: includeMediaRelations(),
             orderBy: { createdAt: 'desc' }
         });
     }

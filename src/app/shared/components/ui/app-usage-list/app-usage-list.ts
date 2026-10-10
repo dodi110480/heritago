@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 export interface UsageEntry {
+    /** Id of the underlying link record (e.g. MediaLink) – required for removal. */
+    linkId?: string;
     context: string;
     contextLabel: string;
     entityId?: string;
@@ -91,7 +93,7 @@ export interface UsageEntry {
                             S. {{ u.page }}
                         </span>
 
-                        <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="ml-auto opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-3">
                              <ng-container *ngIf="u.entityId && u.entityType">
                                 <a [routerLink]="['/' + u.entityType, u.entityId]" (click)="linkClick.emit()" class="text-brand-600 font-bold text-xs flex items-center gap-1">
                                     Ansehen
@@ -101,6 +103,20 @@ export interface UsageEntry {
                                     </svg>
                                 </a>
                              </ng-container>
+
+                             <!-- Optional: unlink an entry (only if the API delivered a linkId) -->
+                             <button *ngIf="allowRemove && u.linkId"
+                                     type="button"
+                                     (click)="removeRequested.emit(u.linkId)"
+                                     class="text-accent-danger-500 hover:text-accent-danger-600 text-xs font-bold flex items-center gap-1"
+                                     [attr.aria-label]="'Verknüpfung mit ' + u.contextLabel + ' entfernen'"
+                                     title="Verknüpfung entfernen">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                     <line x1="18" y1="6" x2="6" y2="18"></line>
+                                     <line x1="6" y1="6" x2="18" y2="18"></line>
+                                 </svg>
+                                 Entfernen
+                             </button>
                         </div>
                     </div>
                 </div>
@@ -113,6 +129,9 @@ export class AppUsageList {
     @Input() isLoading = false;
     @Input() title = '';
     @Input() emptyMessage = 'Keine Verwendungsnachweise gefunden.';
-    
+    /** Enables the per-entry "Entfernen" action (requires `linkId` on the entry). */
+    @Input() allowRemove = false;
+
     @Output() linkClick = new EventEmitter<void>();
+    @Output() removeRequested = new EventEmitter<string>();
 }

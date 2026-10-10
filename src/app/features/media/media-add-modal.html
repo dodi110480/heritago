@@ -14,6 +14,17 @@
     <span>Bitte wähle zuerst einen Stammbaum aus oder erstelle einen neuen, um Medien hochzuladen.</span>
   </div>
 
+  <div *ngIf="saveError()"
+    class="mb-4 mx-6 p-3 rounded-lg bg-accent-danger-500/10 border border-accent-danger-500/20 text-accent-danger-400 text-sm flex items-center gap-2">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span>{{ saveError() }}</span>
+  </div>
+
   <!-- Tabbed single-column layout to match event modal -->
   <div class="flex flex-col h-[600px] max-h-[70vh]">
     <div class="flex border-b border-canvas/10 mb-4 shrink-0 gap-2">
@@ -116,7 +127,8 @@
       <!-- Links Tab -->
       <div *ngIf="activeTab() === 'links'" class="animate-in fade-in slide-in-from-top-2 duration-300">
         <app-usage-list [usages]="usages()" [isLoading]="isLoadingUsage()" [title]="'Verknüpfungen & Verwendung'"
-          [emptyMessage]="'Dieses Medium ist aktuell nirgends verknüpft.'" (linkClick)="close()"></app-usage-list>
+          [emptyMessage]="'Dieses Medium ist aktuell nirgends verknüpft.'" [allowRemove]="isEditing()"
+          (removeRequested)="onUnlinkRequested($event)" (linkClick)="close()"></app-usage-list>
           
         <!-- Manual Linking (Keep for new uploads or quick links) -->
         <div class="mt-8 border-t border-neutral-100 dark:border-neutral-800 pt-6">

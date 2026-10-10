@@ -530,6 +530,7 @@ export class MediaService {
             }
 
             return {
+                linkId: l.id,
                 context,
                 contextLabel,
                 entityId,
