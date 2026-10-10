@@ -57,4 +57,11 @@ export class AppPlacesList {
     }
     return out;
   }
+
+  /** Tooltip for the shared card badge: shows what the place is linked to. */
+  usageTooltip(place: any): string {
+    const usage = place?.usage;
+    if (!usage) return '';
+    return `Events: ${usage.eventCount || 0}, Fakten: ${usage.factCount || 0}, Ass.: ${usage.associationCount || 0}`;
+  }
 }

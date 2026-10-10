@@ -1,52 +1,28 @@
-<div class="space-y-6">
-    <!-- Loading -->
-    <div *ngIf="loading()" class="flex justify-center py-16">
-        <div class="w-8 h-8 border-4 border-brand-500/20 border-l-brand-500 rounded-full animate-spin"></div>
-    </div>
+<!-- Standard data list (shared loading/empty state + responsive grid),
+     identical layout to the sources tab. -->
+<app-list-view
+    [isLoading]="loading()"
+    [isEmpty]="repositories().length === 0"
+    loadingText="Lade Archive..."
+    emptyIcon="🏛️"
+    emptyTitle="Noch keine Archive angelegt"
+    emptySubtitle="Archive sind Aufbewahrungsorte für Quellen, z.B. Standesämter, Bibliotheken oder Kirchenbücher.">
 
-    <!-- Empty State -->
-    <div *ngIf="!loading() && repositories().length === 0"
-        class="flex flex-col items-center justify-center py-16 text-neutral-400 gap-4 glass-card">
-        <span class="text-4xl">🏛️</span>
-        <p class="text-lg font-medium">Noch keine Archive angelegt</p>
-        <p class="text-sm text-center">Archive sind Aufbewahrungsorte für Quellen, z.B. Standesämter, Bibliotheken oder
-            Kirchenbücher.</p>
-        <button class="btn-primary w-auto! py-2! px-5! mt-2" (click)="openAddModal()">+ Erstes Archiv anlegen</button>
-    </div>
-
-    <!-- Repository Grid -->
-    <div *ngIf="!loading() && repositories().length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <app-entity-card *ngFor="let repo of repositories()" [title]="repo.name"
+    @for (repo of repositories(); track repo.id) {
+        <app-entity-card
+            [title]="repo.name"
             [subtitle]="repo.address || 'Keine Adresse angegeben'"
-            [meta]="(repo.sourceCount || 0) + ' Quelle(n) verknüpft'" icon="🏛️" badgeText="Archiv"
-            badgeColor="highlight" (onClick)="openEditModal(repo)">
-
-            <div actions class="flex gap-1 items-center">
-                <span *ngIf="repo.website"
-                    class="text-[10px] px-1.5 py-0.5 rounded-sm bg-canvas-white/10 text-brand-300 font-medium whitespace-nowrap mr-1"
-                    [title]="repo.website">🌐 Web</span>
-                <button
-                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-canvas-white/5 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/20 transition-all border border-transparent hover:border-brand-500/30"
-                    (click)="$event.stopPropagation(); openEditModal(repo)" title="Bearbeiten">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                </button>
-                <button
-                    class="w-7 h-7 flex items-center justify-center rounded-lg bg-canvas-white/5 text-neutral-400 hover:text-accent-danger-400 hover:bg-accent-danger-500/20 transition-all border border-transparent hover:border-accent-danger-500/30"
-                    (click)="$event.stopPropagation(); deleteRepo(repo)" title="Löschen">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </button>
-            </div>
+            [meta]="sourceCountLabel(repo)"
+            icon="🏛️"
+            badgeText="Archiv"
+            badgeColor="highlight"
+            [actionBadge]="repo.website ? '🌐 Web' : ''"
+            [actionBadgeTooltip]="repo.website"
+            (onClick)="openEditModal(repo)">
         </app-entity-card>
-    </div>
-</div>
+    }
+
+</app-list-view>
 
 <!-- Add/Edit Modal -->
     <app-modal-shell [visible]="modalVisible()" [title]="modalMode === 'add' ? 'Neues Archiv anlegen' : 'Archiv bearbeiten'"

@@ -44,15 +44,10 @@
         [routerLink]="['/person', p.id]" 
         badgeText="Person" 
         badgeColor="primary" 
+        [actionBadge]="completionFor(p).score + '%'"
+        [actionBadgeTooltip]="completionTooltip(p)"
+        [actionBadgeTone]="completionTone(completionFor(p).score)"
         (onClick)="rememberFocus(p.id)">
-
-        <div actions class="flex items-center gap-2">
-            <span class="text-[10px] px-2 py-1 rounded-lg font-bold border transition-colors shadow-xs" 
-                [ngClass]="completionCardClass(completionFor(p).score)"
-                [attr.title]="completionTooltip(p)">
-                {{ completionFor(p).score }}%
-            </span>
-        </div>
     </app-entity-card>
 </app-list-view>
 

@@ -18,14 +18,11 @@
         [subtitle]="place.phrase ? (place.name | placeDisplay:'short') : (place.parentName ? 'Teil von: ' + place.parentName : 'Hauptort / Root')"
         [meta]="(place.lang || place.level) ? '[' + (place.lang || '--') + '] ' + place.level : ((place.latitude && place.longitude) ? 'Koord: ' + place.latitude + ', ' + place.longitude : 'Ort')"
         icon="📍" [style.margin-left.px]="(place.depth || 0) * 16" badgeText="Ort" badgeColor="success"
+        [actionBadge]="place.usage?.total > 0 ? place.usage.total + ' Verkn.' : ''"
+        [actionBadgeTooltip]="usageTooltip(place)"
         (onClick)="placeEditRequested.emit(place)">
 
         <div actions class="flex gap-1 items-center">
-            <span *ngIf="place.usage?.total > 0"
-                class="text-[10px] px-2 py-0.5 rounded-sm bg-neutral-400/50 text-brand-400 font-bold border border-brand-500/10 whitespace-nowrap mr-1"
-                [title]="'Events: ' + $safeNavigationMigration($safeNavigationMigration(place.usage?.eventCount)) + ', Fakten: ' + $safeNavigationMigration($safeNavigationMigration(place.usage?.factCount)) + ', Ass.: ' + $safeNavigationMigration($safeNavigationMigration(place.usage?.associationCount))">
-                {{ place.usage.total }} Verkn.
-            </span>
             <button
                 class="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-400/50 text-neutral-400 hover:text-brand-400 hover:bg-brand-500/10 transition-all border border-canvas-white/5 hover:border-brand-500/20"
                 (click)="$event.stopPropagation(); placeEditRequested.emit(place)" title="Bearbeiten">

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TreeService } from '../../core/services/tree.service';
 import { AppEntityCard } from '../../shared/components/ui/app-entity-card';
+import { AppListViewComponent } from '../../shared/components/ui/app-list-view';
 import { AppModalShell } from '../../shared/components/ui/app-modal-shell';
 
 
@@ -10,7 +11,7 @@ import { SourceService } from '../../core/services/source.service';
 @Component({
     selector: 'app-repository-list',
     standalone: true,
-    imports: [CommonModule, FormsModule, AppEntityCard, AppModalShell],
+    imports: [CommonModule, FormsModule, AppEntityCard, AppListViewComponent, AppModalShell],
     changeDetection: ChangeDetectionStrategy.Eager,
     templateUrl: './repository-list.html'
 })
@@ -65,6 +66,16 @@ export class RepositoryList implements OnInit {
                 this.loading.set(false);
             }
         });
+    }
+
+    /**
+     * Display label for the number of linked sources. The phrasing lives here
+     * (not in the template) so the entity card receives a ready-to-render string.
+     */
+    sourceCountLabel(repo: any): string {
+        const count = repo?.sourceCount || 0;
+        if (count === 0) return 'Keine Quellen verknüpft';
+        return count === 1 ? '1 Quelle verknüpft' : `${count} Quellen verknüpft`;
     }
 
     openAddModal() {

@@ -65,12 +65,8 @@
             <app-entity-card *ngFor="let source of filteredSources()" [title]="source.title"
                 [subtitle]="(source.author ? source.author : '') + (source.author && source.shortTitle ? ' • ' : '') + (source.shortTitle ? source.shortTitle : '')"
                 [meta]="source.repositoryName ? '📍 ' + source.repositoryName : 'Kein Repositorium'"
+                [actionBadge]="source.usageCount > 0 ? source.usageCount + ' Zitate' : ''"
                 badgeText="Quelle" badgeColor="success" (onClick)="openEditModal(source)">
-
-                <div actions *ngIf="source.usageCount > 0"
-                    class="text-xs px-2.5 py-1 rounded-sm bg-brand-500/15 text-brand-300 font-bold border border-brand-500/20 whitespace-nowrap">
-                    {{ source.usageCount }} Zitate
-                </div>
             </app-entity-card>
 
         </app-list-view>

@@ -52,7 +52,16 @@ export type EntityBadgeColor = 'primary' | 'highlight' | 'success' | 'danger' | 
                     </div>
                     
                     <!-- Optional Actions (e.g. Delete) passed via Content Projection -->
-                    <div class="shrink-0 flex items-center" (click)="$event.stopPropagation()">
+                    <div class="shrink-0 flex items-center gap-2" (click)="$event.stopPropagation()">
+                        <!-- Shared action badge: single source of truth for the chip
+                             design used by every entity list (counts, labels, status). -->
+                        @if (actionBadge) {
+                            <span class="text-[10px] px-2 py-1 rounded-lg font-bold border whitespace-nowrap shadow-xs"
+                                  [ngClass]="getActionBadgeClass()"
+                                  [attr.title]="actionBadgeTooltip || null">
+                                {{ actionBadge }}
+                            </span>
+                        }
                         <ng-content select="[actions]"></ng-content>
                     </div>
                 </div>
@@ -80,6 +89,17 @@ export class AppEntityCard {
     @Input() routerLink?: any[] | string;
     @Input() queryParams?: Record<string, any>;
     @Input() isFocused: boolean = false;
+
+    /**
+     * Optional action badge shown in the card's top-right corner (e.g. child/link
+     * counts). Centralised here so every entity list renders the exact same badge
+     * design instead of repeating inline Tailwind classes.
+     */
+    @Input() actionBadge?: string;
+    /** Native tooltip (title) for the action badge. */
+    @Input() actionBadgeTooltip?: string;
+    /** Semantic tone of the action badge (reuses the card badge palette). */
+    @Input() actionBadgeTone: EntityBadgeColor = 'primary';
 
     @Output() onClick = new EventEmitter<MouseEvent>();
 
@@ -115,5 +135,20 @@ export class AppEntityCard {
             'neutral': 'text-neutral-900',
         };
         return map[this.badgeColor] || map['neutral'];
+    }
+
+    /**
+     * Tone classes for the shared action badge. The `primary` tone is identical to
+     * the global `.badge-primary` utility (incl. the `dark:` text step for contrast).
+     */
+    getActionBadgeClass(): string {
+        const map: Record<EntityBadgeColor, string> = {
+            'primary': 'bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-500/20',
+            'highlight': 'bg-accent-highlight-500/10 text-accent-highlight-600 dark:text-accent-highlight-400 border-accent-highlight-500/20',
+            'success': 'bg-accent-success-500/10 text-accent-success-600 dark:text-accent-success-400 border-accent-success-500/20',
+            'danger': 'bg-accent-danger-500/10 text-accent-danger-600 dark:text-accent-danger-400 border-accent-danger-500/20',
+            'neutral': 'bg-canvas-white/10 text-neutral-500 dark:text-neutral-300 border-ui-border',
+        };
+        return map[this.actionBadgeTone] || map['primary'];
     }
 }

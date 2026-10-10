@@ -6,7 +6,7 @@ import { Individual } from '../../core/models/models';
 import { FormsModule } from '@angular/forms';
 import { CleanDatePipe } from '../../shared/pipes/clean-date.pipe';
 import { PersonCreateModal } from './person-create-modal';
-import { AppEntityCard } from '../../shared/components/ui/app-entity-card';
+import { AppEntityCard, EntityBadgeColor } from '../../shared/components/ui/app-entity-card';
 import { AppPageHeaderComponent } from '../../shared/components/ui/app-page-header';
 import { AppListViewComponent } from '../../shared/components/ui/app-list-view';
 import { AppSearchInputComponent } from '../../shared/components/ui/app-search-input';
@@ -164,25 +164,12 @@ export class PersonList {
         return person.completeness || { score: 0, missing: [] };
     }
 
-    completionColorClass(score: number): string {
-        if (score >= 80) return 'text-accent-success-600';
-        if (score >= 60) return 'text-accent-success-500';
-        if (score >= 40) return 'text-accent-highlight-500';
-        return 'text-accent-highlight-600';
-    }
-
-    completionDotClass(score: number): string {
-        if (score >= 80) return 'bg-accent-success-600';
-        if (score >= 60) return 'bg-accent-success-500';
-        if (score >= 40) return 'bg-accent-highlight-500';
-        return 'bg-accent-highlight-600';
-    }
-
-    completionCardClass(score: number): string {
-        if (score >= 80) return 'bg-accent-success-500/10 text-accent-success-600 border-accent-success-500/20';
-        if (score >= 60) return 'bg-accent-success-500/5 text-accent-success-500 border-accent-success-500/10';
-        if (score >= 40) return 'bg-accent-highlight-500/10 text-accent-highlight-600 border-accent-highlight-500/20';
-        return 'bg-accent-highlight-500/10 text-accent-highlight-600 border-accent-highlight-500/20';
+    /**
+     * Semantics for the shared card badge (see `AppEntityCard#getActionBadgeClass`):
+     * good/great completeness = success tone, weak = highlight tone.
+     */
+    completionTone(score: number): EntityBadgeColor {
+        return score >= 60 ? 'success' : 'highlight';
     }
 
     completionTooltip(person: Individual): string {
