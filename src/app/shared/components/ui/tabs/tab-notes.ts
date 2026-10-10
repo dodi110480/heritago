@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Output, EventEmitter, signal, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -36,8 +36,8 @@ import { DisplayNote, NoteCategory } from '../../../../core/models/models';
                 </app-section-header>
 
                 <app-notes-list
-                    [entityId]="$safeNavigationMigration(entity?.id)"
-                    [entityType]="entityType"
+                    [entityId]="$safeNavigationMigration(entity()?.id)"
+                    [entityType]="entityType()"
                     [notesDisplay]="displayNotes()"
                     [allowCreate]="true"
                     [allowEdit]="true"
@@ -60,8 +60,8 @@ import { DisplayNote, NoteCategory } from '../../../../core/models/models';
     `
 })
 export class TabNotesComponent {
-    @Input({ required: true }) entity!: any;
-    @Input({ required: true }) entityType!: string;
+    entity = input.required<any>();
+    entityType = input.required<string>();
     @Output() changed = new EventEmitter<{ notes: any[], citations: any[] }>();
     searchText = '';
 
@@ -69,9 +69,11 @@ export class TabNotesComponent {
     activeNoteIndex = signal<number | null>(null);
     activeNote = signal<DisplayNote | null>(null);
 
+    // Signal inputs make this computed re-evaluate whenever the parent hands over a new entity.
     displayNotes = computed(() => {
-        if (!this.entity?.formattedNotes) return [];
-        return this.entity.formattedNotes;
+        const entity = this.entity();
+        if (!entity?.formattedNotes) return [];
+        return entity.formattedNotes;
     });
 
     onNoteCreateRequested() {
@@ -81,7 +83,7 @@ export class TabNotesComponent {
     }
 
     onNoteEditRequested(displayNote: DisplayNote) {
-        const ent = this.entity;
+        const ent = this.entity();
         if (!ent || !ent.formattedNotes) return;
 
         const idx = ent.formattedNotes.findIndex((n: any) => n.id === displayNote.id);
@@ -95,10 +97,11 @@ export class TabNotesComponent {
     onNoteSave(draft: DisplayNote) {
         if (!draft.text.trim()) return;
 
-        const ent = this.entity;
+        const ent = this.entity();
         if (!ent) return;
 
         const idx = this.activeNoteIndex();
+        const targetId = this.activeNote()?.id;
 
         // Map back to API structure
         const apiNote = {
@@ -109,8 +112,15 @@ export class TabNotesComponent {
             isPrivate: draft.isPrivate
         };
 
-        if (idx !== null) {
-            ent.notes[idx] = { ...ent.notes[idx], ...apiNote };
+        // The list renders `formattedNotes`, so resolve the target row by id instead of by index.
+        let targetIndex: number | null = idx;
+        if (idx !== null && targetId && !String(targetId).startsWith('note-')) {
+            const byId = (ent.notes || []).findIndex((note: any) => note.id === targetId);
+            targetIndex = byId !== -1 ? byId : idx;
+        }
+
+        if (targetIndex !== null) {
+            ent.notes[targetIndex] = { ...ent.notes[targetIndex], ...apiNote, id: ent.notes[targetIndex]?.id || apiNote.id };
         } else {
             ent.notes = ent.notes || [];
             ent.notes.push(apiNote);
@@ -121,7 +131,7 @@ export class TabNotesComponent {
     }
 
     onNoteDeleted(noteId: string) {
-        const ent = this.entity;
+        const ent = this.entity();
         if (!ent || !ent.notes) return;
 
         const idx = ent.notes.findIndex((n: any, i: number) => (n.id || `note-${i}`) === noteId);
@@ -137,7 +147,7 @@ export class TabNotesComponent {
         const idx = this.activeNoteIndex();
         if (idx === null) return;
 
-        const ent = this.entity;
+        const ent = this.entity();
         if (!ent || !ent.notes) return;
 
         ent.notes.splice(idx, 1);

@@ -2,6 +2,7 @@
 import { PersonRepository } from "../../repositories/person.repository";
 import { IAuditService } from "../../interfaces/audit.service.interface";
 import { PersonService as LegacyPersonService } from "../person.service";
+import { quayToConfidence, resolveCitationQuay } from "../../shared/citation-quality";
 
 const EVENT_TAGS = ["BIRT", "CHR", "DEAT", "BURI", "CREM", "EMIG", "IMMI", "BAPM", "MARR", "DIV", "ANUL", "ENGA", "ADOP", "EVEN", "OTHER"];
 const FACT_TYPE_MAPPING: { [key: string]: string } = {
@@ -691,6 +692,11 @@ export class PersonWriteService {
         for (const citation of citations) {
             if (!citation?.sourceId) continue;
 
+            // The dialogs send either a confidence enum or the numeric GEDCOM quality level (0-3);
+            // both representations are stored so that exports and re-editing stay consistent.
+            const quay = resolveCitationQuay(citation);
+            const confidence = citation.confidence || quayToConfidence(quay);
+
             const createdCitation = await tx.citation.create({
                 data: {
                     treeId,
@@ -698,7 +704,8 @@ export class PersonWriteService {
                     sourceId: citation.sourceId,
                     page: citation.page || citation.whereInSource || null,
                     dateText: citation.dateText || citation.date || null,
-                    confidence: citation.confidence || null,
+                    confidence: confidence || null,
+                    quay,
                     citationTexts: (citation.text || citation.dataText) ? {
                         create: [{ text: citation.text || citation.dataText }]
                     } : undefined
@@ -1007,24 +1014,57 @@ export class PersonWriteService {
     }
 
     private async clearNestedEntityData(tx: any, entityType: "EVENT" | "FACT", entityId: string) {
+        // Notes that lose their link here must not stay behind as unreachable rows.
+        const removedNotes = await tx.noteLink.findMany({
+            where: entityType === "EVENT" ? { eventId: entityId } : { factId: entityId },
+            select: { noteId: true }
+        });
+
         if (entityType === "EVENT") {
             await tx.citationText.deleteMany({ where: { citation: { eventId: entityId } } });
             await tx.citation.deleteMany({ where: { eventId: entityId } });
             await tx.mediaLink.deleteMany({ where: { eventId: entityId } });
             await tx.noteLink.deleteMany({ where: { eventId: entityId } });
             await tx.association.deleteMany({ where: { eventId: entityId } });
-            return;
+        } else {
+            await tx.citationText.deleteMany({ where: { citation: { factId: entityId } } });
+            await tx.citation.deleteMany({ where: { factId: entityId } });
+            await tx.mediaLink.deleteMany({ where: { factId: entityId } });
+            await tx.noteLink.deleteMany({ where: { factId: entityId } });
+            await tx.association.deleteMany({ where: { factId: entityId } });
         }
 
-        await tx.citationText.deleteMany({ where: { citation: { factId: entityId } } });
-        await tx.citation.deleteMany({ where: { factId: entityId } });
-        await tx.mediaLink.deleteMany({ where: { factId: entityId } });
-        await tx.noteLink.deleteMany({ where: { factId: entityId } });
-        await tx.association.deleteMany({ where: { factId: entityId } });
+        await this.deleteOrphanSharedNotes(tx, removedNotes.map((note: any) => note.noteId));
+    }
+
+    /**
+     * Deletes shared notes that lost their last reference (for example after an event or a note link
+     * was removed). Notes that are still linked somewhere, or that belong directly to a person, stay.
+     */
+    private async deleteOrphanSharedNotes(tx: any, noteIds: string[]) {
+        const uniqueIds = Array.from(new Set((noteIds || []).filter(Boolean)));
+        if (!uniqueIds.length) return;
+
+        const candidates = await tx.sharedNote.findMany({
+            where: { id: { in: uniqueIds }, personId: null },
+            select: { id: true, _count: { select: { links: true } } }
+        });
+        const orphaned = candidates
+            .filter((note: any) => (note._count?.links || 0) === 0)
+            .map((note: any) => note.id);
+
+        if (orphaned.length) {
+            await tx.sharedNote.deleteMany({ where: { id: { in: orphaned } } });
+        }
     }
 
     private async deleteEntityBatch(tx: any, entityType: "EVENT" | "FACT", ids: string[], personId: string) {
         if (!ids.length) return;
+
+        const removedNotes = await tx.noteLink.findMany({
+            where: entityType === "EVENT" ? { eventId: { in: ids } } : { factId: { in: ids } },
+            select: { noteId: true }
+        });
 
         if (entityType === "EVENT") {
             await tx.citationText.deleteMany({ where: { citation: { eventId: { in: ids } } } });
@@ -1033,25 +1073,31 @@ export class PersonWriteService {
             await tx.noteLink.deleteMany({ where: { eventId: { in: ids } } });
             await tx.association.deleteMany({ where: { eventId: { in: ids } } });
             await tx.event.deleteMany({ where: { personId, id: { in: ids } } });
-            return;
+        } else {
+            await tx.citationText.deleteMany({ where: { citation: { factId: { in: ids } } } });
+            await tx.citation.deleteMany({ where: { factId: { in: ids } } });
+            await tx.mediaLink.deleteMany({ where: { factId: { in: ids } } });
+            await tx.noteLink.deleteMany({ where: { factId: { in: ids } } });
+            await tx.association.deleteMany({ where: { factId: { in: ids } } });
+            await tx.fact.deleteMany({ where: { personId, id: { in: ids } } });
         }
 
-        await tx.citationText.deleteMany({ where: { citation: { factId: { in: ids } } } });
-        await tx.citation.deleteMany({ where: { factId: { in: ids } } });
-        await tx.mediaLink.deleteMany({ where: { factId: { in: ids } } });
-        await tx.noteLink.deleteMany({ where: { factId: { in: ids } } });
-        await tx.association.deleteMany({ where: { factId: { in: ids } } });
-        await tx.fact.deleteMany({ where: { personId, id: { in: ids } } });
+        await this.deleteOrphanSharedNotes(tx, removedNotes.map((note: any) => note.noteId));
     }
 
     private async deleteFamilyEvents(tx: any, ids: string[]) {
         if (!ids.length) return;
+        const removedNotes = await tx.noteLink.findMany({
+            where: { eventId: { in: ids } },
+            select: { noteId: true }
+        });
         await tx.citationText.deleteMany({ where: { citation: { eventId: { in: ids } } } });
         await tx.citation.deleteMany({ where: { eventId: { in: ids } } });
         await tx.mediaLink.deleteMany({ where: { eventId: { in: ids } } });
         await tx.noteLink.deleteMany({ where: { eventId: { in: ids } } });
         await tx.association.deleteMany({ where: { eventId: { in: ids } } });
         await tx.event.deleteMany({ where: { id: { in: ids } } });
+        await this.deleteOrphanSharedNotes(tx, removedNotes.map((note: any) => note.noteId));
     }
 
     private async resolvePlaceId(tx: any, treeId: string, rawPlaceName?: string | null, currentPlaceId?: string | null) {

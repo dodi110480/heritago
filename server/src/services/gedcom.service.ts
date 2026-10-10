@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { confidenceToQuay } from '../shared/citation-quality';
 
 /**
  * GEDCOM 7.0 writer for a single tree.
@@ -337,20 +338,14 @@ export class GedcomService {
         return byExtension[extension] || 'application/octet-stream';
     }
 
-    /** Maps the stored confidence/quality value onto the GEDCOM 7.0 `enumset-QUAY` payload (0–3). */
+    /** Maps the stored quality onto the GEDCOM 7.0 `enumset-QUAY` payload (0–3). */
     private resolveQuay(citation: Row): string | null {
         if (citation?.quay !== null && citation?.quay !== undefined) {
             const quay = Number(citation.quay);
             if (Number.isInteger(quay) && quay >= 0 && quay <= 3) return String(quay);
         }
-        switch (citation?.confidence) {
-            case 'CERTAIN':
-            case 'VERY_LIKELY': return '3';
-            case 'LIKELY': return '2';
-            case 'POSSIBLE': return '1';
-            case 'UNLIKELY': return '0';
-            default: return null;
-        }
+        const derived = confidenceToQuay(citation?.confidence);
+        return derived === null ? null : String(derived);
     }
 
     /** Structural tag of an event, including extension handling for unknown custom tags. */

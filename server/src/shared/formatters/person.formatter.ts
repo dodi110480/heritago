@@ -1,6 +1,7 @@
 // server/src/shared/formatters/person.formatter.ts
 import { DateUtils } from "../date.utils";
 import { GenealogyValidator } from '../validator.utils';
+import { confidenceToQuay } from '../citation-quality';
 
 export class PersonFormatter {
     static formatPersonForClient(person: any) {
@@ -413,18 +414,24 @@ export class PersonFormatter {
 
     private static formatCitations(citations: any[]) {
         if (!citations) return [];
-        return citations.map((citation) => ({
-            id: citation.id,
-            sourceId: citation.sourceId,
-            whereInSource: citation.page,
-            page: citation.page,
-            confidence: citation.confidence,
-            date: citation.dateText || citation.dataDateText,
-            dateText: citation.dateText || citation.dataDateText,
-            text: citation.citationTexts?.[0]?.text || "",
-            notes: this.formatNoteLinks(citation.noteLinks),
-            sourceTitle: citation.source?.title
-        }));
+        return citations.map((citation) => {
+            // `quality` is the numeric form the citation dialog works with; GEDCOM calls it QUAY.
+            const quay = citation.quay ?? confidenceToQuay(citation.confidence);
+            return {
+                id: citation.id,
+                sourceId: citation.sourceId,
+                whereInSource: citation.page,
+                page: citation.page,
+                confidence: citation.confidence,
+                quay,
+                quality: quay,
+                date: citation.dateText || citation.dataDateText,
+                dateText: citation.dateText || citation.dataDateText,
+                text: citation.citationTexts?.[0]?.text || "",
+                notes: this.formatNoteLinks(citation.noteLinks),
+                sourceTitle: citation.source?.title
+            };
+        });
     }
 
     private static formatFormattedCitations(citations: any[]) {

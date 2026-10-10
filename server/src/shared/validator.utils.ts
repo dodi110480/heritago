@@ -55,7 +55,18 @@ export class GenealogyValidator {
             TITL: "Titel",
             NATI: "Nationalität",
             DSCR: "Körperl. Merkmale",
-            FACT: "Fakt"
+            FACT: "Fakt",
+            // Facts created in the UI are stored with their `FactType` value instead of a GEDCOM tag.
+            OCCUPATION: "Beruf",
+            EDUCATION: "Bildung",
+            RELIGION: "Religion",
+            NATIONALITY: "Nationalität",
+            TITLE: "Titel",
+            RESIDENCE: "Wohnsitz",
+            PROPERTY: "Eigentum",
+            MILITARY_SERVICE: "Militärdienst",
+            DESCRIPTION: "Körperl. Merkmale",
+            OTHER: "Sonstiger Fakt"
         };
         return labels[tag] || tag;
     }

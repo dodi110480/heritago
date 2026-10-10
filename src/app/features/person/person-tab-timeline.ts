@@ -264,6 +264,8 @@ export class PersonTabTimelineComponent {
             originalIndex: -1,
             tag: draft.type || 'EVEN',
             date: draft.dateText || '',
+            // The backend prefers `dateText`; keep both fields in sync so edits never fall back to a stale value.
+            dateText: draft.dateText || '',
             place: draft.place || '',
             description: isFact ? text : (draft.subType ? draft.subType + (text ? ' - ' + text : '') : text),
             value: isFact ? (draft.value || text) : '',
@@ -340,6 +342,8 @@ export class PersonTabTimelineComponent {
                 ...item,
                 tag: draft.type || 'EVEN',
                 date: draft.dateText || '',
+                // The backend prefers `dateText`; without this the spread above kept the previous date.
+                dateText: draft.dateText || '',
                 place: draft.place || '',
                 value: isFact ? (draft.value || text) : '',
                 description: isFact ? text : (draft.subType ? draft.subType + (text ? ' - ' + text : '') : text),

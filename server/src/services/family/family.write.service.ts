@@ -2,6 +2,7 @@
 import { FamilyRepository } from '../../repositories/family.repository';
 import { IAuditService } from '../../interfaces/audit.service.interface';
 import { NotesService } from '../notes.service';
+import { quayToConfidence, resolveCitationQuay } from '../../shared/citation-quality';
 
 /** `Event.type` values accepted by the Prisma enum – anything else falls back to OTHER. */
 const EVENT_TYPES = new Set([
@@ -195,6 +196,9 @@ export class FamilyWriteService {
         for (const citation of citations) {
             if (!citation?.sourceId) continue;
 
+            // The dialogs send either a confidence enum or the numeric GEDCOM quality level (0-3).
+            const quay = resolveCitationQuay(citation);
+
             const created = await tx.citation.create({
                 data: {
                     treeId,
@@ -202,7 +206,8 @@ export class FamilyWriteService {
                     sourceId: citation.sourceId,
                     page: citation.page || citation.whereInSource || null,
                     dateText: citation.dateText || citation.date || null,
-                    confidence: citation.confidence || null,
+                    confidence: citation.confidence || quayToConfidence(quay),
+                    quay,
                     citationTexts: (citation.text || citation.dataText)
                         ? { create: [{ text: citation.text || citation.dataText }] }
                         : undefined
